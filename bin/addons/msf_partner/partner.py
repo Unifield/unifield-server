@@ -242,6 +242,53 @@ class res_partner(osv.osv):
 
         return [('id', operator, self.search(cr, uid, [('is_instance', '=', True)], context=context))]
 
+    def _get_allow_external_edition(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        res = {}
+
+        cr.execute("select id, locally_created from res_partner where id in %s", (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = x[1]
+
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+            cr.execute('''
+                select p.id
+                from
+                    res_partner p, msf_instance i, res_company c
+                where
+                    i.code=p.instance_creator
+                    and locally_created='f'
+                    and i.level='project'
+                    and i.state='inactive'
+                    and i.parent_id = c.instance_id
+                    and p.id in %s
+            ''', (tuple(ids),))
+
+            for x in cr.fetchall():
+                res[x[0]] = True
+
+        return res
+
+    def _search_allow_external_edition(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        for arg in args:
+            if arg[0] == 'allow_external_edition':
+                if arg[1] != '=' or arg[2]:
+                    raise osv.except_osv(_('Error'), _('Filter not implemented'))
+
+
+            if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+                cr.execute("select code from msf_instance i, res_company c where i.level = 'project' and i.state='inactive' and i.parent_id = c.instance_id")
+                inactive_projects = [x[0] for x in cr.fetchall()]
+                return [('locally_created', '=', False), ('instance_creator', 'not in', inactive_projects)]
+
+            return [('locally_created', '=', False)]
+        return []
+
+
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection(PARTNER_TYPE, string='Partner type', required=True),
@@ -301,11 +348,13 @@ class res_partner(osv.osv):
             string='Is a coordination ?',
         ),
         'locally_created': fields.boolean('Locally Created', help='Partner Created on this instance', readonly=1),
-        'instance_creator': fields.char('Instance Creator', size=64, readonly=1),
+        'allow_external_edition': fields.function(_get_allow_external_edition, type='boolean', method=True, fnct_search=_search_allow_external_edition, string="Editable ext. partner"),
+        'instance_creator': fields.char('Instance Creator', size=64, readonly=1, select=1),
     }
 
     _defaults = {
         'locally_created': lambda *a: True,
+        'allow_external_edition': True,
         'manufacturer': lambda *a: False,
         'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
@@ -597,7 +646,7 @@ class res_partner(osv.osv):
             +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
-    def check_partner_unicity(self, cr, uid, partner_id, context=None):
+    def check_partner_unicity(self, cr, uid, partner_id, write_vals=None, context=None):
         """
         If the partner name is already used, check that the city is not empty AND not used by another partner with the
         same name. Checks are case insensitive, done with active and inactive External partners, and NOT done at synchro time.
@@ -607,11 +656,25 @@ class res_partner(osv.osv):
             context = {}
         if not context.get('sync_update_execution'):
             address_obj = self.pool.get('res.partner.address')
-            partner = self.browse(cr, uid, partner_id, fields_to_fetch=['partner_type', 'name', 'city'], context=context)
-            if partner.partner_type == 'external':
-                city = partner.city or ''  # city of the first address created for this partner
-                partner_domain = [('id', '!=', partner_id), ('name', '=ilike', partner.name),
-                                  ('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])]
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+            current_instance_code = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.code
+            if write_vals is not None:
+                partner_type = 'partner_type' in write_vals and write_vals.get('partner_type', False)
+                name = 'name' in write_vals and write_vals.get('name', False) or ''
+                city = 'address' in write_vals and write_vals.get('address', False) and \
+                       len(write_vals.get('address')) == 1 and \
+                       len(write_vals.get('address')[0]) == 3 and \
+                       'city' in write_vals.get('address')[0][2] and \
+                    write_vals.get('address')[0][2].get('city') or ''
+            else:
+                partner = self.browse(cr, uid, partner_id, fields_to_fetch=['partner_type', 'name', 'city'], context=context)
+                partner_type = partner.partner_type
+                name = partner.name or ''
+                city = partner.city or ''
+            if partner_type == 'external':
+                partner_domain = [('id', '!=', partner_id), ('name', '=ilike', name),
+                                  ('partner_type', '=', 'external'), ('active', 'in', ['t', 'f']),
+                                  ('instance_creator', 'in', [current_instance, current_instance_code])]
                 duplicate_partner_ids = self.search(cr, uid, partner_domain, order='NO_ORDER', context=context)
                 if duplicate_partner_ids:
                     address_ids = address_obj.search(cr, uid, [('partner_id', 'in', duplicate_partner_ids)],
@@ -620,7 +683,7 @@ class res_partner(osv.osv):
                                                                       ('city', '=ilike', city)], context=context):
                         raise osv.except_osv(_('Warning'),
                                              _("The partner can't be saved because already exists under the same name for "
-                                               "the same city. Please change the partner name or city or use the existing partner."))
+                                               "the same city and created in the same instance. Please change the partner name or city or use the existing partner."))
 
     def _check_default_accounts(self, cr, uid, vals, context=None):
         """
@@ -697,6 +760,31 @@ class res_partner(osv.osv):
                 raise osv.except_osv(_('Warning'),
                                      _("Impossible to deactivate a partner used in the tax line of an invoice."))
 
+    def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
+        if context is None:
+            context = {}
+
+        self.check_partner_unicity(cr, uid, ids, vals, context=context)
+
+        type_changed = False
+        if vals and ('customer' in vals or 'supplier' in vals) and not vals.get('customer') and not vals.get('supplier'):
+            type_changed = True
+
+        res = super(res_partner, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
+
+        if type_changed:
+            if isinstance(ids, int):
+                ids = [ids]
+            partner_domain = [('id', 'in', ids), ('partner_type', '=', 'external'), ('customer', '=', False),
+                              ('supplier', '=', False), ('active', 'in', ['t', 'f'])]
+            if self.search_exists(cr, uid, partner_domain, context=context):
+                raise osv.except_osv(
+                    _('Error'),
+                    _("It's mandatory to choose the role of a partner. Please select at least either Customer or Supplier")
+                )
+
+        return res
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -761,6 +849,12 @@ class res_partner(osv.osv):
             context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         self._check_default_accounts(cr, uid, vals, context=context)
+        if not context.get('sync_update_execution') and not vals.get('customer') and not vals.get('supplier'):
+            raise osv.except_osv(
+                _('Error'),
+                _("It's mandatory to choose the role of a partner. Please select at least either Customer or Supplier")
+            )
+
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
@@ -839,7 +933,6 @@ class res_partner(osv.osv):
                                                  )
 
         return new_id
-
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''

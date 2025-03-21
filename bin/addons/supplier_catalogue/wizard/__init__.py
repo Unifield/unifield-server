@@ -21,5 +21,6 @@
 
 from . import catalogue_import_lines
 from . import catalogue_export_lines
+from . import catalogue_update_lines_ranking_wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

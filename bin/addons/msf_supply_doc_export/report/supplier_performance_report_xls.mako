@@ -105,6 +105,8 @@
     <Table x:FullColumns="1" x:FullRows="1">
         ## Supplier
         <Column ss:AutoFitWidth="1" ss:Width="130.0" />
+        ## PO Details
+        <Column ss:AutoFitWidth="1" ss:Width="240.0" />
         ## PO Reference
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
         ## IN Reference
@@ -232,6 +234,7 @@
         <%
         headers_list = [
             _('Supplier'),
+            _('PO Details'),
             _('PO Reference'),
             _('IN Reference'),
             _('SI Reference'),
@@ -282,6 +285,7 @@
         % for line in getLines(r):
             <Row ss:Height="12.0">
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['partner_name']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['details']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['po_name']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['in_ref']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['si_ref']|x}</Data></Cell>

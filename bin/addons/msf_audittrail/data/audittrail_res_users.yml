@@ -7,7 +7,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         fields = [
-            'action_id', 'active', 'address_id', 'context_department_id', 'email', 'force_password_change', 'groups_id', 'login', 'menu_id', 'menu_tips', 'name', 'signature', 'user_email',
+            'action_id', 'active', 'address_id', 'context_department_id', 'force_password_change', 'groups_id', 'login', 'menu_id', 'menu_tips', 'name', 'signature', 'user_email',
             'esignature_id', 'signature_from', 'signature_to', 'signature_enabled', 'never_expire'
 
         ]
@@ -34,7 +34,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         fields = [
-            'action_id', 'active', 'address_id', 'context_department_id', 'email', 'force_password_change', 'groups_id', 'login', 'menu_id', 'menu_tips', 'name', 'signature', 'user_email',
+            'action_id', 'active', 'address_id', 'context_department_id', 'force_password_change', 'groups_id', 'login', 'menu_id', 'menu_tips', 'name', 'signature', 'user_email',
             'esignature_id', 'signature_from', 'signature_to', 'signature_enabled', 'never_expire'
         ]
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'res.users'), ('name', 'in', fields)], context=context)

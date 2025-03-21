@@ -133,6 +133,7 @@ SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT = [
     (_('SoQ Rounding'), 'number'),
     (_('Min. Order Qty.'), 'number'),
     (_('Comment'), 'string'),
+    (_('Ranking'), 'string'),
 ]
 SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT = [x for (x,y) in SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT]
 
@@ -167,3 +168,4 @@ from . import wizard_return_from_unit_import
 from . import abstract_wizard_import
 from . import wizard_import_batch
 from . import wizard_import_ad_line
+from . import wizard_update_po_line_import

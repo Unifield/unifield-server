@@ -268,7 +268,7 @@ class wizard_pick_import(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('File line %s: Column "Item" must be an integer') % xls_line_number)
 
             if line_data['qty_to_process'] is None:
-                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
+                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should contain the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
             if line_data['qty_to_process'] and float(line_data['qty_to_process']) < 0:
                 raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should be greater than 0') % line_data['item'])
 

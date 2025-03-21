@@ -27,7 +27,7 @@ class account_analytic_journal(osv.osv):
     _description = 'Analytic Journal'
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True),
-        'code': fields.char('Journal Code', size=8),
+        'code': fields.char('Journal Code', size=8, required=True),
         # the Active tag should not be used anymore from US-7194
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the analytic journal without removing it."),
         'line_ids': fields.one2many('account.analytic.line', 'journal_id', 'Lines'),

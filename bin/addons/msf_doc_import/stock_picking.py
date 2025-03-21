@@ -459,7 +459,7 @@ class stock_picking(osv.osv):
             'res_id': wiz_id,
             'view_type': 'form',
             'view_mode': 'form',
-            'target': 'crush',
+            'target': 'same',
             'context': context,
         }
 

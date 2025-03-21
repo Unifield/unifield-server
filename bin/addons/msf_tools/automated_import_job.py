@@ -416,6 +416,11 @@ class automated_import_job(osv.osv):
                                 nb_rejected += (context.get('nb_rejected_po_vi_lines', 0) + context.get('nb_rejected_in_vi_lines', 0))
                                 nb_processed -= (context.get('nb_rejected_po_vi_lines', 0) + context.get('nb_rejected_in_vi_lines', 0))
 
+                            if import_data.function_id.model_id.model == 'supplier.catalogue' and \
+                                    context.get('auto_import_catalogue_default_rank'):
+                                error_message.insert(0, _('A default ranking of 3rd choice has been applied to all lines imported into this catalogue since no ranking was in file'))
+                                context.pop('auto_import_catalogue_default_rank')
+
                         if rejected:
                             is_success = False
                             nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, remote=remote, rejected=True)
@@ -433,6 +438,11 @@ class automated_import_job(osv.osv):
                                 error_message.append(_("no data will be imported until all the error messages are corrected"))
                                 tools.cache.clean_caches_for_db(cr.dbname)
                                 tools.read_cache.clean_caches_for_db(cr.dbname)
+
+                            if import_data.function_id.model_id.model == 'supplier.catalogue' and \
+                                    context.get('auto_import_catalogue_overlap'):
+                                error_message.insert(0, _('No data will be imported until all the duplicates have been removed'))
+                                context.pop('auto_import_catalogue_overlap')
 
                         if context.get('rejected_confirmation'):
                             nb_rejected += context['rejected_confirmation']

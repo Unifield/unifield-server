@@ -963,11 +963,11 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
 
         if delete_old:
             if verbose:
-                logger.info("remove unused code and sql_constraint translations")
+                logger.info("remove unused code, field and sql_constraint translations")
             cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
-                select id from ir_translation where lang=%s and updated_by_modules='f' and type in ('code', 'sql_constraint')
+                select id from ir_translation where lang=%s and updated_by_modules='f' and type in ('code', 'sql_constraint','field')
                 )""", (lang,))
-            cr.execute("delete from ir_translation where lang=%s and updated_by_modules='f' and type in ('code', 'sql_constraint')", (lang,))
+            cr.execute("delete from ir_translation where lang=%s and updated_by_modules='f' and type in ('code', 'sql_constraint', 'field')", (lang,))
             logger.info("Delete %d unused translations" % (cr.rowcount,))
         if clear_cache:
             tools.cache.clean_caches_for_db(cr.dbname)

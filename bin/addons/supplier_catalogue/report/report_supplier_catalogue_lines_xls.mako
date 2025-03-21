@@ -65,6 +65,7 @@
 <Column ss:AutoFitWidth="1" ss:Width="250" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 
 ## we loop over the purchase_order_line "%s"%po_name.split('/')[-1])
     
@@ -78,6 +79,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('SoQ Rounding')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Min. Order Qty.')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ranking')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('MML')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('MSL')}</Data></Cell>
     </Row>
@@ -92,6 +94,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.rounding or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.min_order_qty or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'ranking') or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'mml_status')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'msl_status')|x}</Data></Cell>
     </Row>

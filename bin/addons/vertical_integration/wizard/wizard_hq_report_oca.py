@@ -38,7 +38,7 @@ class wizard_export_vi_finance(osv.osv_memory):
             return []
 
         coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
-        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16), ('already_exported', '=', False)], context=context)
+        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16)], context=context)
 
 
     def get_active_export_ids(self, cr, uid, context=None):
@@ -93,6 +93,7 @@ class wizard_export_vi_finance(osv.osv_memory):
         set_as_already_exported = False
         if instance.instance == 'OCP_HQ':
             set_as_already_exported = True
+
         p_state_obj = self.pool.get('account.period.state')
         export_job_obj = self.pool.get('automated.export.job')
         nb_ok = 0
@@ -113,6 +114,8 @@ class wizard_export_vi_finance(osv.osv_memory):
                         month=period_state.period_id.number or 0,
                         date=time.strftime('%Y%m%d%H%M%S'),
                     )
+                    if period_state.already_exported:
+                        file_name = 'reopen_%s' % file_name
                     if not export_wiz.ftp_dest_ok:
                         out_file_name = os.path.join(export_wiz.dest_path, file_name)
                     else:

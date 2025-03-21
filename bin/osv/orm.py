@@ -469,6 +469,10 @@ class orm_template(object):
                                                context=context
                                                )
 
+    def _after_update_send(self, cr, uid, ids, context=None):
+        ''' Method called when a sync update is sent to the sync server '''
+        pass
+
     def view_init(self, cr, uid, fields_list, context=None):
         """Override this method to do specific things when a view on the object is opened."""
         pass
@@ -3118,6 +3122,30 @@ class orm(orm_template):
         '''
         pass
 
+    def _add_missing_o2m_index(self, cr, col_name, o2m_obj):
+        cr.execute("""SELECT count(1)
+                        FROM pg_class c, pg_attribute a
+                        WHERE 
+                            c.relname=%s AND
+                            a.attname=%s AND
+                            c.oid=a.attrelid AND
+                            c.relkind='r'
+                    """, (self._table, col_name))
+
+        if not cr.fetchone()[0]:
+            # ignore view
+            return False
+        if not self.has_index(cr, col_name) and \
+                self.pool.get('ir.model.fields').search_exists(cr, 1, [
+                    ('state', '=', 'base'),
+                    ('model', '=', o2m_obj),
+                    ('ttype', '=', 'one2many'),
+                    ('relation', '=', self._name),
+                    ('relation_field', '=', col_name)]):
+            self.__schema.warn("Create implicit index on %s %s (o2m exists)", self._table, col_name)
+            cr.execute('CREATE INDEX "%(table)s_%(col)s_index" ON "%(table)s" ("%(col)s")' % {'table': self._table, 'col': col_name}) # not_a_user_entry
+            cr.commit()
+
     def _create_fk(self, cr, col_name, field_def, update=False):
         try:
             ref = self.pool.get(field_def._obj)._table
@@ -3151,6 +3179,9 @@ class orm(orm_template):
                         cr.execute('ALTER TABLE "' + self._table + '" DROP CONSTRAINT "' + res2[0]['conname'] + '"') # not_a_user_entry
                         to_create = True
 
+            if not field_def.select:
+                self._add_missing_o2m_index(cr, col_name, field_def._obj)
+
             if to_create:
                 cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s' % (self._table, col_name, ref, field_def.ondelete)) # not_a_user_entry
                 self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE %s",
@@ -3183,6 +3214,7 @@ class orm(orm_template):
         to_migrate = []
         missing_fk = {}
         missing_m2m = {}
+
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
@@ -3242,7 +3274,7 @@ class orm(orm_template):
                         self.__schema.debug("Table '%s': added column '%s' with definition=%s",
                                             self._table, k, logs[k])
 
-            self._check_removed_columns(cr, log=False)
+            #self._check_removed_columns(cr, log=False)
 
             # iterate on the "object columns"
             todo_update_store = []
@@ -3266,13 +3298,16 @@ class orm(orm_template):
                 f = self._columns[k]
 
                 if isinstance(f, fields.one2many):
-                    cr.execute("SELECT relname FROM pg_class WHERE relkind='r' AND relname=%s", (f._obj,))
 
-                    if self.pool.get(f._obj):
-                        if f._fields_id not in list(self.pool.get(f._obj)._columns.keys()):
+                    m2o = self.pool.get(f._obj)
+                    if m2o:
+                        if f._fields_id in list(m2o._columns.keys()):
+                            m2o._add_missing_o2m_index(cr, f._fields_id, self._name)
+                        else:
                             if not self.pool.get(f._obj)._inherits or (f._fields_id not in list(self.pool.get(f._obj)._inherit_fields.keys())):
                                 raise except_orm('Programming Error', ("There is no reference field '%s' found for '%s'") % (f._fields_id, f._obj,))
 
+                    cr.execute("SELECT relname FROM pg_class WHERE relkind='r' AND relname=%s", (f._obj,))
                     if cr.fetchone():
                         cr.execute("SELECT count(1) as c FROM pg_class c,pg_attribute a WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid", (f._obj, f._fields_id))
                         res = cr.fetchone()[0]
@@ -3411,7 +3446,7 @@ class orm(orm_template):
                             indexname = '%s_%s_index' % (self._table, k)
                             cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, self._table))
                             res2 = cr.dictfetchall()
-                            if not res2 and f.select:
+                            if not res2 and f.select and f.select != -1:
                                 cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (self._table, k, self._table, k))  # not_a_user_entry
                                 cr.commit()
                                 if f._type == 'text':
@@ -3421,11 +3456,12 @@ class orm(orm_template):
                                         " because there is a length limit for indexable btree values!\n"\
                                         "Use a search view instead if you simply want to make the field searchable."
                                     self.__schema.warn(msg, self._table, k, f._type)
-                            if res2 and not f.select:
+
+                            if res2 and f.select == -1:
                                 cr.execute('DROP INDEX "%s_%s_index"' % (self._table, k))  # not_a_user_entry
                                 cr.commit()
                                 msg = "Table '%s': dropping index for column '%s' of type '%s' as it is not required anymore"
-                                self.__schema.debug(msg, self._table, k, f._type)
+                                self.__schema.warn(msg, self._table, k, f._type)
 
                             if isinstance(f, fields.many2one):
                                 if self.pool.get(f._obj):
@@ -3508,9 +3544,14 @@ class orm(orm_template):
                 continue
             conname = '%s_%s' % (self._table, key)
 
-            cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname=%s", (conname,))
-            existing_constraints = cr.dictfetchall()
 
+            cr.execute("""SELECT lower(COALESCE(d.description, pg_get_constraintdef(c.oid)))
+                FROM pg_constraint c
+                JOIN pg_class t ON t.oid = c.conrelid
+                LEFT JOIN pg_description d ON c.oid = d.objoid
+                WHERE t.relname = %s AND conname = %s""", (self._table, conname))
+
+            existing_constraints = cr.fetchall()
             sql_actions = {
                 'drop': {
                     'execute': False,
@@ -3534,10 +3575,10 @@ class orm(orm_template):
                 # constraint does not exists:
                 sql_actions['add']['execute'] = True
                 sql_actions['add']['msg_err'] = sql_actions['add']['msg_err'] % (sql_actions['add']['query'], )
-            elif con.lower() not in [item['condef'].lower() for item in existing_constraints]:
+            elif con.lower() not in [item[0] for item in existing_constraints]:
                 # constraint exists but its definition has changed:
                 sql_actions['drop']['execute'] = True
-                sql_actions['drop']['msg_ok'] = sql_actions['drop']['msg_ok'] % (existing_constraints[0]['condef'].lower(), )
+                sql_actions['drop']['msg_ok'] = sql_actions['drop']['msg_ok'] % (existing_constraints[0][0], )
                 sql_actions['add']['execute'] = True
                 sql_actions['add']['msg_err'] = sql_actions['add']['msg_err'] % (sql_actions['add']['query'], )
 
@@ -3547,6 +3588,8 @@ class orm(orm_template):
             for sql_action in [action for action in sql_actions if action['execute']]:
                 try:
                     cr.execute(sql_action['query'])
+                    if sql_action['order'] == 2: # add
+                        cr.execute('COMMENT ON CONSTRAINT "%s" ON "%s" IS %%s'%(conname, self._table), (con, )) # not_a_user_entry
                     cr.commit()
                     self.__schema.debug(sql_action['msg_ok'])
                 except:

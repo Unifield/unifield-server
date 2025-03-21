@@ -34,7 +34,7 @@
             <search string="Destruction Location">
                 <group>
                 	<filter icon="terp-dialog-close" string="Closed" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
-                	<filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
+                	<filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Not Available, Available or Waiting"/>
                 	<filter icon="terp-camera_test" string="Ready" name="ready" domain="[('state','=','assigned')]" help="Stock moves that are Available (Ready to process)"/>
 	                <field name="picking_id" string="Reference" widget="char"/>
 	                <field name="product_id" default_focus="1"/>

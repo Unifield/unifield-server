@@ -192,7 +192,7 @@ class ir_followup_location_wizard(osv.osv_memory):
             category_domain.append('medical')
 
         if wizard.logistic_ok:
-            category_domain.append('logistic')
+            category_domain.append('log')
 
         if wizard.service_ok:
             category_domain.append('service')

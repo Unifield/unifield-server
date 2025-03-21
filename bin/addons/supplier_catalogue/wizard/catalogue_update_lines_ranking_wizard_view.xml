@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="catalogue_update_lines_ranking_wizard_form_view" model="ir.ui.view">
+			<field name="name">catalogue.update.lines.ranking.wizard.form.view</field>
+			<field name="model">catalogue.update.lines.ranking.wizard</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Do you want to update the Ranking of all/selected Catalogue lines ?">
+					<separator colspan="4" string="Value to be used"/>
+                    <field name="selected" invisible="1" />
+                    <field colspan="2" name="ranking" readonly="1" />
+                    <group colspan="2" col="3">
+                        <button name="update_lines_ranking_selected" string="Yes - Selected lines" type="object"
+                                icon="gtk-apply" attrs="{'invisible': [('selected', '=', False)]}" />
+                        <button name="update_lines_ranking" string="Yes - All lines" type="object" icon="gtk-apply" />
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                    </group>
+				</form>
+			</field>
+        </record>
+    </data>
+</openerp>

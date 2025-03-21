@@ -22,14 +22,14 @@ class line_mismatch(XlsxReportParser):
         self.create_style_from_template('row_int', 'A11')
         self.create_style_from_template('row_text', 'B11')
         self.create_style_from_template('row_float', 'F11')
-        self.create_style_from_template('row_date', 'H11')
+        self.create_style_from_template('row_date', 'I11')
 
 
         self.duplicate_column_dimensions(default_width=10.75)
-        for col in ['M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']:
-            sheet.column_dimensions[col].hidden= True
+        for col in ['O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V']:
+            sheet.column_dimensions[col].hidden = True
         sheet.freeze_panes = 'A11'
-        sheet.auto_filter.ref = "A10:U10"
+        sheet.auto_filter.ref = "A10:W10"
 
         sheet.title = _('PO Catalogue Mismatch')
 
@@ -62,12 +62,12 @@ class line_mismatch(XlsxReportParser):
         row_idx += 2
 
         col_title = [_('PO line'), _('Product Code'), _('Product Description'), _('PO Quantity'),
-                     _('UoM'), _('PO Price'), _('Currency'), _('Delivery Request Date'),
-                     _('Mismatch'), _('Catalogue Price'), _('Catalogue SoQ'), _('Comment'),
-                     _('External Ref'), _('Justification Code'), _('Justification Coordination'),
-                     _('HQ Remarks'), _('Justification Y/N'), _('Cold chain type'),
-                     _('Dangerous Good Type'), _('Controlled Substance Type'),
-                     _('State')]
+                     _('UoM'), _('PO Unit Price'), _('PO Subtotal'), _('Currency'),
+                     _('Delivery Request Date'), _('Mismatch'), _('Catalogue Price'),
+                     _('Catalogue Subtotal'), _('Catalogue SoQ'), _('Comment'), _('External Ref'),
+                     _('Justification Code'), _('Justification Coordination'), _('HQ Remarks'),
+                     _('Justification Y/N'), _('Cold chain type'), _('Dangerous Good Type'),
+                     _('Controlled Substance Type'), _('State')]
         sheet.append([self.cell_ro(x, 'col_title') for x in col_title])
 
 
@@ -79,9 +79,11 @@ class line_mismatch(XlsxReportParser):
         label_dangerous_goods = dict(fields['dangerous_goods']['selection'])
 
         for line in po.order_line_mismatch:
-            catalog_price_unit = ''
+            catalog_price_unit, catalog_subtotal = '', ''
             if not isinstance(line.catalog_price_unit, bool) and line.catalog_price_unit is not None:
                 catalog_price_unit = line.catalog_price_unit
+            if not isinstance(line.catalog_subtotal, bool) and line.catalog_subtotal is not None:
+                catalog_subtotal = line.catalog_subtotal
 
             sheet.append([
                 self.cell_ro(line.line_number, 'row_int'),
@@ -90,10 +92,12 @@ class line_mismatch(XlsxReportParser):
                 self.cell_ro(line.product_qty, 'row_float'),
                 self.cell_ro(line.product_uom.name, 'row_text'),
                 self.cell_ro(line.price_unit, 'row_float'),
+                self.cell_ro(line.price_subtotal, 'row_float'),
                 self.cell_ro(line.currency_id.name, 'row_text'),
                 self.cell_ro(line.date_planned and datetime.strptime(line.date_planned, '%Y-%m-%d') or '', 'row_date'),
                 self.cell_ro(label_catalog_mismatch.get(line.catalog_mismatch) or '', 'row_text'),
                 self.cell_ro(catalog_price_unit, 'row_float'),
+                self.cell_ro(catalog_subtotal, 'row_float'),
                 self.cell_ro(line.catalog_soq or '', 'row_float'),
                 self.cell_ro(line.comment or '', 'row_text'),
                 self.cell_ro(line.external_ref or '', 'row_text'),

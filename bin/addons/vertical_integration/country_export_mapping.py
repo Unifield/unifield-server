@@ -26,9 +26,9 @@ class country_export_mapping(osv.osv):
     _name = 'country.export.mapping'
     _description = 'Mapping of Instance into a Country Code'
     _rec_name = 'instance_id'
-    
+
     _columns = {
-        'instance_id': fields.many2one('msf.instance', string="Unifield Instance", required=True, domain=[('level', '=', 'coordo')]),
+        'instance_id': fields.many2one('msf.instance', string="Unifield Instance", required=True, domain=[('level', '=', 'coordo')], select=1),
         'mapping_value': fields.char('HQ System Country Code', required=True, size=64)
     }
 
@@ -44,7 +44,7 @@ class country_export_mapping(osv.osv):
     _constraints = [
         (_check_unicity, "A mapping already exists for this instance", ['instance_id']),
     ]
-    
+
     def menu_import_wizard(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -52,14 +52,14 @@ class country_export_mapping(osv.osv):
         wiz_id = wiz_obj.create(cr, uid, {}, context=context)
         # we open a wizard
         return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'wizard.import.mapping',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.mapping',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
-    
+
 country_export_mapping()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -140,7 +140,7 @@ class hr_employee(osv.osv):
         'birthday': fields.date("Date of Birth"),
         'ssnid': fields.char('SSN No', size=32, help='Social Security Number'),
         'sinid': fields.char('SIN No', size=32, help="Social Insurance Number"),
-        'identification_id': fields.char('Identification No', size=32),
+        'identification_id': fields.char('Identification No', size=32, select=1),
         'gender': fields.selection([('male', 'Male'),('female', 'Female')], 'Gender'),
         'marital': fields.many2one('hr.employee.marital.status', 'Marital Status'),
         'department_id':fields.many2one('hr.department', 'Department'),

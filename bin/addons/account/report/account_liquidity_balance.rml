@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+<document>
+  <template pageSize="(842.0,595.0)" title="Liquidity Balance Report" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="28.0" y1="57.0" width="817" height="481"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+    <blockTableStyle id="Standard_Outline">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+    <blockTableStyle id="Tableau1">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,0" stop="0,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#000000" start="0,0" stop="0,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="0,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+      <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>
+      <blockRightPadding length="2" start="0,0" stop="-1,-1"/>
+    </blockTableStyle>
+    <blockTableStyle id="Tableau3">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="-1,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="-1,-1" thickness="0.5"/>
+      <blockBackground colorName="#f8cbad" start="0,0" stop="-1,0"/>
+      <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>
+      <blockRightPadding length="2" start="0,0" stop="-1,-1"/>
+    </blockTableStyle>
+    <blockTableStyle id="Tableau4">
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="1,0" stop="-1,-1"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="-1,-1"/>
+      <blockBackground colorName="#f8cbad" start="1,0" stop="-1,-1"/>
+      <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>
+      <blockRightPadding length="2" start="0,0" stop="-1,-1"/>
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="14.0" leading="20" alignment="CENTER"/>
+    <paraStyle name="P2" fontName="Helvetica" fontSize="7.0" leading="10"/>
+    <paraStyle name="P2W" fontName="Helvetica" fontSize="7.0" leading="10" spaceAfter="10"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="P3Bold" fontName="Helvetica-Bold" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="P3BoldLeft" fontName="Helvetica-Bold" fontSize="7.0" leading="10" alignment="LEFT"/>
+    <paraStyle name="P3Left" fontName="Helvetica" fontSize="7.0" leading="10" alignment="LEFT"/>
+    <paraStyle name="P3Right" fontName="Helvetica" fontSize="7.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="7.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="P5" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
+    <paraStyle name="List" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
+    <paraStyle name="Caption" fontName="Helvetica" fontSize="12.0" leading="15" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="Index" fontName="Helvetica"/>
+    <paraStyle name="Table Contents" fontName="Helvetica"/>
+    <paraStyle name="Table Heading" fontName="Helvetica" alignment="CENTER"/>
+    <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <images/>
+  </stylesheet>
+  <story>
+    <blockTable colWidths="816.0" style="Tableau1">
+      <tr>
+        <td>
+          <para style="P1">[[ data['title'] ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+    <para style="P2W">
+      <font color="white"> </font>
+    </para>
+
+    <!-- Display the header -->
+    <blockTable colWidths="816.0" style="Tableau3">
+      <tr>
+        <td>
+          <para style="P3Bold">[[ translate('Selection') ]]</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3BoldLeft">[[ 'header' in data and data['header'] or '' ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+
+    <blockTable colWidths="45.0,45.0,185.0,58.0,78.0,73.0,75.0,40.0,65.0,76.0,76.0" style="Tableau3">
+      <tr>
+        <td>
+          <para style="P3Bold">[[ translate('Instance') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Code') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Name') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Period') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Starting Balance') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Movements') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Closing balance') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Currency') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Journal status') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Closing balance output value') ]]</para>
+        </td>
+        <td>
+          <para style="P3Bold">[[ translate('Currency output') ]]</para>
+        </td>
+      </tr>
+      <tr>
+	      [[ repeatIn(get_register_data(), 'line') ]]
+        <td>
+          <parawrap style="P3Left">[[ line['instance'] or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Left">[[ line['code'] or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Left">[[ line['name'] or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Left">[[ line['period'] or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ formatLang(line['opening']) or '0.0' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ formatLang(line['calculated']) or '0.0' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ formatLang(line['closing']) or '0.0']]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ line['currency'] or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ line['journal_status'] or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ formatLang(line['output_value']) or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ 'currency_name' in data['form'] and data['form']['currency_name'] or '']]</parawrap>
+        </td>
+      </tr>
+    </blockTable>
+    <para style="P2W">
+      <font color="white"> </font>
+    </para>
+    <para style="P2W">
+      <font color="white"> </font>
+    </para>
+    <blockTable colWidths="333.0,78.0,148.0,40.0,65.0,76.0,76.0" style="Tableau4">
+      <tr>
+          [[ repeatIn(get_subtotals().items(), 'sub_total') ]]
+        <td>
+          <parawrap style="P3Right"></parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ translate('Sub-Total In') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ formatLang(sub_total[1].get('closings', False) or '') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ sub_total[0] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right"></parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ formatLang(sub_total[1].get('output_value', False) or '') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ 'currency_name' in data['form'] and data['form']['currency_name'] or '' ]]</parawrap>
+        </td>
+      </tr>
+    </blockTable>
+    <para style="P2W">
+      <font color="white"> </font>
+    </para>
+    <blockTable colWidths="333.0,78.0,253.0,76.0,76.0" style="Tableau4">
+      <tr>
+        <td>
+          <parawrap></parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ translate('General Total In') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right"></parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ formatLang(get_general_total() or '') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3Right">[[ 'currency_name' in data['form'] and data['form']['currency_name'] or '' ]]</parawrap>
+        </td>
+      </tr>
+    </blockTable>
+    <section>
+      <para style="P2W">
+        <font color="white"> </font>
+      </para>
+    </section>
+  </story>
+</document>

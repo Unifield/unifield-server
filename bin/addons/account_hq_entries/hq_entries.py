@@ -24,6 +24,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from tools.analytic import get_analytic_state
+from lxml import etree
+
 class hq_entries(osv.osv):
     _name = 'hq.entries'
     _description = 'HQ Entries'
@@ -106,7 +108,7 @@ class hq_entries(osv.osv):
 
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True, select=1),
-        'account_user_type_code': fields.related('account_id', 'user_type_code', string="Account Type",
+        'account_user_type_code': fields.related('account_id_first_value', 'user_type_code', string="Account Type",
                                                  type='char', size=32, readonly=True, store=False),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]", select=1),
@@ -135,8 +137,11 @@ class hq_entries(osv.osv):
         'cc_changed': fields.function(_get_cc_changed, method=True, type='boolean', string='Have Cost Center changed?', help="When you change the cost center from the initial value (from a HQ Entry or a Split line), so the Cost Center changed is True."),
         'account_changed': fields.function(_get_account_changed, method=True, type='boolean', string='Have account changed?', help="When your entry have a different account from the initial one or from the original one."),
         'is_account_partner_compatible': fields.function(_get_is_account_partner_compatible, method=True, type='boolean', string='Account and partner compatible ?'),
+        'original_asset_not_corrigible': fields.related('account_id_first_value', 'prevent_hq_asset', string="Can be an asset?", type='boolean'),
         'current_instance_level': fields.function(_get_current_instance_level, method=True, type='char',
                                                   string='Current Instance Level', store=False, readonly=True),
+        'is_asset': fields.boolean(string="Asset", help="Is an asset?"),
+        'is_asset_display': fields.boolean(string="Asset", help="Is an asset?", readonly=1), # bug on onchange is_asset
     }
 
     _defaults = {
@@ -145,6 +150,7 @@ class hq_entries(osv.osv):
         'is_original': lambda *a: False,
         'is_split': lambda *a: False,
         'is_account_partner_compatible': lambda *a: True,
+        'is_asset': lambda *a: False,
     }
 
     def _check_active_account(self, cr, uid, ids, context=None):
@@ -342,6 +348,19 @@ class hq_entries(osv.osv):
             'context': context,
         }
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view = super().fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
+            found = False
+            view_xml = etree.fromstring(view['arch'])
+            for field in view_xml.xpath('//field[@name="is_asset"]|//field[@name="is_asset_display"]'):
+                found = True
+                field.set('invisible', "0")
+            if found:
+                view['arch'] = etree.tostring(view_xml, encoding='unicode')
+
+        return view
+
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
         """
         Resets the FP and Dest if not compatible with CC and update DEST domain
@@ -353,6 +372,27 @@ class hq_entries(osv.osv):
         return self.pool.get('analytic.distribution').\
             onchange_ad_destination(cr, uid, ids, destination_id=destination_id, funding_pool_id=funding_pool_id, account_id=account_id)
 
+    def onchange_asset_status(self, cr, uid, ids, is_asset=False, account_id=False, context=None):
+        if isinstance(ids, int):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id_first_value'], context=context):
+            if line.account_id_first_value.prevent_hq_asset:
+                return {
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _('The account %s could not be capitalized') % line.account_id_first_value.code
+                    },
+                    'value': {'is_asset': False},
+                }
+
+        if not is_asset:
+            account_id_first_value = self.browse(cr, uid, ids[0], fields_to_fetch=['account_id_first_value'], context=context).account_id_first_value.id
+            return {'value': {'account_id': account_id_first_value}}
+        if account_id:
+            if not self.pool.get('account.account').search_exists(cr, uid, [('id', '=', account_id), ('type', '=', 'other'), ('user_type_code', '=', 'asset'), ('is_not_hq_correctible', '=', False)], context=context):
+                return {'value': {'account_id': False}}
+        return {}
 
     def _check_cc(self, cr, uid, ids, context=None):
         """
@@ -378,7 +418,14 @@ class hq_entries(osv.osv):
                                              (hq_entry.cost_center_id.code or '', hq_entry.name))
         return True
 
+    def _duplicate_is_asset(self, cr, uid, vals, context=None):
+        if 'is_asset' in vals:
+            vals['is_asset_display'] = vals['is_asset']
+            return {'is_asset_display': vals['is_asset']}
+        return {}
+
     def create(self, cr, uid, vals, context=None):
+        self._duplicate_is_asset(cr, uid, vals, context)
         new_id = super(hq_entries, self).create(cr, uid, vals, context)
         self._check_active_account(cr, uid, [new_id], context=context)
         self._check_cc(cr, uid, [new_id], context=context)
@@ -406,6 +453,7 @@ class hq_entries(osv.osv):
                 return super(hq_entries, self).write(cr, uid, ids, sync_vals, context)
             return True
 
+        self._duplicate_is_asset(cr, uid, vals, context)
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
             for line in self.browse(cr, uid, ids):
@@ -510,17 +558,27 @@ class hq_entries(osv.osv):
             context = {}
         if not context.get('sync_update_execution'):
             account_obj = self.pool.get('account.account')
-            fields_list = ['account_id', 'cost_center_id', 'free_1_id', 'free_2_id', 'destination_id', 'analytic_id']
+            fields_list = [
+                'account_id', 'cost_center_id', 'free_1_id', 'free_2_id', 'destination_id', 'analytic_id',
+                'is_asset', 'cost_center_id_first_value', 'destination_id_first_value', 'analytic_id_first_value'
+            ]
             for hq_entry in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
-                account_id = vals.get('account_id') and account_obj.browse(cr, uid, vals['account_id'], fields_to_fetch=['is_not_ad_correctable'], context=context)
-                hq_account = account_id or hq_entry.account_id
-                if hq_account.is_not_ad_correctable:
-                    for field in ['cost_center_id', 'destination_id', 'analytic_id', 'free_1_id', 'free_2_id']:
-                        value_changed = vals.get(field) and (not getattr(hq_entry, field) or getattr(hq_entry, field).id != vals[field])
-                        value_removed = getattr(hq_entry, field) and field in vals and not vals[field]
-                        if value_changed or value_removed:
-                            raise osv.except_osv(_('Warning'), _('The account %s - %s is set as \"Prevent correction on'
-                                                                 ' analytic accounts\".') % (hq_account.code, hq_account.name))
+                if hq_entry.is_asset:
+                    vals.update({
+                        'cost_center_id': hq_entry.cost_center_id_first_value and hq_entry.cost_center_id_first_value.id or False,
+                        'destination_id': hq_entry.destination_id_first_value and hq_entry.destination_id_first_value.id or False,
+                        'analytic_id': hq_entry.analytic_id_first_value and hq_entry.analytic_id_first_value.id or False,
+                    })
+                else:
+                    account_id = vals.get('account_id') and account_obj.browse(cr, uid, vals['account_id'], fields_to_fetch=['is_not_ad_correctable'], context=context)
+                    hq_account = account_id or hq_entry.account_id
+                    if hq_account.is_not_ad_correctable:
+                        for field in ['cost_center_id', 'destination_id', 'analytic_id', 'free_1_id', 'free_2_id']:
+                            value_changed = vals.get(field) and (not getattr(hq_entry, field) or getattr(hq_entry, field).id != vals[field])
+                            value_removed = getattr(hq_entry, field) and field in vals and not vals[field]
+                            if value_changed or value_removed:
+                                raise osv.except_osv(_('Warning'), _('The account %s - %s is set as \"Prevent correction on'
+                                                                     ' analytic accounts\".') % (hq_account.code, hq_account.name))
 
     def auto_import(self, cr, uid, file_to_import, context=None):
         import base64

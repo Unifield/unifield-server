@@ -1071,7 +1071,7 @@ class stock_picking(osv.osv):
         'state': fields.selection([
             ('draft', 'Draft'),
             ('auto', 'Waiting'),
-            ('confirmed', 'Confirmed'),
+            ('confirmed', 'Not Available'),
             ('assigned', 'Available'),
             ('shipped', 'Available Shipped'),  # UF-1617: new state of IN for partial shipment
             ('updated', 'Available Updated'),
@@ -1081,7 +1081,7 @@ class stock_picking(osv.osv):
             ('import', 'Import in progress'),
         ], 'State', readonly=True, select=True,
             help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
-                 "* Confirmed: still waiting for the availability of products\n"\
+                 "* Not Available: still waiting for the availability of products\n"\
                  "* Available: products reserved, simply waiting for confirmation.\n"\
                  "* Available Shipped: products already shipped at supplier, simply waiting for arrival confirmation.\n"\
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
@@ -1205,6 +1205,63 @@ class stock_picking(osv.osv):
 
     def onchange_partner_in(self, cr, uid, context=None, partner_id=None):
         return {}
+
+    def on_change_order_category(self, cr, uid, ids, category, context=None):
+        """
+        # Check if all product nomenclature of products in IN/INT/OUT moves from scratch are consistent with the category
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        message = {}
+        res = False
+
+        if ids and category in ['log', 'medical']:
+            try:
+                med_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+            try:
+                log_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            nomen_id = category == 'log' and log_nomen or med_nomen
+            cr.execute('''SELECT m.id
+                          FROM stock_move m
+                            LEFT JOIN product_product p ON m.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN stock_picking pi ON m.picking_id = pi.id
+                          WHERE (t.nomen_manda_0 != %s) AND pi.id in %s LIMIT 1''',
+                       (nomen_id, tuple(ids)))
+            res = cr.fetchall()
+
+        if ids and category in ['service', 'transport']:
+            category = category == 'service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if category == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT m.id
+                          FROM stock_move m
+                            LEFT JOIN product_product p ON m.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN stock_picking pi ON m.picking_id = pi.id
+                          WHERE (t.type != 'service_recep' %s) AND pi.id in %%s LIMIT 1''' % transport_cat,
+                       (tuple(ids),))  # not_a_user_entry
+            res = cr.fetchall()
+
+        if res:
+            message.update({
+                'title': _('Warning'),
+                'message': _('This order category is not consistent with product(s) on this document.'),
+            })
+
+        return {'warning': message}
 
     def action_explode(self, cr, uid, moves, context=None):
         return moves

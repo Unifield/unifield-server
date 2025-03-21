@@ -9,6 +9,7 @@ from osv import fields
 from product_nomenclature.product_nomenclature import RANDOM_XMLID_CODE_PREFIX
 import time
 import netsvc
+from tools.translate import _
 
 # Note:
 #
@@ -464,6 +465,8 @@ class msf_instance(osv.osv):
         changed_state_ids = []
 
         if context.get('sync_update_execution') and vals.get('state') in ['active', 'inactive']:
+            if vals.get('state') == 'inactive' and self._has_undisposed_assets(cr, uid, ids, context=context):
+                raise osv.except_osv(_('Error'), _('The instance cannot be decommissioned yet, it still owns undisposed assets.'))
             changed_state_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '!=', vals['state'])], context=context)
 
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
@@ -485,6 +488,16 @@ class msf_instance(osv.osv):
                     partner_obj.write(cr, uid, p_id, {'active': active}, context={})  # empty context: in sync ctx active field is disabled
 
         return res
+
+    def _has_undisposed_assets(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, int):
+            ids = [ids]
+        if context is None:
+            context = {}
+        asset_obj = self.pool.get('product.asset')
+        return asset_obj.search_exists(cr, uid, [('used_instance_id', 'in', ids), ('state', '!=', 'disposed')], context=context)
 
 msf_instance()
 
@@ -966,3 +979,33 @@ class hr_payment_method(osv.osv):
         return get_valid_xml_name('hr_payment_method', r['name'])
 
 hr_payment_method()
+
+class product_asset(osv.osv):
+    _inherit = 'product.asset'
+
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if dest_field != 'used_instance_id':
+            return super(product_asset, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+        if not ids:
+            return {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = []
+        cr.execute('''
+            select asset.id, array_agg(distinct((i.instance)))
+                from product_asset asset
+                left join asset_owner_instance_rel rel on rel.asset_id = asset.id
+                left join msf_instance i on i.id = rel.instance_id or i.id = asset.used_instance_id
+            where
+                asset.id in %s and
+                i.level = 'project'
+            group by asset.id
+        ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            res[x[0]] = x[1]
+
+        return res
+
+product_asset()

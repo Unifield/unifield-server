@@ -35,7 +35,7 @@ class output_currency_for_export(osv.osv_memory):
 
     _columns = {
         'currency_id': fields.many2one('res.currency', string="Output currency", help="Give an output currency that would be used for export", required=False),
-        'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False),
+        'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False, domain=[('state', '=', 'valid')]),
         'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
         'domain': fields.text('Domain'),
         'export_selected': fields.boolean('Export only the selected items', help="The output is limited to 5000 records"),
@@ -124,6 +124,9 @@ class output_currency_for_export(osv.osv_memory):
             data_from_selector = {}
             wiz = self.browse(cr, uid, ids, context=context)[0]
             choice = wiz and wiz.export_format or False
+            currency_table_id = wiz and wiz.fx_table_id or False
+            if currency_table_id:
+                context.update({'currency_table_id': currency_table_id.id, 'fx_table_id': currency_table_id.id})
 
         count_ids = 0
         if choice != 'pdf':
@@ -169,6 +172,8 @@ class output_currency_for_export(osv.osv_memory):
         model = data_from_selector.get('model') or context.get('active_model')
         display_fp = context.get('display_fp', False)
         wiz = currency_id = choice = False
+        currency_str = False
+        currency_table_str = False
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
         if data_from_selector:
@@ -177,6 +182,16 @@ class output_currency_for_export(osv.osv_memory):
         else:
             wiz = self.browse(cr, uid, ids, context=context)[0]
             currency_id = wiz and wiz.currency_id and wiz.currency_id.id or company_currency
+            if not wiz or not wiz.currency_id and context.get('output_currency_id', False):
+                currency_id = context.get('output_currency_id')
+            currency = self.pool.get('res.currency').browse(cr, uid, currency_id, context=context)
+            currency_str = "%s: %s" % (_("Output currency"), currency and currency.name)
+            fx_table_id = wiz and wiz.fx_table_id and wiz.fx_table_id.id or False
+            if not wiz or not wiz.fx_table_id and context.get('currency_table_id', False):
+                fx_table_id = context.get('currency_table_id')
+            if fx_table_id:
+                currency_table = self.pool.get('res.currency.table').browse(cr, uid, fx_table_id, context=context)
+                currency_table_str = "%s: %s" % (_("Currency table"), currency_table and currency_table.name)
             choice = wiz and wiz.export_format or False
             if not choice:
                 raise osv.except_osv(_('Error'), _('Please choose an export format!'))
@@ -187,8 +202,8 @@ class output_currency_for_export(osv.osv_memory):
         elif wiz and wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
         elif wiz and not wiz.export_selected and choice == 'pdf':
-                # get the ids of the entries and the header to display
-                # (for gl.selector/analytic.selector report if we come from JI/AJI view)
+            # get the ids of the entries and the header to display
+            # (for gl.selector/analytic.selector report if we come from JI/AJI view)
             dom = self.get_dom_from_context(cr, uid, model, context)
             export_obj = self.pool.get(model)
             if export_obj:
@@ -197,6 +212,10 @@ class output_currency_for_export(osv.osv_memory):
                     'ids': export_obj.search(cr, uid, dom, context=context, limit=limit),
                     'header': mcdb_obj.get_selection_from_domain(cr, uid, dom, model, context=context),
                 }
+                if currency_str:
+                    datas['header'] = datas['header'] + '; ' + currency_str
+                if currency_table_str:
+                    datas['header'] = datas['header'] + '; ' + currency_table_str
         else:
             context['from_domain'] = True
         # Update context with wizard currency or default currency

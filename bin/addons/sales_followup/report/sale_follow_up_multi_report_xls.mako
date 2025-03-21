@@ -218,18 +218,22 @@
         <Column ss:AutoFitWidth="1" ss:Width="107.25" />
         ## product description
         <Column ss:AutoFitWidth="1" ss:Width="239.25"  />
+        ## Comment
+        <Column ss:AutoFitWidth="1" ss:Width="239.25"  />
         ## Qty Ordered
         <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
-        ## UoM Ordered
-        <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
+        ## UoM
+        <Column ss:AutoFitWidth="1" ss:Width="24.75"  />
+        ## Qty Received
+        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
         ## Qty Delivered
         <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
-        ## UoM Delivered
-        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
-        ## Packing
-        <Column ss:AutoFitWidth="1" ss:Width="60.25" />
+        ## UoM
+        <Column ss:AutoFitWidth="1" ss:Width="24.75"  />
         ## Qty to deliver
         <Column ss:AutoFitWidth="1" ss:Width="50.5" />
+        ## Packing
+        <Column ss:AutoFitWidth="1" ss:Width="60.25" />
         ## Transport
         <Column ss:AutoFitWidth="1" ss:Width="55.00" />
         ## Transport file
@@ -338,12 +342,14 @@
                 _('Item'),
                 _('Code'),
                 _('Description'),
+                _('Comment'),
                 _('Qty ordered'),
-                _('UoM ordered'),
+                _('UoM'),
+                _('Qty received'),
                 _('Qty delivered'),
-                _('UoM delivered'),
-                _('Packing'),
+                _('UoM'),
                 _('Qty to deliver'),
+                _('Packing'),
                 _('Transport'),
                 _('Transport file'),
                 _('EDD'),
@@ -396,20 +402,22 @@
                     <Cell ss:StyleID="line_center_grey"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('comment', '-') or ''|x}</Data></Cell>
                     % if line.get('ordered_qty'):
                     <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
                     % if line.get('delivered_qty'):
                     <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">0.00</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
                     % if o.transport_type and o.transport_type not in (False, 'False', ''):
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
                     % else:
@@ -494,24 +502,30 @@
                     <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('comment', '-') or ''|x}</Data></Cell>
                     % if line.get('ordered_qty'):
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
+                    % if 'received_qty' in line and line.get('received_qty') != 'N/A':
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('received_qty', 0.00)}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
+                    % endif
                     % if line.get('delivered_qty'):
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
                     % if line.get('extra_qty', False):
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
                     % endif
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
                     % if o.transport_type and o.transport_type not in (False, 'False', ''):
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
                     % else:

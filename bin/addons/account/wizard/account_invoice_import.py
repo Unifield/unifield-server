@@ -61,7 +61,9 @@ class account_invoice_import(osv.osv_memory):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         return super(account_invoice_import, self).create(cr, real_uid, vals, context=context)
 
-    def _check_col_length(self, percent_col, cc_col, dest_col, fp_col, line_num, errors):
+    def _check_col_length(self, percent_col, cc_col, dest_col, fp_col, line_num, errors, context=None):
+        if context is None:
+            context = {}
         if isinstance(percent_col, list):
             if not isinstance(cc_col, list) or len(cc_col) != len(percent_col) or \
                     not isinstance(dest_col, list) or len(dest_col) != len(percent_col) or \
@@ -69,10 +71,12 @@ class account_invoice_import(osv.osv_memory):
                 errors.append(_('Line %s: Cost Center, Destination and Funding Pool columns should have '
                                 'the same number of values as Percentage column') % line_num)
 
-    def _check_percent_values(self, percent_col, line_num, errors):
+    def _check_percent_values(self, percent_col, line_num, errors, context=None):
         '''
         Check if the Percent Column values adds up to exactly 100
         '''
+        if context is None:
+            context = {}
         if isinstance(percent_col, list):
             try:
                 percent_vals = [float(percent_val) for percent_val in percent_col]
@@ -333,7 +337,7 @@ class account_invoice_import(osv.osv_memory):
                         current_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
 
                         # create a new AD if diff from current AD on line
-                        if not current_ad or self._is_ad_diff(current_ad, cc_ids=cc_ids, dest_ids=dest_ids, fp_ids=fp_ids, percentages=percentage_vals):
+                        if not errors and (not current_ad or self._is_ad_diff(current_ad, cc_ids=cc_ids, dest_ids=dest_ids, fp_ids=fp_ids, percentages=percentage_vals)):
                             distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
                             for i, percentage in enumerate(percentage_vals):
                                 ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, account.id, dest_ids[i], cc_ids[i], fp_ids[i],

@@ -509,6 +509,7 @@ SELECT res_id, touched
         return True
 
     def clear_synchronization(self, cr, uid, ids, context=None):
+        self._after_update_send(cr, uid, ids, context)
         data_ids = self.get_sd_ref(cr, uid, ids, field='id', context=context)
         return self.pool.get('ir.model.data').write(cr, uid, list(data_ids.values()),
                                                     {'force_recreation':False,'touched':False}, context=context)

@@ -101,7 +101,6 @@ class Cursor(object):
         if p is not None:
             self._oc = p.get('operations.count')
             self._oe = p.get('operations.event')
-        # TODO JFB
         self._obj = self._cnx.cursor()
         self.__closed = False   # real initialisation value
         self.autocommit(False)
@@ -326,12 +325,19 @@ class Cursor(object):
     def drop_index_if_exists(self, table, indexname):
         if self.index_exists(table, indexname):
             self.execute('DROP INDEX "%s"' % (indexname,))
+            return True
+        return False
 
     @check
     def index_exists(self, table, indexname):
         self.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, table))
         return self.fetchone()
 
+
+    @check
+    def sql_user_exists(self, username):
+        self.execute("SELECT rolname FROM pg_roles WHERE rolname=%s", (username, ))
+        return self.fetchone()
 
     def __build_dict(self, row):
         return {d.name: row[i] for i, d in enumerate(self._obj.description)}

@@ -128,9 +128,9 @@ class PhysicalInventory(osv.osv):
     _columns = {
         'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
         'name': fields.char('Details', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'date': fields.datetime('PI Creation date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
-        'date_done': fields.datetime('Date done', readonly=True),
+        'date_done': fields.datetime('PI Closed date', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
         # 'inventory_id' and 'product_id' seem to be inverted in product_ids
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
@@ -776,11 +776,15 @@ class PhysicalInventory(osv.osv):
                 # Check UoM
                 product_uom_id = False
                 if row.cells[3].data:
-                    product_uom = row.cells[3].data.lower()
-                    if product_uom not in all_uom:
-                        add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
-                    else:
-                        product_uom_id = all_uom[product_uom]
+                    product_uom = row.cells[3].data
+                    try:
+                        product_uom = tools.ustr(product_uom).lower()
+                        if product_uom not in all_uom:
+                            add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                        else:
+                            product_uom_id = all_uom[product_uom]
+                    except ValueError:
+                        add_error(_("""UoM %s is not valid""") % product_uom, row_index, 3)
                 else:
                     add_error(_("""UoM is mandatory"""), row_index, 3)
 
@@ -831,9 +835,12 @@ class PhysicalInventory(osv.osv):
                                 expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
                             else:
                                 raise ValueError()
-                        except:
-                            if not year or year >= 1900:
-                                add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+                        except Exception as e:
+                            err_type = type(e).__name__
+                            if not year or year >= 1900 or err_type == 'ParserError':
+                                add_error(_("""Expiry date '%s' is not valid""") % expiry_date, row_index, 6)
+                                if err_type == 'ParserError':
+                                    expiry_date = False
 
                         if year and year < 1900:
                             add_error(_('Expiry date: year must be after 1899'), row_index, 6)
@@ -937,9 +944,12 @@ class PhysicalInventory(osv.osv):
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
             if row_index < 10:
                 continue
+            # To ignore the white spaces and the signature block at the bottom
+            if not row.cells[0].data and not row.cells[1].data:
+                break
             if len(row) != 21:
                 add_error(_("""The number of columns is incorrect, you should have exactly 20 columns in this order:
-Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theoretical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),
+Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Quantity, Counted Quantity, Batch number, Expiry date, Discrepancy Quantity, Discrepancy Value, Total Theoretical Quantity for product, Total Counted Quantity for product, Total Counted Value for product, Total Discrepancy for product, Total Discrepancy Value for product, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),
                           row_index, len(row))
                 break
 
@@ -1050,16 +1060,35 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         return result
 
     def export_xls_discrepancy_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
         if self.search_exist(cr, uid, [('id', 'in', ids), ('discrepancies_generated', '=', False)]):
             raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
 
+        pi_name = self.read(cr, uid, ids[0], ['ref'], context=context)['ref'].replace('/', '_')
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'physical_inventory_discrepancies_report_xls',
-            'datas': {'ids': ids, 'target_filename': 'discrepancies'},
+            'datas': {'ids': ids, 'target_filename': '%s_discrepancies_report_%s' % (pi_name, time.strftime('%Y_%m_%d'))},
             'nodestroy': True,
             'context': context,
         }
+
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
+
+        pi = self.read(cr, uid, ids[0], ['discrepancies_generated', 'ref'], context=context)
+        if not pi['discrepancies_generated']:
+            raise osv.except_osv(_('Error'), _('This report is only available for Physical Inventories with discrepancies already generated'))
+
+        return "%s_discrepancies_report_%s" % (pi['ref'].replace('/', '_'), time.strftime('%Y_%m_%d'))
 
     def action_counted(self, cr, uid, ids, context=None):
         if context is None:

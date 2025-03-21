@@ -13,6 +13,7 @@ from openpyxl.utils.cell import get_column_letter
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles.protection import Protection
 
+
 class XlsxReport(report_int):
     def __init__(self, name, parser, write_only=True, template=False):
         """
@@ -138,7 +139,7 @@ class XlsxReportParser():
             str_date = value
         return datetime.datetime.strptime(str_date, "%Y-%m-%d %H:%M:%S")
 
-    def cell_ro(self, value, style=None, unlock=None, copy_style=None):
+    def cell_ro(self, value, style=None, unlock=None, copy_style=None, wrap_text=None):
         new_cell = WriteOnlyCell(self.workbook.active, value=value)
         if style:
             new_cell.style = style
@@ -150,6 +151,8 @@ class XlsxReportParser():
                 new_cell.style = self.create_style_from_template(copied_style_name, copy_style)
         if unlock:
             new_cell.protection = Protection(locked=False)
+        if wrap_text:
+            new_cell.alignment = new_cell.alignment.copy(wrapText=True)
         return new_cell
 
 

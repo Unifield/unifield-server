@@ -914,6 +914,9 @@ class msf_import_export(osv.osv_memory):
         forbid_creation_of = [] # list of product ids that will not be created
         last_empty_lines = []
 
+        donation_acc_ids = {}
+        asset_acc_ids = {}
+
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
             if all(not x for x in line_data):
@@ -936,6 +939,9 @@ class msf_import_export(osv.osv_memory):
             o2mdatas = {}
             i += 1
             data = {}
+
+            if import_brw.model_list_selection == 'supplier_catalogue_update':
+                cr.execute("SAVEPOINT catalogue_auto_import")
             try:
                 if model == 'hq.entries':
                     hq_entries_obj = self.pool.get('hq.entries.import')
@@ -1374,6 +1380,34 @@ class msf_import_export(osv.osv_memory):
                         if parent_type != 'view' or parent_category != 'FREE2':
                             raise Exception(_('The Parent Analytic Account must be a View type Free 2 account.'))
 
+                # Product-Category
+                if import_brw.model_list_selection == 'product_category':
+                    if data.get('donation_expense_account', False) and not donation_acc_ids.get(data.get('donation_expense_account'), False):
+                        donation_id = acc_obj.search(cr, uid, [('id', '=', data.get('donation_expense_account')),
+                                                               ('restricted_area', '=', 'product_category_donation')],
+                                                     context=context)
+                        if not donation_id:
+                            raise Exception(_('Import error for product category "%s" : The Donation Account must be of type donation.')
+                                            % data.get('name', ''))
+                        else:
+                            donation_acc_ids[data.get('donation_expense_account')] = True
+                    if data.get('asset_bs_account_id', False) and not asset_acc_ids.get(data.get('asset_bs_account_id'), False):
+                        asset_acc = acc_obj.browse(cr, uid, data.get('asset_bs_account_id'),
+                                                   fields_to_fetch=['user_type'], context=context)
+                        if not asset_acc or asset_acc.user_type.code != 'asset':
+                            raise Exception(_('Import error for product category "%s" : The Asset Balance Sheet Account must be of type asset.')
+                                            % data.get('name', ''))
+                        else:
+                            asset_acc_ids[data.get('asset_bs_account_id')] = True
+                    if data.get('asset_bs_depreciation_account_id', False) and not asset_acc_ids.get(data.get('asset_bs_depreciation_account_id'), False):
+                        dep_acc = acc_obj.browse(cr, uid, data.get('asset_bs_depreciation_account_id'),
+                                                 fields_to_fetch=['user_type'], context=context)
+                        if not dep_acc or dep_acc.user_type.code != 'asset':
+                            raise Exception(_('Import error for product category "%s" : The Asset B/S Depreciation Account must be of type asset.')
+                                            % data.get('name', ''))
+                        else:
+                            asset_acc_ids[data.get('asset_bs_depreciation_account_id')] = True
+
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):
                         data['groups'] = [(6, 0, [])]
@@ -1420,20 +1454,10 @@ class msf_import_export(osv.osv_memory):
                     context['from_import_menu'] = True
                     if import_brw.model_list_selection == 'supplier_catalogue_update':
                         if data.get('product_id') and data['product_id'] not in forbid_creation_of:
-                            cr.execute("SAVEPOINT catalogue_auto_import")
-                            try:
-                                line_created = impobj.create(cr, uid, data, context=context)
-                                lines_already_updated.append(line_created)
-                            except (osv.except_osv, orm.except_orm) as e:
-                                logging.getLogger('import data').info('Error %s' % e.value)
-                                save_error(e.value, row_index)
-                                nb_error += 1
-                                rejected.append((row_index + 1, line_data, e.value))
-                                cr.execute("ROLLBACK TO SAVEPOINT catalogue_auto_import")
-                            else:
-                                cr.execute("RELEASE SAVEPOINT catalogue_auto_import")
+                            line_created = impobj.create(cr, uid, data, context=context)
+                            lines_already_updated.append(line_created)
                     elif import_brw.model_list_selection == 'cost_centers':
-                        keys_to_extract = ['category', 'date_start', 'date','parent_id', 'type']
+                        keys_to_extract = ['category', 'date_start', 'date', 'parent_id', 'type']
                         data_subset = {
                             'code': data['code'].strip(),
                             'name': data['name'].strip(),
@@ -1461,7 +1485,7 @@ class msf_import_export(osv.osv_memory):
                         id_created = impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
-                    if allow_partial:
+                    if allow_partial and import_brw.model_list_selection != 'supplier_catalogue_update':
                         cr.commit()
                 # For Dest CC Links: create, update or delete the links if necessary
                 if import_brw.model_list_selection == 'destinations':
@@ -1522,7 +1546,10 @@ class msf_import_export(osv.osv_memory):
                 logging.getLogger('import data').info('Error %s' % e.value)
                 if raise_on_error:
                     raise Exception('Line %s, %s' % (row_index+2, e.value))
-                cr.rollback()
+                if import_brw.model_list_selection == 'supplier_catalogue_update':
+                    cr.execute("ROLLBACK TO SAVEPOINT catalogue_auto_import")
+                else:
+                    cr.rollback()
                 save_error(e.value, row_index)
                 nb_error += 1
                 rejected.append((row_index+1, line_data, e.value))
@@ -1530,12 +1557,17 @@ class msf_import_export(osv.osv_memory):
                 logging.getLogger('import data').info('Error %s' % tools.ustr(e))
                 if raise_on_error:
                     raise Exception('Line %s: %s' % (row_index+2, tools.ustr(e)))
-                cr.rollback()
+                if import_brw.model_list_selection == 'supplier_catalogue_update':
+                    cr.execute("ROLLBACK TO SAVEPOINT catalogue_auto_import")
+                else:
+                    cr.rollback()
                 save_error(tools.ustr(e), row_index)
                 nb_error += 1
                 rejected.append((row_index+1, line_data, tools.ustr(e)))
             else:
                 nb_imported_lines += 1
+                if import_brw.model_list_selection == 'supplier_catalogue_update':
+                    cr.execute("RELEASE SAVEPOINT catalogue_auto_import")
 
             self.write(cr, uid, [import_brw.id], {'total_lines_imported': nb_imported_lines}, context=context)
 
@@ -1559,7 +1591,7 @@ class msf_import_export(osv.osv_memory):
                 if not err_msg.endswith('\n'):
                     err_msg += '\n'
 
-        if err_msg and not allow_partial:
+        if err_msg and (not allow_partial or context.get('auto_import_catalogue_overlap')):
             cr.rollback()
             nb_succes = 0
             nb_update_success = 0

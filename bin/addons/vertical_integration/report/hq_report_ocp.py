@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv
+from osv import osv, fields
 from tools.translate import _
 import pooler
 import time
@@ -35,6 +35,18 @@ import zipfile
 import tempfile
 from tools.misc import Path
 import os
+
+class ocp_employee_mapping(osv.osv):
+    _name = 'ocp.employee.mapping'
+    _columns = {
+        'arcole': fields.char('Arcole', size=32, index=1),
+        'workday': fields.char('Worday', size=32, index=1),
+        'section_code': fields.char('Section', size=8),
+    }
+    _sql_constraints = [
+        ('arcole_uniq', 'unique(arcole)', 'arcole must be unique !'),
+    ]
+ocp_employee_mapping()
 
 class finance_archive(finance_export.finance_archive):
     """
@@ -286,11 +298,13 @@ account_balances_per_currency_with_euro_sql = """
                 LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                LEFT JOIN account_period p on p.id = aml.period_id
                 WHERE acc.active = 't'
                 AND curr.active = 't'
                 AND ( aml.date < %(first_day_of_period)s or aml.period_id in %(include_period_opening)s )
                 AND j.instance_id IN %(instance_ids)s
                 AND j.type NOT IN ('migration', 'inkind', 'extra')
+                AND p.fiscalyear_id = %(fiscalyear_id)s
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
         UNION
@@ -320,11 +334,13 @@ account_balances_per_currency_with_euro_sql = """
                 LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                LEFT JOIN account_period p on p.id = aml.period_id
                 WHERE acc.active = 't'
                 AND curr.active = 't'
                 AND ( aml.date <= %(last_day_of_period)s and aml.period_id not in %(exclude_period_closing)s )
                 AND j.instance_id IN %(instance_ids)s
                 AND j.type NOT IN ('migration', 'inkind', 'extra')
+                AND p.fiscalyear_id = %(fiscalyear_id)s
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
         ) AS ssreq
@@ -418,7 +434,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                        c.name AS "booking_currency",
                        CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit,
                        CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
-                       cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name,
+                       cc.name AS "functional_currency", coalesce(hr.former_identification_id, hr.identification_id) as "emplid", aml.partner_id, hr.name_resource as hr_name,
                        CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type
                 FROM account_analytic_line AS al, 
                      account_account AS a, 
@@ -474,7 +490,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             'bs_entries': """
                 SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date,
                        a.code, aml.partner_txt, '', SUBSTR(i.code, 1, 3), '', aml.debit_currency, aml.credit_currency, c.name,
-                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id,
+                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, coalesce(hr.former_identification_id, hr.identification_id) as "Emplid", aml.partner_id,
                        hr.name_resource as hr_name, j.type
                 FROM account_move_line aml 
                 LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
@@ -935,6 +951,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             'last_day_of_period': period.date_stop,
             'include_period_opening': tuple(include_period_opening),
             'exclude_period_closing': tuple(exclude_period_closing),
+            'fiscalyear_id': period.fiscalyear_id.id,
         }
 
 
@@ -1121,6 +1138,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             tot_func = 0
             all_tot = {}
 
+        employee_mapping = {}
         for sql, obj in [
                 (analytic_query, 'account.analytic.line'),
                 (move_line_query, 'account.move.line')]:
@@ -1147,6 +1165,13 @@ class hq_report_ocp_workday(hq_report_ocp):
 
                     else:
                         amls.add(row['id'])
+
+                    if row['journal_type'] == 'correction_hq' and row['partner_txt']:
+                        if row['partner_txt'] not in employee_mapping:
+                            new_cr.execute('''select workday from ocp_employee_mapping where arcole=%s''', (row['partner_txt'],))
+                            if new_cr.rowcount:
+                                emp_r = new_cr.fetchone()
+                                row['partner_txt'] = emp_r[0]
 
                     local_employee = row['employee_type'] and row['employee_type'] != 'ex'
 

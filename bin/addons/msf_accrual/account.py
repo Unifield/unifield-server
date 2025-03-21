@@ -29,10 +29,12 @@ class account_account(osv.osv):
     _inherit = "account.account"
 
     _columns = {
-        'accrual_account': fields.boolean('Accrual Account')
+        'accrual_account': fields.boolean('Accrual Account'),
+        'prevent_hq_asset': fields.boolean('Prevent fixed assets on HQ entries'),
     }
 
     _defaults = {
+        'prevent_hq_asset': lambda *a: False,
         'accrual_account': lambda *a: False,
     }
 

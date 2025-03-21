@@ -124,6 +124,7 @@ class stock_reception_report(report_sxw.rml_parse):
                     'purchase_order': pick.purchase_id and pick.purchase_id.name or '',
                     #'purchase_order': pick.purchase_id and '%s %s' % (pick.purchase_id.name,move.purchase_line_id.id) or '',
                     'supplier': pick.partner_id and pick.partner_id.name or '',
+                    'details': pick.details or '',
                     'purchase_id': po,  # For category, type and priority
                     'dr_date': pol and (pol.date_planned or po.delivery_requested_date) or False,
                     'dc_date': pol and (pol.confirmed_delivery_date or po.delivery_confirmed_date) or False,

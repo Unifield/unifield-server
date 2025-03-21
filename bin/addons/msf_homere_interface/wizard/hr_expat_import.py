@@ -94,7 +94,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                     continue
                 # get cells
                 contract_end_date = False
-                contract_end_date_str = ''
+                contract_end_date_str = False
                 name = get_xml_spreadheet_cell_value(0)
                 if not name:
                     manage_error(line_index, 'No name defined')
@@ -109,7 +109,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                             line_index += 1
                             continue  # inserting an invalid date format in the DB would fail
                         else:
-                            contract_end_date_str = contract_end_date and contract_end_date.strftime('%Y-%m-%d') or ''
+                            contract_end_date_str = contract_end_date and contract_end_date.strftime('%Y-%m-%d') or False
                 code = get_xml_spreadheet_cell_value(1)
                 if isinstance(code, str):
                     code = code.strip()

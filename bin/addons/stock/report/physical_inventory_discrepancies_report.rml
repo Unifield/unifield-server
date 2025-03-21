@@ -1,0 +1,487 @@
+<?xml version="1.0"?>
+<document filename="physical_inventory_discrepancies.pdf">
+  <template pageSize="(70.0cm,49.0cm)" title="Stock Inventory" author="" allowSplitting="20" showBoundary="0">
+    <pageTemplate id="all">
+      <frame id="all" x1="2" y1="-2" width="70.0cm" height="49.0cm"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+    <blockTableStyle id="TableTitle">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+    <blockTableStyle id="TableHeader">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="MIDDLE"/>
+      <lineStyle kind="GRID" colorName="black" start="7,0" stop="10,-2" thickness="0.5" />
+    </blockTableStyle>
+    <blockTableStyle id="TableHeaderSign">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="MIDDLE"/>
+      <lineStyle kind="GRID" colorName="black" start="1,3" stop="4,-1" thickness="0.5" />
+    </blockTableStyle>
+    <blockTableStyle id="TableItemHeader">
+        <blockBackground colorName="lightgrey" start="0,0" stop="-1,0"/>
+        <lineStyle kind="GRID" colorName="black"/>
+        <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+        <blockValign value="MIDDLE" />
+    </blockTableStyle>
+    <blockTableStyle id="TableItem">
+        <lineStyle kind="GRID" colorName="black"/>
+        <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+        <blockValign value="MIDDLE" />
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="default" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="title" fontName="Helvetica-Bold" fontSize="12.0" leading="15" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="table_header_label" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_header_label_center" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_header_value" fontName="Helvetica" fontSize="9.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_header_value_center" fontName="Helvetica" fontSize="9.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_item_header" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="table_item_data" rightIndent="0.0" leftIndent="0.0" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="whitespace" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="7.0" spaceBefore="10.0" spaceAfter="10.0"/>
+  </stylesheet>
+  <story>
+  <pto>
+  <pto_header>
+    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,3.25cm,2.5cm,2.5cm,2.5cm,3.0cm,3.0cm,4.0cm,3.0cm,3.0cm,3.0cm,4.5cm,5.25cm" style="TableItemHeader">
+      <tr>
+        <td>
+          <para style="table_item_header">Line #</para>
+        </td>
+        <td>
+          <para style="table_item_header">Family</para>
+        </td>
+        <td>
+          <para style="table_item_header">Product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Description</para>
+        </td>
+        <td>
+          <para style="table_item_header">UOM</para>
+        </td>
+        <td>
+          <para style="table_item_header">Unit Price</para>
+        </td>
+        <td>
+          <para style="table_item_header">Currency</para>
+        </td>
+        <td>
+          <para style="table_item_header">Theoretical Quantity</para>
+        </td>
+        <td>
+          <para style="table_item_header">Counted Quantity</para>
+        </td>
+        <td>
+          <para style="table_item_header">Batch number</para>
+        </td>
+        <td>
+          <para style="table_item_header">Expiry date</para>
+        </td>
+        <td>
+          <para style="table_item_header">Discrepancy Quantity</para>
+        </td>
+        <td>
+          <para style="table_item_header">Discrepancy Value</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Theoretical Quantity for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Counted Quantity for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Counted Value for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Discrepancy for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Discrepancy Value for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Adjustment type</para>
+        </td>
+        <td>
+          <para style="table_item_header">Sub Reason Type</para>
+        </td>
+        <td>
+          <para style="table_item_header">Comments</para>
+        </td>
+      </tr>
+    </blockTable>
+  </pto_header>
+    <para style="default">[[ repeatIn(objects,'o') ]] </para>
+    <blockTable colWidths="70.0cm" style="TableTitle">
+      <tr>
+        <td>
+          <para style="title">INVENTORY REPORT</para>
+        </td>
+      </tr>
+    </blockTable>
+    <blockTable colWidths="5.0cm,5.0cm,5.0cm,4.0cm,2.0cm,6.0cm,9.5cm,5.0cm,4.5cm,4.0cm,5.0cm,13.0cm" style="TableHeader">
+      <tr>
+        <td>
+          <para style="table_header_label">Inventory Reference</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ o.ref ]]</para>
+        </td>
+        <td>
+          <para style="table_header_label">PI Creation date</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ formatLang(o.date, date_time=True) ]]</para>
+        </td>
+        <td>
+          <para style="table_header_label">Location</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ o.location_id and o.location_id.name or '' ]]</para>
+        </td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td>
+          <para style="table_header_label_center">Number of lines</para>
+        </td>
+        <td>
+          <para style="table_header_label_center">Value ([[ o.company_id.currency_id.name ]])</para>
+        </td>
+        <td>
+          <para style="table_header_label_center">Total Absolute value</para>
+        </td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td>
+          <para style="table_header_label">Inventory Details</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ o.name ]]</para>
+        </td>
+        <td>
+          <para style="table_header_label">PI Closed date</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ formatLang(o.date_done, date_time=True) ]]</para>
+        </td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td>
+          <para style="table_header_label_center">Total at the end</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.inventory_lines_number ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.inventory_lines_value ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.inventory_lines_absvalue ]]</para>
+        </td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td>
+          <para style="table_header_label">Inventory Responsible</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ o.responsible ]]</para>
+        </td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td>
+          <para style="table_header_label_center">With discrepancies</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.discrepancy_lines_number ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.discrepancy_lines_value ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.discrepancy_lines_absvalue ]]</para>
+        </td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td>
+          <para style="table_header_label_center">%</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.discrepancy_lines_percent ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.discrepancy_lines_percent_value ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ o.discrepancy_lines_percent_absvalue ]]</para>
+        </td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+      </tr>
+    </blockTable>
+
+    <para style="whitespace">
+      <font color="white"> </font>
+    </para>
+
+    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,3.25cm,2.5cm,2.5cm,2.5cm,3.0cm,3.0cm,4.0cm,3.0cm,3.0cm,3.0cm,4.5cm,5.25cm" style="TableItemHeader">
+      <tr>
+        <td>
+          <para style="table_item_header">Line #</para>
+        </td>
+        <td>
+          <para style="table_item_header">Family</para>
+        </td>
+        <td>
+          <para style="table_item_header">Product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Description</para>
+        </td>
+        <td>
+          <para style="table_item_header">UOM</para>
+        </td>
+        <td>
+          <para style="table_item_header">Unit Price</para>
+        </td>
+        <td>
+          <para style="table_item_header">Currency</para>
+        </td>
+        <td>
+          <para style="table_item_header">Theoretical Quantity</para>
+        </td>
+        <td>
+          <para style="table_item_header">Counted Quantity</para>
+        </td>
+        <td>
+          <para style="table_item_header">Batch number</para>
+        </td>
+        <td>
+          <para style="table_item_header">Expiry date</para>
+        </td>
+        <td>
+          <para style="table_item_header">Discrepancy Quantity</para>
+        </td>
+        <td>
+          <para style="table_item_header">Discrepancy Value</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Theoretical Quantity for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Counted Quantity for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Counted Value for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Discrepancy for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Total Discrepancy Value for product</para>
+        </td>
+        <td>
+          <para style="table_item_header">Adjustment type</para>
+        </td>
+        <td>
+          <para style="table_item_header">Sub Reason Type</para>
+        </td>
+        <td>
+          <para style="table_item_header">Comments</para>
+        </td>
+      </tr>
+    </blockTable>
+    <section>
+      <para style="default">[[ repeatIn([x for x in o.discrepancy_line_ids if not x.ignored], 'item') ]]</para>
+      <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,3.25cm,2.5cm,2.5cm,2.5cm,3.0cm,3.0cm,4.0cm,3.0cm,3.0cm,3.0cm,4.5cm,5.25cm" style="TableItem">
+        <tr>
+          <td>
+            <para style="table_item_data" alignment="CENTER">[[ item.line_no ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.nomen_manda_2 and item.nomen_manda_2.name or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.product_id and item.product_id.code or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.product_id and item.product_id.name or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.product_uom_id and item.product_uom_id.name or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data" alignment="RIGHT">[[ item.standard_price ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.currency_id and item.currency_id.name or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.theoretical_qty ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.counted_qty ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.batch_number or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.expiry_date and formatLang(item.expiry_date, date=True) or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.discrepancy_qty ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data" alignment="RIGHT">[[ item.discrepancy_value ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.total_product_theoretical_qty ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.total_product_counted_qty ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data" alignment="RIGHT">[[ item.total_product_counted_value ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.total_product_discrepancy_qty ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data" alignment="RIGHT">[[ item.total_product_discrepancy_value ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.reason_type_id and item.reason_type_id.complete_name or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ getSel(item, 'sub_reason_type') or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ item.comment or '' ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+    </section>
+    <para style="whitespace">
+      <font color="white"> </font>
+    </para>
+    <blockTable colWidths="10.0cm,4.0cm,7.0cm,6.0cm,6.0cm,35.0cm" style="TableHeaderSign">
+      <tr>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td>
+          <para style="table_header_label_center">[[ getSign(o, 'wr', 'backup') ]]Warehouse Responsible</para>
+        </td>
+        <td>
+          <para style="table_header_label_center">[[ getSign(o, 'sr', 'backup') ]]Supply Responsible</para>
+        </td>
+        <td>
+          <para style="table_header_label_center">[[ getSign(o, 'so', 'backup') ]]Stock Owner</para>
+        </td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td><para></para></td>
+        <td>
+          <para style="table_header_label_center">Name</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ getSign(o, 'wr', 'user_name') ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ getSign(o, 'sr', 'user_name') ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ getSign(o, 'so', 'user_name') ]]</para>
+        </td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td><para></para></td>
+        <td>
+          <para style="table_header_label_center">Date</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ getSign(o, 'wr', 'date') ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ getSign(o, 'sr', 'date') ]]</para>
+        </td>
+        <td>
+          <para style="table_header_value_center">[[ getSign(o, 'so', 'date') ]]</para>
+        </td>
+        <td><para></para></td>
+      </tr>
+      <tr>
+        <td><para></para></td>
+        <td>
+          <para style="table_header_label_center">Signature</para>
+        </td>
+        <td>
+          <image width="100" height="25" mask="auto">[[ getSign(o, 'wr', 'image') or removeParentNode('image') ]]</image>
+        </td>
+        <td>
+          <image width="100" height="25" mask="auto">[[ getSign(o, 'sr', 'image') or removeParentNode('image') ]]</image>
+        </td>
+        <td>
+          <image width="100" height="25" mask="auto">[[ getSign(o, 'so', 'image') or removeParentNode('image') ]]</image>
+        </td>
+        <td><para></para></td>
+      </tr>
+    </blockTable>
+  </pto>
+  </story>
+</document>

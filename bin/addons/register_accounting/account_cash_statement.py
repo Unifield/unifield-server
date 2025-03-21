@@ -82,7 +82,7 @@ class account_cash_statement(osv.osv):
         if not prev_reg and sync_update and vals.get('period_id') and vals.get('journal_id'):
             prev_reg_id = previous_register_id(self, cr, uid, vals['period_id'], vals['journal_id'], context=context, raise_error=False)
             if prev_reg_id:
-                prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['responsible_ids'], context=context)[0]
+                prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['responsible_ids', 'signature_id'], context=context)[0]
 
         if 'responsible_ids' not in vals and prev_reg and prev_reg.responsible_ids:
             vals['responsible_ids'] = [(6, 0, [x.id for x in prev_reg.responsible_ids])]

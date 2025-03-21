@@ -116,33 +116,27 @@
                     <field name="order_line_mismatch" colspan="4" nolabel="1" mode="tree"
                         filter_selector="[('Show all', []),  ('Hide Confirmed', [('state', 'not in', ['confirmed'])]), ('Hide Closed', [('state', 'not in', ['done'])]), ('Hide Confirmed, Closed &amp; Cancelled', [('state', 'not in', ['confirmed', 'done', 'cancel', 'cancel_r'])]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])])]"
                         >
-                        <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
+                        <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: inactive_product == True; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
                             <field name="line_number" />
                             <field name="default_code" />
                             <field name="default_name" />
 
-                            <field name="comment"  />
-                            <field name="nomenclature_description" />
+                            <field name="comment" />
                             <field name="supplier_code"  />
                             <field name="inactive_error" invisible="1"/>
                             <field name="inactive_product" invisible="1"/>
-                            <field name="to_correct_ok" invisible="1"/>
-                            <field name="red_color" invisible="1"/>
-                            <field name="origin" invisible="1"/>
-                            <field name="from_fo" invisible="1"/>
                             <field name="fake_id" invisible="1"/>
                             <field name="soq_updated" invisible="1"/>
                             <field name="product_qty" string="Qty" />
-                            <field name="product_uom" />
-                            <field name="price_unit" />
-                            <field name="price_subtotal"/>
+                            <field name="product_uom" string="UoM" />
+                            <field name="price_unit" string="PO Unit Price" />
+                            <field name="price_subtotal" string="PO Subtotal"/>
+                            <field name="catalog_price_unit"/>
+                            <field name="catalog_subtotal"/>
                             <field name="original_changed" string="CHG"/>
-                            <field name="date_planned" />
                             <field name="catalog_mismatch" />
                             <field name="po_state_stored" invisible="True"/>
                             <field name="state_to_display"/>
-                            <field name="mml_status" />
-                            <field name="msl_status" />
                         </tree>
                     </field>
                 </form>
@@ -196,6 +190,12 @@
                                     <translate>WARNING: Order line(s) not synchronized, please add an AD on line(s): </translate>
                                 </p>
                                 <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                                <p id="view_purchase_order_locked_for_signature" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                    <translate>
+                                        WARNING: This PO uses e-signatures. To edit it, e-signatures must be removed.
+                                    </translate>
+                                    <br/>
+                                </p>
 
                                 <script language="javascript">
                                     var original_partner = false;
@@ -267,6 +267,11 @@
                                     if (catalogue_text) {
                                          $('#order_line_extra_text').html(catalogue_text);
                                     }
+                                    var is_doc_locked_for_sign = $('#doc_locked_for_sign').val();
+                                    if (is_doc_locked_for_sign == "1") {
+                                        msg_dom = $('#view_purchase_order_locked_for_signature')
+                                        msg_dom.show();
+                                    }
 
                                 </script>
                             </html>
@@ -301,11 +306,11 @@
                     <newline/>
                     <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,validated"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('doc_locked_for_sign', '=', True)]}"/>
                     </group>
                     <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
-                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,validated"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('doc_locked_for_sign', '=', True)]}"/>
                     </group>
                     <field name="analytic_distribution_id" invisible="1"/>
                     <notebook colspan="4">
@@ -327,23 +332,24 @@
                                 <field name="dest_partner_names"/>
                                 <group colspan="2" col="3">
                                     <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}" />
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p']), ('doc_locked_for_sign', '=', True)]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="no_line" invisible="1"/>
                                     <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', '|', ('no_line', '=', False), ('state', 'not in', ['draft']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
-                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}"/>
+                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('doc_locked_for_sign', '=', True)]}"/>
                                 </group>
-                                <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                                <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('doc_locked_for_sign', '=', True)]}"/>
                             </group>
-                            <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
+                            <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('doc_locked_for_sign', '=', True)]}">
                                 <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                                <button name="wizard_update_po_line" string="Update lines" icon="gtk-ok" colspan="1" type="object" attrs="{'invisible':['&amp;', ('state', 'not in', ['draft', 'draft_p']), '|', ('partner_type', '!=', 'external'), ('state', 'not in', ['validated', 'validated_p'])]}"/>
                                 <button name="wizard_import_ad" string="Import AD" icon="terp-stock_symbol-selection" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                                 <button name="button_cancel_lines" string="Cancel Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['&amp;', ('state', 'not in', ['draft', 'draft_p']), '|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['validated', 'validated_p'])]}" />
-                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" context="{'rfq_ok': False}"/>
-                                <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" context="{'rfq_ok': False}"/>
+                                <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                             </group>
-                            <group colspan="4" col="4" attrs="{'invisible':['&amp;', ('state', 'not in', ['validated', 'validated_p']), '|', ('partner_type', 'not in', ['esc', 'external']), ('state', 'not in', ['confirmed', 'confirmed_p'])]}">
+                            <group colspan="4" col="4" attrs="{'invisible':['|', '&amp;', ('state', 'not in', ['validated', 'validated_p']), '|', ('partner_type', 'not in', ['esc', 'external']), ('state', 'not in', ['confirmed', 'confirmed_p']), ('doc_locked_for_sign', '=', True)]}">
                                 <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" />
                                 <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" />
                             </group>
@@ -353,19 +359,21 @@
                                 filter_selector="[('Show all', []), ('ESC Confirmed', [('esc_confirmed', '=', True)]), ('ESC Unconfirmed', [('esc_confirmed', '=', False)])], [('Show all', []), ('Show validated only', [('state', 'in', ['validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n'])]), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="['0', '4']" o2m_selectable="2"
                                 >
-                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description) or no_prod_nr_id != False; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated'] or no_prod_nr_id != False" button_attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p'])]}" editable="both">
+                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description) or no_prod_nr_id != False; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated'] or no_prod_nr_id != False" button_attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p']), ('doc_locked_for_sign', '=', True)]}" editable="both" nopopup="po_locked==True">
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False), ('no_prod_nr_id', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
 
-                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,nomen_manda_0,comment,context, parent.categ, False, linked_sol_id, select_fo, po_order_type, instance_sync_order_ref, rfq_ok)" attrs="{'readonly': [('tender_line_id', '!=', False)], 'required': [('comment', '=', False)]}" displayon="editable" />
-                                    <field name="comment"  attrs="{'required': [('product_id', '=', False)]}"/>
+                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ"
+                                           on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,nomen_manda_0,comment,context, parent.categ, False, linked_sol_id, select_fo, po_order_type, instance_sync_order_ref, rfq_ok)"
+                                           attrs="{'readonly': ['|', ('tender_line_id', '!=', False), ('po_locked', '=', True)], 'required': [('comment', '=', False)]}" displayon="editable" />
+                                    <field name="comment" attrs="{'required': [('product_id', '=', False)], 'readonly': [('po_locked', '=', True)]}"/>
                                     <field name="nomenclature_description" readonly="1" />
                                     <button name="openform"
                                         special="openform"
                                         string="Configurator"
-                                        attrs="{'invisible': ['|', '|', ('default_code', '!=', False), ('fake_state', 'not in', ['draft', 'draft_p', 'validated_n', 'validated']), ('no_prod_nr_id', '!=', False)]}"
+                                        attrs="{'invisible': ['|', '|', '|', ('default_code', '!=', False), ('fake_state', 'not in', ['draft', 'draft_p', 'validated_n', 'validated']), ('no_prod_nr_id', '!=', False), ('po_locked', '=', True)]}"
                                         context="{'nom_configurator': True}"
                                         icon="terp-go-week" />
                                     <field name="supplier_code" displayon="noteditable" />
@@ -374,23 +382,27 @@
                                     <field name="internal_name" invisible="True"/>
                                     <field name="supplier_name" invisible="True"/>
                                     <field name="fake_id" invisible="True"/>
-                                    <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,'','', context)" string="Qty"/>
-                                    <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
-                                    <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, '', '', context)"/>
+                                    <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id"
+                                           on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,'','', context)"
+                                           string="Qty" attrs="{'readonly': [('po_locked', '=', True)]}"/>
+                                    <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)"
+                                           domain="[('uom_by_product', '=', product_id)]" attrs="{'readonly': [('po_locked', '=', True)]}"/>
+                                    <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, '', '', context)"
+                                           attrs="{'readonly': [('po_locked', '=', True)]}"/>
                                     <field name="price_subtotal"/>
                                     <field name="original_changed" readonly="1" string="CHG"/>
                                     <field name="change_price_ok" invisible="1"/>
                                     <field name="old_price_unit" invisible="1"/>
-                                    <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
+                                    <field name="date_planned" attrs="{'readonly': ['|', ('fake_state', 'not in', ['', 'draft']), ('po_locked', '=', True)]}"/>
                                     <field name="esti_dd" attrs="{'readonly': [('fake_state', 'not in', ['validated', 'validated_n'])]}"/>
-                                    <field name="confirmed_delivery_date"/>
-                                    <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
+                                    <field name="confirmed_delivery_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft', 'validated', 'validated_n'])]}"/>
+                                    <field name="stock_take_date" attrs="{'readonly': ['|', ('fake_state', 'not in', ['', 'draft']), ('po_locked', '=', True)]}"/>
                                     <button name="button_analytic_distribution" string="Analytical distribution" type="object" context="{'partner_type': parent.partner_type}" icon="terp-stock_symbol-selection" attrs="{'invisible': [('no_prod_nr_id', '!=', False)]}"/>
                                     <field name="analytic_distribution_state_recap" string="A.D"/>
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                                     <field name="kit_pol_check" invisible="True"/>
                                     <field name="po_state_stored" invisible="True"/>
-                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}"/>
+                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', '|', ('kit_pol_check', '=', False), ('fake_state', 'not in', ['draft', 'validated', 'validated_n']), ('po_locked', '=', True)]}"/>
                                     <field name="red_color" invisible="1"/>
                                     <field name="tender_line_id" invisible="1"/>
                                     <field name="to_correct_ok" invisible="1"/>
@@ -408,11 +420,12 @@
                                     <field name="instance_sync_order_ref" invisible="True"/>
                                     <field name="rfq_ok" invisible="True"/>
                                     <field name="no_prod_nr_id" invisible="True"/>
-                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': ['|', ('fake_state', 'not in', ('draft', 'validated', 'validated_n')), ('no_prod_nr_id', '!=', False)]}"/>
+                                    <field name="po_locked" invisible="True"/>
+                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': ['|', '|', ('fake_state', 'not in', ('draft', 'validated', 'validated_n')), ('no_prod_nr_id', '!=', False), ('po_locked', '=', True)]}"/>
                                     <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': ['|', ('fake_state', '!=', 'draft'), ('no_prod_nr_id', '!=', False)]}" header="True"/>
                                     <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': ['|', ('fake_state', 'not in', ['validated', 'validated_n']), ('no_prod_nr_id', '!=', False)]}" header="True"/>
                                     <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', '|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct'), '&amp;', ('dest_partner_type', 'in', ['internal', 'section', 'intermission']), ('po_version', '!=', 1)]}"/>
-                                    <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', '&amp;', ('fake_state', '!=', 'draft'), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('fake_state', 'not in', ['draft', 'validated', 'validated_n']), ('partner_type', 'in', ['external', 'esc'])]}"/>
+                                    <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', '|', '&amp;', ('fake_state', '!=', 'draft'), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('fake_state', 'not in', ['draft', 'validated', 'validated_n']), ('partner_type', 'in', ['external', 'esc']), ('po_locked', '=', True)]}"/>
                                     <field name="mml_status" />
                                     <field name="msl_status" />
                                 </tree>
@@ -456,7 +469,7 @@
                                     <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'estimated', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p'))]}"/>
                                 </group>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
+                                    <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
                                     <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
                                 </group>
                                 <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
@@ -504,22 +517,22 @@
                                     <field name="currency_id"/>
                                 </tree>
                             </field>
-                                <field name="has_tax_at_line_level" invisible="1" />
-                                <field name="tax_line" nolabel="1" attrs="{'invisible': ['|', ('partner_type', '!=', 'external'), ('order_type', '=', 'in_kind')], 'readonly': ['|', ('not_beyond_validated','=', False), ('has_tax_at_line_level', '=', True)]}">
-                                    <tree editable="bottom" string="Taxes">
-                                        <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)" />
-                                        <field name="name"/>
+                            <field name="has_tax_at_line_level" invisible="1" />
+                            <field name="tax_line" nolabel="1" attrs="{'invisible': ['|', ('partner_type', '!=', 'external'), ('order_type', '=', 'in_kind')], 'readonly': ['|', ('not_beyond_validated','=', False), ('has_tax_at_line_level', '=', True)]}">
+                                <tree editable="bottom" string="Taxes">
+                                    <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)" />
+                                    <field name="name"/>
 
-                                        <field name="account_id"
-                                               domain="[('type', 'not in', ['view', 'consolidation']),
-                                                        ('user_type_code', '=', 'tax')]"/>
+                                    <field name="account_id"
+                                           domain="[('type', 'not in', ['view', 'consolidation']),
+                                                    ('user_type_code', '=', 'tax')]"/>
 
-                                        <field name="partner_id" readonly="1"/>
-                                        <field name="base" readonly="1"/>
-                                        <field name="amount" />
-                                        <field name="base_amount" invisible="1"/>
-                                    </tree>
-                                </field>
+                                    <field name="partner_id" readonly="1"/>
+                                    <field name="base" readonly="1"/>
+                                    <field name="amount" />
+                                    <field name="base_amount" invisible="1"/>
+                                </tree>
+                            </field>
 
                         </page>
                         <page string="Notes">
@@ -527,7 +540,7 @@
                             <field name="import_in_progress" readonly="1" invisible="0"/>
                             <field name="auto_exported_ok" readonly="1"/>
                             <field name="can_be_auto_exported" invisible="1" />
-                            <button name="auto_export_manual" string="Run PO export job" attrs="{'invisible': [('can_be_auto_exported', '!=', True)]}" type="object" icon="terp-camera_test" colspan="2"/>
+                            <button name="auto_export_manual" string="Run PO export job" attrs="{'invisible': ['|', ('can_be_auto_exported', '!=', True), ('doc_locked_for_sign', '=', True)]}" type="object" icon="terp-camera_test" colspan="2"/>
                             </group>
                             <field colspan="4" name="notes" nolabel="1"/>
                             <separator colspan="4" string="Message ESC"/>
@@ -553,7 +566,7 @@
                             <field name="intl_supplier_ok" invisible="1"/>
                             <label align="1.0" string="Estimated transport costs : " colspan="3"/>
                             <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
-                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
+                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
                             <label colspan="13"/>
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                         </group>
@@ -561,13 +574,13 @@
                         <field name="amount_untaxed" sum="Untaxed amount"/>
                         <field name="amount_tax"/>
                         <field name="amount_total" sum="Total amount"/>
-                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+                        <button name="button_dummy" string="Compute" type="object" icon="gtk-execute" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('doc_locked_for_sign', '=', True)]}"/>
                         <newline/>
                         <field name="functional_currency_id" readonly="1"/>
                         <field name="functional_amount_untaxed"/>
                         <field name="functional_amount_tax"/>
                         <field name="functional_amount_total"/>
-                        <button type="object" string="Remove taxes on lines" name="remove_line_tax" attrs="{'invisible': ['|', ('has_tax_at_line_level', '=', False), ('not_beyond_validated', '=', False)]}" icon="gtk-cut" confirm="Remove taxes on all PO lines ?"/>
+                        <button type="object" string="Remove taxes on lines" name="remove_line_tax" attrs="{'invisible': ['|', '|', ('has_tax_at_line_level', '=', False), ('not_beyond_validated', '=', False), ('doc_locked_for_sign', '=', True)]}" icon="gtk-cut" confirm="Remove taxes on all PO lines ?"/>
                         <newline/>
                         <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                         <newline/>
@@ -576,8 +589,8 @@
                     <group colspan="4" col="16">
                         <field name="state" readonly="1"/>
                         <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', '|',  ('state', 'not in', ['confirmed', 'confirmed_p']), ('order_type', '!=', 'direct'), '&amp;', ('dest_partner_type', 'in', ['internal', 'section', 'intermission']), ('po_version', '&gt;', 1)]}"/>
-                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc'])]}" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
-                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}"/>
+                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc']), ('doc_locked_for_sign', '=', True)]}" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
+                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel'), ('doc_locked_for_sign', '=', True)]}"/>
                         <button name="validate_lines" states="draft,draft_p" string="Validate document" type="object" icon="gtk-go-forward" help="all the lines will be Validated where this status change is feasible" />
                         <button name="confirm_lines" states="validated,validated_p" string="Confirm document" icon="gtk-go-forward" type="object" help="all the lines will be Confirmed where this status change is feasible" />
                     </group>
@@ -604,14 +617,15 @@
                         <field name="name" select="1" string="Reference"/>
                         <field name="partner_id" select="1" string="Supplier"/>
                         <field name="partner_ref" select="1" string="Supplier Ref."/>
+                        <field name="create_uid"/>
                     </group>
                     <newline/>
                     <group>
                         <field name="product_id"/>
                         <field name="origin"/>
+                        <field name="customer_ref"/>
                         <field name="dest_partner_names" />
                         <field name="details"/>
-                        <field name="create_uid"/>
                         <field name="date_order"/>
                     </group>
                     <newline/>
@@ -867,7 +881,7 @@
                                 <script type="text/javascript">
                             $('#order_line\\/select_fo_text').css('display', 'none');
                             $('#order_line\\/select_fo_open').css('display', 'none');
-                            $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
+                            $('#order_line\\/select_fo_select').css('position', 'static');
                             $('[for="order_line\\/select_fo"]').css('width', '1%%');
                             var mml_status = $('#order_line\\/mml_status').val() || $('#order_line\\/mml_status').text();
                             var msl_status = $('#order_line\\/msl_status').val() || $('#order_line\\/msl_status').text();
@@ -1067,7 +1081,7 @@
                                 <script type="text/javascript">
                             $('#order_line\\/select_fo_text').css('display', 'none');
                             $('#order_line\\/select_fo_open').css('display', 'none');
-                            $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
+                            $('#order_line\\/select_fo_select').css('position', 'static');
                             $('[for="order_line\\/select_fo"]').css('width', '1%%');
                             setTimeout("$('#error_message_unifield').css('overflow', 'visible').css('border-width', '1px').css('height', 'auto');", 500);
                             </script>

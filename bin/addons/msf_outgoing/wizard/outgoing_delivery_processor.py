@@ -44,6 +44,27 @@ class outgoing_delivery_processor(osv.osv):
     """
     Model methods
     """
+    def import_out(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No OUT selected'))
+
+        out_processor_id = self.read(cr, uid, ids[0], ['id'], context=context)['id']
+        wiz_id = self.pool.get('wizard.out.import').create(cr, uid, {'processor_id': out_processor_id}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.out.import',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
     def do_partial(self, cr, uid, ids, context=None):
         """
         Made some integrity check on lines and run the do_incoming_shipment of stock.picking
@@ -136,6 +157,12 @@ class outgoing_delivery_processor(osv.osv):
 
         self.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False}, context=context)
 
+        # Remove all KCL references from the OUT process wizard lines
+        out_m_proc_obj = self.pool.get('outgoing.delivery.move.processor')
+        out_m_proc_ids = out_m_proc_obj.search(cr, uid, [('wizard_id', 'in', ids), ('composition_list_id', '!=', False)], context=context)
+        if out_m_proc_ids:
+            out_m_proc_obj.write(cr, uid, out_m_proc_ids, {'composition_list_id': False}, context=context)
+
         return self.pool.get('stock.picking').action_process(cr, uid, pick_id, context=context)
 
     def do_save_draft(self, cr, uid, ids, context=None):
@@ -152,6 +179,7 @@ class outgoing_delivery_processor(osv.osv):
         self.write(cr, uid, ids, {'draft': True}, context=context)
 
         return {}
+
 
 outgoing_delivery_processor()
 
@@ -420,6 +448,7 @@ class outgoing_delivery_move_processor(osv.osv):
             help="Ticked if the product is a Controlled Substance",
         ),
     }
+
 
 outgoing_delivery_move_processor()
 
