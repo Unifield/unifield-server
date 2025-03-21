@@ -168,7 +168,7 @@ class transport_order(osv.osv):
                         or
                         t.supplier_partner_id is not null and sa.id is not null and t.supplier_partner_id != coalesce(sa.partner_id, 0)
                         or
-                        t.transit_partner_id is not null and t.id is not null and t.transit_partner_id != coalesce(ta.partner_id, 0)
+                        t.transit_partner_id is not null and ta.id is not null and t.transit_partner_id != coalesce(ta.partner_id, 0)
                         or
                         t.customer_partner_id is not null and ca.id is not null and t.customer_partner_id != coalesce(ca.partner_id, 0)
                     ) ''', (tuple(ids), ))  # not_a_user_entry
