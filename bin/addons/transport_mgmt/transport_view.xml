@@ -400,7 +400,7 @@
                             </group>
                             <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                                 <tree string="Lines" editable="top">
-                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [parent.customer_partner_id, context.get('parent_doc_id')])]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
+                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [[parent.customer_partner_id, parent.transit_partner_id], context.get('parent_doc_id')])]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
                                     <field name="is_split" />
                                     <field name="description" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="parcels_nb" attrs="{'readonly': [('shipment_id', '!=', False)]}" required="1"/>

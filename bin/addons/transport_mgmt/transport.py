@@ -1256,7 +1256,7 @@ class shipment(osv.osv):
             if args[0][2] and isinstance(args[0][2], list):
                 if args[0][2][0]:
                     # supplier is set
-                    domain.append(('partner_id2', '=', args[0][2][0]))
+                    domain.append(('partner_id2', 'in', args[0][2][0]))
                 elif args[0][2][1] and isinstance(args[0][2][1], int):
                     # only list IN with same partner
                     cr.execute('''
@@ -1274,6 +1274,7 @@ class shipment(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot mix partners on the same document, please review Shipments on existing lines'))
                     if list_p:
                         domain.append(('partner_id2', '=', list_p[0]))
+        print(domain)
         return domain
 
     _columns = {
