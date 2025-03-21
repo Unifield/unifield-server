@@ -211,9 +211,6 @@ class account_move_compute_currency(osv.osv):
                 j = self.pool.get('account.journal').read(cr, uid, vals.get('journal_id'), ['currency'])
                 if j and j.get('currency', False):
                     vals.update({'manual_currency_id': j.get('currency')[0]})
-                    # Add currency to context for journal items lines
-                    if not 'manual_currency_id' in context:
-                        context['manual_currency_id'] = j.get('currency')[0]
         return super(account_move_compute_currency, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -232,15 +229,8 @@ class account_move_compute_currency(osv.osv):
             journal = self.pool.get('account.journal').read(cr, uid, j_id, ['currency'])
             if journal and journal.get('currency', False):
                 vals.update({'manual_currency_id': journal.get('currency')[0], 'block_manual_currency_id': True,})
-                # Add currency to context for journal items lines
-                if not 'manual_currency_id' in context:
-                    context['manual_currency_id'] = journal.get('currency')[0]
             tmp_res = super(account_move_compute_currency, self).write(cr, uid, [m.get('id')], vals, context)
             res.append(tmp_res)
-            # Recompute account move lines debit/credit
-            if 'manual_currency_id' in vals and m.get('status') == 'manu':
-                for ml in self.pool.get('account.move.line').browse(cr, uid, m.get('line_id', []), context=context):
-                    self.pool.get('account.move.line').write(cr, uid, [ml.id], {'currency_id': vals.get('manual_currency_id'), 'debit_currency': ml.debit_currency, 'credit_currency': ml.credit_currency}, context=context)
         return res
 
 account_move_compute_currency()
