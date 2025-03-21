@@ -781,6 +781,15 @@ class transport_order_out(osv.osv):
                 data['next_partner_id'] = oto.customer_partner_id.id
                 data['next_partner_type'] = 'customer'
 
+            if data.get('next_partner_id'):
+                partner_instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
+                if data['next_partner_id'] == partner_instance_id:
+                    if data['next_partner_type'] == 'via':
+                        field_label = _('Ships Via')
+                    else:
+                        field_label = _('Customer Partner')
+                    raise osv.except_osv(_('Warning'), _('You cannot dispatch an OTO to yourself, please change the %s value') % (field_label, ))
+
             self.write(cr, uid, oto.id, data, context=context)
 
         return True
@@ -965,7 +974,7 @@ class transport_order_out_line(osv.osv):
                                                                                                                        ('done', 'Dispatched'),
                                                                                                                        ('delivered', 'Received'),
                                                                                                                        ('cancel', 'Returned')]),
-        'is_split': fields.boolean('is_split', 'Split', readonly=True, copy=False),
+        'is_split': fields.boolean('Split', readonly=True, copy=False),
         'pack_family_ids': fields.one2many('pack.family.memory', 'oto_line_id', 'Pack Family', copy=False),
         'item_ids': fields.one2many('shipment.additionalitems', 'oto_line_id', 'Additional Item', copy=False),
     }
