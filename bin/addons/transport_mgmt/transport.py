@@ -219,7 +219,7 @@ class transport_order_in(osv.osv):
                     ito.from_sync = 't' and
                     ito.id in %s and
                     not exists(select ito2.id from transport_order_in ito2 where ito2.id = ito.id and ito2.sync_ref = ito2.sync_ref and state not in ('closed', 'done'))
-            ''', (tuple(ids), ), debug=True)
+            ''', (tuple(ids), ))
         for _id in cr.fetchall():
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'transport.order.in', _id[0], {},
                                                                                   'transport.order.out.closed_by_sync', False, check_identifier=False, context=context, force_domain=True)
@@ -300,7 +300,7 @@ class transport_order_in(osv.osv):
                 ito_line_info = {}
                 if line.get('shipment_id') and line.get('shipment_id').get('name'):
                     in_ref = '%s.%s' % (source, line['shipment_id']['name'])
-                    in_ids = self.pool.get('stock.picking').search(cr, uid, [('name', '=', in_ref), ('type', '=', 'in')], context=context)
+                    in_ids = self.pool.get('stock.picking').search(cr, uid, [('shipment_ref', '=', in_ref), ('type', '=', 'in')], context=context)
                     if in_ids:
                         ito_line_info['incoming_id'] = in_ids[0]
                     ito_line_info['description'] = in_ref
@@ -476,6 +476,8 @@ class transport_order_in(osv.osv):
         return self.button_process_lines(cr, uid, ids, context=None)
 
     def button_process_lines(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         new_id = self.copy_all(cr, uid, ids, context=context)
         if not new_id:
             return True
@@ -611,7 +613,7 @@ class transport_order_in(osv.osv):
                 new_id = self.pool.get('transport.order.out').create(cr, uid, data, context=context)
                 self.write(cr, uid, x['id'], {'oto_created': True, 'oto_id': new_id}, context=context)
                 oto_name = self.pool.get('transport.order.out').read(cr, uid, new_id, ['name'], context=context)['name']
-                self.pool.get('transport.order.out').log(cr, uid, new_id, _('OTO %s created') % (oto_name), context=context)
+                self.pool.get('transport.order.out').log(cr, uid, new_id, _('OTO %s created') % (oto_name), action_xmlid='transport_mgmt.transport_order_out_action')
 
         return True
 
