@@ -27,6 +27,7 @@ class signature_follow_up(osv.osv):
                         when so.procurement_request = 't' then 'sale.order.ir'
                         when so.procurement_request = 'f' then 'sale.order.fo'
                         when pick.type = 'in' and pick.subtype = 'standard' then 'stock.picking.in'
+                        when pick.type = 'internal' and pick.subtype = 'standard' then 'stock.picking.int'
                         when pick.type = 'out' and pick.subtype = 'standard' then 'stock.picking.out'
                         when pick.type = 'out' and pick.subtype = 'picking' then 'stock.picking.pick'
                         else s.signature_res_model end as doc_type,
@@ -86,7 +87,8 @@ class signature_follow_up(osv.osv):
             context = {}
         res = {}
 
-        need_closed = ['sale.order.fo', 'sale.order.ir', 'purchase.order', 'stock.picking.in', 'stock.picking.out', 'stock.picking.pick']
+        need_closed = ['sale.order.fo', 'sale.order.ir', 'purchase.order', 'stock.picking.in', 'stock.picking.int',
+                       'stock.picking.out', 'stock.picking.pick']
         for sign_fup in self.browse(cr, uid, ids, fields_to_fetch=['doc_type', 'doc_state', 'doc_id'], context=context):
             if sign_fup.doc_type == 'purchase.order' and sign_fup.doc_state == 'confirmed':
                 res[sign_fup.id] = 'confirmed_po'
@@ -111,8 +113,9 @@ class signature_follow_up(osv.osv):
             ('sale.order.ir', 'Internal Request (IR)'), ('account.bank.statement.cash', 'Cash Register'),
             ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.cheque', 'Cheque Register'),
             ('account.invoice.si', 'Supplier Invoice (SI)'), ('account.invoice.donation', 'Donation'),
-            ('stock.picking.in', 'Incoming Shipment (IN)'), ('stock.picking.out', 'Delivery Order (Out)'),
-            ('stock.picking.pick', 'Picking Ticket (Pick)'), ('physical.inventory', 'Physical Inventory (PI)')
+            ('stock.picking.in', 'Incoming Shipment (IN)'), ('stock.picking.int', 'Internal Move (INT)'),
+            ('stock.picking.out', 'Delivery Order (Out)'), ('stock.picking.pick', 'Picking Ticket (Pick)'),
+            ('physical.inventory', 'Physical Inventory (PI)')
         ], 'Document Type', readonly=1),
         'doc_id': fields.integer('Doc ID', readonly=1),
         'status': fields.selection([('open', 'Unsigned'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
@@ -137,6 +140,7 @@ class signature_follow_up(osv.osv):
             'account.invoice.si': 'account.action_invoice_tree2',
             'account.invoice.donation': 'account_override.action_inkind_donation',
             'stock.picking.in': 'stock.action_picking_tree4',
+            'stock.picking.int': 'stock.action_picking_tree6',
             'stock.picking.out': 'stock.action_picking_tree',
             'stock.picking.pick': 'msf_outgoing.action_picking_ticket',
             'physical.inventory': 'stock.action_physical_inventory',

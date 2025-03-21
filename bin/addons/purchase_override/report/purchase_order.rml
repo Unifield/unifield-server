@@ -787,7 +787,7 @@
                     <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'mr', 'backup') ]]Mission Responsible</para>
                 </td>
                 <td>
-                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'hq', 'backup') ]]HQ</para>
+                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'hq', 'backup') ]]HQ Responsible</para>
                 </td>
             </tr>
             <tr>
