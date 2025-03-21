@@ -184,7 +184,7 @@ else:
 </Row>
 ## requested date
 <Row>
-    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Requested date:')|x}</Data></Cell>
+    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Requested Delivery date:')|x}</Data></Cell>
 <% dt = parse_date_xls(o.requested_date) %>
 % if dt:
     <Cell ss:StyleID="short_date"${merge_accross}><Data ss:Type="DateTime">${dt|n}</Data></Cell>
@@ -194,7 +194,7 @@ else:
 </Row>
 ## confirmed date
 <Row>
-    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Confirmed date:')|x}</Data></Cell>
+    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Confirmed Delivery date:')|x}</Data></Cell>
 <% dt = parse_date_xls(o.confirmed_date) %>
 % if dt:
     <Cell ss:StyleID="short_date"${merge_accross}><Data ss:Type="DateTime">${dt|n}</Data></Cell>
