@@ -293,6 +293,13 @@
             auto="False"
             menu="True" />
 
+    <report id="asset_register_report_landscape"
+                string="Fixed Assets Register PDF"
+                model="product.asset"
+                name="asset.register.report.landscape"
+                rml="product_asset/report/asset_register_report_landscape.rml"
+                auto="False"
+                menu="True" />
 
     <!-- Assets in SALES>Products -->
     <menuitem id="menu_asset_sales" name="Assets" parent="account.menu_finance_periodical_processing" sequence="20" active_config="fixed_asset_ok"/>

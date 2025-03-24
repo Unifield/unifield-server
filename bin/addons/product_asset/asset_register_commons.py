@@ -46,13 +46,41 @@ class asset_register_commons(osv.osv):
         current_period_id = period_obj.find(cr, uid)[0]
         current_period = current_period_id and period_obj.browse(cr, uid, current_period_id, context=context).name or ''
 
+
         filename = '_'.join(('Fixed Assets Register', prop_instance, datetime.now().strftime("%Y%m%d")))
+
+        row_headers = [
+            (_('Asset code')),
+            (_('Capitalization Entry sequence')),
+            (_('Capitalization Period')),
+            (_('Product code')),
+            (_('Product Description')),
+            (_('Serial Number')),
+            (_('Instance creator')),
+            (_('Instance of use')),
+            (_('Analytic distribution')),
+            (_('Asset type')),
+            (_('Useful life')),
+            (_('Booking Currency')),
+            (_('Initial Value Booking Curr.')),
+            (_('Accumulated Depr. Booking Curr.')),
+            (_('Remaining net value Booking Currency')),
+            (_('Remaining net value Func. Currency')),
+            (_('Fixed Asset Status')),
+            (_('External Asset ID')),
+        ]
+
+        asset_fields = ['name', 'move_line_id', 'prod_int_code', 'prod_int_name', 'serial_nb', 'instance_id',
+                        'used_instance_id', 'analytic_distribution_id', 'asset_type_id', 'useful_life_id',
+                        'invo_currency', 'invo_value', 'depreciation_amount', 'disposal_amount', 'state',
+                        'external_asset_id']
 
         draft_asset_ids = asset_obj.search(cr, uid, [('state', '=', 'draft')], context=context)
         open_asset_ids = asset_obj.search(cr, uid, [('state', '=', 'open')], context=context)
         active_asset_ids = asset_obj.search(cr, uid, [('state', '=', 'running')], context=context)
         depreciated_asset_ids = asset_obj.search(cr, uid, [('state', '=', 'depreciated')], context=context)
         disposed_asset_ids = asset_obj.search(cr, uid, [('state', '=', 'disposed')], context=context)
+        sorted_asset_ids = [*draft_asset_ids, *open_asset_ids, *active_asset_ids, *depreciated_asset_ids, *disposed_asset_ids]
 
         data = {
             'draft_asset_ids': draft_asset_ids or [],
@@ -60,10 +88,13 @@ class asset_register_commons(osv.osv):
             'active_asset_ids': active_asset_ids or [],
             'depreciated_asset_ids': depreciated_asset_ids or [],
             'disposed_asset_ids': disposed_asset_ids or [],
+            'sorted_asset_ids': sorted_asset_ids or [],
             'model': 'product.asset',
             'context': context,
             'filename': filename,
             'prop_instance': prop_instance,
+            'headers': row_headers,
+            'asset_fields': asset_fields,
             'func_currency': func_currency,
             'func_currency_id': func_currency_id,
             'report_date': date,
