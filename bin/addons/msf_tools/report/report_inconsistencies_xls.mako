@@ -105,7 +105,7 @@
                   <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['internationnal_status_code_name'] or ''|x}</Data></Cell>
                   <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['uf_status_code']|x}</Data></Cell>
                   <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['ud_status_code'] or ''|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl['standard_ok'] or ''|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod['prod_standard_ok']  or ''|x}</Data></Cell>
                   <Cell ss:StyleID="tab_content"><Data ss:Type="String">${_('Active') if smrl['active'] else _('Inactive')|x}</Data></Cell>
                 </Row>
             % endfor

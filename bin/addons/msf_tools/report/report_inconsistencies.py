@@ -208,7 +208,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     smrl.product_state,
                     smrl.state_ud,
                     smrl.product_active,
-                    smrl.standard_ok,
                     instance.level,
                     pp.id,
                     pp.international_status,
@@ -229,8 +228,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     smrl.full_view='f' AND
                     smr.instance_id != %s AND
                     (coalesce(ps.code, '') != coalesce(smrl.product_state, '') OR
-                    pp.state_ud != smrl.state_ud OR pp.active != smrl.product_active OR
-                    (smrl.standard_ok != '' AND pp.standard_ok != smrl.standard_ok))
+                    pp.state_ud != smrl.state_ud OR pp.active != smrl.product_active)
 
                 ORDER BY
                     pp.default_code, il.ordering, smr.name
@@ -265,7 +263,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                 'uf_status_code',
                 'ud_status_code',
                 'active',
-                'standard_ok',
                 'instance_level',
                 'product_id',
                 'product_international_status',
@@ -306,7 +303,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                 # tweak results to display string instead of codes
                 smrl['uf_status_code'] = smrl['uf_status_code'] and self.get_uf_status(smrl['uf_status_code']) or ''
                 smrl['ud_status_code'] = smrl['ud_status_code'] and self.get_ud_status(smrl['ud_status_code']) or ''
-                smrl['standard_ok'] = smrl['standard_ok'] in standard_ok_dict and standard_ok_dict[smrl['standard_ok']] or ''
                 smrl['internationnal_status_code_name'] = smrl['internationnal_status_code_name'] and intl_status_code_name[smrl['internationnal_status_code_name']] or ''
 
                 smrl_list = self.inconsistent[product_id]['smrl_list']
