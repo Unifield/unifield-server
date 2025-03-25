@@ -160,13 +160,13 @@ class asset_parser(XlsxReportParser):
         total_val_cell.style = total_style
         empty_total_cell = WriteOnlyCell(sheet, value='')
         empty_total_cell.style = total_style
-        total_init_value_cell = WriteOnlyCell(sheet, value=init_value)
+        total_init_value_cell = WriteOnlyCell(sheet, value='%.2f' % init_value)
         total_init_value_cell.style = total_style
-        total_accumul_depr_cell = WriteOnlyCell(sheet, value=accumulated_depreciation)
+        total_accumul_depr_cell = WriteOnlyCell(sheet, value='%.2f' % accumulated_depreciation)
         total_accumul_depr_cell.style = total_style
-        remain_net_value_book_cell = WriteOnlyCell(sheet, value=remain_net_value_book)
+        remain_net_value_book_cell = WriteOnlyCell(sheet, value='%.2f' % remain_net_value_book)
         remain_net_value_book_cell.style = total_style
-        remain_net_value_func_cell = WriteOnlyCell(sheet, value=remain_net_value_func)
+        remain_net_value_func_cell = WriteOnlyCell(sheet, value='%.2f' % remain_net_value_func)
         remain_net_value_func_cell.style = total_style
         last_empty_cell = WriteOnlyCell(sheet, value='')
         total_style.border = Border(top=medium, left=thin, right=medium, bottom=medium)
