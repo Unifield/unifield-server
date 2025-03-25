@@ -162,7 +162,7 @@ class asset_parser(XlsxReportParser):
         empty_total_cell.style = total_style
         total_init_value_cell = WriteOnlyCell(sheet, value=init_value)
         total_init_value_cell.style = total_style
-        total_accumul_depr_cell = WriteOnlyCell(sheet, value=init_value)
+        total_accumul_depr_cell = WriteOnlyCell(sheet, value=accumulated_depreciation)
         total_accumul_depr_cell.style = total_style
         remain_net_value_book_cell = WriteOnlyCell(sheet, value=remain_net_value_book)
         remain_net_value_book_cell.style = total_style
