@@ -285,19 +285,20 @@
     </record>
 
     <report id="asset_register_report_xlsx"
-            string="Fixed Assets Register"
+            string="Export Fixed Assets Register Xlsx"
             model="product.asset"
             name="asset.register.report.xlsx"
             report_type="openpyxl"
-            target_filename="${_('Fixed_Assets_Register')}"
+            target_filename="${_('Fixed_Assets_Register')}_%(instance)s_%(year)s%(month)s%(day)s"
             auto="False"
             menu="True" />
 
     <report id="asset_register_report_landscape"
-                string="Fixed Assets Register PDF"
+                string="Export Fixed Assets Register PDF"
                 model="product.asset"
                 name="asset.register.report.landscape"
                 rml="product_asset/report/asset_register_report_landscape.rml"
+                target_filename="${_('Fixed_Assets_Register')}_%(instance)s_%(year)s%(month)s%(day)s"
                 auto="False"
                 menu="True" />
 
