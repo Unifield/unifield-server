@@ -30,6 +30,29 @@ from datetime import datetime
 class asset_register_commons(osv.osv):
     _name = 'asset.register.commons'
 
+    def get_asset_ad(self, asset):
+        asset_ad = ''
+        ads = []
+        if asset.analytic_distribution_id and asset.analytic_distribution_id.funding_pool_lines:
+            for fp_line in asset.analytic_distribution_id.funding_pool_lines:
+                cc_code = fp_line.cost_center_id.code
+                dest_code = fp_line.destination_id.code
+                fp_code = fp_line.analytic_id.code
+                percentage = str(fp_line.percentage)
+                line_ad = '; '.join([cc_code, dest_code, fp_code, percentage])
+                ads.append(line_ad)
+            asset_ad = ' / '.join(ads)
+        return asset_ad
+
+    def format_asset_state(self, state):
+        states = {
+            'draft': _('Draft'),
+            'open': _('Open'),
+            'running': _('Active'),
+            'depreciated': _('Fully Depreciated'),
+            'disposed': _('Disposed')}
+        return states.get(state, '')
+
     def get_asset_register_data(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -83,11 +106,6 @@ class asset_register_commons(osv.osv):
         sorted_asset_ids = [*draft_asset_ids, *open_asset_ids, *active_asset_ids, *depreciated_asset_ids, *disposed_asset_ids]
 
         data = {
-            'draft_asset_ids': draft_asset_ids or [],
-            'open_asset_ids': open_asset_ids or [],
-            'active_asset_ids': active_asset_ids or [],
-            'depreciated_asset_ids': depreciated_asset_ids or [],
-            'disposed_asset_ids': disposed_asset_ids or [],
             'sorted_asset_ids': sorted_asset_ids or [],
             'model': 'product.asset',
             'context': context,

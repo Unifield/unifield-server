@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from tools import misc
 from tools.translate import _
-from openpyxl.utils.cell import column_index_from_string, get_column_letter
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Border, Side
 
@@ -14,7 +11,8 @@ class asset_parser(XlsxReportParser):
 
     def generate(self, context=None):
         asset_obj = self.pool.get('product.asset')
-        reg_data = self.pool.get('asset.register.commons').get_asset_register_data(self.cr, self.uid, self.uid, context=context)
+        commons_obj = self.pool.get('asset.register.commons')
+        reg_data = commons_obj.get_asset_register_data(self.cr, self.uid, self.uid, context=context)
 
         asset_count = 0
         init_value = 0
@@ -84,26 +82,7 @@ class asset_parser(XlsxReportParser):
 
         sheet.append([])
 
-        row_headers = [
-            (_('Asset code')),
-            (_('Capitalization Entry sequence')),
-            (_('Capitalization Period')),
-            (_('Product code')),
-            (_('Product Description')),
-            (_('Serial Number')),
-            (_('Instance creator')),
-            (_('Instance of use')),
-            (_('Analytic distribution')),
-            (_('Asset type')),
-            (_('Useful life')),
-            (_('Booking Currency')),
-            (_('Initial Value Booking Curr.')),
-            (_('Accumulated Depr. Booking Curr.')),
-            (_('Remaining net value Booking Currency')),
-            (_('Remaining net value Func. Currency')),
-            (_('Fixed Asset Status')),
-            (_('External Asset ID')),
-        ]
+        row_headers = reg_data.get('headers', [])
 
         header_row = []
         for header in row_headers:
@@ -114,17 +93,9 @@ class asset_parser(XlsxReportParser):
             header_row.append(cell_t)
         sheet.append(header_row)
 
-        asset_fields = ['name', 'move_line_id', 'prod_int_code', 'prod_int_name', 'serial_nb', 'instance_id',
-                        'used_instance_id', 'analytic_distribution_id', 'asset_type_id', 'useful_life_id',
-                        'invo_currency', 'invo_value', 'depreciation_amount', 'disposal_amount', 'state',
-                        'external_asset_id']
+        asset_fields = reg_data.get('asset_fields')
 
-        sorted_assets = [*(reg_data.get('draft_asset_ids', [])),
-                         *(reg_data.get('open_asset_ids', [])),
-                         *(reg_data.get('active_asset_ids', [])),
-                         *(reg_data.get('running_asset_ids', [])),
-                         *(reg_data.get('depreciated_asset_ids', [])),
-                         *(reg_data.get('disposed_asset_ids', []))]
+        sorted_assets = reg_data.get('sorted_asset_ids', [])
 
         for asset_id in sorted_assets:
             asset_count += 1
@@ -149,18 +120,7 @@ class asset_parser(XlsxReportParser):
                 if field == _('Instance of use'):
                     cell_value = asset.used_instance_id and asset.used_instance_id.instance or ''
                 if field == _('Analytic distribution'):
-                    asset_ad = ''
-                    ads = []
-                    if asset.analytic_distribution_id and asset.analytic_distribution_id.funding_pool_lines:
-                        for fp_line in asset.analytic_distribution_id.funding_pool_lines:
-                            cc_code = fp_line.cost_center_id.code
-                            dest_code = fp_line.destination_id.code
-                            fp_code = fp_line.analytic_id.code
-                            percentage = str(fp_line.percentage)
-                            line_ad = ';'.join([cc_code, dest_code , fp_code, percentage])
-                            ads.append(line_ad)
-                        asset_ad = ' | '.join(ads)
-                    cell_value = asset_ad
+                    cell_value = commons_obj.get_asset_ad(asset) or ''
                 if field == _('Asset type'):
                     cell_value = asset.asset_type_id and asset.asset_type_id.name or ''
                 if field == _('Useful life'):
@@ -182,7 +142,7 @@ class asset_parser(XlsxReportParser):
                     cell_value = func_amount
                     remain_net_value_func += func_amount
                 if field == _('Fixed Asset Status'):
-                    cell_value = asset.state or ''
+                    cell_value = commons_obj.format_asset_state(asset.state) or ''
                 if field == _('External Asset ID'):
                     cell_value = asset.external_asset_id or ''
 

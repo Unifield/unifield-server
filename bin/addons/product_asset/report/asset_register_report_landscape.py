@@ -13,37 +13,15 @@ class asset_register_report_landscape(report_sxw.rml_parse):
         self.cr = cr
         self.uid = uid
         self.localcontext.update({
-            'get_data': self._get_data,
-            'all_assets': self._all_assets,
+            'get_data': self.get_data,
+            'all_assets': self.all_assets,
         })
 
-    def _get_data(self):
+    def get_data(self):
         return self.pool.get('asset.register.commons').get_asset_register_data(self.cr, self.uid, self.uid, context= self.context)
 
-    def _get_asset_ad(self, asset):
-        asset_ad = ''
-        ads = []
-        if asset.analytic_distribution_id and asset.analytic_distribution_id.funding_pool_lines:
-            for fp_line in asset.analytic_distribution_id.funding_pool_lines:
-                cc_code = fp_line.cost_center_id.code
-                dest_code = fp_line.destination_id.code
-                fp_code = fp_line.analytic_id.code
-                percentage = str(fp_line.percentage)
-                line_ad = '; '.join([cc_code, dest_code, fp_code, percentage])
-                ads.append(line_ad)
-            asset_ad = ' \n/\n '.join(ads)
-        return asset_ad
-
-    def _format_asset_state(self, state):
-        states = {
-            'draft': _('Draft'),
-            'open': _('Open'),
-            'running': _('Active'),
-            'depreciated': _('Fully Depreciated'),
-            'disposed': _('Disposed')}
-        return states.get(state, '')
-
     def format_data(self, asset):
+        commons_obj = self.pool.get('asset.register.commons')
         booking_rate = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id,
                                                     fields_to_fetch=['rate'], context=None).rate
         format_data = {
@@ -55,7 +33,7 @@ class asset_register_report_landscape(report_sxw.rml_parse):
             'serial_number': asset.serial_nb or '',
             'instance_creator': asset.instance_id and asset.instance_id.instance or '',
             'instance_use': asset.used_instance_id and asset.used_instance_id.instance or '',
-            'ad': self._get_asset_ad(asset),
+            'ad': commons_obj.get_asset_ad(asset),
             'asset_type': asset.asset_type_id and asset.asset_type_id.name or '',
             'useful_life': asset.useful_life_id and asset.useful_life_id.year or '',
             'booking_currency': asset.invo_currency and asset.invo_currency.name or '',
@@ -63,17 +41,18 @@ class asset_register_report_landscape(report_sxw.rml_parse):
             'depreciation_amount': asset.depreciation_amount,
             'book_remaining_value': asset.disposal_amount,
             'func_remaining_value': asset.disposal_amount / booking_rate,
-            'state': self._format_asset_state(asset.state),
+            'state': commons_obj.format_asset_state(asset.state),
             'external_asset_id': asset.external_asset_id or '',
         }
         return format_data
 
-    def _all_assets(self):
+    def all_assets(self):
         """
-        Returns the assets to be displayed in the report as a list of product.assets browse records
+        Returns the assets to be displayed in the report as a list of product.assets browse records +
+        Compute the totals fields
         """
         asset_obj = self.pool.get('product.asset')
-        data = self._get_data()
+        data = self.get_data()
         to_display = []
         asset_count = 0
         total_init_value = 0
