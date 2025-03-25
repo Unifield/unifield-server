@@ -177,8 +177,8 @@ class asset_parser(XlsxReportParser):
                     cell_value = asset.disposal_amount
                     remain_net_value_book += asset.disposal_amount
                 if field == _('Remaining net value Func. Currency'):
-                    rate = self.pool.get('res.currency').browse(self.cr, self.uid, reg_data.get('func_currency_id'), fields_to_fetch=['rate'], context=context).rate
-                    func_amount = asset.disposal_amount * rate
+                    booking_rate = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id, fields_to_fetch=['rate'], context=context).rate
+                    func_amount = asset.disposal_amount / booking_rate
                     cell_value = func_amount
                     remain_net_value_func += func_amount
                 if field == _('Fixed Asset Status'):
