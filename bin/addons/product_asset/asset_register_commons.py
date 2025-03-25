@@ -42,7 +42,7 @@ class asset_register_commons(osv.osv):
         prop_instance = company and company.name or ''
         func_currency = company and company.currency_id.name or ''
         func_currency_id = company and company.currency_id.id
-        date = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        date = datetime.now().strftime("%d-%m-%Y %H:%M")
         current_period_id = period_obj.find(cr, uid)[0]
         current_period = current_period_id and period_obj.browse(cr, uid, current_period_id, context=context).name or ''
 
