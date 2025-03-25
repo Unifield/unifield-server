@@ -233,7 +233,7 @@
                 <para style="terp_tblheader_General_Centre">Summary: Total</para>
             </td>
             <td>
-                <para style="terp_tblheader_Details_Right">[[ str(all_assets() and all_assets()[1].get('asset_counts', 0)) ]]</para>
+                <para style="terp_tblheader_Details_Right">[[ str(all_assets() and all_assets()[1].get('asset_count', 0)) ]]</para>
             </td>
             <td>
                 <para style="terp_tblheader_General_Centre"></para>
