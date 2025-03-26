@@ -77,7 +77,7 @@ class asset_parser(XlsxReportParser):
         period_val_cell = WriteOnlyCell(sheet, value=reg_data.get('current_period',''))
         report_infos_value_style.border = Border(top=thin, left=thin, right=thin, bottom=medium)
         period_val_cell.style = report_infos_value_style
-        row2.extend([curr_cell, curr_val_cell, '', '', cell_title] + ([''] * 11) + [period_cell, period_val_cell])
+        row2.extend([curr_cell, curr_val_cell, '', '', cell_title] + ([empty_title_cell] * 9) + ([''] * 2) + [period_cell, period_val_cell])
         sheet.append(row2)
 
         sheet.append([])
