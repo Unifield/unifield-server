@@ -142,7 +142,7 @@ class asset_parser(XlsxReportParser):
                     cell_value = func_amount
                     remain_net_value_func += func_amount
                 if field == _('Fixed Asset Status'):
-                    cell_value = commons_obj.format_asset_state(asset.state) or ''
+                    cell_value = commons_obj.format_asset_state(asset.state, context=context) or ''
                 if field == _('External Asset ID'):
                     cell_value = asset.external_asset_id or ''
 

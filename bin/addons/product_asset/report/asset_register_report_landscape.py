@@ -23,7 +23,7 @@ class asset_register_report_landscape(report_sxw.rml_parse):
     def format_data(self, asset):
         commons_obj = self.pool.get('asset.register.commons')
         booking_rate = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id,
-                                                    fields_to_fetch=['rate'], context=None).rate
+                                                    fields_to_fetch=['rate'], context=self.context).rate
         format_data = {
             'asset_name': asset.name,
             'ji_entry_sequence': asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or '',
@@ -41,7 +41,7 @@ class asset_register_report_landscape(report_sxw.rml_parse):
             'depreciation_amount': asset.depreciation_amount,
             'book_remaining_value': asset.disposal_amount,
             'func_remaining_value': asset.disposal_amount / booking_rate,
-            'state': commons_obj.format_asset_state(asset.state),
+            'state': commons_obj.format_asset_state(asset.state, context=self.context),
             'external_asset_id': asset.external_asset_id or '',
         }
         return format_data

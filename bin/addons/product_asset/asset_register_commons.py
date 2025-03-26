@@ -44,7 +44,9 @@ class asset_register_commons(osv.osv):
             asset_ad = ' / '.join(ads)
         return asset_ad
 
-    def format_asset_state(self, state):
+    def format_asset_state(self, state, context=None):
+        if context is None:
+            context = {}
         states = {
             'draft': _('Draft'),
             'open': _('Open'),
