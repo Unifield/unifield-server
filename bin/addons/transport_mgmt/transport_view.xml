@@ -156,13 +156,13 @@
                                 <field name="transport_partner_id" />
                                 <field name="transport_mode" />
                                 <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
-                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id)]" />
+                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
                             <separator colspan="4" string="Transit" />
                             <separator colspan="4" string="Customer" />
                                 <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
-                                <field name="transit_address_id" domain="[('partner_id', '=', transit_address_id)]"/>
-                                <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)"/>
-                                <field name="customer_address_id" domain="[('partner_id', '=', customer_address_id)]"/>
+                                <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
+                                <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" domain="['|', ('customer', '=', True), '('is_instance', '=', True)]"/>
+                                <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
                                 <group colspan="2" col="4">
                                     <field name="departure_date" />
                                     <field name="arrival_planned_date" />
@@ -382,13 +382,13 @@
                             <separator colspan="4" string="Shipping" />
                                 <field name="transport_partner_id" />
                                 <field name="transport_mode" />
-                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id)]" colspan="2"/>
+                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id),('partner_id', '!=', False)]" colspan="2"/>
                             <separator colspan="4" string="Transit" />
                             <separator colspan="4" string="Customer" />
                                 <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
-                                <field name="transit_address_id" domain="[('partner_id', '=', transit_address_id)]"/>
+                                <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
                                 <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
-                                <field name="customer_address_id" domain="[('partner_id', '=', customer_address_id)]"/>
+                                <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id),('partner_id', '!=', False)]"/>
                                 <group colspan="2" col="4">
                                     <field name="departure_date" />
                                     <field name="arrival_planned_date" />
