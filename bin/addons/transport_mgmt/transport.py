@@ -105,7 +105,7 @@ class transport_order(osv.osv):
         'post2_transport_partner_id': fields.many2one('res.partner', 'Post Transit 2nd Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
         'post2_transport_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit 2nd Transport Mode'),
 
-        'transport_po_id': fields.many2one('purchase.order', 'Transport PO', domain=[('categ', '=', 'transport')]),
+        'transport_po_id': fields.many2one('purchase.order', 'Transport PO', domain=[('categ', '=', 'transport')], context={'po_from_transport': True}),
 
         'supplier_partner_id': fields.many2one('res.partner', 'Supplier Partner', domain=[('supplier', '=', True)], select=1, ondelete='restrict'),
         'supplier_address_id': fields.many2one('res.partner.address', 'Supplier Address', select=1, ondelete='restrict'),
