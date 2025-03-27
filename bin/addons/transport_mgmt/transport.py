@@ -932,7 +932,7 @@ class transport_order_in_line(osv.osv):
 
     _columns = {
         'transport_id': fields.many2one('transport.order.in', 'Transport', required=True, select=True, join=True, ondelete='cascade'),
-        'incoming_id': fields.many2one('stock.picking', 'Incoming', select=1, domain=[('type', '=', 'in')], join='LEFT'),
+        'incoming_id': fields.many2one('stock.picking', 'Incoming', select=1, domain=[('type', '=', 'in')], join='LEFT',  context={'pick_type': 'incoming', 'from_transport': 1}),
 
         'process_parcels_nb': fields.integer_null('Number of Parcels'),
         'process_volume': fields.float_null('Volume [dm3]', digits=(16,2)),

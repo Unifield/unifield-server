@@ -2183,7 +2183,7 @@ class stock_picking(osv.osv):
 
         res = super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # US-688 Do not show the button new, duplicate in the tree and form view of picking
-        if view_type in ['tree', 'form'] and res['name'] in ['picking.ticket.form', 'picking.ticket.tree']:
+        if view_type in ['tree', 'form'] and (res['name'] in ['picking.ticket.form', 'picking.ticket.tree'] or context.get('from_transport')):
             root = etree.fromstring(res['arch'])
             root.set('hide_new_button', 'True')
             root.set('hide_delete_button', 'True')
