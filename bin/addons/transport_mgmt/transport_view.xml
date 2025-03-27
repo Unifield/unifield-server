@@ -151,26 +151,44 @@
                     <notebook colspan="4">
                         <page string="Transport Object">
                             <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
-                            <separator colspan="4" string="Transporter" />
-                            <separator colspan="4" string="Shipping" />
-                                <field name="transport_partner_id" />
-                                <field name="transport_mode" />
-                                <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
-                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
-                            <separator colspan="4" string="Transit" />
-                            <separator colspan="4" string="Customer" />
-                                <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
-                                <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
-                                <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" domain="['|', ('customer', '=', True), '('is_instance', '=', True)]"/>
-                                <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
-                                <group colspan="2" col="4">
-                                    <field name="departure_date" />
-                                    <field name="arrival_planned_date" />
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Transit" />
+                                    <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
+                                    <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
+                                    <group colspan="4" col="4">
+                                        <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                        <field name="transit_arrival_planned_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                    </group>
                                 </group>
-                                <field name="transport_po_id" />
-                                <field name="incoterm_type" />
-                                <field name="incoterm_location" />
-                                <field name="notify_partner_id" />
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Shipping" />
+                                    <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
+                                    <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
+                                </group>
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Transporter" />
+                                    <field name="transport_partner_id" />
+                                    <field name="transport_mode" />
+                                    <group colspan="4" col="4" attrs="{'invisible': [('transit_partner_id', '=', False)]}">
+                                        <field name="post_transport_partner_id" />
+                                        <field name="post_transport_mode" />
+                                        <field name="post2_transport_partner_id" />
+                                        <field name="post2_transport_mode" />
+                                    </group>
+                                    <group colspan="2" col="4">
+                                        <field name="departure_date" />
+                                        <field name="arrival_planned_date" />
+                                    </group>
+                                    <field name="transport_po_id" />
+                                    <field name="notify_partner_id" />
+                                </group>
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Customer" />
+                                    <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" domain="['|', ('customer', '=', True), '('is_instance', '=', True)]"/>
+                                    <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
+                                    <field name="incoterm_type" />
+                                    <field name="incoterm_location" />
+                                </group>
                             </group>
                             <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                                 <tree string="Lines" editable="top">
@@ -378,26 +396,46 @@
                     <notebook colspan="4">
                         <page string="Transport Object">
                             <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
-                            <separator colspan="4" string="Transporter"  />
-                            <separator colspan="4" string="Shipping" />
-                                <field name="transport_partner_id" />
-                                <field name="transport_mode" />
-                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id),('partner_id', '!=', False)]" colspan="2"/>
-                            <separator colspan="4" string="Transit" />
-                            <separator colspan="4" string="Customer" />
-                                <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
-                                <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
-                                <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
-                                <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id),('partner_id', '!=', False)]"/>
-                                <group colspan="2" col="4">
-                                    <field name="departure_date" />
-                                    <field name="arrival_planned_date" />
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Transit" />
+                                    <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
+                                    <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
+                                    <group colspan="4" col="4">
+                                        <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                        <field name="transit_arrival_planned_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                    </group>
                                 </group>
-                                <field name="transport_po_id" />
-                                <field name="incoterm_type" />
-                                <field name="incoterm_location" />
-                                <field name="notify_partner_id" />
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Shipping" />
+                                    <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id),('partner_id', '!=', False)]" colspan="2"/>
+                                </group>
+
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Transporter" />
+                                    <field name="transport_partner_id" />
+                                    <field name="transport_mode" />
+                                    <group colspan="4" col="4" attrs="{'invisible': [('transit_partner_id', '=', False)]}">
+                                        <field name="post_transport_partner_id" />
+                                        <field name="post_transport_mode" />
+                                        <field name="post2_transport_partner_id" />
+                                        <field name="post2_transport_mode" />
+                                    </group>
+                                    <group colspan="2" col="4">
+                                        <field name="departure_date" />
+                                        <field name="arrival_planned_date" />
+                                    </group>
+                                    <field name="transport_po_id" />
+                                    <field name="notify_partner_id" />
+                                </group>
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Customer" />
+                                    <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
+                                    <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
+                                    <field name="incoterm_type" />
+                                    <field name="incoterm_location" />
+                                </group>
                             </group>
+
                             <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                                 <tree string="Lines" editable="top">
                                     <field name="shipment_id" domain="[('oto_line_domain', '=', [[parent.customer_partner_id, parent.transit_partner_id], context.get('parent_doc_id')])]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
