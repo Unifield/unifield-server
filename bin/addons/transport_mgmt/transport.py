@@ -694,7 +694,7 @@ class transport_order_out(osv.osv):
                 transport_order_out oto
                 inner join transport_order_out_line line on oto.id = line.transport_id
                 inner join shipment ship on line.shipment_id = ship.id
-                left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split and pack.oto_line_id = line.id or not line.is_split)
+                left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split_or_cancel and pack.oto_line_id = line.id or not line.is_split_or_cancel)
             where
                 oto.id in %s and
                 oto.state = 'planned'
@@ -717,7 +717,7 @@ class transport_order_out(osv.osv):
                 transport_order_out oto
                 inner join transport_order_out_line line on oto.id = line.transport_id
                 inner join shipment ship on line.shipment_id = ship.id
-                left join shipment_additionalitems add on add.shipment_id = ship.id and (line.is_split and add.oto_line_id = line.id or not line.is_split)
+                left join shipment_additionalitems add on add.shipment_id = ship.id and (line.is_split_or_cancel and add.oto_line_id = line.id or not line.is_split_or_cancel)
             where
                 oto.id in %s and
                 oto.state = 'planned'
@@ -866,7 +866,7 @@ class transport_order_out(osv.osv):
         line_obj = self.pool.get('transport.order.out.line')
         line_ids = line_obj.search(cr, uid, [('transport_id', 'in', ids)], context=context)
         if line_ids:
-            line_obj.write(cr, uid, line_ids, {'is_split': True}, context=context)
+            line_obj.write(cr, uid, line_ids, {'is_split_or_cancel': True}, context=context)
             cr.execute("update pack_family_memory set oto_line_id=null where oto_line_id in %s", (tuple(line_ids), ))
             cr.execute("update shipment_additionalitems set oto_line_id=null where oto_line_id in %s", (tuple(line_ids), ))
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -1019,6 +1019,7 @@ class transport_order_out_line(osv.osv):
                                                                                                                        ('delivered', 'Received'),
                                                                                                                        ('cancel', 'Returned')]),
         'is_split': fields.boolean('Split', readonly=True, copy=False),
+        'is_split_or_cancel': fields.boolean('Split or Cancel', readonly=True, copy=False),
         'pack_family_ids': fields.one2many('pack.family.memory', 'oto_line_id', 'Pack Family', copy=False),
         'item_ids': fields.one2many('shipment.additionalitems', 'oto_line_id', 'Additional Item', copy=False),
     }
@@ -1093,7 +1094,7 @@ class transport_order_out_line(osv.osv):
                 from
                     transport_order_out_line line
                     inner join shipment ship on line.shipment_id = ship.id
-                    left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split and pack.oto_line_id = line.id or not line.is_split)
+                    left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split_or_cancel and pack.oto_line_id = line.id or not line.is_split_or_cancel)
                     left join stock_move m on pack.id = m.shipment_line_id
                     left join product_product p on p.id = m.product_id
                     left join lateral (
@@ -1134,7 +1135,7 @@ class transport_order_out_line(osv.osv):
                 from
                     transport_order_out_line line
                     inner join shipment ship on line.shipment_id = ship.id
-                    left join shipment_additionalitems add on add.shipment_id = ship.id and (line.is_split and add.oto_line_id = line.id or not line.is_split)
+                    left join shipment_additionalitems add on add.shipment_id = ship.id and (line.is_split_or_cancel and add.oto_line_id = line.id or not line.is_split_or_cancel)
                 where
                     line.id in %s
                 group by line.id''', (tuple(ids), ))
@@ -1189,7 +1190,7 @@ class transport_order_out_line(osv.osv):
 
         doc = self.browse(cr, uid, ids[0], context=context)
 
-        if doc.is_split:
+        if doc.is_split_or_cancel:
             cond = [('oto_line_id', '=', doc.id)]
         else:
             cond = ['|', ('oto_line_id', '=', doc.id), ('oto_line_id', '=', False)]
@@ -1230,8 +1231,8 @@ class transport_order_out_line(osv.osv):
         if len(add_ids) == len(context['button_selected_ids']['item_ids']) and len(pack_ids) == len(context['button_selected_ids']['pack_family_ids']):
             self.write(cr, uid, line.id, {'transport_id': new_oto_id}, context=context)
         else:
-            new_line_id = self.copy(cr, uid, line.id, {'transport_id': new_oto_id, 'pack_family_ids': [], 'item_ids': [], 'is_split': True}, context=context)
-            self.write(cr, uid, line.id, {'is_split': True}, context=context)
+            new_line_id = self.copy(cr, uid, line.id, {'transport_id': new_oto_id, 'pack_family_ids': [], 'item_ids': [], 'is_split': True, 'is_split_or_cancel': True}, context=context)
+            self.write(cr, uid, line.id, {'is_split': True, 'is_split_or_cancel': True}, context=context)
             self.pool.get('pack.family.memory').write(cr, uid, context['button_selected_ids']['pack_family_ids'], {'oto_line_id': new_line_id}, context=context)
             self.pool.get('shipment.additionalitems').write(cr, uid, context['button_selected_ids']['item_ids'], {'oto_line_id': new_line_id}, context=context)
         return {'type': 'ir.actions.act_window_close'}
@@ -1292,7 +1293,7 @@ class shipment(osv.osv):
         #    '&', ('parent_id', '!=', False) , '|',  ('oto_line_ids.id', '=', False), '&', ('oto_line_ids.is_split', '=', True), '|', ('pack_family_memory_ids.oto_line_id', '=', False), ('additional_items_ids.oto_line_id', '=', False)
         #]
         domain = [
-            '&', ('parent_id', '!=', False) , '|', ('oto_line_ids.id', '=', False) , '&', ('oto_line_ids.is_split', '=', True), '|', ('pack_family_memory_ids.oto_line_id', '=', False), '&', ('additional_items_ids.id', '!=', False ), ('additional_items_ids.oto_line_id', '=', False)
+            '&', ('parent_id', '!=', False) , '|', ('oto_line_ids.id', '=', False) , '&', ('oto_line_ids.is_split_or_cancel', '=', True), '|', ('pack_family_memory_ids.oto_line_id', '=', False), '&', ('additional_items_ids.id', '!=', False ), ('additional_items_ids.oto_line_id', '=', False)
         ]
         if args and args[0] and args[0][0] == 'oto_line_domain':
             if args[0][2] and isinstance(args[0][2], list):
@@ -1316,7 +1317,6 @@ class shipment(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot mix partners on the same document, please review Shipments on existing lines'))
                     if list_p:
                         domain.append(('partner_id2', '=', list_p[0]))
-        print(domain)
         return domain
 
     _columns = {

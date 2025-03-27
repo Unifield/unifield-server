@@ -264,7 +264,7 @@
                         <button string="Arrive in Country" states="transit" type="object" name="button_arrive" icon="gtk-goto-last" />
                         <button string="Clear Customs" states="border" type="object" name="button_clear_customs" icon="gtk-paste-v" />
                         <button string="Delivery to Warehouse" states="customs" type="object" name="button_delivery" icon="gtk-home" />
-                        <button string="Parcel Reception" states="warehouse" type="object" name="button_reception" icon="gtk-close" />
+                        <button string="Parcel Reception" states="warehouse" type="object" name="button_reception" icon="button_process" />
                         <button string="Parcel Partial Reception" states="warehouse" type="object" name="button_partial_reception" icon="gtk-indent" />
                         <button string="Create Outbound Transport Order for these goods" type="object" name="button_create_oto" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('state', '!=', 'closed') ,('oto_created', '=', True)]}" />
                         <field name="oto_created" attrs="{'invisible': [('oto_created', '=', False)]}" />
