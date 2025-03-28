@@ -15,7 +15,7 @@ class transport_order_fees(osv.osv):
 
     _columns = {
         'name': fields.selection([
-            ('customes_clearance', 'Customs Clearance Fees'),
+            ('customs_clearance', 'Customs Clearance Fees'),
             ('preclearance_cargo', 'Preclearance fees per cargo'),
             ('direct', 'Direct Taxes / Duties per cargo'),
             ('indirect', 'Other indirect taxes / fess per cargo'),
@@ -337,6 +337,7 @@ class transport_order_in(osv.osv):
             ito_data[field] = info.get(field, False)
 
         ito_data['line_ids'] = []
+        cur_cache = {}
         if info.get('line_ids'):
             for line in info['line_ids']:
                 ito_line_info = {}
@@ -350,6 +351,15 @@ class transport_order_in(osv.osv):
                     ito_line_info['description'] = line.get('description')
                 for f in ['parcels_nb', 'volume', 'weight', 'amount', 'comment', 'kc', 'dg', 'cs']:
                     ito_line_info[f] = line.get(f)
+
+                if line.get('currency_id') and line.get('currency_id').get('name'):
+                    if line['currency_id']['name'] not in cur_cache:
+                        curr_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', line['currency_id']['name']), ('active','in', ['t', 'f'])], context=context)
+                        if curr_ids:
+                            cur_cache[line['currency_id']['name']] = curr_ids[0]
+                        else:
+                            cur_cache[line['currency_id']['name']] = False
+                    ito_line_info['currency_id'] = cur_cache[line['currency_id']['name']]
 
                 ito_data['line_ids'].append((0, 0, ito_line_info))
         ito_io = self.create(cr, uid, ito_data, context=context)
@@ -571,7 +581,7 @@ class transport_order_in(osv.osv):
             return True
 
 
-        ito = self.browse(cr, uid, ids[0], fields_to_fetch=['line_ids'], context=context)
+        ito = self.browse(cr, uid, ids[0], fields_to_fetch=['line_ids', 'sync_ref', 'state', 'from_sync'], context=context)
 
         # new ITO with remaining
         cr.execute("select exists(select id from transport_order_in_line where transport_id = %s and process_parcels_nb < parcels_nb)", (ito.id,))
@@ -594,6 +604,7 @@ class transport_order_in(osv.osv):
                             'dg': line.dg,
                             'cs': line.cs,
                             'amount': max(0, line.amount - line.process_amount),
+                            'currency_id': line.currency_id and line.currency_id.id or False,
                             'comment': line.comment,
                         }))
 
@@ -604,7 +615,8 @@ class transport_order_in(osv.osv):
                         'kc': line.process_kc,
                         'dg': line.process_dg,
                         'cs': line.process_cs,
-                        'amount': line.process_amount
+                        'amount': line.process_amount,
+                        'currency_id': line.currency_id and line.currency_id.id or False,
                     }))
 
         if remaining_lines:
@@ -647,10 +659,13 @@ class transport_order_in(osv.osv):
                 })
 
                 for line in self.pool.get('transport.order.in.line').read(cr, uid, x['line_ids'], [
-                    'description', 'parcels_nb', 'volume', 'weight', 'amount', 'comment', 'kc', 'dg', 'cs'
+                    'description', 'parcels_nb', 'volume', 'weight', 'amount', 'currency_id', 'comment', 'kc', 'dg', 'cs'
                 ], context=context):
+                    if line['currency_id']:
+                        line['currency_id'] = line['currency_id'][0]
                     del line['id']
                     data['line_ids'].append((0, 0, line))
+
 
                 new_id = self.pool.get('transport.order.out').create(cr, uid, data, context=context)
                 self.write(cr, uid, x['id'], {'oto_created': True, 'oto_id': new_id}, context=context)
@@ -889,6 +904,7 @@ class transport_order_line(osv.osv):
         'volume': fields.float_null('Volume [dm3]', digits=(16,2)),
         'weight': fields.float_null('Weight [kg]', digits=(16,2)),
         'amount': fields.float_null('Value', digits=(16,2)),
+        'currency_id': fields.many2one('res.currency', 'Currency', domain=[('active', '=', True)]),
         'comment': fields.char('Comment', size=1024),
         # TODO currency ?
         # TODO state
@@ -948,7 +964,7 @@ class transport_order_in_line(osv.osv):
     def change_incoming(self, cr, uid, id, incoming_id, context=None):
         if incoming_id:
             cr.execute('''
-                select pick.details, bool_or(is_kc), bool_or(dangerous_goods='True'), bool_or(cs_txt='X'), sum(m.price_unit * m.product_qty / rate.rate)
+                select pick.details, bool_or(is_kc), bool_or(dangerous_goods='True'), bool_or(cs_txt='X'), sum(m.price_unit * m.product_qty / rate.rate), sum(m.price_unit * m.product_qty), count(distinct(m.price_currency_id)), min(m.price_currency_id)
                 from
                     stock_picking pick
                     left join stock_move m on m.picking_id = pick.id
@@ -966,14 +982,21 @@ class transport_order_in_line(osv.osv):
                     pick.id = %s
                 group by pick.id''', (incoming_id, ))
             x = cr.fetchone()
+            value = {
+                'description': x[0],
+                'kc': x[1],
+                'dg': x[2],
+                'cs': x[3],
+            }
+            if x[6] and x[6] > 1:
+                value['amount'] = x[4]
+                value['currency_id'] = self.pool.get('res.users').get_company_currency_id(cr, uid)
+            else:
+                value['amount'] = x[5]
+                value['currency_id'] = x[7]
+
             return {
-                'value': {
-                    'description': x[0],
-                    'kc': x[1],
-                    'dg': x[2],
-                    'cs': x[3],
-                    'amount': x[4],
-                }
+                'value': value
             }
         return {}
 
@@ -1079,49 +1102,7 @@ class transport_order_out_line(osv.osv):
     def _get_shipment_data(self, cr, uid, ids, context=None):
         res = {}
         if ids:
-            cr.execute('''
-                select
-                    line.id,
-                    ship.id,
-                    ship.in_ref,
-                    bool_or(p.is_kc),
-                    bool_or(p.dangerous_goods='True'),
-                    bool_or(p.cs_txt='X'),
-                    sum(pack.to_pack - pack.from_pack + 1),
-                    sum(pack.weight * (pack.to_pack - pack.from_pack + 1)),
-                    sum(pack.length * pack.width * pack.height * (pack.to_pack - pack.from_pack + 1) / 1000.0),
-                    sum(m.price_unit * m.product_qty / rate.rate)
-                from
-                    transport_order_out_line line
-                    inner join shipment ship on line.shipment_id = ship.id
-                    left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split_or_cancel and pack.oto_line_id = line.id or not line.is_split_or_cancel)
-                    left join stock_move m on pack.id = m.shipment_line_id
-                    left join product_product p on p.id = m.product_id
-                    left join lateral (
-                        select rate.rate, rate.name as fx_date from
-                            res_currency_rate rate
-                        where
-                            rate.name <= ship.shipment_actual_date and
-                            rate.currency_id = m.price_currency_id
-                            order by rate.name desc, id desc
-                        limit 1
-                    ) rate on true
-
-                where
-                    line.id in %s
-                group by line.id, ship.id''', (tuple(ids), ))
-            for x in cr.fetchall():
-                res[x[0]] = {
-                    'description': x[2] or False,
-                    'kc': x[3] or False,
-                    'dg': x[4] or False,
-                    'cs': x[5] or False,
-                    'parcels_nb': x[6] or False,
-                    'weight': x[7] or False,
-                    'volume': x[8] or False,
-                    'amount': x[9] and round(x[9], 2) or False,
-                }
-
+            local_curr_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
             cr.execute('''
                 select
                     line.id,
@@ -1141,14 +1122,73 @@ class transport_order_out_line(osv.osv):
                 group by line.id''', (tuple(ids), ))
             for x in cr.fetchall():
                 res[x[0]] = {
-                    'kc': res[x[0]]['kc'] or x[1] or False,
-                    'dg': res[x[0]]['dg'] or x[2] or False,
-                    'cs': res[x[0]]['cs'] or x[3] or False,
-                    'parcels_nb': (res[x[0]]['parcels_nb'] + (x[4] or False)) or False,
-                    'weight': (res[x[0]]['weight'] + (x[5] or False)) or False,
-                    'volume': (res[x[0]]['volume'] + (x[6] or False)) or False,
-                    'amount':(res[x[0]]['amount'] + (x[7] and round(x[7], 2) or False)) or False,
+                    'kc': x[1] or False,
+                    'dg': x[2] or False,
+                    'cs': x[3] or False,
+                    'parcels_nb': x[4] or False,
+                    'weight': x[5] or False,
+                    'volume': x[6] or False,
+                    'amount': x[7] and round(x[7], 2) or False,
+                    'currency_id': local_curr_id,
                 }
+
+
+
+            cr.execute('''
+                select
+                    line.id,
+                    ship.id,
+                    ship.in_ref,
+                    bool_or(p.is_kc),
+                    bool_or(p.dangerous_goods='True'),
+                    bool_or(p.cs_txt='X'),
+                    sum(pack.to_pack - pack.from_pack + 1),
+                    sum(pack.weight * (pack.to_pack - pack.from_pack + 1)),
+                    sum(pack.length * pack.width * pack.height * (pack.to_pack - pack.from_pack + 1) / 1000.0),
+                    sum(m.price_unit * m.product_qty / rate.rate),
+                    sum(m.price_unit * m.product_qty),
+                    array_agg(distinct(m.price_currency_id))
+                from
+                    transport_order_out_line line
+                    inner join shipment ship on line.shipment_id = ship.id
+                    left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split_or_cancel and pack.oto_line_id = line.id or not line.is_split_or_cancel)
+                    left join stock_move m on pack.id = m.shipment_line_id
+                    left join product_product p on p.id = m.product_id
+                    left join lateral (
+                        select rate.rate, rate.name as fx_date from
+                            res_currency_rate rate
+                        where
+                            rate.name <= ship.shipment_actual_date and
+                            rate.currency_id = m.price_currency_id
+                            order by rate.name desc, id desc
+                        limit 1
+                    ) rate on true
+
+                where
+                    line.id in %s
+                group by line.id, ship.id''', (tuple(ids), ))
+
+            for x in cr.fetchall():
+                value = {
+                    'description': x[2] or False,
+                    'kc': res.get(x[0], {}).get('kc', False) or x[3] or False,
+                    'dg': res.get(x[0], {}).get('dg', False) or x[4] or False,
+                    'cs': res.get(x[0], {}).get('cs', False) or x[5] or False,
+                    'parcels_nb':  (res.get(x[0], {}).get('parcels_nb', 0) + (x[6] or False)) or False,
+                    'weight': (res.get(x[0], {}).get('weight', 0) + (x[7] or False)) or False,
+                    'volume': (res.get(x[0], {}).get('volume', 0) + (x[8] or False)) or False,
+                }
+                if len(x[11]) > 1 or res.get(x[0], {}).get('amount'):
+                    value.update({
+                        'amount': (res[x[0]].get('amount', 0) + (x[9] and round(x[9], 2) or False)) or False,
+                        'currency_id': local_curr_id,
+                    })
+                else:
+                    value.update({
+                        'amount': x[10] and round(x[10], 2) or False,
+                        'currency_id': x[11][0],
+                    })
+                res[x[0]] = value
 
         return res
 
@@ -1165,10 +1205,17 @@ class transport_order_out_line(osv.osv):
                     ship.id = %s
                 group by ship.id''', (shipment_id, ))
             x = cr.fetchone()
-            ship_info = self.pool.get('shipment').read(cr, uid, shipment_id, ['num_of_packs', 'total_volume', 'total_weight', 'state', 'total_amount', 'currency_id', 'shipment_actual_date'])
-            if ship_info['total_amount'] and ship_info['currency_id']:
-                comp_currency = self.pool.get('res.users').get_company_currency_id(cr, uid)
-                ship_info['total_amount'] = round(self.pool.get('res.currency').compute(cr, uid, ship_info['currency_id'][0], comp_currency, ship_info['total_amount'], context={'currency_date': ship_info['shipment_actual_date']}), 2)
+            ship_info = self.pool.get('shipment').read(cr, uid, shipment_id, ['num_of_packs', 'total_volume', 'total_weight', 'state', 'total_amount', 'currency_id', 'shipment_actual_date', 'additional_items_ids'])
+
+            amount = False
+            currency_id = False
+            if not ship_info['additional_items_ids']:
+                currency_id = ship_info['currency_id'] and ship_info['currency_id'][0] or False
+                amount = ship_info['total_amount']
+            elif ship_info['total_amount'] and ship_info['currency_id']:
+                currency_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
+                amount = round(self.pool.get('res.currency').compute(cr, uid, ship_info['currency_id'][0], currency_id, ship_info['total_amount'], context={'currency_date': ship_info['shipment_actual_date']}), 2)
+
             return {
                 'value': {
                     'description': x[0],
@@ -1179,7 +1226,8 @@ class transport_order_out_line(osv.osv):
                     'volume': ship_info['total_volume'],
                     'weight': ship_info['total_weight'],
                     'state': ship_info['state'],
-                    'amount': ship_info['total_amount'],
+                    'amount': amount,
+                    'currency_id': currency_id,
                 }
             }
         return {}
