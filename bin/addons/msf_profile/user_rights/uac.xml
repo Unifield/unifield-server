@@ -24712,7 +24712,7 @@
     <Cell><Data ss:Type="String">menu_unconsistent_stock_report</Data><NamedCell
       ss:Name="_FilterDatabase"/></Cell>
     <Cell><Data ss:Type="String">++</Data><NamedCell ss:Name="_FilterDatabase"/></Cell>
-    <Cell><Data ss:Type="String">Product Inconsistencies Report</Data><NamedCell
+    <Cell><Data ss:Type="String">BN/ED Inconsistencies Report</Data><NamedCell
       ss:Name="_FilterDatabase"/></Cell>
     <Cell><Data ss:Type="String">NO</Data><NamedCell ss:Name="_FilterDatabase"/></Cell>
     <Cell><Data ss:Type="String">NO</Data><NamedCell ss:Name="_FilterDatabase"/></Cell>
