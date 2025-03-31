@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <!-- The associated ir_cron will be created during the task creation -->
+        <record id="delete_old_supplier_catalogue_default" model="delete.old.supplier.catalogue">
+            <field name="name">Delete ESC catalogues older than 6 months</field>
+            <field name="interval">6</field>
+            <field name="interval_unit">months</field>
+        </record>
+    </data>
+
+    <data>
+        <record id="delete_old_supplier_catalogue_form_view" model="ir.ui.view">
+            <field name="name">delete.old.supplier.catalogue.form.view</field>
+            <field name="model">delete.old.supplier.catalogue</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Delete old ESC catalogues" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <separator colspan="4" string="General configuration" />
+                    <field name="name" readonly="1" />
+                    <field name="partner_id" />
+                    <field name="active" />
+                    <newline />
+                    <button name="manual_run_catalogue_mass_deletion" string="Run task manually" colspan="4" type="object" icon="gtk-execute" />
+
+                    <separator colspan="4" string="Scheduler configuration" />
+                    <group colspan="4" col="4">
+                        <field name="interval" attrs="{'required': [('interval_unit', '&gt;', 0)]}" />
+                        <field name="interval_unit" />
+                        <field name="start_time" />
+                        <field name="next_scheduled_task" />
+                    </group>
+                    <field name="message" colspan="4" />
+                    <separator colspan="4" string="Activation" />
+                    <group colspan="4" col="1">
+                        <button name="active_auto_catalogue_deletion" string="Activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', True)]}" />
+                        <button name="deactive_auto_catalogue_deletion" string="De-activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', False)]}" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="ir_actions_server_delete_old_supplier_catalogue" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'delete_old_supplier_catalogue_default')
+action = {
+'res_model' : 'delete.old.supplier.catalogue',
+'view_type' : 'form',
+'view_mode' : 'form',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_delete_old_supplier_catalogue"/>
+            <field name="condition">True</field>
+            <field name="name">Open Delete old ESC catalogues</field>
+        </record>
+
+        <record id="delete_old_supplier_catalogue_menu" model="ir.ui.menu">
+            <field name="name">Delete old ESC catalogues</field>
+            <field name="parent_id" ref="object_query.menu_preferences"/>
+            <field name="sequence">54</field>
+        </record>
+
+        <record id="ir_values_menuitem_delete_old_supplier_catalogue" model="ir.values">
+            <field name="name">Menuitem Delete old ESC catalogues</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('msf_tools.ir_actions_server_delete_old_supplier_catalogue')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('delete_old_supplier_catalogue_menu')" name="res_id"/>
+        </record>
+    </data>
+</openerp>

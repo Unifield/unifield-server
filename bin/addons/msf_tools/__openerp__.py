@@ -50,6 +50,7 @@
         'report/report_stock_pipe_per_product_instance_view.xml',
         'automated_import_data.xml',
         'automated_export_data.xml',
+        'delete_old_supplier_catalogue_view.xml'
     ],
     'demo_xml': [
     ],
