@@ -136,11 +136,11 @@ class product_asset(osv.osv):
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
         line_obj = self.pool.get('product.asset.line')
-        move_line_obj = self.pool.get('account.move.line')
-        to_reset_asset_line_ids = line_obj.search(cr, uid, ['&', '&', ('asset_id', 'in', ids), '|', ('move_id', '=', False), ('move_id.state', '!=', 'posted'), ('analytic_distribution_id', '!=', False)])
-        to_reset_move_line_ids = move_line_obj.search(cr, uid, [('move_id.state', '!=', 'posted'), ('analytic_distribution_id', '!=', False), ('asset_line_id', 'in', to_reset_asset_line_ids)])
-        if to_reset_move_line_ids:
-            move_line_obj.write(cr, uid, to_reset_move_line_ids, {'analytic_distribution_id': False})
+        # move_line_obj = self.pool.get('account.move.line')
+        to_reset_asset_line_ids = line_obj.search(cr, uid, [('asset_id', 'in', ids), ('move_id', '=', False), ('analytic_distribution_id', '!=', False)])
+        # to_reset_move_line_ids = move_line_obj.search(cr, uid, [('move_id.state', '!=', 'posted'), ('analytic_distribution_id', '!=', False), ('asset_line_id', 'in', to_reset_asset_line_ids)])
+        # if to_reset_move_line_ids:
+        #     move_line_obj.write(cr, uid, to_reset_move_line_ids, {'analytic_distribution_id': False})
         if to_reset_asset_line_ids:
             line_obj.write(cr, uid, to_reset_asset_line_ids, {'analytic_distribution_id': False})
         return True
@@ -628,6 +628,20 @@ class product_asset(osv.osv):
             return [('used_instance_id', cond, current_instance_id)]
         return []
 
+    def _get_has_lines_without_ji(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        if not ids:
+            return {}
+        for _id in ids:
+            ret[_id] = False
+        # Set True for assets with asset lines without JI and for assets without asset lines
+        cr.execute("select asset_id from product_asset_line where move_id is null and asset_id in %s group by asset_id "
+                   "UNION "
+                   "select id from product_asset where id not in (select distinct asset_id from product_asset_line)", (tuple(ids), ))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
 
     _columns = {
         # asset
@@ -697,6 +711,8 @@ class product_asset(osv.osv):
         'inital_line_account_id': fields.function(_get_inital_line_account_id,  method=True, type='many2one', relation='account.account', string='Initial B/S account'),
         'create_update_sent': fields.boolean('1st Update sent', readonly=True),
         'target_instance_history_ids': fields.many2many('msf.instance', 'asset_owner_instance_rel', 'asset_id', 'instance_id', 'List of owners (accurate at Coo)'),
+        'has_lines_without_ji': fields.function(_get_has_lines_without_ji, string='Has at least one line without JI',
+                                            type='boolean', method=True),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -735,6 +751,7 @@ class product_asset(osv.osv):
         'quantity_divisor': False,
         'used_instance_id': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_id(cr, uid),
         'create_update_sent': False,
+        'has_lines_without_ji': True,
     }
 
     _sql_constraints = [('asset_name_uniq', 'unique(name)', 'Asset Code must be unique.')]
@@ -1376,9 +1393,9 @@ class product_asset_line(osv.osv):
 
             period_id = period_cache[line.date]
 
-            #if not line.analytic_distribution_id and line.asset_id.analytic_distribution_id:
-            #    analytic_line_id = self.pool.get('analytic.distribution').copy(cr, uid, line.asset_id.analytic_distribution_id.id, {}, context=context)
-            #    update_data['analytic_distribution_id'] = analytic_line_id
+            if not line.analytic_distribution_id and line.asset_id.analytic_distribution_id:
+                analytic_line_id = self.pool.get('analytic.distribution').copy(cr, uid, line.asset_id.analytic_distribution_id.id, {}, context=context)
+                update_data['analytic_distribution_id'] = analytic_line_id
             #else:
             #    analytic_line_id = line.analytic_distribution_id.id
 
