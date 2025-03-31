@@ -916,8 +916,9 @@ class purchase_order(osv.osv):
 
         cr.execute("""
             SELECT p.id, array_agg(DISTINCT(pl.line_number)) FROM purchase_order_line pl, purchase_order p 
-            WHERE pl.order_id = p.id AND p.id IN %s AND p.analytic_distribution_id IS NULL AND 
-                pl.state NOT IN ('cancel', 'cancel_r') AND pl.analytic_distribution_id IS NULL 
+            WHERE pl.order_id = p.id AND p.id IN %s AND p.analytic_distribution_id IS NULL 
+                AND p.order_type NOT IN ('loan', 'loan_return', 'donation_st', 'donation_exp', 'in_kind') 
+                AND p.push_fo = 'f' AND pl.state NOT IN ('cancel', 'cancel_r') AND pl.analytic_distribution_id IS NULL 
             GROUP BY p.id
         """, (tuple(ids),))
         for x in cr.fetchall():

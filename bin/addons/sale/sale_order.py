@@ -664,8 +664,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         cr.execute("""
             SELECT s.id, array_agg(DISTINCT(sl.line_number)) FROM sale_order_line sl, sale_order s 
-            WHERE sl.order_id = s.id AND s.id IN %s AND s.analytic_distribution_id IS NULL AND
-                sl.state NOT IN ('cancel', 'cancel_r') AND sl.analytic_distribution_id IS NULL
+            WHERE sl.order_id = s.id AND s.id IN %s AND s.analytic_distribution_id IS NULL
+                AND s.order_type NOT IN ('loan', 'loan_return', 'donation_st', 'donation_exp') 
+                AND sl.state NOT IN ('cancel', 'cancel_r') AND sl.analytic_distribution_id IS NULL
             GROUP BY s.id
         """, (tuple(ids),))
         for x in cr.fetchall():
