@@ -92,6 +92,8 @@ class delete_old_supplier_catalogue(osv.osv):
             ids = [ids]
 
         cron_obj = self.pool.get('ir.cron')
+        if vals.get('interval') and vals['interval'] < 0:
+            raise osv.except_osv(_('Error'), _('Interval number cannot be negative !'))
         res = super(delete_old_supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
 
         for cat_del in self.browse(cr, uid, ids, context=context):
@@ -121,6 +123,11 @@ class delete_old_supplier_catalogue(osv.osv):
             super(delete_old_supplier_catalogue, self).write(cr, uid, ids, {'start_time': False}, context=context)
 
         return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        raise osv.except_osv(_('Error'), _('This task can not be deleted'))
 
     def manual_run_catalogue_mass_deletion(self, cr, uid, ids, context=None, params=None):
         if context is None:
