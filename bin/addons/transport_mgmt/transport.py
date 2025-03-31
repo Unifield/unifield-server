@@ -1136,37 +1136,46 @@ class transport_order_out_line(osv.osv):
 
             cr.execute('''
                 select
-                    line.id,
-                    ship.id,
-                    ship.in_ref,
-                    bool_or(p.is_kc),
-                    bool_or(p.dangerous_goods='True'),
-                    bool_or(p.cs_txt='X'),
-                    sum(pack.to_pack - pack.from_pack + 1),
-                    sum(pack.weight * (pack.to_pack - pack.from_pack + 1)),
-                    sum(pack.length * pack.width * pack.height * (pack.to_pack - pack.from_pack + 1) / 1000.0),
-                    sum(m.price_unit * m.product_qty / rate.rate),
-                    sum(m.price_unit * m.product_qty),
-                    array_agg(distinct(m.price_currency_id))
+                line.id,
+                ship.id,
+                ship.in_ref,
+                bool_or(m.is_kc),
+                bool_or(m.dangerous_goods),
+                bool_or(m.cs_txt),
+                sum(pack.to_pack - pack.from_pack + 1),
+                sum(pack.weight * (pack.to_pack - pack.from_pack + 1)),
+                sum(pack.length * pack.width * pack.height * (pack.to_pack - pack.from_pack + 1) / 1000.0),
+                sum(round(m.fun_price, 2)),
+                sum(round(m.price, 2)),
+                m.currency
                 from
-                    transport_order_out_line line
-                    inner join shipment ship on line.shipment_id = ship.id
-                    left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split_or_cancel and pack.oto_line_id = line.id or not line.is_split_or_cancel)
-                    left join stock_move m on pack.id = m.shipment_line_id
-                    left join product_product p on p.id = m.product_id
-                    left join lateral (
-                        select rate.rate, rate.name as fx_date from
+                transport_order_out_line line
+                inner join shipment ship on line.shipment_id = ship.id
+                left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split_or_cancel and pack.oto_line_id = line.id or not line.is_split_or_cancel)
+                left join lateral (
+                    select
+                        m.shipment_line_id, bool_or(p.is_kc) as is_kc, bool_or(p.dangerous_goods='True') as dangerous_goods, bool_or(p.cs_txt='X') as cs_txt, sum(m.price_unit * m.product_qty / rate.rate) as fun_price, sum(m.price_unit * m.product_qty) as price,
+                        array_agg(distinct(m.price_currency_id)) as currency
+                    from
+                        stock_move m
+                        left join product_product p on p.id = m.product_id
+                        left join lateral (
+                            select rate.rate, rate.name as fx_date from
                             res_currency_rate rate
-                        where
+                            where
                             rate.name <= ship.shipment_actual_date and
                             rate.currency_id = m.price_currency_id
                             order by rate.name desc, id desc
-                        limit 1
-                    ) rate on true
-
+                            limit 1
+                        ) rate on true
+                    where
+                        m.shipment_line_id = pack.id
+                    group by m.shipment_line_id
+                ) m on true
                 where
-                    line.id in %s
-                group by line.id, ship.id''', (tuple(ids), ))
+                line.id in %s
+                group by line.id, ship.id, m.currency
+            ''', (tuple(ids), ))
 
             for x in cr.fetchall():
                 value = {
