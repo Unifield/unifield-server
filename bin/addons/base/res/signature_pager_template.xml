@@ -26,6 +26,7 @@
         <newline />
         <field name="allowed_to_be_signed_unsigned" invisible="1" />
         <field name="allowed_to_be_locked" invisible="1" />
+        <field name="allowed_to_be_closed" invisible="1" />
         <field name="doc_locked_for_sign" invisible="1" />
         <field name="signature_line_ids" readonly="1" nolabel="1" colspan="6" on_change="sig_line_change()" mode="tree">
             <tree string="Signatures">
@@ -46,7 +47,7 @@
         </field>
         <field name="signature_state" colspan="3" />
         <group colspan="3" col="4">
-            <button name="action_close_signature" string="Close Signature" type="object" icon="terp-locked" attrs="{'readonly': [('signature_is_closed', '=', True)]}" ignore_access_error="1" confirm="You are about to block signature on the document. This is not modifiable. Are you sure ?"/>
+            <button name="action_close_signature" string="Close Signature" type="object" icon="terp-locked" attrs="{'readonly': ['|', ('signature_is_closed', '=', True), ('allowed_to_be_closed', '=', False)]}" ignore_access_error="1" confirm="You are about to block signature on the document. This is not modifiable. Are you sure ?"/>
             <field name="signature_is_closed" />
         </group>
     </group>

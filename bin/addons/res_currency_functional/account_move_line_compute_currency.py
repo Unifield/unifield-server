@@ -669,7 +669,7 @@ class account_move_line_compute_currency(osv.osv):
             date = vals.get('date', line.date)
             source_date = vals.get('source_date', line.source_date)
             # Add currency on line
-            if context.get('from_web_menu', False):
+            if context.get('from_web_menu', False) and 'currency_id' not in vals:
                 vals.update({'currency_id': line.move_id and line.move_id.manual_currency_id and line.move_id.manual_currency_id.id or False})
             currency_id = vals.get('currency_id') or line.currency_id.id
             func_currency = line.account_id.company_id.currency_id.id

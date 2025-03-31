@@ -58,6 +58,49 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF37.0
+    def us_12270_13064_13353_sign_roles_and_int_sign(self, cr, uid, *a, **b):
+        '''
+        In the existing signature lines, change the "HQ" role into "HQ Responsible" for FO/PO, and change the
+        "Controller" and "Receiver" roles into "Controlled by" and "Received by"
+        Create the signature lines on existing INTs
+        '''
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'HQ Responsible' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model IN ('sale.order', 'purchase.order') AND sl.name = 'HQ'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'HQ Responsible'" % (cr.rowcount,))
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'Controlled by' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model = 'stock.picking' AND sl.name = 'Controller'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'Controlled by'" % (cr.rowcount,))
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'Received by' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model = 'stock.picking' AND sl.name = 'Receiver'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'Received by'" % (cr.rowcount,))
+
+        # To create signature lines on existing documents, the header signature was added with US-9406
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+        return True
+
+
+    def us_14124_delete_old_unused_ir_properties(self, cr, uid, *a, **b):
+        '''
+        The fields property_product_pricelist_purchase, property_product_pricelist, property_account_receivable and
+        property_account_payable were changed from fields.property into fields.many2one. The patch script will delete
+        any remnant of data linked to those 4 fields in the table ir_property
+        '''
+        cr.execute("""
+            DELETE FROM ir_property WHERE name IN ('property_product_pricelist_purchase',  'property_product_pricelist', 
+            'property_account_receivable', 'property_account_payable')
+        """)
+        self.log_info(cr, uid, "US-14124: %s ir_properties were deleted" % (cr.rowcount,))
+        return True
+
     # UF36.0
     def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
         '''
@@ -2923,7 +2966,7 @@ class patch_scripts(osv.osv):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:
             return True
-        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
         self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': instance.level != 'project'}, context={})
         return True
 

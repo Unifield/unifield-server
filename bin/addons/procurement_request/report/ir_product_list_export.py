@@ -60,7 +60,7 @@ class ir_product_list_export(XlsxReportParser):
 
         top_headers = [
             (_('Priority')),
-            (_('Requested Date')),
+            (_('Requested Delivery Date')),
             (_('Requestor')),
             (_('Location Requestor')),
             (_('Origin')),

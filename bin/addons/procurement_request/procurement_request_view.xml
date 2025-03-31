@@ -58,7 +58,7 @@
                         </group>
                         <group col="2" colspan="2">
                             <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                            <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                            <field name="delivery_requested_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                             <field name="categ" on_change="onchange_categ(categ)" /> <!-- RO state!=draft set on _column, same on IR -->
                             <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         </group>

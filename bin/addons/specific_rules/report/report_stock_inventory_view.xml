@@ -150,7 +150,7 @@
 
         <report
             id="report_unconsistent_stock_xls"
-            string="Unconsistent stock"
+            string="BN_ED_inconsistencies"
             model="unconsistent.stock.report"
             name="unconsistent.stock.report_xls"
             file="specific_rules/report/unconsistent_stock_report_xls.mako"
