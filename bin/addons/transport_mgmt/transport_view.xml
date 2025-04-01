@@ -156,8 +156,8 @@
                                     <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
                                     <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
                                     <group colspan="4" col="4">
-                                        <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
                                         <field name="transit_arrival_planned_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                        <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
                                     </group>
                                 </group>
                                 <group colspan="4" col="4">
@@ -176,8 +176,8 @@
                                         <field name="post2_transport_mode" />
                                     </group>
                                     <group colspan="2" col="4">
-                                        <field name="departure_date" />
                                         <field name="arrival_planned_date" />
+                                        <field name="departure_date" />
                                     </group>
                                     <field name="transport_po_id" />
                                     <field name="notify_partner_id" />

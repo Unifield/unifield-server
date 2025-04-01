@@ -964,7 +964,15 @@ class transport_order_in_line(osv.osv):
     def change_incoming(self, cr, uid, id, incoming_id, context=None):
         if incoming_id:
             cr.execute('''
-                select pick.details, bool_or(is_kc), bool_or(dangerous_goods='True'), bool_or(cs_txt='X'), sum(m.price_unit * m.product_qty / rate.rate), sum(m.price_unit * m.product_qty), count(distinct(m.price_currency_id)), min(m.price_currency_id)
+                select
+                    pick.details,
+                    bool_or(is_kc),
+                    bool_or(dangerous_goods='True'),
+                    bool_or(cs_txt='X'),
+                    sum(m.price_unit * m.product_qty / rate.rate),
+                    sum(m.price_unit * m.product_qty),
+                    count(distinct(m.price_currency_id)),
+                    min(m.price_currency_id)
                 from
                     stock_picking pick
                     left join stock_move m on m.picking_id = pick.id
@@ -994,6 +1002,30 @@ class transport_order_in_line(osv.osv):
             else:
                 value['amount'] = x[5]
                 value['currency_id'] = x[7]
+
+            cr.execute('''
+                select
+                    sum(parcel_to - parcel_from + 1),
+                    sum(total_weight * (parcel_to - parcel_from + 1)),
+                    sum(total_height * total_length * total_width * (parcel_to - parcel_from + 1))
+                from
+                    wizard_import_in_pack_simulation_screen pa
+                where
+                    pa.id in (
+                        select m.pack_info_id from stock_move m where m.picking_id = %s
+                    )
+                ''', (incoming_id, ))
+            x = cr.fetchone()
+            if x[0]:
+                value['parcels_nb'] = x[0]
+                if x[1]:
+                    value['weight'] = round(x[1], 2)
+                else:
+                    value['weight'] = False
+                if x[2]:
+                    value['volume'] = round(x[2]/1000, 2)
+                else:
+                    value['volume'] = False
 
             return {
                 'value': value
