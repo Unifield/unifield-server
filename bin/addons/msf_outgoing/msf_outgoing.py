@@ -1847,8 +1847,7 @@ class shipment(osv.osv):
             self.infolog(cr, uid, "The Shipment id:%s (%s) has been dispatched." % (
                 shipment.id, shipment.name,
             ))
-            self.pool.get('pack.family.memory').write(cr, uid, [x.id for x in shipment.pack_family_memory_ids], {'state': 'done'}, context=context)
-
+            self.pool.get('pack.family.memory').write(cr, uid, [x.id for x in shipment.pack_family_memory_ids if x.state == 'assigned'], {'state': 'done'}, context=context)
         self.complete_finished(cr, uid, ids, context=context)
         return True
 
