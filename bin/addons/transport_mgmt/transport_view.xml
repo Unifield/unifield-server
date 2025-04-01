@@ -169,6 +169,8 @@
                                     <separator colspan="4" string="Transporter" />
                                     <field name="transport_partner_id" />
                                     <field name="transport_mode" />
+                                    <field name="transport2_partner_id" />
+                                    <field name="transport2_mode" />
                                     <group colspan="4" col="4" attrs="{'invisible': [('transit_partner_id', '=', False)]}">
                                         <field name="post_transport_partner_id" />
                                         <field name="post_transport_mode" />
@@ -416,6 +418,8 @@
                                     <separator colspan="4" string="Transporter" />
                                     <field name="transport_partner_id" />
                                     <field name="transport_mode" />
+                                    <field name="transport2_partner_id" />
+                                    <field name="transport2_mode" />
                                     <group colspan="4" col="4" attrs="{'invisible': [('transit_partner_id', '=', False)]}">
                                         <field name="post_transport_partner_id" />
                                         <field name="post_transport_mode" />

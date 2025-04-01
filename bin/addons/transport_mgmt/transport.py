@@ -99,6 +99,9 @@ class transport_order(osv.osv):
         'transit_departure_date': fields.date('Transit Location Date of Departure'),
         'transit_arrival_planned_date': fields.date('Transit Location Planned Arrival Date'),
 
+        'transport2_partner_id': fields.many2one('res.partner', '2nd Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
+        'transport2_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], '2nd Transport Mode'),
+
         'post_transport_partner_id': fields.many2one('res.partner', 'Post Transit Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
         'post_transport_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit Transport Mode'),
 
@@ -316,7 +319,7 @@ class transport_order_in(osv.osv):
                     transit_address_id = so_po_common.get_partner_address_id(cr, uid, transit_id, context=context)
                     ito_data.update({'transit_partner_id': transit_id, 'transit_address_id': transit_address_id})
 
-        for x in ['post_transport_partner_id', 'post2_transport_partner_id']:
+        for x in ['post_transport_partner_id', 'post2_transport_partner_id', 'transport2_partner_id']:
             transp_value = False
             if info.get(x):
                 if internal_source:
@@ -333,7 +336,7 @@ class transport_order_in(osv.osv):
             if incoterm_ids:
                 ito_data['incoterm_type'] = incoterm_ids[0]
 
-        for field in ['original_cargo_ref', 'shipment_flow', 'zone_type', 'cargo_category', 'ship_ref', 'details', 'transport_mode', 'departure_date', 'arrival_planned_date', 'incoterm_location', 'container_type', 'container_size', 'truck_payload', 'transit_departure_date', 'transit_arrival_planned_date', 'post_transport_mode', 'post2_transport_mode']:
+        for field in ['original_cargo_ref', 'shipment_flow', 'zone_type', 'cargo_category', 'ship_ref', 'details', 'transport_mode', 'departure_date', 'arrival_planned_date', 'incoterm_location', 'container_type', 'container_size', 'truck_payload', 'transit_departure_date', 'transit_arrival_planned_date', 'post_transport_mode', 'post2_transport_mode', 'transport2_mode']:
             ito_data[field] = info.get(field, False)
 
         ito_data['line_ids'] = []
