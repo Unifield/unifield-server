@@ -726,8 +726,7 @@ Please check if these can be switched for UniData type product(s) instead, or co
             if sol.product_uom_qty*sol.price_unit >= self._max_value:
                 raise osv.except_osv(_('Warning !'), _('%s line %s: %s') % (sol.order_id.name, sol.line_number, _(self._max_msg)))
             if not sol.order_id.delivery_requested_date:
-                raise osv.except_osv(_('Warning !'),
-                                     _('You can not validate the line without a Requested date.'))
+                raise osv.except_osv(_('Warning !'), _('You can not validate the line without a Requested Delivery date.'))
             if not sol.order_id.procurement_request and sol.order_id.partner_id.partner_type == 'section' and \
                     sol.order_id.order_type == 'regular' and not sol.order_id.client_order_ref:
                 raise osv.except_osv(_('Warning !'),
@@ -960,7 +959,7 @@ class sale_order(osv.osv):
                                      _('You can not validate \'%s\' without a Location Requestor.') % (so.name))
             if not so.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
-                                     _('You can not validate \'%s\' without a Requested date.') % (so.name))
+                                     _('You can not validate \'%s\' without a Requested Delivery date.') % (so.name))
 
             # Prevent lines without products created by a NR during synch to be validated
             sol_ids = []
