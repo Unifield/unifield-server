@@ -38,9 +38,12 @@ class Client(object):
     def login(self):
         self.request = ClientContext(urljoin(self.url, self.path))
         self.request.with_user_credentials(self.username, self.password)
-        if not isinstance(self.request.authentication_context._provider, SamlTokenProvider) or \
-                not self.request.authentication_context._provider.get_authentication_cookie():
-            raise requests.exceptions.RequestException(self.request.get_last_error())
+        try:
+            if not isinstance(self.request.authentication_context._provider, SamlTokenProvider) or \
+                    not self.request.authentication_context._provider.get_authentication_cookie():
+                raise requests.exceptions.RequestException(self.request.get_last_error())
+        except AttributeError:
+            raise requests.exceptions.RequestException('Auth error')
 
         # get the server_site url
         if not self.path.startswith('/'):
