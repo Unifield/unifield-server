@@ -45,7 +45,7 @@ class account_mcdb(osv.osv):
         'posting_date_to': fields.date('Ending posting date'),
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
-        'document_code': fields.char(string='Sequence number', size=255),
+        'document_code': fields.char(string='Sequence number', size=365),
         'include_related_entries': fields.boolean('Related entries', help='Entries related to the Sequence numbers set'),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Entry Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
