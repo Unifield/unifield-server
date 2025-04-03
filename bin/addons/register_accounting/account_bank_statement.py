@@ -778,7 +778,7 @@ The starting balance will be proposed automatically and the closing balance is t
                 ''', (min_posting_date, tuple(aml_ids)))
         return [x[0] for x in cr.fetchall()]
 
-    def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
+    def open_register(self, cr, uid, reg_id, context=None):
         """
         Opens the register and updates the related XML_ID
         """
@@ -789,7 +789,7 @@ The starting balance will be proposed automatically and the closing balance is t
             raise osv.except_osv(_('Error'),
                                  _('The associated period is closed.'))
         if reg.journal_id.type == 'cash':
-            self.do_button_open_cash(cr, uid, [reg_id], opening_balance=cash_opening_balance, context=context)
+            self.do_button_open_cash(cr, uid, [reg_id], context=context)
         else:
             self.write(cr, uid, [reg_id], {'state': 'open', 'name': reg.journal_id.name})
         # The update of xml_id must be done when opening the register
@@ -831,10 +831,7 @@ The starting balance will be proposed automatically and the closing balance is t
                         'context': context,
                         }
             else:
-                computed_balance = 0.0
-                if reg.journal_id.type == 'cash':
-                    computed_balance = self._get_starting_balance(cr, uid, [ids[0]], context=context)[ids[0]].get('balance_start', 0.0)
-                return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
+                return self.open_register(cr, uid, ids[0], context=context)
         return res
 
 account_bank_statement()

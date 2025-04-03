@@ -57,6 +57,34 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+    def us_14039_store_cash_migration(self, cr, uid, *a, **b):
+        cr.execute("""
+            select
+                st1.id, sum(c.pieces*c.number)
+            from
+                account_bank_statement st1
+                inner join account_period p1 on p1.id = st1.period_id
+                left join account_cashbox_line c on c.starting_id = st1.id
+            where
+                (st1.journal_id, p1.date_start) in (
+                    select
+                        j.id, min(p.date_start)
+                    from
+                        account_bank_statement st
+                        inner join account_journal j on st.journal_id = j.id
+                        inner join account_period p on st.period_id = p.id
+                    where
+                        j.type='cash'
+                    group by j.id
+                )
+            group by st1.id,  p1.name, st1.name
+            having sum(c.pieces*c.number) != 0;
+        """)
+
+        for x in cr.fetchall():
+            cr.execute("update account_bank_statement set initial_migration_amount = %s where id = %s", (x[1], x[0]))
+
+        return True
 
     # UF37.0
     def us_12270_13064_13353_sign_roles_and_int_sign(self, cr, uid, *a, **b):
