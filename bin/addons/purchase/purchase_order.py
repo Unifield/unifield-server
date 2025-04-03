@@ -906,6 +906,30 @@ class purchase_order(osv.osv):
 
         return ret
 
+    def _get_ad_lines_missing_message(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = 0
+
+        cr.execute("""
+            SELECT p.id, array_agg(DISTINCT(pl.line_number)) FROM purchase_order_line pl, purchase_order p 
+            WHERE pl.order_id = p.id AND p.id IN %s AND p.analytic_distribution_id IS NULL 
+                AND p.order_type NOT IN ('loan', 'loan_return', 'donation_st', 'donation_exp', 'in_kind') 
+                AND p.push_fo = 'f' AND pl.state NOT IN ('cancel', 'cancel_r') AND pl.analytic_distribution_id IS NULL 
+            GROUP BY p.id
+        """, (tuple(ids),))
+        for x in cr.fetchall():
+            no_ad_lines = ', '.join(['%s' % (l,) for l in x[1][:20]])
+            if len(x[1]) > 20:
+                no_ad_lines += _(' and more')
+            no_ad_lines += _('. It must be added manually')
+            res[x[0]] = no_ad_lines
+
+        return res
+
     def _get_catalogue_ratio(self, cr, uid, ids, name, arg, context=None):
         if not ids:
             return {}
@@ -1204,6 +1228,7 @@ class purchase_order(osv.osv):
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
         'ad_lines_message_nr': fields.function(_get_ad_lines_message_nr, type='char', size=1024, method=1, string='Line number of NR message for missing AD'),
+        'ad_lines_missing_message': fields.function(_get_ad_lines_missing_message, type='char', size=1024, method=1, string='Line number of lines missing AD'),
         'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
         'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
         'catalogue_ratio_conform': fields.function(_get_catalogue_ratio, method=True, type='integer', string='PO Lines Adherence', multi='catalogue'),
