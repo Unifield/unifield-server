@@ -635,9 +635,9 @@ class product_asset(osv.osv):
         for _id in ids:
             ret[_id] = False
         # Set True for assets with asset lines without JI and for assets without asset lines
-        cr.execute("select asset_id from product_asset_line where move_id is null and asset_id in %s group by asset_id "
+        cr.execute("select distinct asset_id from product_asset_line where move_id is null and asset_id in %s group by asset_id "
                    "UNION "
-                   "select id from product_asset where id not in (select distinct asset_id from product_asset_line)", (tuple(ids), ))
+                   "select id from product_asset where id in %s and id not in (select distinct asset_id from product_asset_line)", (tuple(ids),tuple(ids)))
         for x in cr.fetchall():
             ret[x[0]] = True
         return ret
