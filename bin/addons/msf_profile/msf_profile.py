@@ -59,6 +59,27 @@ class patch_scripts(osv.osv):
     }
 
     # UF37.0
+    def us_13346_13377_set_signee_users(self, cr, uid, *a, **b):
+        '''
+        If there is any user with signature enabled and only the Groups 'Sign_user' and 'Sync / User', make it Signee
+        '''
+        group_obj = self.pool.get('res.groups')
+        user_obj = self.pool.get('res.users')
+        sign_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sign_user')])
+        sync_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+        user_ids = user_obj.search(cr, uid, [('signature_enabled', '=', True)])
+        if sign_group_ids and sync_group_ids and user_ids:
+            action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu',
+                                                                            'signature_follow_up_to_be_signed_action')[1]
+            needed_groups_ids = {sign_group_ids[0], sync_group_ids[0]}
+            signee_user_ids = []
+            for user in user_obj.read(cr, uid, user_ids, ['groups_id']):
+                if user['groups_id'] and needed_groups_ids == set(user['groups_id']):
+                    signee_user_ids.append(user['id'])
+            user_obj.write(cr, uid, signee_user_ids, {'signee_user': True, 'action_id': action_id})
+
+        return True
+
     def us_12270_13064_13353_sign_roles_and_int_sign(self, cr, uid, *a, **b):
         '''
         In the existing signature lines, change the "HQ" role into "HQ Responsible" for FO/PO, and change the
@@ -86,7 +107,6 @@ class patch_scripts(osv.osv):
         sign_install = setup_obj.create(cr, uid, {})
         setup_obj.execute(cr, uid, [sign_install])
         return True
-
 
     def us_14124_delete_old_unused_ir_properties(self, cr, uid, *a, **b):
         '''
