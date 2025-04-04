@@ -1659,11 +1659,11 @@ class purchase_order(osv.osv):
         defaults.update({'from_procurement': False, 'tender_id': False})
         is_direct = False
         if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'direct')], context=context):
-            company_id = self.pool.get('res.users').get_current_company(cr, uid)[0][0]
-            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
+            company_partner_id = self.pool.get('res.users').get_current_company_partner_id(cr, uid)[0]
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_partner_id, ['delivery'])['delivery']
             defaults['order_type'] = 'regular'
-            defaults['dest_address_id'] = company_id
-            defaults['dest_partner_id'] = cp_address_id
+            defaults['dest_partner_id'] = company_partner_id
+            defaults['dest_address_id'] = cp_address_id
             defaults['customer_id'] = False
             is_direct = True
         if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'loan_return')], context=context):
@@ -1820,7 +1820,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
+        return {'name': _('Do you want to update the Requested Delivery Date of all/selected Order lines ?'), }
 
     def estimated_data(self, cr, uid, ids, context=None):
         '''
@@ -3418,13 +3418,21 @@ class purchase_order(osv.osv):
         }
         audit_line_obj.create(cr, uid, vals, context=context)
 
-
     def export_line_mismatch(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        po_name = ''
+        if ids:
+            po_name = ' ' + self.read(cr, uid, ids[0], ['name'], context=context)['name']
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'report_line_mismatch',
+            'datas': {'target_filename': 'PO vs. Catalogue Mismatch%s' % (po_name,)},
             'context': context
         }
+
 
 purchase_order()
 

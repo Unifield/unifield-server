@@ -310,7 +310,7 @@
                             <field name="reason_type_id" widget="selection"
                                    domain="[('internal_ok', '=', True)]" 
                                    attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', True)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', False)]}"/>
+                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_wkf', '=', True)], 'required': [('state', '=', 'draft'), ('from_wkf', '=', False)]}"/>
                             <field name="incoming_id" />
                             <field name="from_pick_cancel_id" attrs="{'invisible': [('from_pick_cancel_id', '=', False)]}" />
                         </group>
@@ -494,6 +494,7 @@
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
                         </page>
+                        &signature_template;
                     </notebook>
                 </form>
             </field>
@@ -559,7 +560,7 @@
                                    attrs="{'readonly': ['|', '|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('claim', '=', True)]}"/>
                             <field name="customers" readonly="1" />
                             <field name="change_reason"/>
-                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', True), ('claim', '=', True)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', False), ('claim', '=', False)]}"/>
+                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_wkf', '=', True), ('claim', '=', True)], 'required': [('state', '=', 'draft'), ('from_wkf', '=', False), ('claim', '=', False)]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -893,7 +894,7 @@
                                 domain="[('partner_id', '=', partner_id2)]"
                                 required="1"
                                 />
-                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', True), ('claim', '=', True)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', False), ('claim', '=', False)]}"/>
+                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_wkf', '=', True), ('claim', '=', True)], 'required': [('state', '=', 'draft'), ('from_wkf', '=', False), ('claim', '=', False)]}"/>
                             <field name="reason_type_id"
                                 domain="[('outgoing_ok', '=', True), ('is_fs_out', '=', True)]"
                                 get_selection="list_reason_type_outgoing"
@@ -913,8 +914,11 @@
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
                             <field name="in_ref"  readonly="True" />
-                       </group>
-                   </group>
+                        </group>
+                    </group>
+                    <group colspan="6" col="1">
+                        <button name="export_out" type="object" string="Export OUT" icon="gtk-execute"/>
+                    </group>
                     <notebook colspan="4">
                         <page string="Products">
                             <field name="from_wkf" invisible="1"/>

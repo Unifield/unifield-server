@@ -369,7 +369,7 @@
                     <para style="LFooter">[[ getSign(objects[0], 'fr', 'backup') ]]Storekeeper :</para>
                 </td>
                 <td>
-                    <para style="LFooter">[[ getSign(objects[0], 'mr', 'backup') ]]Receiver :</para>
+                    <para style="LFooter">[[ getSign(objects[0], 'mr', 'backup') ]]Received by :</para>
                 </td>
             </tr>
             <tr>

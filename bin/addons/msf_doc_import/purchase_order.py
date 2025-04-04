@@ -665,6 +665,33 @@ class purchase_order(osv.osv):
                 'context': context,
                 }
 
+    def wizard_update_po_line(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to update lines of a PO from a file
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        wiz_data = {
+            'po_id': ids[0],
+            'state': 'draft',
+            'message': _("""IMPORTANT : The file should be in xlsx format.
+The header column names should be: Line, Product Code, Product Description, Comment, Quantity, Product UoM, Unit Price, Currency"""),
+        }
+        wiz_id = self.pool.get('wizard.update.po.line.import').create(cr, uid, wiz_data, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.update.po.line.import',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'same',
+            'context': context,
+        }
+
     def wizard_import_ad(self, cr, uid, ids, context=None):
         if isinstance(ids, int):
             ids = [ids]

@@ -116,33 +116,27 @@
                     <field name="order_line_mismatch" colspan="4" nolabel="1" mode="tree"
                         filter_selector="[('Show all', []),  ('Hide Confirmed', [('state', 'not in', ['confirmed'])]), ('Hide Closed', [('state', 'not in', ['done'])]), ('Hide Confirmed, Closed &amp; Cancelled', [('state', 'not in', ['confirmed', 'done', 'cancel', 'cancel_r'])]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])])]"
                         >
-                        <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
+                        <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: inactive_product == True; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
                             <field name="line_number" />
                             <field name="default_code" />
                             <field name="default_name" />
 
-                            <field name="comment"  />
-                            <field name="nomenclature_description" />
+                            <field name="comment" />
                             <field name="supplier_code"  />
                             <field name="inactive_error" invisible="1"/>
                             <field name="inactive_product" invisible="1"/>
-                            <field name="to_correct_ok" invisible="1"/>
-                            <field name="red_color" invisible="1"/>
-                            <field name="origin" invisible="1"/>
-                            <field name="from_fo" invisible="1"/>
                             <field name="fake_id" invisible="1"/>
                             <field name="soq_updated" invisible="1"/>
                             <field name="product_qty" string="Qty" />
-                            <field name="product_uom" />
-                            <field name="price_unit" />
-                            <field name="price_subtotal"/>
+                            <field name="product_uom" string="UoM" />
+                            <field name="price_unit" string="PO Unit Price" />
+                            <field name="price_subtotal" string="PO Subtotal"/>
+                            <field name="catalog_price_unit"/>
+                            <field name="catalog_subtotal"/>
                             <field name="original_changed" string="CHG"/>
-                            <field name="date_planned" />
                             <field name="catalog_mismatch" />
                             <field name="po_state_stored" invisible="True"/>
                             <field name="state_to_display"/>
-                            <field name="mml_status" />
-                            <field name="msl_status" />
                         </tree>
                     </field>
                 </form>
@@ -327,7 +321,7 @@
                                 <field name="po_from_ir" invisible="1"/>
                                 <field name="po_from_fo" invisible="1"/>
                                 <field name="canceled_end" invisible="1"/>
-                                <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
+                                <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': ['|', ('state', 'not in', ['draft']), ('order_type', '=', 'loan_return')]}"/>
                                 <field name="partner_type"/>
                                 <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="origin" readonly="1" widget="char"/>
@@ -349,10 +343,11 @@
                             </group>
                             <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('doc_locked_for_sign', '=', True)]}">
                                 <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                                <button name="wizard_update_po_line" string="Update lines" icon="gtk-ok" colspan="1" type="object" attrs="{'invisible':['&amp;', ('state', 'not in', ['draft', 'draft_p']), '|', ('partner_type', '!=', 'external'), ('state', 'not in', ['validated', 'validated_p'])]}"/>
                                 <button name="wizard_import_ad" string="Import AD" icon="terp-stock_symbol-selection" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                                 <button name="button_cancel_lines" string="Cancel Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['&amp;', ('state', 'not in', ['draft', 'draft_p']), '|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['validated', 'validated_p'])]}" />
-                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" context="{'rfq_ok': False}"/>
-                                <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" context="{'rfq_ok': False}"/>
+                                <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                             </group>
                             <group colspan="4" col="4" attrs="{'invisible':['|', '&amp;', ('state', 'not in', ['validated', 'validated_p']), '|', ('partner_type', 'not in', ['esc', 'external']), ('state', 'not in', ['confirmed', 'confirmed_p']), ('doc_locked_for_sign', '=', True)]}">
                                 <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" />
@@ -886,7 +881,7 @@
                                 <script type="text/javascript">
                             $('#order_line\\/select_fo_text').css('display', 'none');
                             $('#order_line\\/select_fo_open').css('display', 'none');
-                            $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
+                            $('#order_line\\/select_fo_select').css('position', 'static');
                             $('[for="order_line\\/select_fo"]').css('width', '1%%');
                             var mml_status = $('#order_line\\/mml_status').val() || $('#order_line\\/mml_status').text();
                             var msl_status = $('#order_line\\/msl_status').val() || $('#order_line\\/msl_status').text();
@@ -1086,7 +1081,7 @@
                                 <script type="text/javascript">
                             $('#order_line\\/select_fo_text').css('display', 'none');
                             $('#order_line\\/select_fo_open').css('display', 'none');
-                            $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
+                            $('#order_line\\/select_fo_select').css('position', 'static');
                             $('[for="order_line\\/select_fo"]').css('width', '1%%');
                             setTimeout("$('#error_message_unifield').css('overflow', 'visible').css('border-width', '1px').css('height', 'auto');", 500);
                             </script>

@@ -325,6 +325,8 @@ class Cursor(object):
     def drop_index_if_exists(self, table, indexname):
         if self.index_exists(table, indexname):
             self.execute('DROP INDEX "%s"' % (indexname,))
+            return True
+        return False
 
     @check
     def index_exists(self, table, indexname):

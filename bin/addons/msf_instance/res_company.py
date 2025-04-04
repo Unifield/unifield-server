@@ -114,7 +114,7 @@ class res_company(osv.osv):
             stock_pipe_report_menu_id = data_obj.get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_menu')[1]
             menu_obj.write(cr, uid, stock_pipe_report_menu_id, {'active': level == 'section'}, context=context)
             # Hide Product Status Inconsistencies in Project
-            report_prod_inconsistencies_menu_id = data_obj.get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+            report_prod_inconsistencies_menu_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
             menu_obj.write(cr, uid, report_prod_inconsistencies_menu_id, {'active': level != 'project'}, context=context)
             # Hide Consolidated Mission Stock Report in HQ and Project
             consolidated_sm_report_menu_id = data_obj.get_object_reference(cr, uid, 'mission_stock', 'consolidated_mission_stock_wizard_menu')[1]
@@ -123,6 +123,10 @@ class res_company(osv.osv):
             import_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_import_products')[1]
             update_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_update_products')[1]
             menu_obj.write(cr, uid, [import_prod_menu_id, update_prod_menu_id], {'active': level != 'project'}, context=context)
+            # Hide Generate Asset Entries and Import Asset Entries in Project
+            generate_asset_menu_id = data_obj.get_object_reference(cr, uid, 'product_asset', 'menu_product_asset_generate_entries')[1]
+            import_asset_menu_id = data_obj.get_object_reference(cr, uid, 'product_asset', 'menu_product_asset_import_entries')[1]
+            menu_obj.write(cr, uid, [generate_asset_menu_id, import_asset_menu_id], {'active': level != 'project'}, context=context)
         return ret
 
     def _get_instance_oc(self, cr, uid):

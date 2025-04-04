@@ -1171,5 +1171,24 @@
             <field name="method">us_13842_fix_sign_document_creator_supply_sdref</field>
         </record>
 
+        <!-- UF36.0 -->
+        <record id="us_13755_13788_remove_columns_res_users" model="patch.scripts">
+            <field name="method">us_13755_13788_remove_columns_res_users</field>
+        </record>
+
+        <record id="us_13895_hide_import_generate_asset_menus" model="patch.scripts">
+            <field name="method">us_13895_hide_import_generate_asset_menus</field>
+        </record>
+
+        <!-- UF37.0 -->
+        <record id="us_12270_13064_13353_sign_roles_and_int_sign" model="patch.scripts">
+            <field name="method">us_12270_13064_13353_sign_roles_and_int_sign</field>
+        </record>
+
+        <record id="us_14124_delete_old_unused_ir_properties" model="patch.scripts">
+            <field name="method">us_14124_delete_old_unused_ir_properties</field>
+        </record>
+
+
     </data>
 </openerp>

@@ -28,6 +28,9 @@ import time
 import tools
 import logging
 from tools.safe_eval import safe_eval as eval
+import netsvc
+
+logger = netsvc.Logger()
 
 
 class account_subscription(osv.osv):
@@ -682,9 +685,13 @@ class audittrail_rule(osv.osv):
             ret = []
             obj = self.pool.get(objname)
             for field in fields_obj.read(cr, uid, fields_ids, ['name']):
-                col = obj._all_columns[field['name']].column
-                if col._properties and not col._classic_write:
-                    ret.append(field['name'])
+                # To prevent an error when a tracked column has been deleted
+                if field['name'] in obj._all_columns:
+                    col = obj._all_columns[field['name']].column
+                    if col._properties and not col._classic_write:
+                        ret.append(field['name'])
+                else:
+                    logger.notifyChannel('init', netsvc.LOG_WARNING, "The field '%s' has been deleted from '%s'. Please remove it from the audittrail files (Track Changes)" % (field['name'], obj._name))
             return ret
         return []
 
