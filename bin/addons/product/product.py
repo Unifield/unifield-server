@@ -290,9 +290,10 @@ class product_template(osv.osv):
                     product_supplierinfo s
                     left join res_partner p on p.id = s.name
                     left join product_product prod on prod.product_tmpl_id = s.product_id
+                    left join pricelist_partnerinfo pi on pi.suppinfo_id = s.id
                 where
-                    product_id in %s
-                order by product_id, sequence, id
+                    product_id in %s and pi.valid_from <= NOW() and (pi.valid_till IS NULL or pi.valid_till >= NOW())
+                order by product_id, s.sequence, pi.price, id
                 ''', (tuple(ids), )
             )
             for seller in cr.fetchall():
@@ -302,23 +303,6 @@ class product_template(osv.osv):
                     'seller_id': seller[4] or False,
                     'seller_info_id': seller[5] or False,
                 }
-        return result
-
-
-
-        for product in self.browse(cr, uid, ids, context=context):
-            for field in fields:
-                result[product.id] = {field:False}
-            result[product.id]['seller_delay'] = 1
-            if product.seller_ids:
-                partner_list = sorted([(partner_id.sequence, partner_id)
-                                       for partner_id in  product.seller_ids
-                                       if partner_id and isinstance(partner_id.sequence, int)], key=lambda a: (a[0], a[1].id))
-                main_supplier = partner_list and partner_list[0] and partner_list[0][1] or False
-                result[product.id]['seller_delay'] =  main_supplier and main_supplier.delay or 1
-                result[product.id]['seller_qty'] =  main_supplier and main_supplier.qty or 0.0
-                result[product.id]['seller_id'] = main_supplier and main_supplier.name.id or False
-                result[product.id]['seller_info_id'] = main_supplier and main_supplier.id or False
         return result
 
     def _get_list_price(self, cr, uid, ids, fields, arg, context=None):

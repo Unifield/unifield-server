@@ -33,7 +33,7 @@
                                domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), 
                                         ('scrap_location', '=', False), ('destruction_location', '=', False), 
                                         ('output_ok', '=', False), ('input_ok', '=', False)]" 
-                               attrs="{'readonly': [('type', '!=', 'make_to_stock')]}" 
+                               attrs="{'readonly': [('type', '!=', 'make_to_stock')], 'required': [('type', '=', 'make_to_stock')]}"
                                on_change="change_location(location_id, line_ids)" />
                         <field name="related_sourcing_ok" invisible="1" />
                         <field name="supplier_type" invisible="1" />

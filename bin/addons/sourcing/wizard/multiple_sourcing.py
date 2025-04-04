@@ -155,8 +155,8 @@ class multiple_sourcing_wizard(osv.osv_memory):
         # will be displayed at the top of the wizard
         res['type'] = 'make_to_stock'
         res['po_cft'] = False
-        loc = -1 # first location flag
-        supplier = -1 # first location flag
+        res['location_id'] = False
+        supplier = -1  # first location flag
         group = None
         for line in sol_obj.browse(cr, uid, active_ids, context=context):
             if line.state == 'validated':
@@ -168,12 +168,11 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 res['type'] = 'make_to_order'
                 res['po_cft'] = 'po'
 
-                loc = False  # always set False for location if source on order
                 if not line.supplier:
                     supplier = False
                 else:
                     temp = line.supplier.id
-                    if supplier == -1:  # first location
+                    if supplier == -1:
                         supplier = temp
                     elif supplier != temp:
                         supplier = False
@@ -188,18 +187,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
                         group = False
 
             else:
-                # UTP-1021: Calculate the location to set into the wizard view if all lines are sourced from the same location
-                supplier = False # if source from stock, always set False to partner
+                supplier = False  # if source from stock, always set False to partner
                 group = False
-                temploc = line.location_id.id
-                if loc == -1:  # first location
-                    loc = temploc
-                elif temploc != loc:
-                    loc = False
 
         # UTP-1021: Set default values on opening the wizard
-        if loc != -1:
-            res['location_id'] = loc
         if supplier != -1:
             res['supplier_id'] = supplier
             local_market_id = 0
@@ -387,7 +378,6 @@ class multiple_sourcing_wizard(osv.osv_memory):
         :param context: Context of the call
         :return: A dictionary that contains the field names to change as keys and the value for these fields as values.
         """
-        wh_obj = self.pool.get('stock.warehouse')
         sol_obj = self.pool.get('sale.order.line')
 
         if context is None:
@@ -399,45 +389,6 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     'location_id': False,
                     'related_sourcing_ok': sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context),
                     'supplier_id': self.get_same_seller(cr, uid, lines, context=context),
-                },
-            }
-
-        res = {
-            'value': {
-                'po_cft': False,
-                'supplier_id': False,
-                'related_sourcing_ok': False,
-                'related_sourcing_id': False,
-            },
-        }
-        if not context or not context[0] or not context[0][2]:
-            return res
-
-        # UF-2508: Set by default Stock if all the lines had either no location or stock before
-        active_ids = context[0][2]
-        context = {}
-        if not active_ids:
-            return res
-
-        # Get the default stock location of the default warehouse
-        wh_ids = wh_obj.search(cr, uid, [], context=context)
-        stock_loc = False
-        if wh_ids:
-            stock_loc = wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
-
-        all_line_empty = True
-        for line in sol_obj.browse(cr, uid, active_ids, context=context):
-            if line.location_id and line.location_id.id != stock_loc:
-                all_line_empty = False
-
-        if all_line_empty:  # by default, and if all lines has no location, then set by default Stock
-            return {
-                'value': {
-                    'po_cft': False,
-                    'supplier_id': False,
-                    'location_id': stock_loc,
-                    'related_sourcing_ok': False,
-                    'related_sourcing_id': False,
                 },
             }
 
@@ -568,6 +519,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 'po_cft': False,
             },
         }
+
 
 multiple_sourcing_wizard()
 
