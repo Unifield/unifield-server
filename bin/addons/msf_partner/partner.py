@@ -29,6 +29,8 @@ import time
 from tools.translate import _
 from lxml import etree
 from msf_field_access_rights.osv_override import _record_matches_domain
+from datetime import datetime
+
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -85,9 +87,12 @@ class res_partner(osv.osv):
             seller_ids = []
             seller_info = {}
             supinfo_obj = self.pool.get('product.supplierinfo')
-            sup_ids = supinfo_obj.search(cr, uid, [('name', 'in', ids), ('product_id', '=', product.product_tmpl_id.id)], context=context)
+            today = datetime.today().strftime('%Y-%m-%d')
+            supinfo_domain = [('name', 'in', ids), ('product_id', '=', product.product_tmpl_id.id),
+                              '&', ('get_from_date', '<=', today), '|', ('get_till_date', '=', False), ('get_till_date', '>=', today)]
+            sup_ids = supinfo_obj.search(cr, uid, supinfo_domain, context=context)
             # Get all suppliers defined on product form
-            for s in  supinfo_obj.browse(cr, uid, sup_ids, context=context):
+            for s in supinfo_obj.browse(cr, uid, sup_ids, context=context):
                 seller_ids.append(s.name.id)
                 seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay}})
             # Check if the partner is in product form
@@ -1127,9 +1132,12 @@ class res_partner(osv.osv):
 
         # Sort suppliers by sequence in product form
         if 'product_id' in context:
-            supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
+            today = datetime.today().strftime('%Y-%m-%d')
+            supinfo_domain = [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id')),
+                              '&', ('get_from_date', '<=', today), '|', ('get_till_date', '=', False), ('get_till_date', '>=', today)]
+            supinfo_ids = supinfo_obj.search(cr, uid, supinfo_domain, order='sequence')
 
-            for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
+            for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name', 'get_from_date', 'get_till_date']):
                 try:
                     tmp_res.remove(result['name'][0])
                 except:

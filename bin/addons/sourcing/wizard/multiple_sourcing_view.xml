@@ -69,6 +69,7 @@
                     <field name="available_stock" />
                     <field name="virtual_stock" />
                     <field name="supplier" invisible="1" />
+                    <field name="supplier_ranking" />
                 </tree>
             </field>
         </record>

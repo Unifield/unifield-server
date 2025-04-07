@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 
+from tools.translate import _
 import decimal_precision as dp
 
 
@@ -52,6 +53,32 @@ class product_supplierinfo(osv.osv):
                         min_qty = price.min_order_qty
         return ret
 
+    def search_get_date(self, cr, uid, ids, fields, args, context=None):
+        """
+        Allow searches on get_from_date and get_till_date
+        """
+        if not args or not args[0][0] or not args[0][1]:
+            return []
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        try:
+            date_col = args[0][0] == 'get_from_date' and 'valid_from' or 'valid_till'
+            where_clause = date_col + ' ' + args[0][1]
+            if args[0][2]:
+                cr.execute("""
+                    SELECT DISTINCT(suppinfo_id) FROM pricelist_partnerinfo WHERE """ + where_clause + """ %s
+                """, (args[0][2],))
+            else:
+                cr.execute("""SELECT DISTINCT(suppinfo_id) FROM pricelist_partnerinfo WHERE """ + date_col + """ IS NULL""")
+            suppinfo_ids = [x[0] for x in cr.fetchall()]
+        except Exception as e:
+            raise osv.except_osv(_('Error'), _('An error has occurred: %s') % (e,))
+
+        return [('id', 'in', suppinfo_ids)]
+
     _columns = {
         'manufacturer_id': fields.many2one('res.partner', string='Manufacturer', domain=[('manufacturer', '=', 1)]),
         'second_manufacturer_id': fields.many2one('res.partner', string='Second Manufacturer', domain=[('manufacturer', '=', 1)]),
@@ -60,8 +87,8 @@ class product_supplierinfo(osv.osv):
         'check_manufacturer': fields.function(_get_manu_price_dates, method=True, type="boolean", string="Manufacturer", multi="compt_f"),
         'get_first_price': fields.function(_get_manu_price_dates, method=True, type="float", string="Indicative Price", digits_compute=dp.get_precision('Purchase Price Computation'), multi="compt_f"),
         'get_first_currency': fields.function(_get_manu_price_dates, method=True, type="many2one", relation="res.currency", string="Currency", multi="compt_f"),
-        'get_till_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid till date", multi="compt_f"),
-        'get_from_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid from date", multi="compt_f"),
+        'get_till_date': fields.function(_get_manu_price_dates, fnct_search=search_get_date, method=True, type="date", string="Valid till date", multi="compt_f"),
+        'get_from_date': fields.function(_get_manu_price_dates, fnct_search=search_get_date, method=True, type="date", string="Valid from date", multi="compt_f"),
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the the supplier info without removing it."),
     }
 
