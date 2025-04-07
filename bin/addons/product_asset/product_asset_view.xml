@@ -284,6 +284,24 @@
         <field name="search_view_id" ref="asset_search_form_view" />
     </record>
 
+    <report id="asset_register_report_xlsx"
+            string="Export Fixed Assets Register Xlsx"
+            model="product.asset"
+            name="asset.register.report.xlsx"
+            report_type="openpyxl"
+            target_filename="${_('Fixed_Assets_Register')}_%(instance)s_%(year)s%(month)s%(day)s"
+            auto="False"
+            menu="True" />
+
+    <report id="asset_register_report_landscape"
+                string="Export Fixed Assets Register PDF"
+                model="product.asset"
+                name="asset.register.report.landscape"
+                rml="product_asset/report/asset_register_report_landscape.rml"
+                target_filename="${_('Fixed_Assets_Register')}_%(instance)s_%(year)s%(month)s%(day)s"
+                auto="False"
+                menu="True" />
+
     <!-- Assets in SALES>Products -->
     <menuitem id="menu_asset_sales" name="Assets" parent="account.menu_finance_periodical_processing" sequence="20" active_config="fixed_asset_ok"/>
     <menuitem action="asset_normal_action" id="menu_assets_sales"
