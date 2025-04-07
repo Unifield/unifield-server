@@ -109,12 +109,10 @@ class account_cash_statement(osv.osv):
         # take on previous lines if exists (or discard if they come from sync)
         if prev_reg_id and not sync_update:
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
-        # update balance_end
-        self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
 
 
-    def do_button_open_cash(self, cr, uid, ids, opening_balance=None, context=None):
+    def do_button_open_cash(self, cr, uid, ids, context=None):
         """
         when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
@@ -146,9 +144,6 @@ class account_cash_statement(osv.osv):
         #+ Cash Journal Name
         if st.journal_id and st.journal_id.name:
             cash_reg_vals = {'state': 'open', 'name': st.journal_id.name}
-            # update Opening Balance
-            if opening_balance:
-                cash_reg_vals.update({'balance_start': opening_balance})
             return self.write(cr, uid, ids, cash_reg_vals, context=context)
         else:
             return False
@@ -195,6 +190,40 @@ class account_cash_statement(osv.osv):
             res[statement.id] = diff_amount
         return res
 
+    def _get_cash_starting_balance(self, cr, uid, ids, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        cr.execute('''
+            select
+                st.id, coalesce(amount.amount, 0)+coalesce(amount.mig, 0)+coalesce(st.initial_migration_amount,0)
+            from
+                account_bank_statement st
+                inner join account_period p on st.period_id = p.id
+                inner join account_journal j on st.journal_id = j.id
+                left join lateral (
+                    select
+                        max(coalesce(p_st.initial_migration_amount,0)) as mig, sum(amount) as amount
+                    from
+                        account_bank_statement p_st
+                        inner join account_bank_statement_line p_st_li on p_st_li.statement_id = p_st.id
+                        inner join account_period p_p on p_st.period_id = p_p.id
+                    where
+                        p_st.journal_id = st.journal_id and
+                        p_p.date_start < p.date_start
+                    group by st.id
+                ) amount on true
+            where
+                j.type='cash' and
+                st.state != 'confirm' and
+                st.id in %s
+        ''', (tuple(ids), ))
+
+        return dict(cr.fetchall())
+
+
     def _msf_calculated_balance_compute(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Sum of starting balance (balance_start) and sum of cash transaction (total_entry_encoding)
@@ -206,13 +235,6 @@ class account_cash_statement(osv.osv):
         for st in self.browse(cr, uid, ids):
             amount = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
             res[st.id] = amount
-            # Update next register starting balance
-            if st.journal_id and st.journal_id.type == 'cash':
-                next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
-                context.update({'update_next_reg_balance_start': True})
-                for next_st in self.browse(cr, uid, next_st_ids):
-                    if next_st.state != 'confirm':
-                        self.write(cr, 1, [next_st.id], {'balance_start': amount}, context=context)
         return res
 
 
@@ -225,7 +247,23 @@ class account_cash_statement(osv.osv):
         'comments': fields.char('Comments', size=64, required=False, readonly=False),
         'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance',
                                                   help="Starting Balance + Cash Transactions"),
+
+        'initial_migration_amount': fields.float('Initial Migration Amount', readonly=1, help='Used to store the migration initial amount (pre US-7221)'),
     }
+
+    def read(self, cr, uid, ids, vals=None, context=None, load='_classic_read'):
+        data = super(account_cash_statement, self).read(cr, uid, ids, vals, context=context, load=load)
+
+        if not vals or 'balance_start' in vals:
+            cash_balance_start = self._get_cash_starting_balance(cr, uid, ids, context)
+            if cash_balance_start:
+                if isinstance(ids, int):
+                    data['balance_start'] = cash_balance_start[ids[0]]
+                else:
+                    for d in data:
+                        if d['id'] in cash_balance_start:
+                            d['balance_start'] = cash_balance_start[d['id']]
+        return data
 
     def button_wiz_temp_posting(self, cr, uid, ids, context=None):
         """
