@@ -85,7 +85,20 @@ class patch_scripts(osv.osv):
         setup_obj = self.pool.get('signature.setup')
         sign_install = setup_obj.create(cr, uid, {})
         setup_obj.execute(cr, uid, [sign_install])
+        return True
 
+
+    def us_14124_delete_old_unused_ir_properties(self, cr, uid, *a, **b):
+        '''
+        The fields property_product_pricelist_purchase, property_product_pricelist, property_account_receivable and
+        property_account_payable were changed from fields.property into fields.many2one. The patch script will delete
+        any remnant of data linked to those 4 fields in the table ir_property
+        '''
+        cr.execute("""
+            DELETE FROM ir_property WHERE name IN ('property_product_pricelist_purchase',  'property_product_pricelist', 
+            'property_account_receivable', 'property_account_payable')
+        """)
+        self.log_info(cr, uid, "US-14124: %s ir_properties were deleted" % (cr.rowcount,))
         return True
 
     # UF36.0
@@ -2953,7 +2966,7 @@ class patch_scripts(osv.osv):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:
             return True
-        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
         self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': instance.level != 'project'}, context={})
         return True
 

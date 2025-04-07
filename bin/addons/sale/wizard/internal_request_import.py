@@ -111,7 +111,7 @@ class internal_request_import(osv.osv):
         'in_categ': fields.char(string='Order Category', size=64, readonly=True),
         'in_priority': fields.char(string='Priority', size=64, readonly=True),
         'in_creation_date': fields.char(string='Creation date', size=64, readonly=True),
-        'in_requested_date': fields.char(string='Requested date', size=64, readonly=True),
+        'in_requested_date': fields.char(string='Requested Delivery Date', size=64, readonly=True),
         'in_requestor': fields.char(string='Requestor', size=64, readonly=True),
         'in_loc_requestor': fields.char(string='Location Requestor', size=64, readonly=True),
         'in_origin': fields.char(string='Origin', size=64, readonly=True),
@@ -120,7 +120,7 @@ class internal_request_import(osv.osv):
         'imp_categ': fields.selection(ORDER_CATEGORY, string='Order Category', readonly=True),
         'imp_priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'imp_creation_date': fields.date(string='Creation Date', readonly=True),
-        'imp_requested_date': fields.date(string='Requested Date', readonly=True),
+        'imp_requested_date': fields.date(string='Requested Delivery Date', readonly=True),
         'imp_requestor': fields.char(size=128, string='Requestor', readonly=True),
         'imp_loc_requestor': fields.many2one('stock.location', string='Location Requestor', readonly=True),
         'imp_origin': fields.char(size=64, string='Origin', readonly=True),
@@ -506,7 +506,7 @@ class internal_request_import(osv.osv):
                         except:
                             continue
                     if not header_values.get('imp_requested_date'):
-                        msg_val = _('Requested Date: The Requested Date \'%s\' is incorrect, you will need to correct this manually.') \
+                        msg_val = _('Requested Delivery Date: The Requested Delivery Date \'%s\' is incorrect, you will need to correct this manually.') \
                             % req_date
                         values_header_errors.append(msg_val)
                         err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,

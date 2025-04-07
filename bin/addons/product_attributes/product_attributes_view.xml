@@ -1120,5 +1120,20 @@ action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.act
             </field>
         </record>
 
+        <!-- Product Reporting -->
+        <menuitem id="product.parent_product_reporting" parent="product_attributes.menu_main_product" name="Reporting" sequence="11" />
+
+        <record id="export_report_inconsistencies_action" model="ir.actions.act_window">
+            <field name="name">Product Status Inconsistencies</field>
+            <field name="res_model">export.report.inconsistencies</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="export_report_inconsistencies_menu"
+            action="export_report_inconsistencies_action"
+            parent="product.parent_product_reporting"
+            sequence="1" />
     </data>
 </openerp>

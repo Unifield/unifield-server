@@ -296,6 +296,7 @@
                         <field name="loan_duration" attrs="{'invisible': [('order_type', 'not in', ['loan', 'loan_return'])], 'required': [('order_type', 'in', ['loan', 'loan_return'])], 'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}" />
                         <field name="rfq_delivery_address" attrs="{'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}"/>
                         <field name="from_procurement" invisible="1"/>
+                        <field name="doc_locked_for_sign" invisible="1"/>
                     </group>
                     <notebook colspan="4">
                         <page string="Request for Quotation">

@@ -298,11 +298,13 @@ account_balances_per_currency_with_euro_sql = """
                 LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                LEFT JOIN account_period p on p.id = aml.period_id
                 WHERE acc.active = 't'
                 AND curr.active = 't'
                 AND ( aml.date < %(first_day_of_period)s or aml.period_id in %(include_period_opening)s )
                 AND j.instance_id IN %(instance_ids)s
                 AND j.type NOT IN ('migration', 'inkind', 'extra')
+                AND p.fiscalyear_id = %(fiscalyear_id)s
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
         UNION
@@ -332,11 +334,13 @@ account_balances_per_currency_with_euro_sql = """
                 LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                LEFT JOIN account_period p on p.id = aml.period_id
                 WHERE acc.active = 't'
                 AND curr.active = 't'
                 AND ( aml.date <= %(last_day_of_period)s and aml.period_id not in %(exclude_period_closing)s )
                 AND j.instance_id IN %(instance_ids)s
                 AND j.type NOT IN ('migration', 'inkind', 'extra')
+                AND p.fiscalyear_id = %(fiscalyear_id)s
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
         ) AS ssreq
@@ -947,6 +951,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             'last_day_of_period': period.date_stop,
             'include_period_opening': tuple(include_period_opening),
             'exclude_period_closing': tuple(exclude_period_closing),
+            'fiscalyear_id': period.fiscalyear_id.id,
         }
 
 

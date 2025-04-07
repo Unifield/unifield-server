@@ -18,7 +18,7 @@
             <field name="model">unconsistent.stock.report</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Product Inconsistencies Report generation">
+                <form string="BN/ED Inconsistencies Report generation">
                     <field name="name" invisible="1" />
                     <button name="generate_report" string="Generate report" icon="gtk-execute" type="object" colspan="4" />
                 </form>
@@ -26,7 +26,7 @@
         </record>
 
         <record id="action_unconsistent_stock_report" model="ir.actions.act_window">
-            <field name="name">Product Inconsistencies Report</field>
+            <field name="name">BN/ED Inconsistencies Report</field>
             <field name="res_model">unconsistent.stock.report</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -35,8 +35,8 @@
 
         <menuitem
             id="menu_unconsistent_stock_report"
-            parent="object_query.menu_preferences"
-            sequence="50"
+            sequence="-4"
+            parent="stock.menu_traceability"
             action="action_unconsistent_stock_report" />
 
         <!-- Make a cron to remove lines from old reports -->

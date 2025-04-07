@@ -24,32 +24,32 @@ from tools.translate import _
 MODEL_DICT = {
     # SUPPLY
     'products': {
-        'name': 'Products',
+        'name': _('Products'),
         'domain_type': 'supply',
         'model': 'product.product',
         'partial': True,
     },
     'product_nomenclature': {
-        'name': 'Product Nomenclature',
+        'name': _('Product Nomenclature'),
         'domain_type': 'supply',
         'model': 'product.nomenclature',
         'partial': True,
     },
     'product_category': {
-        'name': 'Product Categories',
+        'name': _('Product Categories'),
         'domain_type': 'supply',
         'model': 'product.category',
         'domain': [('msfid', '!=', False)],
         'partial': True,
     },
     'product_list': {
-        'name': 'Products Lists',
+        'name': _('Products Lists'),
         'domain_type': 'supply',
         'model': 'product.list',
         'partial': True,
     },
     'product_list_line': {
-        'name': 'Products Lists Lines',
+        'name': _('Products Lists Lines'),
         'domain_type': 'supply',
         'model': 'product.list.line',
         'partial': True,
@@ -61,20 +61,20 @@ MODEL_DICT = {
         'partial': True,
     },
     'suppliers': {
-        'name': 'Suppliers',
+        'name': _('Suppliers'),
         'domain_type': 'supply',
         'model': 'res.partner',
         'domain': [('supplier', '=', True)],
         'partial': True,
     },
     'supplier_catalogues': {
-        'name': 'Supplier Catalogues',
+        'name': _('Supplier Catalogues'),
         'domain_type': 'supply',
         'model': 'supplier.catalogue',
         'partial': True,
     },
     'supplier_catalogues_lines': {
-        'name': 'Supplier Catalogue Lines',
+        'name': _('Supplier Catalogue Lines'),
         'domain_type': 'supply',
         'model': 'supplier.catalogue.line',
         'partial': True,
