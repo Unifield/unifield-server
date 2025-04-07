@@ -837,6 +837,20 @@ The starting balance will be proposed automatically and the closing balance is t
                 return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
         return res
 
+    def open_import_wizard(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        wiz_id = self.pool.get('wizard.register.import').create(cr, uid, {'state': 'draft', 'register_id': context.get('active_ids')[0]}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.register.import',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': [wiz_id],
+            'context': context,
+        }
+
 account_bank_statement()
 
 
