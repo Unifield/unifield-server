@@ -219,7 +219,7 @@
         <field name="model">product.asset</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Asset Forms">
+            <tree string="Asset Forms" colors="blue:state == 'draft';grey:state == 'disposed'">
                 <field name="name" />
                 <field name="instance_id"/>
                 <field name="used_instance_id" />
