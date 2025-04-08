@@ -339,7 +339,8 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
-            self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
+            if emp.resource_id and emp.resource_id.active:
+                self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
