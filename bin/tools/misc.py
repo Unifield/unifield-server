@@ -973,7 +973,7 @@ class cache(object):
             raise Exception("Can not use a cache instance on more than one function")
         self.fun = fn
 
-        argspec = inspect.getargspec(fn)
+        argspec = inspect.getfullargspec(fn)
         self.fun_arg_names = argspec[0][self.skiparg:]
         self.fun_default_values = {}
         if argspec[3]:
@@ -1104,7 +1104,7 @@ class read_cache(object):
             raise Exception("Can not use a cache instance on more than one function")
         self.fun = fn
 
-        argspec = inspect.getargspec(fn)
+        argspec = inspect.getfullargspec(fn)
         # get rid of self and the database cursor
         self.fun_arg_names = argspec[0][2:]
         self.fun_default_values = {}

@@ -21,7 +21,7 @@
 ##############################################################################
 import base64
 import io
-import imp
+import importlib
 import logging
 import os
 import re
@@ -238,7 +238,7 @@ class module(osv.osv):
             while parts:
                 part = parts.pop()
                 try:
-                    f, path, descr = imp.find_module(part, path and [path] or None)
+                    f, path, descr = importlib.find_module(part, path and [path] or None)
                 except ImportError:
                     raise ImportError('No module named %s' % (pydep,))
 

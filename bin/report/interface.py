@@ -42,6 +42,7 @@ def toxml(value):
 
 class report_int(netsvc.Service):
     def __init__(self, name, audience='*'):
+
         assert not self.exists(name), 'The report "%s" already exists!' % name
         super(report_int, self).__init__(name, audience)
         if name[0:7]!='report.':
