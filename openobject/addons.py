@@ -1,6 +1,6 @@
 import logging
 import os
-import imp
+import importlib
 import itertools
 import functools
 import cherrypy
@@ -151,12 +151,7 @@ def upgrade_graph(graph, module_list):
 
 
 def imp_module(name):
-    fp, pathname, description = imp.find_module(name, [paths.addons()])
-    try:
-        return imp.load_module(name, fp, pathname, description)
-    finally:
-        if fp:
-            fp.close()
+    importlib.__import__(name)
 
 
 from openobject import i18n
