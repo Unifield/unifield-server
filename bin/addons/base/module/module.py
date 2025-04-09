@@ -417,7 +417,7 @@ class module(osv.osv):
         for mod in self.browse(cr, uid, ids, context=context):
             if not mod.url:
                 continue
-            match = re.search('-([a-zA-Z0-9\._-]+)(\.zip)', mod.url, re.I)
+            match = re.search(r'-([a-zA-Z0-9\._-]+)(\.zip)', mod.url, re.I)
             version = '0'
             if match:
                 version = match.group(1)

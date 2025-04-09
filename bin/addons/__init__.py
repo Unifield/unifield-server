@@ -216,7 +216,7 @@ def zip_directory(directory, b64enc=True, src=True):
     @return: a string containing the zip file
     """
 
-    RE_exclude = re.compile('(?:^\..+\.swp$)|(?:\.py[oc]$)|(?:\.bak$)|(?:\.~.~$)', re.I)
+    RE_exclude = re.compile(r'(?:^\..+\.swp$)|(?:\.py[oc]$)|(?:\.bak$)|(?:\.~.~$)', re.I)
 
     def _zippy(archive, path, src=True):
         path = os.path.abspath(path)

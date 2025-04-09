@@ -580,7 +580,7 @@ def html2plaintext(html, body_id=None, encoding='utf-8'):
     html = html.replace('<em>','/').replace('</em>','/')
     html = html.replace('<tr>', '\n')
     html = html.replace('</p>', '\n')
-    html = re.sub('<br\s*/?>', '\n', html)
+    html = re.sub(r'<br\s*/?>', '\n', html)
     html = re.sub('<.*?>', ' ', html)
     html = html.replace(' ' * 2, ' ')
 
@@ -1524,7 +1524,7 @@ def debug(what):
     from inspect import stack
     from pprint import pformat
     st = stack()[1]
-    param = re.split("debug *\((.+)\)", st[4][0].strip())[1].strip()
+    param = re.split(r"debug *\((.+)\)", st[4][0].strip())[1].strip()
     while param.count(')') > param.count('('): param = param[:param.rfind(')')]
     what = pformat(what)
     if param != what:
