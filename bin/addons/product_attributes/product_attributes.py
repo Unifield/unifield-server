@@ -3107,12 +3107,11 @@ class product_attributes(osv.osv):
             fields_data = self.fields_get(cr, uid, failed, context=context)
             values = {'attr': ', '.join([fields_data[x].get('string') for x in failed])}
             if blocker:
-                values['products'] = ''
-                if 'nomen_manda_0' in failed:
-                    values['products'] = _('\nProducts: %s and %s') % (old_values['default_code'], new_values['default_code'])
+                values['product_old'] = old_values['default_code']
+                values['product_new'] = new_values['default_code']
                 if level == 'coordo':
-                    return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge.%(products)s') % values
-                return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update (one of) your UniData product\'s %(attr)s and then proceed with the merge.%(products)s') % values
+                    return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge. Products %(product_old)s and %(product_new)s') % values
+                return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update (one of) your UniData product\'s %(attr)s and then proceed with the merge. Products %(product_old)s and %(product_new)s') % values
 
             return _('There is an inconsistency between the selected products’ %(attr)s. Do you still want to proceed with the merge ?') % values
 
