@@ -79,13 +79,30 @@ class product_supplierinfo(osv.osv):
 
         return [('id', 'in', suppinfo_ids)]
 
+    def _get_supplierinfo_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of pricelist.partnerinfo objects for which values have changed
+        return the list of ids of product.supplierinfo object which need to get their price field updated
+
+        self is pricelist.partnerinfo object
+        '''
+        result = []
+        for obj in self.read(cr, uid, ids, ['suppinfo_id'], context=context):
+            if obj['suppinfo_id'] and obj['suppinfo_id'][0] not in result:
+                result.append(obj['suppinfo_id'][0])
+        return result
+
     _columns = {
         'manufacturer_id': fields.many2one('res.partner', string='Manufacturer', domain=[('manufacturer', '=', 1)]),
         'second_manufacturer_id': fields.many2one('res.partner', string='Second Manufacturer', domain=[('manufacturer', '=', 1)]),
         'third_manufacturer_id': fields.many2one('res.partner', string='Third Manufacturer', domain=[('manufacturer', '=', 1)]),
         'company_id': fields.many2one('res.company','Company',select=1),
         'check_manufacturer': fields.function(_get_manu_price_dates, method=True, type="boolean", string="Manufacturer", multi="compt_f"),
-        'get_first_price': fields.function(_get_manu_price_dates, method=True, type="float", string="Indicative Price", digits_compute=dp.get_precision('Purchase Price Computation'), multi="compt_f"),
+        'get_first_price': fields.function(_get_manu_price_dates, method=True, type="float", string="Indicative Price", digits_compute=dp.get_precision('Purchase Price Computation'),
+                                           multi="compt_f", store={
+                'pricelist.partnerinfo': (_get_supplierinfo_ids, ['suppinfo_id', 'price'], 10),
+                'product.supplierinfo': (lambda self, cr, uid, ids, c={}: ids, ['pricelist_ids'], 10)
+            }),
         'get_first_currency': fields.function(_get_manu_price_dates, method=True, type="many2one", relation="res.currency", string="Currency", multi="compt_f"),
         'get_till_date': fields.function(_get_manu_price_dates, fnct_search=search_get_date, method=True, type="date", string="Valid till date", multi="compt_f"),
         'get_from_date': fields.function(_get_manu_price_dates, fnct_search=search_get_date, method=True, type="date", string="Valid from date", multi="compt_f"),

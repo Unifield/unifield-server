@@ -2214,6 +2214,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'related_sourcing_ok': False,
                 'related_sourcing_id': False,
                 'supplier': False,
+                'supplier_ranking': False,
             })
 
             res = {'value': value, 'warning': message}
