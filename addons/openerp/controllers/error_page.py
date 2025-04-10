@@ -18,7 +18,6 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import cgitb
 import sys
 
 import cherrypy
@@ -44,7 +43,7 @@ class ErrorPage(BaseController):
             return self.__render(value)
 
         if not isinstance(value, openobject.errors.TinyException):
-            return cgitb.html((etype, value, tb))
+            return _cperror.get_error_page(500, traceback=_cperror.format_exc())
 
         return self.__render(value)
 

@@ -1253,7 +1253,7 @@ class Form(SecuredController):
         except:
             context = {}
 
-        match = re.match('^(.*?)\((.*)\)$', callback)
+        match = re.match(r'^(.*?)\((.*)\)$', callback)
 
         if not match:
             raise common.error(_('Application Error'), _('Wrong on_change trigger: %s') % callback)

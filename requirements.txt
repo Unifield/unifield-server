@@ -1,6 +1,6 @@
 Babel==2.13.1
 cheroot==10.0.0
-CherryPy==18.8.0
+CherryPy==18.10.0
 FormEncode==2.1.1
 jaraco.classes==3.2.1
 jaraco.collections==3.3.0
