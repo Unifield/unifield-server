@@ -1162,7 +1162,7 @@ class product_supplierinfo(osv.osv):
     _constraints = [
         (_check_uom, 'Error: The default UOM and the Supplier Product UOM must be in the same category.', ['product_uom']),
     ]
-    _order = 'sequence,get_first_price'
+    _order = 'sequence,get_first_price,id'
 
     def onchange_sequence(self, cr, uid, ids, sequence=False, context=None):
         """
