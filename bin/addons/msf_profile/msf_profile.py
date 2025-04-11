@@ -7233,8 +7233,7 @@ class email_configuration(osv.osv):
         res = cr.fetchone()
         if res:
             for i, key in enumerate(data):
-                if key in tools.config:
-                    tools.config[key] = res[i] or False
+                tools.config[key] = res[i] or False
         return True
 
     def __init__(self, pool, cr):
