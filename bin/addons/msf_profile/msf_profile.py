@@ -7211,7 +7211,8 @@ class email_configuration(osv.osv):
         'smtp_server': fields.char('SMTP Server', size=512, required=True),
         'email_from': fields.char('Email From', size=512, required=True),
         'smtp_port': fields.integer('SMTP Port', required=True),
-        'smtp_ssl': fields.boolean('Use SSL'),
+        'smtp_ssl': fields.boolean('Use TLS/SSL'),
+        'smtp_ssl_ignore_cert': fields.boolean('Do not verify certificate'),
         'smtp_user': fields.char('SMTP User', size=512),
         'smtp_password': fields.char('SMTP Password', size=512),
         'destination_test': fields.char('Email Destination Test', size=512),
@@ -7222,7 +7223,7 @@ class email_configuration(osv.osv):
     }
 
     def set_config(self, cr):
-        data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password']
+        data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password', 'smtp_ssl_ignore_cert']
         cr.execute("""select %s from email_configuration
             limit 1""" % ','.join(data))  # not_a_user_entry
         res = cr.fetchone()
@@ -7246,8 +7247,17 @@ class email_configuration(osv.osv):
         res = cr.fetchone()
         if not res or not res[0]:
             raise osv.except_osv(_('Warning !'), _('No destination email given!'))
-        if not tools.email_send(False, [res[0]], 'Test email from UniField', 'This is a test.'):
-            raise osv.except_osv(_('Warning !'), _('Could not deliver email'))
+        try:
+            body = "This is a test.\n\n"
+            for x in ['smtp_server', 'smtp_port', 'smtp_ssl', 'smtp_ssl_ignore_cert']:
+                body += '%s : %s\n' % (x, tools.config.get(x))
+            if tools.config.get('smtp_user') and tools.config.get('smtp_password'):
+                body += 'Auth user: %s' % (tools.config.get('smtp_user'), )
+
+
+            tools.email_send(False, [res[0]], 'Test email from UniField', body, raise_error=True)
+        except Exception as e:
+            raise osv.except_osv(_('Warning !'), _('Could not deliver email: %s') % e)
         return True
 
     _constraints = [
