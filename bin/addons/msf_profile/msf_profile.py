@@ -7223,7 +7223,11 @@ class email_configuration(osv.osv):
     }
 
     def set_config(self, cr):
-        data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password', 'smtp_ssl_ignore_cert']
+        data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password']
+
+        if cr.column_exists('email_configuration', 'smtp_ssl_ignore_cert'):
+            data.append('smtp_ssl_ignore_cert')
+
         cr.execute("""select %s from email_configuration
             limit 1""" % ','.join(data))  # not_a_user_entry
         res = cr.fetchone()
