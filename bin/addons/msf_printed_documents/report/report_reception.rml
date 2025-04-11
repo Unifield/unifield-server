@@ -64,23 +64,23 @@
         <blockTableStyle id="OrderInformationsFin1">
             <blockAlignment value="CENTER" />
             <blockVAlign value="MIDDLE" />
-            <lineStyle kind="GRID" colorName="black" start="2,0" stop="3,0" thickness="0.5" />
+            <lineStyle kind="GRID" colorName="black" start="2,0" stop="4,0" thickness="0.5" />
         </blockTableStyle>
 
         <blockTableStyle id="OrderInformationsFin2">
             <blockAlignment value="CENTER" />
             <blockVAlign value="MIDDLE" />
-            <lineStyle kind="GRID" colorName="black" start="2,0" stop="3,6" thickness="0.5" />
+            <lineStyle kind="GRID" colorName="black" start="2,0" stop="4,6" thickness="0.5" />
         </blockTableStyle>
 
         <blockTableStyle id="OrderInformationsFin2_2">
             <blockAlignment value="CENTER" />
             <blockVAlign value="MIDDLE" />
             <blockBottomPadding length="10" />
-            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="1,-1" stop="3,-1"/>
-            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  start="1,-1" stop="3,-1"/>
-            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5"  start="1,-1" stop="3,-1"/>
-            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="1,-1" stop="3,-1" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="1,-1" stop="4,-1"/>
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  start="1,-1" stop="4,-1"/>
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5"  start="1,-1" stop="4,-1"/>
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="1,-1" stop="4,-1" />
         </blockTableStyle>
 
 
@@ -88,9 +88,9 @@
         <blockTableStyle id="OrderInformationsFin2_3">
             <blockAlignment value="CENTER" />
             <blockVAlign value="MIDDLE" />
-            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="1,-1" stop="3,-1" />
-            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  start="1,-1" stop="3,-1"/>
-            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="1,-1" stop="3,-1" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="1,-1" stop="4,-1" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  start="1,-1" stop="4,-1"/>
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="1,-1" stop="4,-1" />
         </blockTableStyle>
 
 
@@ -792,13 +792,16 @@
         </blockTable>
 
 
-        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2" keepWithNext="1">
+        <blockTable colWidths="150,125,125,125,125,150" style="OrderInformationsFin2" keepWithNext="1">
             <tr>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">[[ translate('Approved by') ]] :</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">[[ translate('Received by') ]] [[ getSign(objects[0], 'tr', 'backup') ]]:</para>
@@ -812,13 +815,16 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_2" keepWithNext="1">
+        <blockTable colWidths="150,125,125,125,125,150" style="OrderInformationsFin2_2" keepWithNext="1">
             <tr>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">Name :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'tr', 'user_name') ]]</para>
@@ -833,13 +839,16 @@
         </blockTable>
 
 
-        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_2" keepWithNext="1">
+        <blockTable colWidths="150,125,125,125,125,150" style="OrderInformationsFin2_2" keepWithNext="1">
             <tr>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">Date :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'tr', 'date', '%d/%m/%Y %H:%M') ]]</para>
@@ -853,13 +862,16 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_2" keepWithNext="1">
+        <blockTable colWidths="150,125,125,125,125,150" style="OrderInformationsFin2_2" keepWithNext="1">
             <tr>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">Value :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'tr', 'format_value') ]]</para>
@@ -874,13 +886,16 @@
         </blockTable>
 
 
-        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_2" keepWithNext="1">
+        <blockTable colWidths="150,125,125,125,125,1505" style="OrderInformationsFin2_2" keepWithNext="1">
             <tr>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">Signature :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td><image width="100" height="25" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image')]]</image></td>
                 <td><image width="100" height="25" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image')]]</image></td>
