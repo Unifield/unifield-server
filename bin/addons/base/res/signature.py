@@ -211,8 +211,9 @@ class signature(osv.osv):
             ids = [ids]
 
         res = {}
+        signee_user = self.pool.get('res.users').read(cr, uid, uid, ['signee_user'])['signee_user']
         for sign in self.read(cr, uid, ids, ['id']):
-            res[sign['id']] = self.pool.get('res.users').read(cr, uid, uid, ['signee_user'])['signee_user']
+            res[sign['id']] = signee_user
         return res
 
     _columns = {
