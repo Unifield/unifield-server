@@ -569,10 +569,10 @@ class hr_payroll_import(osv.osv_memory):
                     Config = configparser.ConfigParser()
                     ini_desc = zipobj.open('envoi.ini', 'r', xyargv)
                     try:
-                        Config.readfp(io.TextIOWrapper(ini_desc, encoding='utf_8_sig'))
+                        Config.read_file(io.TextIOWrapper(ini_desc, encoding='utf_8_sig'))
                     except:
                         ini_desc.seek(0)
-                        Config.readfp(io.TextIOWrapper(ini_desc, encoding='ISO-8859-1'))
+                        Config.read_file(io.TextIOWrapper(ini_desc, encoding='ISO-8859-1'))
                     field = Config.get('DEFAUT', 'PAYS')
                 except Exception:
                     raise osv.except_osv(_('Error'), _('Could not read envoi.ini file in given ZIP file.'))

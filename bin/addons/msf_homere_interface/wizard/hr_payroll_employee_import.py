@@ -620,7 +620,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 ini_file_desc = open(ini_file_name, 'r', encoding='utf_8_sig')
                 desc_to_close.append(ini_file_desc)
                 config_parser = configparser.ConfigParser()
-                config_parser.readfp(ini_file_desc)
+                config_parser.read_file(ini_file_desc)
 
         if not contract_reader:
             raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (contract_file,))
