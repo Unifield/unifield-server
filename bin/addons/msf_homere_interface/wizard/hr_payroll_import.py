@@ -566,7 +566,7 @@ class hr_payroll_import(osv.osv_memory):
                 field = False
                 try:
                     import configparser
-                    Config = configparser.SafeConfigParser()
+                    Config = configparser.ConfigParser()
                     ini_desc = zipobj.open('envoi.ini', 'r', xyargv)
                     try:
                         Config.readfp(io.TextIOWrapper(ini_desc, encoding='utf_8_sig'))
