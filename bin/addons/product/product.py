@@ -1020,6 +1020,29 @@ class product_product(osv.osv):
 
         return res
 
+    def get_supplier_ranking_for_line(self, cr, uid, prod_id, partner_id):
+        """
+        Get the ranking of the product_supplierinfo for a product, ordered by rank then price
+        """
+        res = False
+        if not prod_id or not partner_id:
+            return res
+
+        cr.execute("""
+            SELECT DISTINCT ON (prod.id) s.sequence FROM product_product prod
+                LEFT JOIN product_supplierinfo s ON prod.product_tmpl_id = s.product_id
+                LEFT JOIN res_partner p ON p.id = s.name
+                LEFT JOIN pricelist_partnerinfo pi ON pi.suppinfo_id = s.id
+            WHERE prod.id = %s AND p.id = %s AND pi.valid_from <= NOW() 
+                AND (pi.valid_till IS NULL OR pi.valid_till >= NOW())
+            ORDER BY prod.id, s.sequence, pi.price
+        """, (prod_id, partner_id))
+        prod_data = cr.fetchone()
+        if prod_data:
+            res = prod_data[0]
+
+        return res
+
 
 product_product()
 

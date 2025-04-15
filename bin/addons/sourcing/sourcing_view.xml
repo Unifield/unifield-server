@@ -72,7 +72,7 @@
                         context="{'product_id': product_id, 'choose_supplier': True, 'uom': product_uom, 'product_qty': product_uom_qty}"
 						attrs="{'readonly': ['|', '|', ('po_cft', '=', 'cft'), ('state', '!=', 'validated'), ('type', '=', 'make_to_stock')]}"
 						on_change="onChangeSupplier(supplier, type)" />
-					<field name="supplier_ranking" />
+					<field name="supplier_ranking" readonly="1" />
 					<field name="customer" invisible="1" />
 					<field name="sourcing_date" invisible="1"/>
 					<field name="estimated_delivery_date" />

@@ -427,7 +427,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         return {}
 
-    def change_supplier(self, cr, uid, ids, supplier, l_type, context=None):
+    def change_supplier(self, cr, uid, ids, supplier, l_type, po_cft, line_ids, context=None):
         """
         Check if the partner has an address.
         :param cr: Cursor to the database
@@ -444,7 +444,8 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        result = {'value': {}}
+        active_ids = line_ids and line_ids[0] and line_ids[0][2] or []
+        result = {'value': {'line_ids': active_ids}}
         related_sourcing_ok = False
         if supplier:
             related_sourcing_ok = sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
@@ -479,6 +480,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         if not related_sourcing_ok:
             result['value']['related_sourcing_id'] = False
+
+        # To refresh the data on screen
+        sol_vals = {'type': l_type, 'po_cft': result['value'].get('po_cft') or po_cft , 'supplier': supplier}
+        self.pool.get('sale.order.line').write(cr, uid, active_ids, sol_vals, context=context)
 
         return result
 

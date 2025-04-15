@@ -526,7 +526,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             selection=[(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'), (5, '5th choice'),
                        (6, '6th choice'),  (7, '7th choice'), (8, '8th choice'), (9, '9th choice'), (10, '10th choice'),
                        (11, '11th choice'), (12, '12th choice'), (13, '-99'), (14, '0'), (15, '1'), (16, '2'), (17, '3'),
-                       (18, '4')], readonly=True, store=False
+                       (18, '4')], store=False
         ),
         'stock_uom_id': fields.related(
             'product_id',
@@ -2207,7 +2207,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if l_type == 'make_to_order' and line.product_id and line.product_id.seller_id and \
                     (line.product_id.seller_id.supplier or line.product_id.seller_id.manufacturer
                      or line.product_id.seller_id.transporter):
-                value['supplier'] = line.product_id.seller_id.id
+                value.update({
+                    'supplier': line.product_id.seller_id.id,
+                    'supplier_ranking': self.pool.get('product.product').\
+                        get_supplier_ranking_for_line(cr, uid, line.product_id.id, line.product_id.seller_id.id)
+                })
         if l_type == 'make_to_stock':
             value.update({
                 'po_cft': False,
@@ -2283,6 +2287,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'related_sourcing_ok': False,
                 'supplier_type': False,
                 'supplier_split_po': False,
+                'supplier_ranking': False,
             })
             sl = self.browse(cr, uid, line_id, context=context)
             if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
@@ -2342,6 +2347,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             if error:
                 return result
+
+            # Get the supplier ranking, if any
+            result['value']['supplier_ranking'] = self.pool.get('product.product').\
+                get_supplier_ranking_for_line(cr, uid, line.product_id.id, partner_id)
 
         return result
 
