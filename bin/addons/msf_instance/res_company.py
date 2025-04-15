@@ -128,9 +128,6 @@ class res_company(osv.osv):
             generate_asset_menu_id = data_obj.get_object_reference(cr, uid, 'product_asset', 'menu_product_asset_generate_entries')[1]
             import_asset_menu_id = data_obj.get_object_reference(cr, uid, 'product_asset', 'menu_product_asset_import_entries')[1]
             menu_obj.write(cr, uid, [generate_asset_menu_id, import_asset_menu_id], {'active': level != 'project'}, context=context)
-            # Hide Delete old ESC catalogues in non-OCA instances
-            del_old_cat_menu_id = data_obj.get_object_reference(cr, uid, 'msf_tools', 'delete_old_supplier_catalogue_menu')[1]
-            menu_obj.write(cr, uid, del_old_cat_menu_id, {'active': oc == 'oca'}, context=context)
         return ret
 
     def _get_instance_oc(self, cr, uid):

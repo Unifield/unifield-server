@@ -58,16 +58,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-    # UF37.0
-    def us_13069_hide_delete_old_catalogue_menu(self, cr, uid, *a, **b):
-        '''
-        Hide Delete old ESC catalogues in non-OCA instances
-        '''
-        oc = self.pool.get('res.company')._get_instance_oc(cr, uid)
-        del_old_cat_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'delete_old_supplier_catalogue_menu')[1]
-        self.pool.get('ir.ui.menu').write(cr, uid, del_old_cat_menu_id, {'active': oc == 'oca'}, context={})
-        return True
-
     # UF36.0
     def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
         '''
