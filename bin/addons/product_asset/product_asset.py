@@ -628,6 +628,52 @@ class product_asset(osv.osv):
             return [('used_instance_id', cond, current_instance_id)]
         return []
 
+    def _get_has_unposted_entries(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the asset,
+        and value = True if an unposted JE is linked to one of the depreciation lines, False otherwise
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        res = {}
+        for asset in self.browse(cr, uid, ids, fields_to_fetch=['line_ids'], context=context):
+            res[asset.id] = False
+            for depline in asset.line_ids:
+                if depline.move_id and depline.move_id.state == 'draft':  # draft = Unposted state
+                    res[asset.id] = True
+                    break
+        return res
+
+    def delete_unposted(self, cr, uid, ids, context=None):
+        """
+        This method:
+        - searches for the unposted Journal Entries linked to the asset depreciation lines,
+        - deletes the unposted JEs, and the related JIs and AJIs
+        """
+        if context is None:
+            context = {}
+        je_obj = self.pool.get('account.move')
+        asset_line_obj = self.pool.get('product.asset.line')
+        je_to_delete_ids = []
+        disposal_to_delete_id = []
+        for asset in self.browse(cr, uid, ids, fields_to_fetch=['line_ids'], context=context):
+            for depline in asset.line_ids:
+                if depline.move_id and depline.move_id.state == 'draft':  # draft = Unposted state
+                    je_to_delete_ids.append(depline.move_id.id)
+                    if depline.is_disposal:
+                        disposal_to_delete_id.append(depline.id)
+        if je_to_delete_ids:
+            je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
+        if disposal_to_delete_id:
+            # If disposal line exists, it means a disposal already operated,
+            # so eventually recreate the draft deplines deleted by the disposal action
+            asset_line_obj.unlink(cr, uid, disposal_to_delete_id, context=context)
+            self.button_generate_draft_entries(cr, uid, ids, context=context, entries_regeneration=True)
+
+        return True
+
 
     _columns = {
         # asset
@@ -697,6 +743,8 @@ class product_asset(osv.osv):
         'inital_line_account_id': fields.function(_get_inital_line_account_id,  method=True, type='many2one', relation='account.account', string='Initial B/S account'),
         'create_update_sent': fields.boolean('1st Update sent', readonly=True),
         'target_instance_history_ids': fields.many2many('msf.instance', 'asset_owner_instance_rel', 'asset_id', 'instance_id', 'List of owners (accurate at Coo)'),
+        'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
+                                                store=False, string='Has unposted entries'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -812,7 +860,7 @@ class product_asset(osv.osv):
         self.button_generate_draft_entries(cr, uid, ids, context=context, display_period_warning=False)
         return {'type': 'ir.actions.act_window_close'}
 
-    def button_generate_draft_entries(self, cr, uid, ids, context=None, display_period_warning=True):
+    def button_generate_draft_entries(self, cr, uid, ids, context=None, display_period_warning=True, entries_regeneration=False):
         line_obj = self.pool.get('product.asset.line')
         tools_obj = self.pool.get('date.tools')
 
@@ -854,12 +902,13 @@ class product_asset(osv.osv):
         self._check_mandatory_fields(cr, uid, ids, context)
 
         alreary_posted_ids = line_obj.search(cr, uid, [('asset_id', 'in', ids), ('move_id', '!=', False)], context=context)
-        if alreary_posted_ids:
+        if alreary_posted_ids and not entries_regeneration:
             raise osv.except_osv(_('Error !'), _('%d Entries already created on %s, cannot replace entries') % (len(alreary_posted_ids), asset.name))
 
         to_del = []
         for line in asset.line_ids:
-            to_del.append(line.id)
+            if not (entries_regeneration and line.move_id and line.move_id.state == 'posted'):
+                to_del.append(line.id)
         if to_del:
             line_obj.unlink(cr, uid, to_del, context=context)
 
@@ -919,28 +968,38 @@ class product_asset(osv.osv):
                 raise osv.except_osv(_('Error !'), dep_lines_error)
 
             new_ad_id = False
-            if asset.move_line_id.analytic_distribution_id:
-                new_ad_id = self.pool.get('analytic.distribution').copy(cr, uid, asset.move_line_id.analytic_distribution_id.id, {}, context=context)
-            line_obj.create(cr, uid, {
-                'asset_id': asset.id,
-                'asset_bs_depreciation_account_id': bs_prod_account_id,
-                'asset_pl_account_id': asset.move_line_id.account_id.id,
-                'date': to_create[0][0],
-                'amount': -1*asset.invo_value,
-                'is_initial_line': True,
-                'analytic_distribution_id': new_ad_id,
-            }, context=context)
+            exist_init_line_id = line_obj.search(cr, uid, [('is_initial_line', '=', True), ('asset_id', '=', asset.id)], context=context)
+            if not exist_init_line_id:
+                if asset.move_line_id.analytic_distribution_id:
+                    new_ad_id = self.pool.get('analytic.distribution').copy(cr, uid, asset.move_line_id.analytic_distribution_id.id, {}, context=context)
+                if not (asset.move_line_id.account_id.type == 'other' and asset.move_line_id.account_id.user_type_code == 'asset'):
+                    line_obj.create(cr, uid, {
+                        'asset_id': asset.id,
+                        'asset_bs_depreciation_account_id': bs_prod_account_id,
+                        'asset_pl_account_id': asset.move_line_id.account_id.id,
+                        'date': to_create[0][0],
+                        'amount': -1*asset.invo_value,
+                        'is_initial_line': True,
+                        'analytic_distribution_id': new_ad_id,
+                    }, context=context)
 
         for line in to_create:
-            line_obj.create(cr, uid, {
-                'asset_id': asset.id,
-                'asset_bs_depreciation_account_id': asset.asset_bs_depreciation_account_id.id,
-                'asset_pl_account_id': asset.asset_pl_account_id.id,
-                'date': line[0],
-                'amount': line[1],
-                'first_dep_day': line[2],
-                'last_dep_day': line[3],
-            }, context=context)
+            # In case of deplines re-generation, check that the line doesn't already exist
+            existing_line_id = False
+            if entries_regeneration:
+                existing_line_id = line_obj.search(cr, uid, [('asset_id', '=', asset.id),
+                                                             ('first_dep_day', '=', line[2]),
+                                                             ('last_dep_day', '=', line[3])], context=context)
+            if not existing_line_id:
+                line_obj.create(cr, uid, {
+                    'asset_id': asset.id,
+                    'asset_bs_depreciation_account_id': asset.asset_bs_depreciation_account_id.id,
+                    'asset_pl_account_id': asset.asset_pl_account_id.id,
+                    'date': line[0],
+                    'amount': line[1],
+                    'first_dep_day': line[2],
+                    'last_dep_day': line[3],
+                }, context=context)
 
         if to_create:
             to_write = {'lock_open': True}

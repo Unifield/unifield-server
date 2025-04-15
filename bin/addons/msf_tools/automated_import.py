@@ -40,7 +40,7 @@ import tempfile
 
 from tools import webdav
 from urllib.parse import urlparse
-
+import requests
 
 class RemoteInterface(object):
     port = 0
@@ -122,7 +122,32 @@ class RemoteOneDrive(RemoteInterface):
 
     def push(self, local_name, remote_name):
         f = open(local_name, 'r')
-        self.dav.upload(f, remote_name)
+        retries = 0
+        max_retries = 3
+        logged = True
+        while True:
+            try:
+                f.seek(0)
+                self.connect()
+                ok, error = self.dav.upload(f, remote_name)
+                if ok:
+                    break
+                if retries > max_retries:
+                    f.close()
+                    raise Exception(error)
+                retries += 1
+                time.sleep(2)
+                if not logged or 'timed out' in error or '2130575252' in error:
+                    logged = False
+                    self.connect()
+                    logged = True
+            except requests.exceptions.RequestException:
+                if retries > max_retries:
+                    f.close()
+                    raise
+                retries += 1
+                time.sleep(2)
+
         f.close()
 
     def get(self, remote_name, dest_name, delete=False):
