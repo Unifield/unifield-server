@@ -40,6 +40,51 @@
             </field>
         </record>
 
+
+        <record id="res_log_catalogue_deletion_search_view" model="ir.ui.view">
+            <field name="name">res.log.catalogue.deletion.search.view</field>
+            <field name="model">res.log.catalogue.deletion</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Catalogues deletion logs">
+                    <field name="name" />
+                    <field name="create_date" />
+                </search>
+            </field>
+        </record>
+
+        <record id="res_log_catalogue_deletion_tree_view" model="ir.ui.view">
+            <field name="name">res.log.catalogue.deletion.tree.view</field>
+            <field name="model">res.log.catalogue.deletion</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Catalogues deletion logs" hide_delete_button="1" hide_new_button="1">
+                    <field name="create_date" />
+                    <field name="user_id" />
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="res_log_catalogue_deletion_form_view" model="ir.ui.view">
+            <field name="name">res.log.catalogue.deletion.form.view</field>
+            <field name="model">res.log.catalogue.deletion</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Logs" hide_delete_button="1" hide_new_button="1" hide_duplicate_button="1">
+                  <group colspan="4" col="4">
+                      <field name="create_date" />
+                      <field name="user_id" />
+                      <field name="name" />
+                  </group>
+                </form>
+            </field>
+        </record>
+
+
+        <menuitem id="delete_old_supplier_catalogue_main_menu" name="Old catalogues deletion"
+                  parent="object_query.menu_preferences" sequence="54" />
+
         <record id="ir_actions_server_delete_old_supplier_catalogue" model="ir.actions.server">
             <field name="code">
 res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'delete_old_supplier_catalogue_default')
@@ -60,10 +105,9 @@ action = {
 
         <record id="delete_old_supplier_catalogue_menu" model="ir.ui.menu">
             <field name="name">Delete old ESC catalogues</field>
-            <field name="parent_id" ref="object_query.menu_preferences"/>
-            <field name="sequence">54</field>
+            <field name="parent_id" ref="delete_old_supplier_catalogue_main_menu"/>
+            <field name="sequence" eval="10" />
         </record>
-
         <record id="ir_values_menuitem_delete_old_supplier_catalogue" model="ir.values">
             <field name="name">Menuitem Delete old ESC catalogues</field>
             <field name="key2">tree_but_open</field>
@@ -73,5 +117,16 @@ action = {
             <field name="model">ir.ui.menu</field>
             <field eval="ref('delete_old_supplier_catalogue_menu')" name="res_id"/>
         </record>
+
+        <record id="action_res_log_catalogue_deletion" model="ir.actions.act_window">
+            <field name="name">Catalogues deletion logs</field>
+            <field name="res_model">res.log.catalogue.deletion</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_type">form</field>
+            <field name="view_search_id" ref="res_log_catalogue_deletion_search_view" />
+            <field name="view_id" ref="res_log_catalogue_deletion_tree_view" />
+        </record>
+        <menuitem id="res_log_catalogue_deletion_menu" action="action_res_log_catalogue_deletion"
+                  parent="delete_old_supplier_catalogue_main_menu" sequence="11" />
     </data>
 </openerp>

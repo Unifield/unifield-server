@@ -27,6 +27,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 from tools.translate import _
+from tools.sql import drop_view_if_exists
 
 
 class delete_old_supplier_catalogue(osv.osv):
@@ -37,7 +38,7 @@ class delete_old_supplier_catalogue(osv.osv):
         'name': fields.char('Name', size=128),
         'start_time': fields.datetime(string='Force Date and time of next execution'),
         'interval': fields.integer(string='Interval number'),
-        'interval_unit': fields.selection(selection=[('minutes', 'Minutes'), ('hours', 'Hours'), ('work_days', 'Work Days'), ('days', 'Days'), ('weeks', 'Weeks'), ('months', 'Months')], string='Interval Unit'),
+        'interval_unit': fields.selection(selection=[('weeks', 'Weeks'), ('months', 'Months')], string='Interval Unit'),
         'active': fields.boolean(string='Active', readonly=True),
         'cron_id': fields.many2one('ir.cron', string='Associated cron job', readonly=True),
         'next_scheduled_task': fields.related('cron_id', 'nextcall', type='datetime', readonly=1, string="Next Execution Date"),
@@ -192,3 +193,33 @@ class delete_old_supplier_catalogue(osv.osv):
 
 
 delete_old_supplier_catalogue()
+
+
+class res_log_catalogue_deletion(osv.osv):
+    _name ='res.log.catalogue.deletion'
+    _order = 'create_date desc'
+    _auto = False
+    _columns = {
+        'name': fields.char('Message', size=250, help='The logging message.', readonly=True, select=1),
+        'user_id': fields.many2one('res.users', 'User', readonly=True),
+        'create_date': fields.datetime('Creation Date', readonly=True, select=1),
+    }
+
+    def init(self, cr):
+        drop_view_if_exists(cr, 'res_log_catalogue_deletion')
+        cr.execute("""
+            CREATE OR REPLACE VIEW res_log_catalogue_deletion AS (
+                SELECT
+                    l.id as id,
+                    l.name as name, 
+                    l.user_id as user_id, 
+                    l.create_date as create_date
+                FROM
+                    res_log l
+                WHERE
+                    l.name LIKE '%Catalogue Deletion:%'
+            )
+        """)
+
+
+res_log_catalogue_deletion()

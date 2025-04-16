@@ -30,6 +30,7 @@ from msf_partner import PARTNER_TYPE
 import decimal_precision as dp
 
 import time
+import logging
 
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -46,6 +47,7 @@ class supplier_catalogue(osv.osv):
     _description = 'Supplier catalogue'
     _order = 'period_from, period_to'
     _trace = True
+    _logger = logging.getLogger('supplier_catalogue')
 
     def copy(self, cr, uid, catalogue_id, default=None, context=None):
         '''
@@ -113,6 +115,15 @@ class supplier_catalogue(osv.osv):
                 )
 
         if to_unlink:
+            # Log for history
+            cat_names = ', '.join([cat['name'] for cat in self.read(cr, uid, to_unlink, ['name'], context=context)])
+            if len(to_unlink) == 1:
+                msg = 'Catalogue Deletion: 1 catalogue was deleted: %s' % (cat_names,)
+            else:
+                msg = 'Catalogue Deletion: %s catalogues were deleted: %s' % (len(to_unlink), cat_names)
+            self._logger.warning(msg)
+            self.pool.get('res.log').create(cr, uid, {'name': '%s' % msg, 'read': True, }, context=context)
+
             to_unlink = tuple(to_unlink)
             id_cond = len(to_unlink) == 1 and ' = %s' % (to_unlink[0],) or ' IN %s' % (to_unlink,)
             cr.execute("""DELETE FROM supplier_catalogue WHERE id""" + id_cond)
