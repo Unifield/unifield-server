@@ -1357,7 +1357,10 @@ class account_mcdb(osv.osv):
         data['header'] = header
         context['keep_open'] = 1
         a = export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
-        a['datas']['keep_open'] = 1
+        if 'datas' in a:
+            a['datas']['keep_open'] = 1
+        else:
+            raise osv.except_osv(_('Warning'), _('There is more than 50000 records.'))
         return a
 
     def load_mcdb_template(self, cr, buid, ids, context=None):
