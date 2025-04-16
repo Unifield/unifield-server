@@ -81,7 +81,7 @@ class res_partner(osv.osv):
         # If we aren't in the context of choose supplier on procurement list
         if not context.get('product_id', False) or 'choose_supplier' not in context:
             for i in ids:
-                res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
+                res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A', 'supplier_ranking': 'N/A'}
         else:
             product = product_obj.browse(cr, uid, context.get('product_id'), fields_to_fetch=['product_tmpl_id'])
             seller_ids = []
@@ -94,13 +94,18 @@ class res_partner(osv.osv):
             # Get all suppliers defined on product form
             for s in supinfo_obj.browse(cr, uid, sup_ids, context=context):
                 seller_ids.append(s.name.id)
-                seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay}})
+                seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay, 'supplier_ranking': s.sequence}})
             # Check if the partner is in product form
             for i in ids:
                 if i in seller_ids:
-                    res[i] = {'in_product': True, 'min_qty': '%s' %seller_info[i]['min_qty'], 'delay': '%s' %seller_info[i]['delay']}
+                    res[i] = {
+                        'in_product': True,
+                        'min_qty': '%s' %seller_info[i]['min_qty'],
+                        'delay': '%s' %seller_info[i]['delay'],
+                        'supplier_ranking': seller_info[i]['supplier_ranking']
+                    }
                 else:
-                    res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
+                    res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A', 'supplier_ranking': 'N/A'}
 
         return res
 
@@ -307,6 +312,11 @@ class res_partner(osv.osv):
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
+        'supplier_ranking': fields.function(_set_in_product, string='Ranking', type='selection', method=True,
+            selection=[(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'), (5, '5th choice'),
+                       (6, '6th choice'),  (7, '7th choice'), (8, '8th choice'), (9, '9th choice'), (10, '10th choice'),
+                       (11, '11th choice'), (12, '12th choice'), (13, '-99'), (14, '0'), (15, '1'), (16, '2'), (17, '3'),
+                       (18, '4')], readonly=True, multi='in_product'),
         'property_product_pricelist_purchase': fields.many2one(
             'product.pricelist',
             domain=[('type', '=', 'purchase')],

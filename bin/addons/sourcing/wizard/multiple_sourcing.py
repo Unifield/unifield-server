@@ -481,9 +481,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not related_sourcing_ok:
             result['value']['related_sourcing_id'] = False
 
-        # To refresh the data on screen
-        sol_vals = {'type': l_type, 'po_cft': result['value'].get('po_cft') or po_cft , 'supplier': supplier}
-        self.pool.get('sale.order.line').write(cr, uid, active_ids, sol_vals, context=context)
+        # To refresh the data on screen, use update for performance
+        cr.execute("""
+            UPDATE sale_order_line SET type = %s, po_cft = %s, supplier = %s WHERE id IN %s
+        """, (l_type, result['value'].get('po_cft') or po_cft, supplier or None, tuple(active_ids)))
 
         return result
 
