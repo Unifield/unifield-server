@@ -563,6 +563,9 @@ class account_move_line(osv.osv):
             aml = self.browse(cr, uid, [res], context)
             if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
+            # US-13963 Check also for inactive employees tagged as not to be used
+            if aml and aml[0] and aml[0].employee_id and aml[0].employee_id.not_to_be_used:
+                raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (aml[0].employee_id.name_resource or '',))
 
         # US-852: Make an extra call to post-check all move lines when the "last" line got executed
         if vals.get('move_id'):
