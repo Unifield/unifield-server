@@ -53,32 +53,6 @@ class product_supplierinfo(osv.osv):
                         min_qty = price.min_order_qty
         return ret
 
-    def search_get_date(self, cr, uid, ids, fields, args, context=None):
-        """
-        Allow searches on get_from_date and get_till_date
-        """
-        if not args or not args[0][0] or not args[0][1]:
-            return []
-        if context is None:
-            context = {}
-        if isinstance(ids, int):
-            ids = [ids]
-
-        try:
-            date_col = args[0][0] == 'get_from_date' and 'valid_from' or 'valid_till'
-            where_clause = date_col + ' ' + args[0][1]
-            if args[0][2]:
-                cr.execute("""
-                    SELECT DISTINCT(suppinfo_id) FROM pricelist_partnerinfo WHERE """ + where_clause + """ %s
-                """, (args[0][2],))
-            else:
-                cr.execute("""SELECT DISTINCT(suppinfo_id) FROM pricelist_partnerinfo WHERE """ + date_col + """ IS NULL""")
-            suppinfo_ids = [x[0] for x in cr.fetchall()]
-        except Exception as e:
-            raise osv.except_osv(_('Error'), _('An error has occurred: %s') % (e,))
-
-        return [('id', 'in', suppinfo_ids)]
-
     def _get_supplierinfo_ids(self, cr, uid, ids, context=None):
         '''
         ids represents the ids of pricelist.partnerinfo objects for which values have changed
@@ -104,8 +78,8 @@ class product_supplierinfo(osv.osv):
                 'product.supplierinfo': (lambda self, cr, uid, ids, c={}: ids, ['pricelist_ids'], 10)
             }),
         'get_first_currency': fields.function(_get_manu_price_dates, method=True, type="many2one", relation="res.currency", string="Currency", multi="compt_f"),
-        'get_till_date': fields.function(_get_manu_price_dates, fnct_search=search_get_date, method=True, type="date", string="Valid till date", multi="compt_f"),
-        'get_from_date': fields.function(_get_manu_price_dates, fnct_search=search_get_date, method=True, type="date", string="Valid from date", multi="compt_f"),
+        'get_till_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid till date", multi="compt_f"),
+        'get_from_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid from date", multi="compt_f"),
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the the supplier info without removing it."),
     }
 
