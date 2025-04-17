@@ -81,20 +81,33 @@ class res_partner(osv.osv):
         # If we aren't in the context of choose supplier on procurement list
         if not context.get('product_id', False) or 'choose_supplier' not in context:
             for i in ids:
-                res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A', 'supplier_ranking': 'N/A'}
+                res[i] = {'in_product': False, 'min_qty': 'N/A', 'supplier_ranking': 'N/A', 'delay': 'N/A'}
         else:
             product = product_obj.browse(cr, uid, context.get('product_id'), fields_to_fetch=['product_tmpl_id'])
             seller_ids = []
             seller_info = {}
-            supinfo_obj = self.pool.get('product.supplierinfo')
             today = datetime.today().strftime('%Y-%m-%d')
-            supinfo_domain = [('name', 'in', ids), ('product_id', '=', product.product_tmpl_id.id),
-                              '&', ('get_from_date', '<=', today), '|', ('get_till_date', '=', False), ('get_till_date', '>=', today)]
-            sup_ids = supinfo_obj.search(cr, uid, supinfo_domain, context=context)
+
+            cr.execute("""
+                SELECT DISTINCT ON (s.sequence, s.get_first_price, s.id) s.name, s.min_qty, s.sequence,
+                    CASE 
+                        WHEN s.name IS NOT NULL THEN rp.supplier_lt 
+                        WHEN s.product_id IS NOT NULL THEN pp.procure_delay
+                        ELSE 1
+                    END AS delay
+                FROM pricelist_partnerinfo p 
+                    LEFT JOIN product_supplierinfo s ON p.suppinfo_id = s.id 
+                    LEFT JOIN product_product pp ON s.product_id = pp.id 
+                    LEFT JOIN product_template t ON pp.product_tmpl_id = t.id 
+                    LEFT JOIN res_partner rp ON s.name = rp.id
+                WHERE s.name IN %s AND t.id = %s AND p.valid_from <= %s AND (p.valid_till IS NULL OR p.valid_till >= %s) 
+                ORDER BY s.sequence, s.get_first_price, s.id
+            """, (tuple(ids), product.product_tmpl_id.id, today, today))
+
             # Get all suppliers defined on product form
-            for s in supinfo_obj.browse(cr, uid, sup_ids, context=context):
-                seller_ids.append(s.name.id)
-                seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay, 'supplier_ranking': s.sequence}})
+            for s in cr.fetchall():
+                seller_ids.append(s[0])
+                seller_info.update({s[0]: {'min_qty': s[1], 'supplier_ranking': s[2], 'delay': s[3]}})
             # Check if the partner is in product form
             for i in ids:
                 if i in seller_ids:
@@ -1114,12 +1127,10 @@ class res_partner(osv.osv):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list
         '''
-        supinfo_obj = self.pool.get('product.supplierinfo')
         if context is None:
             context = {}
         if args is None:
             args = []
-
 
         # Get all supplier
         if not context.get('product_id', False) or 'choose_supplier' not in context or count:
@@ -1141,22 +1152,29 @@ class res_partner(osv.osv):
         new_res = []
 
         # Sort suppliers by sequence in product form
-        if 'product_id' in context:
+        if 'product_id' in context and res_in_prod:
             today = datetime.today().strftime('%Y-%m-%d')
-            supinfo_domain = [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id')),
-                              '&', ('get_from_date', '<=', today), '|', ('get_till_date', '=', False), ('get_till_date', '>=', today)]
-            supinfo_ids = supinfo_obj.search(cr, uid, supinfo_domain, order='sequence')
 
-            for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name', 'get_from_date', 'get_till_date']):
+            cr.execute("""
+                SELECT DISTINCT ON (s.sequence, s.get_first_price, s.id) s.name  
+                FROM pricelist_partnerinfo p 
+                    LEFT JOIN product_supplierinfo s ON p.suppinfo_id = s.id 
+                    LEFT JOIN product_product pp ON s.product_id = pp.id 
+                    LEFT JOIN product_template t ON pp.product_tmpl_id = t.id 
+                WHERE s.name IN %s AND t.id = %s AND p.valid_from <= %s AND (p.valid_till IS NULL OR p.valid_till >= %s) 
+                ORDER BY s.sequence, s.get_first_price, s.id
+            """, (tuple(res_in_prod), context.get('product_id'), today, today))
+
+            for result in cr.fetchall():
                 try:
-                    tmp_res.remove(result['name'][0])
+                    tmp_res.remove(result[0])
                 except:
                     try:
                         tmp_res.pop()
                     except:
                         pass
                 finally:
-                    new_res.append(result['name'][0])
+                    new_res.append(result[0])
 
         #return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
 
