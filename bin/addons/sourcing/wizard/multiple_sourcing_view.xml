@@ -26,14 +26,14 @@
                         <field name="supplier_id"
                                domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids), '|', '|', ('supplier', '=', 't'), ('manufacturer', '=', 't'), ('transporter', '=', 't')]"
                                attrs="{'readonly': [('po_cft', '=', 'cft')], 'invisible': [('type', '=', 'make_to_stock')]}"
-                               on_change="change_supplier(supplier_id, type)"
+                               on_change="change_supplier(supplier_id, type, po_cft, line_ids)"
                         />
                     
                         <field name="location_id"
                                domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), 
                                         ('scrap_location', '=', False), ('destruction_location', '=', False), 
                                         ('output_ok', '=', False), ('input_ok', '=', False)]" 
-                               attrs="{'readonly': [('type', '!=', 'make_to_stock')]}" 
+                               attrs="{'readonly': [('type', '!=', 'make_to_stock')], 'required': [('type', '=', 'make_to_stock')]}"
                                on_change="change_location(location_id, line_ids)" />
                         <field name="related_sourcing_ok" invisible="1" />
                         <field name="supplier_type" invisible="1" />
@@ -69,6 +69,7 @@
                     <field name="available_stock" />
                     <field name="virtual_stock" />
                     <field name="supplier" invisible="1" />
+                    <field name="supplier_ranking" />
                 </tree>
             </field>
         </record>

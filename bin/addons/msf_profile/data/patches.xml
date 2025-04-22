@@ -1193,5 +1193,9 @@
             <field name="method">us_14039_store_cash_migration</field>
         </record>
 
+        <record id="us_13741_13952_13955_14253_update_prod_supinfo_prices" model="patch.scripts">
+            <field name="method">us_13741_13952_13955_14253_update_prod_supinfo_prices</field>
+        </record>
+
     </data>
 </openerp>

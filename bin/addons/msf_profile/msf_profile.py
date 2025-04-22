@@ -39,7 +39,7 @@ import io
 import csv
 import zlib
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from base.res.signature import _register_log
 import hashlib
@@ -87,6 +87,22 @@ class patch_scripts(osv.osv):
         return True
 
     # UF37.0
+    def us_13741_13952_13955_14253_update_prod_supinfo_prices(self, cr, uid, *a, **b):
+        '''
+        The field get_first_price from product.supplierinfo is now stored, so its data will be updated using the same
+        way as the get function
+        '''
+        start_time = time.time()
+        cr.execute("""
+            UPDATE product_supplierinfo si 
+            SET get_first_price = (SELECT DISTINCT ON (pi.suppinfo_id) pi.price 
+                FROM pricelist_partnerinfo pi WHERE pi.suppinfo_id=si.id ORDER BY pi.suppinfo_id,pi.min_quantity)
+        """)
+        end_time = timedelta(seconds=time.time() - start_time)
+        self.log_info(cr, uid, "US-13741-13952-13955-14253: %s prices of Products Suppliers have been updated in %s" % (cr.rowcount, end_time))
+
+        return True
+
     def us_12270_13064_13353_sign_roles_and_int_sign(self, cr, uid, *a, **b):
         '''
         In the existing signature lines, change the "HQ" role into "HQ Responsible" for FO/PO, and change the
