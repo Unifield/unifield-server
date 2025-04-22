@@ -53,6 +53,7 @@ from functools import reduce
 from functools import cmp_to_key
 import hashlib
 from . import sql
+import ssl
 
 try:
     from html2text import html2text
@@ -602,7 +603,7 @@ def generate_tracking_message_id(openobject_id):
     """
     return "<%s-openobject-%s@%s>" % (time.time(), openobject_id, socket.gethostname())
 
-def _email_send(smtp_from, smtp_to_list, message, openobject_id=None, ssl=False, debug=False):
+def _email_send(smtp_from, smtp_to_list, message, openobject_id=None, use_ssl=False, debug=False, raise_error=None):
     """Low-level method to send directly a Message through the configured smtp server.
         :param smtp_from: RFC-822 envelope FROM (not displayed to recipient)
         :param smtp_to_list: RFC-822 envelope RCPT_TOs (not displayed to recipient)
@@ -612,12 +613,8 @@ def _email_send(smtp_from, smtp_to_list, message, openobject_id=None, ssl=False,
         :return: True if the mail was delivered successfully to the smtp,
                  else False (+ exception logged)
     """
-    class WriteToLogger(object):
-        def __init__(self):
-            self.logger = netsvc.Logger()
-
-        def write(self, s):
-            self.logger.notifyChannel('email_send', netsvc.LOG_DEBUG, s)
+    def _print_debug(self, *args):
+        _logger.warn(' '.join(str(a) for a in args))
 
     if openobject_id:
         message['Message-Id'] = generate_tracking_message_id(openobject_id)
@@ -632,43 +629,49 @@ def _email_send(smtp_from, smtp_to_list, message, openobject_id=None, ssl=False,
             mdir.add(message.as_string(True))
             return True
 
-        oldstderr = smtplib.stderr
-        if not ssl: ssl = config.get('smtp_ssl', False)
-        s = smtplib.SMTP()
+        if not use_ssl:
+            use_ssl = config.get('smtp_ssl', False)
+
         try:
-            # in case of debug, the messages are printed to stderr.
-            if debug:
-                smtplib.stderr = WriteToLogger()
+            with smtplib.SMTP(smtp_server, config['smtp_port'], timeout=10) as s:
+                # in case of debug, the messages are printed to stderr.
+                if debug:
+                    smtplib.SMTP._print_debug = _print_debug
 
-            s.set_debuglevel(int(bool(debug)))  # 0 or 1
-            s.connect(smtp_server, config['smtp_port'])
-            if ssl:
-                s.ehlo()
-                s.starttls()
-                s.ehlo()
+                s.set_debuglevel(int(bool(debug)))  # 0 or 1
+                s.connect(smtp_server, config['smtp_port'])
+                if use_ssl:
+                    if not config.get('smtp_ssl_ignore_cert', False):
+                        context = ssl.create_default_context()
+                    else:
+                        context = ssl._create_unverified_context()
 
-            if config['smtp_user'] or config['smtp_password']:
-                s.login(config['smtp_user'], config['smtp_password'])
+                    s.ehlo()
+                    s.starttls(context=context)
+                    s.ehlo()
 
-            s.sendmail(smtp_from, smtp_to_list, message.as_string())
+                if config['smtp_user'] or config['smtp_password']:
+                    s.login(config['smtp_user'], config['smtp_password'])
+
+                s.sendmail(smtp_from, smtp_to_list, message.as_string())
         finally:
             try:
                 s.quit()
-                if debug:
-                    smtplib.stderr = oldstderr
             except Exception:
                 # ignored, just a consequence of the previous exception
                 pass
 
     except Exception:
         _logger.error('could not deliver email', exc_info=True)
+        if raise_error:
+            raise
         return False
 
     return True
 
 
 def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=None, reply_to=False,
-               attach=None, openobject_id=False, ssl=False, debug=False, subtype='plain', x_headers=None, priority='3'):
+               attach=None, openobject_id=False, use_ssl=False, debug=False, subtype='plain', x_headers=None, priority='3', raise_error=None):
 
     """Send an email.
 
@@ -688,14 +691,17 @@ def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=Non
         raise ValueError("Sending an email requires either providing a sender "
                          "address or having configured one")
 
-    if not email_from: email_from = config.get('email_from', False)
-    email_from = ustr(email_from).encode('utf-8')
+    if not email_from:
+        email_from = config.get('email_from', False)
 
-    if not email_cc: email_cc = []
-    if not email_bcc: email_bcc = []
-    if not body: body = ''
+    if not email_cc:
+        email_cc = []
+    if not email_bcc:
+        email_bcc = []
+    if not body:
+        body = ''
 
-    email_body = ustr(body).encode('utf-8')
+    email_body = body
     email_text = MIMEText(email_body or '',_subtype=subtype,_charset='utf-8')
 
     msg = MIMEMultipart()
@@ -721,7 +727,7 @@ def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=Non
         msg['%s' % key] = str(value)
 
     if html2text and subtype == 'html':
-        text = html2text(email_body.decode('utf-8')).encode('utf-8')
+        text = html2text(email_body.decode('utf-8'))
         alternative_part = MIMEMultipart(_subtype="alternative")
         alternative_part.attach(MIMEText(text, _charset='utf-8', _subtype='plain'))
         alternative_part.attach(email_text)
@@ -737,7 +743,7 @@ def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=Non
             part.add_header('Content-Disposition', 'attachment; filename="%s"' % (fname,))
             msg.attach(part)
 
-    return _email_send(email_from, flatten([email_to, email_cc, email_bcc]), msg, openobject_id=openobject_id, ssl=ssl, debug=debug)
+    return _email_send(email_from, flatten([email_to, email_cc, email_bcc]), msg, openobject_id=openobject_id, use_ssl=use_ssl, debug=debug, raise_error=raise_error)
 
 #----------------------------------------------------------
 # SMS
