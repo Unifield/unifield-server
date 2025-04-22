@@ -517,12 +517,13 @@ class PhysicalInventory(osv.osv):
         # Do the actual write
         physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': False, 'has_bad_stock': False}, context=context)
 
-
         return self.resolve_discrepancies_anomalies(cr, uid, inventory_id, context=context)
 
     def re_generate_discrepancies(self, cr, uid, inventory_ids, context=None):
-        return self.generate_discrepancies(cr, uid, inventory_ids, context=context)
+        # Unsign the signed lines
+        self.unsign_all(cr, uid, inventory_ids, context=context)
 
+        return self.generate_discrepancies(cr, uid, inventory_ids, context=context)
 
     def resolve_discrepancies_anomalies(self, cr, uid, inventory_id, context=None):
         context = context if context else {}
@@ -1115,6 +1116,15 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         """ Finish the inventory"""
         if context is None:
             context = {}
+
+        signl_obj = self.pool.get('signature.line')
+        for inv in self.read(cr, uid, ids, ['signature_id', 'signature_available', 'signed_off_line'], context=context):
+            if inv['signature_id'] and inv['signature_available'] and not inv['signed_off_line'] and\
+                    len(signl_obj.search(cr, uid, [('signature_id', '=', inv['signature_id'][0]), ('name_key', 'in', ['wr', 'sr']),
+                                                   ('is_active', '=', True), ('signed', '=', True)], context=context)) != 2:
+                raise osv.except_osv(_('Error'),
+                                     _('Both the Warehouse and Supply Responsible roles must be signed in order to close the Inventory.\nIf the signature is provided physically, please select "Sign Off-line".'))
+
         self.write(cr, uid, ids, {'state': 'closed', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
                    context=context)
         return {}
@@ -1123,11 +1133,16 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         if context is None:
             context = {}
         discrep_line_obj = self.pool.get('physical.inventory.discrepancy')
+
         # Remove discrepancies and reset discrepancies_generated boolean
         for inv_id in ids:
             discrep_line_ids = discrep_line_obj.search(cr, uid, [('inventory_id', '=', inv_id)], context=context)
             if len(discrep_line_ids) > 0:
                 discrep_line_obj.unlink(cr, uid, discrep_line_ids, context=context)
+
+        # Unsign the signed lines
+        self.unsign_all(cr, uid, ids, context=context)
+
         self.write(cr, uid, ids, {'state': 'counting', 'discrepancies_generated': False}, context=context)
         return {}
 
@@ -1191,6 +1206,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         prod_lot_obj = self.pool.get('stock.production.lot')
         picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
+        signl_obj = self.pool.get('signature.line')
 
         product_dict = {}
         product_tmpl_dict = {}
@@ -1204,11 +1220,15 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             errors.insert(0, _('Probably due to BN/ED changes on product, you have duplicates'))
             return wizard_obj.message_box(cr, uid, title=_('Error'), message='\n'.join(errors))
 
-        for inv in self.read(cr, uid, ids, ['counting_line_ids',
-                                            'discrepancy_line_ids',
-                                            'date', 'name', 'state'], context=context):
+        for inv in self.read(cr, uid, ids, ['counting_line_ids', 'discrepancy_line_ids', 'date', 'name', 'state',
+                                            'signature_id', 'signature_available', 'signed_off_line'], context=context):
             if inv['state'] in ('confirmed', 'closed', 'cancel'):
                 raise osv.except_osv(_('Error'), _('You cannot confirm an inventory which is %s') % inv['state'])
+            if inv['signature_id'] and inv['signature_available'] and not inv['signed_off_line'] and \
+                    not signl_obj.search_exist(cr, uid, [('signature_id', '=', inv['signature_id'][0]), ('name_key', '=', 'wr'),
+                                                         ('is_active', '=', True), ('signed', '=', True)], context=context):
+                raise osv.except_osv(_('Error'),
+                                     _('The Warehouse Responsible role must be signed in order to confirm the Inventory.\nIf the signature is provided physically, please select "Sign Off-line".'))
             move_ids = []
 
             # gather all information needed for the lines treatment first to do less requests
@@ -1216,7 +1236,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             inv_line_obj = self.pool.get('physical.inventory.discrepancy')
 
 
-            counting_lines_with_no_discrepancy_ids = counting_line_obj.search(cr, uid, [("inventory_id", '=', inv["id"]),
+            counting_lines_with_no_discrepancy_ids = counting_line_obj.search(cr, uid, [("inventory_id", '=', inv['id']),
                                                                                         ("discrepancy", '=', False)],
                                                                               context=context)
 
@@ -1356,12 +1376,21 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
 
     def action_cancel_draft(self, cr, uid, ids, context=None):
         """ Cancels the stock move and change inventory state to draft."""
+        if context is None:
+            context = {}
+
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
 
         for inv in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
             if not inv.location_id.active:
                 raise osv.except_osv(_('Warning'), _("Location %s is inactive") % (inv.location_id.name,))
+
+        # Unsign the signed lines
+        context['pi_cancel_reset'] = True
+        self.unsign_all(cr, uid, ids, context=context)
+        if 'pi_cancel_reset' in context:
+            context.pop('pi_cancel_reset')
 
         self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False}, context=context)
         return {}

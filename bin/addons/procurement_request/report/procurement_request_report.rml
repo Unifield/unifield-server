@@ -6,7 +6,7 @@
             <frame id="first" x1="28.0" y1="28.0" width="786" height="520"/>
             <pageGraphics>
                 <drawString x="28.0" y="560.0">INTERNAL REQUEST [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
-                <image x="28.0" y="505" height="35.0" >[[ company.logo or removeParentNode('image') ]]</image>
+                <image x="693.0" y="545" height="35.0" >[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8"/>
                 <drawString x="765" y="550.0">Page : <pageNumber /></drawString>
                 <drawString x="800" y="550.0">/</drawString>
@@ -95,7 +95,7 @@
         </para>
 
         <!-- Header Information -->
-        <blockTable colWidths="120.0,120.0,120.0,120.0,120.0,120.0" style="HeaderInfo">
+        <blockTable colWidths="120.0,125.0,150.0,125.0,120.0,120.0" style="HeaderInfo">
             <tr>
                 <td>
                     <para style="HeaderRight">Order Reference :</para>
@@ -124,7 +124,7 @@
                     <para style="Header">[[ getSel(req, 'state') ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Requested date :</para>
+                    <para style="HeaderRight">Requested Delivery Date :</para>
                 </td>
                 <td>
                     <para style="Header">[[ formatLang(req.delivery_requested_date, date=True) ]]</para>

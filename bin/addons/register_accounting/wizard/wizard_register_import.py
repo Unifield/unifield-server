@@ -36,10 +36,13 @@ import pooler
 from ..register_tools import open_register_view
 from lxml import etree
 import logging
+from threading import RLock
+
 
 
 class wizard_register_import(osv.osv_memory):
     _name = 'wizard.register.import'
+    _lock = RLock()
 
     _columns = {
         'file': fields.binary(string="File", filters='*.xml, *.xls', required=True),
@@ -72,20 +75,6 @@ class wizard_register_import(osv.osv_memory):
             fields = form.xpath
             view['arch'] = etree.tostring(form, encoding='unicode')
         return view
-
-    def create(self, cr, uid, vals, context=None):
-        """
-        Add register regarding context @creation
-        """
-        if not context:
-            return False
-        res = super(wizard_register_import, self).create(cr, uid, vals, context=context)
-        if context.get('active_ids', False):
-            ids = res
-            if isinstance(ids, int):
-                ids = [ids]
-            self.write(cr, uid, ids, {'register_id': context.get('active_ids')[0]}, context=context)
-        return res
 
     def create_entries(self, cr, uid, ids, remaining_percent=50.0, context=None):
         """
@@ -702,12 +691,19 @@ class wizard_register_import(osv.osv_memory):
         """
         if not context:
             context = {}
+
+
+        with self._lock:
+            current = self.read(cr, uid, ids[0], ['state'])
+            if current['state'] != 'draft':
+                return {}
+            # Write changes
+            self.write(cr, uid, ids, {'state': 'inprogress'}, context)
+
         # Launch a thread
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
 
-        # Write changes
-        self.write(cr, uid, ids, {'state': 'inprogress'}, context)
         # Return a dict to avoid problem of panel bar to the right
         return {
             'type': 'ir.actions.act_window',
