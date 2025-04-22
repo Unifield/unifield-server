@@ -94,12 +94,33 @@ class patch_scripts(osv.osv):
         '''
         start_time = time.time()
         cr.execute("""
-            UPDATE product_supplierinfo si 
-            SET get_first_price = (SELECT DISTINCT ON (pi.suppinfo_id) pi.price 
+            UPDATE product_supplierinfo si
+            SET get_first_price = (SELECT DISTINCT ON (pi.suppinfo_id) pi.price
                 FROM pricelist_partnerinfo pi WHERE pi.suppinfo_id=si.id ORDER BY pi.suppinfo_id,pi.min_quantity)
         """)
         end_time = timedelta(seconds=time.time() - start_time)
         self.log_info(cr, uid, "US-13741-13952-13955-14253: %s prices of Products Suppliers have been updated in %s" % (cr.rowcount, end_time))
+        return True
+
+
+    def us_13346_13377_set_signee_users(self, cr, uid, *a, **b):
+        '''
+        If there is any user with signature enabled and only the Groups 'Sign_user' and 'Sync / User', make it Signee
+        '''
+        group_obj = self.pool.get('res.groups')
+        user_obj = self.pool.get('res.users')
+        sign_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sign_user')])
+        sync_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+        user_ids = user_obj.search(cr, uid, [('signature_enabled', '=', True)])
+        if sign_group_ids and sync_group_ids and user_ids:
+            action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu',
+                                                                            'signature_follow_up_to_be_signed_action')[1]
+            needed_groups_ids = {sign_group_ids[0], sync_group_ids[0]}
+            signee_user_ids = []
+            for user in user_obj.read(cr, uid, user_ids, ['groups_id']):
+                if user['groups_id'] and needed_groups_ids == set(user['groups_id']):
+                    signee_user_ids.append(user['id'])
+            user_obj.write(cr, uid, signee_user_ids, {'signee_user': True, 'action_id': action_id})
 
         return True
 
@@ -130,7 +151,6 @@ class patch_scripts(osv.osv):
         sign_install = setup_obj.create(cr, uid, {})
         setup_obj.execute(cr, uid, [sign_install])
         return True
-
 
     def us_14124_delete_old_unused_ir_properties(self, cr, uid, *a, **b):
         '''

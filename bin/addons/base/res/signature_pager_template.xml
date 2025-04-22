@@ -2,6 +2,20 @@
     <group colspan="2" />
 
     <group colspan="6" col="6">
+        <html>
+            <script language="javascript">
+                var signee_user = $('#is_signee_user').val();
+                if (signee_user == "1") {
+                    $('.oe_form_button_create').hide();
+                    $('.oe_form_button_edit').hide();
+                    $('.oe_form_button_save').hide();
+                    $('.oe_form_button_save_edit').hide();
+                    $('.oe_form_button_duplicate').hide();
+                    $('.oe_form_button_delete').hide();
+                }
+            </script>
+        </html>
+
         <button name="add_user_signatures"
             string="Manage Users allowed to sign"
             type="object"
@@ -28,6 +42,7 @@
         <field name="allowed_to_be_locked" invisible="1" />
         <field name="allowed_to_be_closed" invisible="1" />
         <field name="doc_locked_for_sign" invisible="1" />
+        <field name="is_signee_user" invisible="1" />
         <field name="signature_line_ids" readonly="1" nolabel="1" colspan="6" on_change="sig_line_change()" mode="tree">
             <tree string="Signatures">
                 <field name="name" />
