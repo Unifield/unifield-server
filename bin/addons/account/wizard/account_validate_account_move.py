@@ -47,6 +47,10 @@ class validate_account_move_lines(osv.osv_memory):
                 vals_to_check = {'date': aml.date, 'period_id': aml.period_id.id,
                                  'account_id': aml.account_id.id, 'journal_id': aml.journal_id.id}
                 obj_move_line._check_date(cr, uid, vals_to_check, context=context)
+                # US-13963 Check also for inactive employees tagged as not to be used
+                if aml.employee_id and aml.employee_id.not_to_be_used:
+                    raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                        aml.employee_id.name_resource or '',))
         move_ids = [m.id for m in moves]
         obj_move.button_validate(cr, uid, move_ids, context)
         # update the state of the related Recurring Plans if any

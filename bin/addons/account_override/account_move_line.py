@@ -512,6 +512,10 @@ class account_move_line(osv.osv):
                 employee_id = aml['employee_id'] and aml['employee_id'][0] or False
                 transfer_journal_id = aml['transfer_journal_id'] and aml['transfer_journal_id'][0] or False
                 partner_id = aml['partner_id'] and aml['partner_id'][0] or False
+                # US-13963 Check also for inactive employees tagged as not to be used
+                if employee_id and 'not_to_be_used' in aml['employee_id'] and aml['employee_id']['not_to_be_used']:
+                    raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                        aml['employee_id']['name_resource'] or '',))
                 # US-672/2
                 self.pool.get('account.account').is_allowed_for_thirdparty(
                     cr, uid, account_id, partner_type=partner_type, partner_txt=partner_txt, employee_id=employee_id,
@@ -597,6 +601,10 @@ class account_move_line(osv.osv):
                     new_ji_name_empty = 'name' in vals and not vals['name']
                     if no_ji_name or new_ji_name_empty:
                         vals.update({'name': ml.move_id.manual_name})
+                # US-13963 Check also for inactive employees tagged as not to be used
+                if ml.employee_id and ml.employee_id.not_to_be_used:
+                    raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                        ml.employee_id.name_resource or '',))
             # Check date validity with period
             self._check_date_validity(cr, uid, ids, vals)
             if 'move_id' in vals:

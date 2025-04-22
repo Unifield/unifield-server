@@ -1380,6 +1380,10 @@ class account_move(osv.osv):
                         continue
                     if curr_aml.id != prev_currency_id:
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
+                    # US-13963 Check also for inactive employees tagged as not to be used
+                    if ml.employee_id and ml.employee_id.not_to_be_used:
+                        raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                            ml.employee_id.name_resource or '',))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
     def update_line_description(self, cr, uid, ids, context=None):

@@ -2667,7 +2667,9 @@ class account_bank_statement_line(osv.osv):
                     self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
                     self.create_down_payment_link(cr, uid, absl, context=context)
 
-
+                if absl.employee_id and absl.employee_id.not_to_be_used:
+                    raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                        absl.employee_id.name_resource or '',))
 
                 to_write['sequence_for_reference'] = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 # Optimization on write() for this field
