@@ -136,35 +136,48 @@ class product_history_consumption(osv.osv):
         """
         Remove all internal locations from the destinations when the last source is removed
         """
-        res = {}
-
         if src and isinstance(src, list) and src[0] and isinstance(src[0], tuple) and len(src[0]) == 3 and \
                 not src[0][2] and dest and isinstance(dest, list) and dest[0] and isinstance(dest[0], tuple) and \
                 len(dest[0]) == 3 and dest[0][2]:
             loc_domain = [('id', 'in', dest[0][2]), ('usage', '=', 'internal')]
             int_loc_dest_ids = self.pool.get('stock.location').search(cr, uid, loc_domain, context=context)
             if int_loc_dest_ids:
-                res.update({'value': {'dest_location_ids': [loc for loc in dest[0][2] if loc not in int_loc_dest_ids]}})
+                return {'value': {'dest_location_ids': [loc for loc in dest[0][2] if loc not in int_loc_dest_ids]}}
+
+        return {}
+
+    def change_dest_location_ids(self, cr, uid, ids, dest, partner, context=None):
+        """
+        Prevent adding the Other Customer Location if an External Partner has been selected
+        """
+        res = {}
+
+        res_dest = []
+        other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')[1]
+        if dest and isinstance(dest, list) and dest[0] and isinstance(dest[0], tuple) and len(dest[0]) == 3:
+            res_dest = dest[0][2]
+            if res_dest and partner and isinstance(partner, list) and partner[0] and isinstance(partner[0], tuple) and \
+                    len(partner[0]) == 3 and partner[0][2] and other_customer in dest[0][2]:
+                res_dest = [loc for loc in dest[0][2] if loc != other_customer]
+                res.update({
+                    'value': {'dest_location_ids': res_dest},
+                    'warning': {
+                        'title': _('Warning!'),
+                        'message': _('You can not select the Other Customer Destination Location if an External Partner has been selected')
+                    }
+                })
+
+        if not dest or not isinstance(dest, list) or not dest[0] or not isinstance(dest[0], tuple) or len(dest[0]) != 3 or not res_dest:
+            res.update({'value': {'disable_adjusted_rr_amc': False}})
+        else:
+            res.update({'value': {'disable_adjusted_rr_amc': True, 'adjusted_rr_amc': False}})
 
         return res
 
-    def change_dest_location_ids(self, cr, uid, ids, dest, partner, context=None):
-        other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')[1]
-        if dest and isinstance(dest, list) and dest[0] and isinstance(dest[0], tuple) and len(dest[0]) == 3 and \
-                dest[0][2] and partner and isinstance(partner, list) and partner[0] and isinstance(partner[0], tuple) and \
-                len(partner[0]) == 3 and partner[0][2] and other_customer in dest[0][2]:
-            return {
-                'value': {'dest_location_ids': [loc for loc in dest[0][2] if loc != other_customer]},
-                'warning': {
-                    'title': _('Warning!'),
-                    'message': _('You can not select the Other Customer Destination Location if an External Partner has been selected')
-                }
-            }
-        if not dest or not isinstance(dest, list) or not dest[0] or not isinstance(dest[0], tuple) or len(dest[0]) != 3 or not dest[0][2]:
-            return {'value': {'disable_adjusted_rr_amc': False}}
-        return {'value': {'disable_adjusted_rr_amc': True, 'adjusted_rr_amc': False}}
-
     def change_ext_partner_ids(self, cr, uid, ids, dest, partner, context=None):
+        """
+        Prevent adding an External Partner if the Other Customer Location has been selected
+        """
         other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')[1]
         if dest and isinstance(dest, list) and dest[0] and isinstance(dest[0], tuple) and len(dest[0]) == 3 and \
                 dest[0][2] and partner and isinstance(partner, list) and partner[0] and isinstance(partner[0], tuple) and \
