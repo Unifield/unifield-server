@@ -221,7 +221,6 @@ class ListGroup(List):
             if isinstance(self.group_by_ctx, list):
                 # change ['group_parent_id,group_category'] to ['group_parent_id', 'group_category']
                 self.group_by_ctx = reduce(lambda x,y: x+y,[x.split(',') for x in self.group_by_ctx])
-            self.context['group_by'] = self.group_by_ctx
         else:
             self.group_by_ctx = self.context.get('group_by', [])
 
