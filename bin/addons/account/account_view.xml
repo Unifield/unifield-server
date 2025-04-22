@@ -271,7 +271,7 @@
                         <filter name="expense_account" string="Expense" domain="[('user_type.code','=', 'expense')]" icon="terp-stock_symbol-selection"/>
                         <filter name="income_account" string="Income" domain="[('user_type.code','=', 'income')]" icon="gtk-go-forward"/>
                         <filter name="asset_account" string="Assets" domain="[('user_type.code','=', 'asset')]" icon="terp-dolar"/>
-                        <filter name="prevent_hq_asset" string="Prevent assets on HQ entries" domain="[('prevent_hq_asset','=', True)]" icon="terp-dolar_ok!"/>
+                        <filter name="prevent_hq_asset" string="Prevent capitalization of entries" domain="[('prevent_hq_asset','=', True)]" icon="terp-dolar_ok!"/>
                         <separator orientation="vertical"/>
                         <newline/>
 
