@@ -87,11 +87,16 @@
                                         <field name="ref" attrs="{'readonly': [('number_imported_account_invoices', '!=', 0)]}"/>
                                         <field name="account_id" domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]"
                                             on_change="onchange_account(account_id, parent.virtual_id)"
-                                            attrs="{'readonly': ['|','|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
+                                            attrs="{'readonly': ['|', '|', '|',
+                                                                 ('from_import_cheque_id', '!=', False),
+                                                                 ('number_imported_invoice', '>', 0),
+                                                                 ('direct_invoice', '=', True),
+                                                                 ('has_a_counterpart_transfer', '=', True)]}" />
                                         <field name="type_for_register" invisible="1"/>
                                         <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                                         <field name="partner_type"
-                                            attrs="{'readonly': ['|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
+                                            attrs="{'readonly': ['|', '|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('has_a_counterpart_transfer', '=', True)],
+                                                    'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}" />
                                         <field name="analytic_account_id"
@@ -146,10 +151,10 @@
                                         <field name="ref"/>
                                         <field name="account_id" domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]"
                                             on_change="onchange_account(account_id, parent.virtual_id)"
-                                            attrs="{'readonly': ['|', '|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
+                                            attrs="{'readonly': ['|', '|', '|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True), ('has_a_counterpart_transfer', '=', True)]}"
                                             />
                                         <field name="partner_type"
-                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
+                                            attrs="{'readonly': ['|', '|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('has_a_counterpart_transfer', '=', True)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
                                         <field name="display_analytic_button" invisible="1"/>
@@ -265,11 +270,11 @@
                                         <field name="ref" attrs="{'readonly': [('number_imported_account_invoices', '!=', 0)]}"/>
                                         <field name="account_id" domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]"
                                             on_change="onchange_account(account_id, parent.virtual_id)"
-                                            attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
+                                            attrs="{'readonly': ['|', '|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True), ('has_a_counterpart_transfer', '=', True)]}" />
                                         <field name="type_for_register" invisible="1"/>
                                         <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                                         <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('has_a_counterpart_transfer', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}"
                                             />
@@ -324,9 +329,9 @@
                                         <field name="ref"/>
                                         <field name="account_id" domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]"
                                             on_change="onchange_account(account_id, parent.virtual_id)"
-                                            attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                            attrs="{'readonly': ['|', '|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True), ('has_a_counterpart_transfer', '=', True)]}"/>
                                         <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('has_a_counterpart_transfer', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}"
                                             />
@@ -443,13 +448,15 @@
                     <field name="name" string="Description"/>
                     <field name="number_imported_account_invoices" invisible="1"/>
                     <field name="ref" attrs="{'readonly': [('number_imported_account_invoices', '!=', 0)]}"/>
-                    <field name="account_id" domain="[('restricted_area', '=', 'register_lines')]" />
+                    <field name="account_id"
+                           domain="[('restricted_area', '=', 'register_lines')]"
+                           attrs="{'readonly': [('has_a_counterpart_transfer', '=', True)]}" />
                     <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                     <field name="number_imported_invoice" invisible="1"/>
                     <field name="from_import_cheque_id" invisible="1"/>
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="partner_type"
-                           attrs="{'readonly': ['|', '|', ('number_imported_invoice', '>', 0), ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True)],
+                           attrs="{'readonly': ['|', '|', '|', ('number_imported_invoice', '>', 0), ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True), ('has_a_counterpart_transfer', '=', True)],
                                    'required': [('partner_type_mandatory', '=', True)]}"
                            domain="[('filter_for_third_party', '=', account_id)]"
                            context="{'search_default_active': True, 'from': 'regline_view',}" />
@@ -786,11 +793,12 @@
                                     <field name="number_imported_account_invoices" invisible="1"/>
                                     <field name="ref" attrs="{'readonly': [('number_imported_account_invoices', '!=', 0)]}"/>
                                     <field name="account_id" domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]"
-                                        on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                           on_change="onchange_account(account_id, parent.virtual_id)"
+                                           attrs="{'readonly': ['|', '|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True), ('has_a_counterpart_transfer', '=', True)]}"/>
                                     <field name="type_for_register" invisible="1"/>
                                     <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                                     <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', '|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True), ('has_a_counterpart_transfer', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}"
                                         />
@@ -841,9 +849,10 @@
                                     <field name="partner_type_mandatory" invisible="1"/>
                                     <field name="ref"/>
                                     <field name="account_id" domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]"
-                                        on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                           on_change="onchange_account(account_id, parent.virtual_id)"
+                                           attrs="{'readonly': ['|', '|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True), ('has_a_counterpart_transfer', '=', True)]}"/>
                                     <field name="partner_type"
-                                        attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                        attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('has_a_counterpart_transfer', '=', True)]}"
                                         domain="[('filter_for_third_party', '=', account_id)]"
                                         context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}"
                                         />

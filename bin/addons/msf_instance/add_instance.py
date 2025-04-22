@@ -459,6 +459,7 @@ class account_bank_statement(osv.osv):
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
         res = True
+
         for reg in self.browse(cr, uid, ids, fields_to_fetch=['closing_balance_frozen'], context=context):
             # if the End-of-the-Month Balance has already been confirmed for a register, ignore changes on fields that
             # should be read-only in that case (cover the use case of concurrent changes by 2 users)

@@ -1261,6 +1261,9 @@ class account_move(osv.osv):
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
 
+                if m.status == 'manu' and vals.get('manual_currency_id'):
+                    ml_vals['currency_id'] = vals['manual_currency_id']
+
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]

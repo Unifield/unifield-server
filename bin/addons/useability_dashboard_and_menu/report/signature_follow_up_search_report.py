@@ -28,6 +28,7 @@ def _get_filters_info(self, fields, search_domain, source, context=None):
         'account.invoice.si': _('Supplier Invoice (SI)'),
         'account.invoice.donation': _('Donation'),
         'stock.picking.in': _('Incoming Shipment (IN)'),
+        'stock.picking.int': _('Internal Move (INT)'),
         'stock.picking.out': _('Delivery Order (Out)'),
         'stock.picking.pick': _('Picking Ticket (Pick)'),
         'physical.inventory': _('Physical Inventory (PI)'),

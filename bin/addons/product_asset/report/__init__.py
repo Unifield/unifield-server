@@ -20,5 +20,6 @@
 ##############################################################################
 
 from . import product_asset
+from . import asset_register_report_landscape
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

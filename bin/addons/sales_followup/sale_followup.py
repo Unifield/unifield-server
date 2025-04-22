@@ -63,8 +63,8 @@ class sale_order_followup(osv.osv_memory):
         'cust_ref': fields.related('order_id', 'client_order_ref', string='Customer reference', readonly=True, type='char'),
         'creation_date': fields.related('order_id', 'create_date', string='Creation date', readonly=True, type='date'),
         'state': fields.function(_get_order_state, method=True, type='char', string='Order state', readonly=True),
-        'requested_date': fields.related('order_id', 'delivery_requested_date', string='Requested date', readonly=True, type='date'),
-        'confirmed_date': fields.related('order_id', 'delivery_confirmed_date', string='Confirmed date', readonly=True, type='date'),
+        'requested_date': fields.related('order_id', 'delivery_requested_date', string='Requested Delivery Date', readonly=True, type='date'),
+        'confirmed_date': fields.related('order_id', 'delivery_confirmed_date', string='Confirmed Delivery Date', readonly=True, type='date'),
         'line_ids': fields.one2many('sale.order.line.followup', 'followup_id', string='Lines', readonly=True),
         'choose_type': fields.selection([('documents', 'Documents view'), ('progress', 'Progress view')], string='Type of view'),
     }
