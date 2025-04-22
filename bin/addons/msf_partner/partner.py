@@ -76,14 +76,11 @@ class res_partner(osv.osv):
             context = {}
         res = {}
 
-        product_obj = self.pool.get('product.product')
-
         # If we aren't in the context of choose supplier on procurement list
         if not context.get('product_id', False) or 'choose_supplier' not in context:
             for i in ids:
                 res[i] = {'in_product': False, 'min_qty': 'N/A', 'supplier_ranking': 'N/A', 'delay': 'N/A'}
         else:
-            product = product_obj.read(cr, uid, context.get('product_id'), ['product_tmpl_id'])
             seller_ids = []
             seller_info = {}
             today = datetime.today().strftime('%Y-%m-%d')
@@ -97,12 +94,11 @@ class res_partner(osv.osv):
                     END AS delay
                 FROM pricelist_partnerinfo p 
                     LEFT JOIN product_supplierinfo s ON p.suppinfo_id = s.id 
-                    LEFT JOIN product_product pp ON s.product_id = pp.id 
-                    LEFT JOIN product_template t ON pp.product_tmpl_id = t.id 
+                    LEFT JOIN product_product pp ON s.product_id = pp.product_tmpl_id 
                     LEFT JOIN res_partner rp ON s.name = rp.id
-                WHERE s.name IN %s AND t.id = %s AND p.valid_from <= %s AND (p.valid_till IS NULL OR p.valid_till >= %s) 
+                WHERE s.name IN %s AND pp.id = %s AND p.valid_from <= %s AND (p.valid_till IS NULL OR p.valid_till >= %s) 
                 ORDER BY s.sequence, s.get_first_price, s.id
-            """, (tuple(ids), product['product_tmpl_id'][0], today, today))
+            """, (tuple(ids), context.get('product_id'), today, today))
 
             # Get all suppliers defined on product form
             for s in cr.fetchall():
@@ -1153,18 +1149,16 @@ class res_partner(osv.osv):
 
         # Sort suppliers by sequence in product form
         if 'product_id' in context and res_in_prod:
-            product = self.pool.get('product.product').read(cr, uid, context.get('product_id'), ['product_tmpl_id'])
             today = datetime.today().strftime('%Y-%m-%d')
 
             cr.execute("""
                 SELECT DISTINCT ON (s.sequence, s.get_first_price, s.id) s.name  
                 FROM pricelist_partnerinfo p 
                     LEFT JOIN product_supplierinfo s ON p.suppinfo_id = s.id 
-                    LEFT JOIN product_product pp ON s.product_id = pp.id 
-                    LEFT JOIN product_template t ON pp.product_tmpl_id = t.id 
-                WHERE s.name IN %s AND t.id = %s AND p.valid_from <= %s AND (p.valid_till IS NULL OR p.valid_till >= %s) 
+                    LEFT JOIN product_product pp ON s.product_id = pp.product_tmpl_id 
+                WHERE s.name IN %s AND pp.id = %s AND p.valid_from <= %s AND (p.valid_till IS NULL OR p.valid_till >= %s) 
                 ORDER BY s.sequence, s.get_first_price, s.id
-            """, (tuple(res_in_prod), product['product_tmpl_id'][0], today, today))
+            """, (tuple(res_in_prod), context.get('product_id'), today, today))
 
             for result in cr.fetchall():
                 try:
