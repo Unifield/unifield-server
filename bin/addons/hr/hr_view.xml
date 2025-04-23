@@ -106,7 +106,9 @@
                     <separator orientation="vertical" />
                     <filter icon="gtk-leave-fullscreen" domain="[('employee_type','=','local')]" name="employee_type_local" string="Local" />
                     <filter icon="gtk-quit" domain="[('employee_type','=','ex')]" name="employee_type_expatriate" string="Expat'" />
-
+                    <separator orientation="vertical" />
+                    <filter icon="gtk-apply" domain="[('not_to_be_used','!=',True)]" name="can_be_used" string="Can be Used" />
+                    <filter icon="gtk-cancel" domain="[('not_to_be_used','=',True)]" name="not_to_be_used" string="Not To be Used" />
                     <separator orientation="vertical" />
                     <field name="name"/>
                     <field name="identification_id"/>
