@@ -154,6 +154,7 @@ class hr_employee(osv.osv):
         'instance_creator': fields.char('Instance creator of the employee', size=64, readonly=1),
         'expat_creation_date': fields.date('Creation Date', readonly=1),
         'former_identification_id': fields.char('Former ID', size=32, readonly=1, help='Used for the OCP migration', select=1),
+        'workday_identification_id': fields.char('Workday ID', size=32, readonly=1, help='Used for the OCP migration', select=1),
     }
 
     _defaults = {
