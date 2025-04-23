@@ -46,12 +46,15 @@ def _get_fake(cr, table, ids, *a, **kw):
 def _search_fake(*a, **kw):
     return []
 
+def _filter_employee(self, cr, table, ids, field_name, arg, context):
+    return [('not_to_be_used', '!=', True)]
+
 class hr_employee(osv.osv):
     _name = 'hr.employee'
     _inherit = 'hr.employee'
     _columns = {
-        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
-        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_filter_employee, method=False),
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_filter_employee, method=False),
     }
 hr_employee()
 
