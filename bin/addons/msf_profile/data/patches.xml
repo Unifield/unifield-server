@@ -1201,5 +1201,8 @@
             <field name="method">us_13741_13952_13955_14253_update_prod_supinfo_prices</field>
         </record>
 
+        <record id="us_14040_14046_fix_duplicated_users_data" model="patch.scripts">
+            <field name="method">us_14040_14046_fix_duplicated_users_data</field>
+        </record>
     </data>
 </openerp>
