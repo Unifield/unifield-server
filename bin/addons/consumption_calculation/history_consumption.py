@@ -150,7 +150,7 @@ class product_history_consumption(osv.osv):
         """
         Prevent adding the Other Customer Location if an External Partner has been selected
         """
-        res = {}
+        res = {'value': {}}
 
         res_dest = []
         other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')[1]
@@ -168,9 +168,9 @@ class product_history_consumption(osv.osv):
                 })
 
         if not dest or not isinstance(dest, list) or not dest[0] or not isinstance(dest[0], tuple) or len(dest[0]) != 3 or not res_dest:
-            res.update({'value': {'disable_adjusted_rr_amc': False}})
+            res['value'].update({'disable_adjusted_rr_amc': False})
         else:
-            res.update({'value': {'disable_adjusted_rr_amc': True, 'adjusted_rr_amc': False}})
+            res['value'].update({'disable_adjusted_rr_amc': True, 'adjusted_rr_amc': False})
 
         return res
 
