@@ -183,7 +183,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     elif len(in_data[0]) == 1:
                         cdd = in_data[0][0][:10]
                     if linked_pol.state in ('confirmed', 'done'):
-                        received_qty = in_data[1]
+                        received_qty = in_data[1] or 0.00
             if not edd and line.esti_dd:
                 edd = line.esti_dd
             if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
