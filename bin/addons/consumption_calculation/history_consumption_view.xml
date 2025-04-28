@@ -39,7 +39,7 @@
                                 <field name="usage" />
                             </tree>
                         </field>
-                        <field name="ext_partner_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_ext_partner_ids(dest_location_ids, ext_partner_ids)" nolabel="1">
+                        <field name="ext_partner_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_ext_partner_ids(dest_location_ids, ext_partner_ids)" context="{'from_history_consumption': True}" nolabel="1">
                             <tree string="External Partners" hide_edit_button="1">
                                 <field name="name" />
                             </tree>
