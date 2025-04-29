@@ -418,14 +418,6 @@ class product_history_consumption(osv.osv):
             cons_prod_obj = self.pool.get('product.history.consumption.product')
 
             res = self.browse(cr, uid, ids[0], context=context)
-            partner_query = ''
-            if res.consumption_type == 'rr-amc' and res.ext_partner_ids:
-                ext_partner_ids = [p.id for p in res.ext_partner_ids]
-                if len(res.ext_partner_ids) == 1:
-                    partner_query = " AND s.type = 'out' AND s.partner_id = %s" % (ext_partner_ids[0],)
-                else:
-                    partner_query = " AND s.type = 'out' AND s.partner_id IN %s" % (tuple(ext_partner_ids),)
-                context['histo_partner_ids'] = ext_partner_ids
             if res.consumption_type == 'rac':
                 if res.location_dest_id:
                     cr.execute('''
@@ -439,27 +431,26 @@ class product_history_consumption(osv.osv):
                     FROM real_average_consumption_line
                     WHERE move_id IS NOT NULL
                     ''')
-            elif res.consumption_type == 'amc' or (not res.src_location_ids and not res.dest_location_ids):
+            elif res.consumption_type == 'amc' or (not res.src_location_ids and not res.dest_location_ids and not res.ext_partner_ids):
                 cr.execute('''
                   SELECT distinct(s.product_id)
                   FROM stock_move s
                     LEFT JOIN stock_location l ON l.id = s.location_id OR l.id = s.location_dest_id
                   WHERE l.usage in ('customer', 'internal')
-                ''' + partner_query)
+                ''')
             else:
                 context['histo_src_location_ids'] = [x.id for x in res.src_location_ids]
                 context['histo_dest_location_ids'] = [x.id for x in res.dest_location_ids]
+                context['histo_partner_ids'] = [p.id for p in res.ext_partner_ids]
                 full_cond = context['histo_src_location_ids'] + context['histo_dest_location_ids']
                 if not context['histo_dest_location_ids'] and res.adjusted_rr_amc:
                     context['adjusted_rr_amc'] = True
 
-                query = '''
+                cr.execute('''
                     SELECT distinct(s.product_id)
                     FROM stock_move s
-                    WHERE
-                        location_id in %s or location_dest_id in %s
-                ''' + partner_query
-                cr.execute(query, (tuple(full_cond or [0]), tuple(full_cond or [0])))
+                    WHERE location_id IN %s OR location_dest_id IN %s OR (s.type = 'out' AND s.partner_id IN %s)
+                ''', (tuple(full_cond or [0]), tuple(full_cond or [0]), tuple(context['histo_partner_ids'] or [0])))
 
             product_ids = [x[0] for x in cr.fetchall()]
 

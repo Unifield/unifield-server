@@ -1880,12 +1880,14 @@ class product_product(osv.osv):
         #   '''
 
         if not context.get('histo_src_location_ids') and context.get('histo_dest_location_ids'):
-            # DEST EXTERNAL
+            # DEST EXTERNAL OR EXTERNAL PARTNER
             input_loc = get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
             if ext_partners:
                 domain += [
-                    '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations),
-                    ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), ('partner_id', 'in', ext_partners)
+                    '|',
+                    '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                        '|', ('location_dest_id', 'in', dest_locations), ('partner_id', 'in', ext_partners),
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
                 ]
             else:
                 domain += [
@@ -1914,14 +1916,23 @@ class product_product(osv.osv):
 
         elif src_locations:
             # SRC INTERNAL
-            # DEST: INTERNAL + EXTERNAL  OR EMPTY (same as segment RR-AMC)
+            # DEST: INTERNAL + EXTERNAL OR EMPTY (same as segment RR-AMC)
             if not dest_locations:
                 dest_locations = self.pool.get('stock.location').search(cr, uid, [('id', 'not in', src_locations), ('usage', 'in', ['internal', 'customer']), ('location_category', '!=', 'transition')], context=context)
             if ext_partners:
                 domain += [
-                    '&', '&', '&', '&', ('type', '=', 'out'), ('partner_id', 'in', ext_partners),
-                    ('location_dest_id', 'in', dest_locations), '|', ('location_id', 'in', src_locations),
-                    ('initial_location', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id])
+                    '|', '|', '|',
+                    # DEST & SRC: internal
+                    '&', '&', '&', '&', '&',
+                    ('type', '=', 'internal'), ('location_id', 'in', src_locations), ('location_id', 'not in', dest_locations), ('location_dest_id', 'in', dest_locations), ('location_dest_id', 'not in', src_locations), ('reason_type_id', '!=', internal_return),
+                    '&', '&', '&', '&', '&',
+                    ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
+                    # SRC INTERNAL, DEST: EXTERNAL OR EXTERNAL PARTNER
+                    '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                        '|',
+                        '&', ('location_dest_id', 'in', dest_locations), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
+                        ('partner_id', 'in', ext_partners),
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
                 ]
             else:
                 domain += [
@@ -1960,7 +1971,12 @@ class product_product(osv.osv):
             internal_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context, order='NO_ORDER')
             customer_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
             if ext_partners:
-                domain += ['&', '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations), ('partner_id', 'in', ext_partners)]
+                domain += [
+                    '|', '|',
+                    '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations),
+                    '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]),
+                    '&', ('type', '=', 'out'), ('partner_id', 'in', ext_partners)
+                ]
             else:
                 domain += [
                     '|',
