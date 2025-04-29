@@ -1977,10 +1977,11 @@ class product_product(osv.osv):
             customer_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
             if ext_partners:
                 domain += [
-                    '|', '|',
-                    '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations),
-                    '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]),
-                    '&', '&', ('type', '=', 'out'), ('partner_id', 'in', ext_partners), ('picking_id.subtype', 'in', ['standard', 'picking'])
+                    '|',
+                    '&', ('location_id', 'in', internal_locations), '|',
+                        '&', ('type', '!=', 'out'), ('location_dest_id', 'in', customer_locations),
+                        '&', '&', ('type', '=', 'out'), ('partner_id', 'in', ext_partners), ('picking_id.subtype', 'in', ['standard', 'picking']),
+                    '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id])
                 ]
             else:
                 domain += [
