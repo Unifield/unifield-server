@@ -449,7 +449,9 @@ class product_history_consumption(osv.osv):
                 cr.execute('''
                     SELECT distinct(s.product_id)
                     FROM stock_move s
-                    WHERE location_id IN %s OR location_dest_id IN %s OR (s.type = 'out' AND s.partner_id IN %s)
+                        LEFT JOIN stock_picking p ON s.picking_id = p.id
+                    WHERE s.location_id IN %s OR s.location_dest_id IN %s 
+                        OR (s.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.partner_id IN %s)
                 ''', (tuple(full_cond or [0]), tuple(full_cond or [0]), tuple(context['histo_partner_ids'] or [0])))
 
             product_ids = [x[0] for x in cr.fetchall()]
