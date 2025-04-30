@@ -1885,8 +1885,10 @@ class product_product(osv.osv):
             if ext_partners:
                 domain += [
                     '|',
-                    '&', '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), ('picking_id.subtype', 'in', ['standard', 'picking']),
-                        '|', ('location_dest_id', 'in', dest_locations), ('partner_id', 'in', ext_partners),
+                    '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                        '|',
+                        ('location_dest_id', 'in', dest_locations),
+                        '&', ('picking_subtype', 'in', ['standard', 'picking']), ('partner_id', 'in', ext_partners),
                     '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
                 ]
             else:
@@ -1929,14 +1931,16 @@ class product_product(osv.osv):
                         '&', '&', '&', '&', '&',
                         ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
                         # SRC INTERNAL, DEST: EXTERNAL OR EXTERNAL PARTNER
-                        '&', '&', '&', '&', ('type', '=', 'out'), ('picking_id.subtype', 'in', ['standard', 'picking']), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
-                            '|', ('location_dest_id', 'in', dest_locations), ('partner_id', 'in', ext_partners),
+                        '&', '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
+                            '|',
+                            ('location_dest_id', 'in', dest_locations),
+                            '&', ('picking_subtype', 'in', ['standard', 'picking']), ('partner_id', 'in', ext_partners),
                         '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
                     ]
                 else:
                     domain += [
                         '&', '&', '&', '&',
-                        ('type', '=', 'out'), ('picking_id.subtype', 'in', ['standard', 'picking']), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('partner_id', 'in', ext_partners),
+                        ('type', '=', 'out'), ('picking_subtype', 'in', ['standard', 'picking']), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('partner_id', 'in', ext_partners),
                     ]
             else:
                 domain += [
@@ -1977,7 +1981,7 @@ class product_product(osv.osv):
             if ext_partners:
                 domain += [
                     '|',
-                    '&', '&', '&', ('location_id', 'in', internal_locations), ('type', '=', 'out'), ('partner_id', 'in', ext_partners), ('picking_id.subtype', 'in', ['standard', 'picking']),
+                    '&', '&', '&', ('location_id', 'in', internal_locations), ('type', '=', 'out'), ('partner_id', 'in', ext_partners), ('picking_subtype', 'in', ['standard', 'picking']),
                     '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id])
                 ]
             else:
@@ -2059,7 +2063,7 @@ class product_product(osv.osv):
             if context.get('histo_dest_location_ids'):
                 rcr_domain = ['&', ('rac_id.activity_id', 'in', context.get('histo_dest_location_ids'))] + rcr_domain
             if context.get('histo_partner_ids'):
-                rcr_domain = ['&', '&', '&', ('move_id.type', '=', 'out'), ('move_id.picking_id.subtype', 'in', ['standard', 'picking']), ('move_id.partner_id', 'in', context.get('histo_partner_ids'))] + rcr_domain
+                rcr_domain = ['&', '&', '&', ('move_id.type', '=', 'out'), ('move_id.picking_subtype', 'in', ['standard', 'picking']), ('move_id.partner_id', 'in', context.get('histo_partner_ids'))] + rcr_domain
 
 
             racl_obj = self.pool.get('real.average.consumption.line')
