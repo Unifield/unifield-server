@@ -46,12 +46,15 @@ def _get_fake(cr, table, ids, *a, **kw):
 def _search_fake(*a, **kw):
     return []
 
+def _filter_employee(self, cr, table, ids, field_name, arg, context):
+    return [('not_to_be_used', '!=', True)]
+
 class hr_employee(osv.osv):
     _name = 'hr.employee'
     _inherit = 'hr.employee'
     _columns = {
-        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
-        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_filter_employee, method=False),
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_filter_employee, method=False),
     }
 hr_employee()
 
@@ -2667,7 +2670,9 @@ class account_bank_statement_line(osv.osv):
                     self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
                     self.create_down_payment_link(cr, uid, absl, context=context)
 
-
+                if absl.employee_id and absl.employee_id.not_to_be_used:
+                    raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                        absl.employee_id.name_resource or '',))
 
                 to_write['sequence_for_reference'] = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 # Optimization on write() for this field
