@@ -931,8 +931,11 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
             except:
                 split_id = dic['res_id'].split('.', 1)
                 dic['module'] = split_id[0]
-                dic['xml_id'] = split_id[1]
-                dic['res_id'] = False
+                if len(split_id) < 2:
+                    dic['res_id'] = 0
+                else:
+                    dic['xml_id'] = split_id[1]
+                    dic['res_id'] = False
 
             args = [
                 ('lang', '=', lang),
