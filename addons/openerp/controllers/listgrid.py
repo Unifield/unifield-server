@@ -146,11 +146,18 @@ class List(SecuredController):
         return dict(error=error)
 
     @expose('json')
-    def get_m2m(self, name, model, view_id, view_type, ids, disabled=False):
+    def get_m2m(self, name, model, view_id, view_type, m2m_model, m2m_view_id, m2m_view_type, m2m_context, ids, disabled=False):
         view_id = ast.literal_eval(view_id) or False
         ids = ast.literal_eval(ids) or []
-        view = cache.fields_view_get(model, view_id, view_type, rpc.session.context)
-        m2m_view = listgrid.List(name, model, view, ids,limit=20, editable=disabled!='true', m2m=1, count=len(ids))
+
+        context = dict(ast.literal_eval(m2m_context), **rpc.session.context)
+        if m2m_view_id and m2m_view_id != 'False':
+            view = cache.fields_view_get(m2m_model, m2m_view_id, m2m_view_type, context)
+        else:
+            view = cache.fields_view_get(model, view_id, view_type, rpc.session.context)
+            view = view['fields'][name]['views'][m2m_view_type]
+
+        m2m_view = listgrid.List(name, m2m_model, view, ids,limit=20, editable=disabled!='true', m2m=1, count=len(ids))
         m2m_view = ustr(m2m_view.render())
         return dict(m2m_view = m2m_view)
 
