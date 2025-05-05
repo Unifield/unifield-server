@@ -1191,6 +1191,12 @@ class res_partner(osv.osv):
                 for field in fields:
                     field.set('invisible', "1")
                 view['arch'] = etree.tostring(tree, encoding='unicode')
+            if context.get('from_history_consumption', False):
+                tree = etree.fromstring(view['arch'])
+                fields = tree.xpath('//filter[@name="supplier"]')
+                for field in fields:
+                    field.set('invisible', "1")
+                view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
 res_partner()
