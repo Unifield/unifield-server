@@ -2665,8 +2665,10 @@ class sale_order_line(osv.osv):
             'no_prod_nr_id': False,
             'no_prod_nr_error': False,
         })
-        if context.get('from_button') and 'is_line_split' not in default:
-            default['is_line_split'] = False
+        if context.get('from_button'):
+            default['location_id'] = False
+            if 'is_line_split' not in default:
+                default['is_line_split'] = False
 
         if not default.get('is_line_split', False):
             default['loan_line_id'] = False

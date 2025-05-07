@@ -48,6 +48,7 @@ class ocp_employee_mapping(osv.osv):
     ]
 ocp_employee_mapping()
 
+
 class finance_archive(finance_export.finance_archive):
     """
     Extend existing class with new methods for this particular export.
@@ -1007,7 +1008,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     aml.partner_id, -- 14
                     aj.code as journal_code, -- 15
                     a.code as account_code, -- 16
-                    hr.identification_id as emplid, -- 17
+                    coalesce(hr.workday_identification_id, hr.identification_id) as emplid, -- 17
                     aml.id as account_move_line_id, -- 18
                     dest.code as destination_code, -- 19
                     c.ocp_workday_decimal = 0 as no_decimal, -- 20
@@ -1070,7 +1071,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     aml.partner_id,  -- 14
                     j.code as journal_code, -- 15
                     a.code as account_code,  -- 16
-                    hr.identification_id as emplid,  -- 17
+                    coalesce(hr.workday_identification_id, hr.identification_id) as emplid,  -- 17
                     c.ocp_workday_decimal = 0 as no_decimal, -- 18
                     rounded.rounded_amount as rounded_amount, -- 19
                     hr.employee_type as employee_type, -- 20
@@ -1172,6 +1173,19 @@ class hq_report_ocp_workday(hq_report_ocp):
                             if new_cr.rowcount:
                                 emp_r = new_cr.fetchone()
                                 row['partner_txt'] = emp_r[0]
+                                employee_mapping[row['partner_txt']] = emp_r[0]
+                            else:
+                                new_cr.execute('''select workday_identification_id from hr_employee where identification_id=%s''', (row['partner_txt'],))
+                                new_txt = row['partner_txt']
+                                if new_cr.rowcount:
+                                    emp_r = new_cr.fetchone()
+                                    if emp_r[0]:
+                                        new_txt = emp_r[0]
+                                employee_mapping[row['partner_txt']] = new_txt
+                                row['partner_txt'] = new_txt
+
+                        else:
+                            row['partner_txt'] = employee_mapping[row['partner_txt']]
 
                     local_employee = row['employee_type'] and row['employee_type'] != 'ex'
 

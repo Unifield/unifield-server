@@ -27,16 +27,21 @@
                     <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                     <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                     <group colspan="2" col="4">
-                        <field name="src_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" nolabel="1">
-                            <tree string="Source">
+                        <field name="src_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_location_ids(src_location_ids, dest_location_ids)" nolabel="1">
+                            <tree string="Source Locations" hide_edit_button="1">
                                 <field name="name" />
                                 <field name="usage" />
                             </tree>
                         </field>
-                        <field name="dest_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_dest_location_ids(dest_location_ids)" nolabel="1">
-                            <tree string="Destination">
+                        <field name="dest_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_dest_location_ids(dest_location_ids, ext_partner_ids)" nolabel="1">
+                            <tree string="Destination Locations" hide_edit_button="1">
                                 <field name="name" />
                                 <field name="usage" />
+                            </tree>
+                        </field>
+                        <field name="ext_partner_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_ext_partner_ids(dest_location_ids, ext_partner_ids)" context="{'from_history_consumption': True}" nolabel="1">
+                            <tree string="External Partners" hide_edit_button="1">
+                                <field name="name" />
                             </tree>
                         </field>
                     </group>
@@ -154,6 +159,7 @@
                 <field name="consumption_type" />
                 <field name="txt_source" />
                 <field name="txt_destination" />
+                <field name="txt_ext_partner" />
                 <field name="sublist_id" />
                 <field name="nomen_manda_0" />
                 <field name="nomen_manda_1" />

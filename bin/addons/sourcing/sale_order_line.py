@@ -295,6 +295,25 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def _get_supplier_ranking(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        if ids:
+            for _id in ids:
+                result[_id] = False
+            cr.execute("""
+                SELECT DISTINCT ON (l.id) l.id, s.sequence FROM sale_order_line l 
+                    LEFT JOIN product_product prod ON l.product_id = prod.id
+                    LEFT JOIN product_supplierinfo s ON prod.product_tmpl_id = s.product_id
+                    LEFT JOIN res_partner p ON p.id = s.name
+                    LEFT JOIN pricelist_partnerinfo pi ON pi.suppinfo_id = s.id
+                WHERE l.id in %s AND l.type = 'make_to_order' AND l.product_id IS NOT NULL AND l.supplier = s.name 
+                    AND pi.valid_from <= NOW() AND (pi.valid_till IS NULL OR pi.valid_till >= NOW())
+                ORDER BY l.id, s.sequence, pi.price
+            """, (tuple(ids), ))
+            for sol in cr.fetchall():
+                result[sol[0]] = sol[1]
+        return result
+
     def _getAvailableStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
         """
         Get the available stock for each line
@@ -502,6 +521,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             multi='line_info',
         ),
+        'supplier_ranking': fields.function(
+            _get_supplier_ranking, method=True, string='Ranking', type='selection',
+            selection=[(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'), (5, '5th choice'),
+                       (6, '6th choice'),  (7, '7th choice'), (8, '8th choice'), (9, '9th choice'), (10, '10th choice'),
+                       (11, '11th choice'), (12, '12th choice'), (13, '-99'), (14, '0'), (15, '1'), (16, '2'), (17, '3'),
+                       (18, '4')], store=False
+        ),
         'stock_uom_id': fields.related(
             'product_id',
             'uom_id',
@@ -646,33 +672,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     """
     Model methods
     """
-    def default_get(self, cr, uid, fields_list, context=None, from_web=False):
-        """
-        Set default values (location_id) for sale_order_line
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param fields_list: Fields to set
-        :param context: Context of the call
-
-        :return Dictionnary with fields_list as keys and default value
-                 of field.
-        :rtype dict
-        """
-        # Objects
-        warehouse_obj = self.pool.get('stock.warehouse')
-
-        res = super(sale_order_line, self).default_get(cr, uid, fields_list, context=context, from_web=from_web)
-
-        if res is None:
-            res = {}
-
-        warehouse = warehouse_obj.search(cr, uid, [], context=context)
-        if warehouse:
-            res['location_id'] = warehouse_obj.browse(cr, uid, warehouse[0], context=context).lot_stock_id.id
-
-        return res
-
     def create(self, cr, uid, vals=None, context=None):
         """
         Update some values according to Field order values
@@ -689,7 +688,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         order_obj = self.pool.get('sale.order')
         partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
-        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -704,10 +702,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ir = False
         order_p_type = False
         if vals.get('order_id', False):
-            order = order_obj.read(cr, uid, vals['order_id'],
-                                   ['procurement_request', 'partner_type', 'state',
-                                    'order_type'],
-                                   context=context)
+            order = order_obj.read(cr, uid, vals['order_id'], ['procurement_request', 'partner_type', 'state',
+                                                               'order_type'], context=context)
             ir = order['procurement_request']
             order_p_type = order['partner_type']
             if order['order_type'] in ('loan', 'loan_return', 'donation_exp', 'donation_st') and order['state'] == 'validated':
@@ -762,11 +758,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 sup = partner_obj.read(cr, uid, vals.get('supplier'), ['partner_type'], context=context)
                 if sup['partner_type'] == 'internal':
                     vals['supplier'] = False
-
-        # UFTP-139: if make_to_stock and no location, put Stock as location
-        if vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
-            stock_loc = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-            vals['location_id'] = stock_loc
 
         if 'supplier' in vals and not vals.get('supplier'):
             vals['related_sourcing_id'] = False
@@ -2191,7 +2182,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         :rtype dict
         """
         # Objects
-        wh_obj = self.pool.get('stock.warehouse')
         product_obj = self.pool.get('product.product')
 
         if not context:
@@ -2215,18 +2205,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if l_type == 'make_to_order' and line.product_id and line.product_id.seller_id and \
                     (line.product_id.seller_id.supplier or line.product_id.seller_id.manufacturer
                      or line.product_id.seller_id.transporter):
-                value['supplier'] = line.product_id.seller_id.id
+                value.update({
+                    'supplier': line.product_id.seller_id.id,
+                    'supplier_ranking': self.pool.get('product.product').\
+                    get_supplier_ranking_for_line(cr, uid, line.product_id.id, line.product_id.seller_id.id)
+                })
         if l_type == 'make_to_stock':
-            if not location_id:
-                wh_ids = wh_obj.search(cr, uid, [], context=context)
-                if wh_ids:
-                    value['location_id'] = wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
-
             value.update({
                 'po_cft': False,
                 'related_sourcing_ok': False,
                 'related_sourcing_id': False,
                 'supplier': False,
+                'supplier_ranking': False,
             })
 
             res = {'value': value, 'warning': message}
@@ -2295,6 +2285,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'related_sourcing_ok': False,
                 'supplier_type': False,
                 'supplier_split_po': False,
+                'supplier_ranking': False,
             })
             sl = self.browse(cr, uid, line_id, context=context)
             if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
@@ -2354,6 +2345,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             if error:
                 return result
+
+            # Get the supplier ranking, if any
+            result['value']['supplier_ranking'] = self.pool.get('product.product').\
+                get_supplier_ranking_for_line(cr, uid, line.product_id.id, partner_id)
 
         return result
 
