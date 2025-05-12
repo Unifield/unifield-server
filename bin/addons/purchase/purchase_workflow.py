@@ -1064,6 +1064,7 @@ class purchase_order(osv.osv):
         pol_obj = self.pool.get('purchase.order.line')
         pol_domain = [('order_id', '=', ids[0]), ('state', '=', 'draft'),  ('no_prod_nr_id', '=', False)]
         pol_ids = pol_obj.search(cr, uid, pol_domain, context=context)
+        pol_obj.check_analytic_distribution(cr, uid, pol_ids, context=context)
         return pol_obj.validated(cr, uid, pol_ids, context=context)
 
     def confirm_lines(self, cr, uid, ids, context=None):
@@ -1095,6 +1096,8 @@ class purchase_order(osv.osv):
             if missing_prod:
                 pol_line = pol_obj.read(cr, uid, missing_prod, ['line_number'], context=context)
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol_line[0]['line_number'])
+
+            pol_obj.check_analytic_distribution(cr, uid, pol_ids_to_confirm, context=context)
 
             return self.pool.get('purchase.order.line').button_confirmed(cr, uid, pol_ids_to_confirm, context=context)
 

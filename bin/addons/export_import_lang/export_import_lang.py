@@ -50,7 +50,8 @@ class base_language_export(osv.osv_memory):
     def split_xlscell(self, array):
         size = len(array)
         if size > 1 and len('\n'.join(array)) > 32700:
-            return self.split_xlscell(array[:size/2])+self.split_xlscell(array[size/2:])
+            half_size = int(size/2)
+            return self.split_xlscell(array[:half_size])+self.split_xlscell(array[half_size:])
         else:
             return [array]
 

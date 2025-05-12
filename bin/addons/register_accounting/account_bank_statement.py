@@ -46,12 +46,15 @@ def _get_fake(cr, table, ids, *a, **kw):
 def _search_fake(*a, **kw):
     return []
 
+def _filter_employee(self, cr, table, ids, field_name, arg, context):
+    return [('not_to_be_used', '!=', True)]
+
 class hr_employee(osv.osv):
     _name = 'hr.employee'
     _inherit = 'hr.employee'
     _columns = {
-        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
-        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_filter_employee, method=False),
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_filter_employee, method=False),
     }
 hr_employee()
 
@@ -778,7 +781,7 @@ The starting balance will be proposed automatically and the closing balance is t
                 ''', (min_posting_date, tuple(aml_ids)))
         return [x[0] for x in cr.fetchall()]
 
-    def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
+    def open_register(self, cr, uid, reg_id, context=None):
         """
         Opens the register and updates the related XML_ID
         """
@@ -789,7 +792,7 @@ The starting balance will be proposed automatically and the closing balance is t
             raise osv.except_osv(_('Error'),
                                  _('The associated period is closed.'))
         if reg.journal_id.type == 'cash':
-            self.do_button_open_cash(cr, uid, [reg_id], opening_balance=cash_opening_balance, context=context)
+            self.do_button_open_cash(cr, uid, [reg_id], context=context)
         else:
             self.write(cr, uid, [reg_id], {'state': 'open', 'name': reg.journal_id.name})
         # The update of xml_id must be done when opening the register
@@ -831,11 +834,22 @@ The starting balance will be proposed automatically and the closing balance is t
                         'context': context,
                         }
             else:
-                computed_balance = 0.0
-                if reg.journal_id.type == 'cash':
-                    computed_balance = self._get_starting_balance(cr, uid, [ids[0]], context=context)[ids[0]].get('balance_start', 0.0)
-                return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
+                return self.open_register(cr, uid, ids[0], context=context)
         return res
+
+    def open_import_wizard(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        wiz_id = self.pool.get('wizard.register.import').create(cr, uid, {'state': 'draft', 'register_id': context.get('active_ids')[0]}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.register.import',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': [wiz_id],
+            'context': context,
+        }
 
 account_bank_statement()
 
@@ -2656,7 +2670,9 @@ class account_bank_statement_line(osv.osv):
                     self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
                     self.create_down_payment_link(cr, uid, absl, context=context)
 
-
+                if absl.employee_id and absl.employee_id.not_to_be_used:
+                    raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                        absl.employee_id.name_resource or '',))
 
                 to_write['sequence_for_reference'] = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 # Optimization on write() for this field

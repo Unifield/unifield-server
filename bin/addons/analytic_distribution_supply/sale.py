@@ -156,6 +156,7 @@ class sale_order(osv.osv):
             if so.procurement_request:
                 continue
 
+            missing_ad_lines = []
             for line in so.order_line:
                 """
                 UFTP-336: Do not check AD on FO lines if the lines are
@@ -172,10 +173,11 @@ class sale_order(osv.osv):
 
                 #US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
                 if not distrib_id and not so.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
-                    raise osv.except_osv(
-                        _('Warning'),
-                        _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',),
-                    )
+                    # To display a single error when multiple lines have no AD
+                    ad_sol_tuple = [line.name or '', line.line_number]
+                    if ad_sol_tuple not in missing_ad_lines:
+                        missing_ad_lines.append(ad_sol_tuple)
+                    continue
 
                 # Check distribution state
                 if distrib_id and line.analytic_distribution_state != 'valid':
@@ -184,10 +186,11 @@ class sale_order(osv.osv):
                        not so.analytic_distribution_id:
                         # We don't raise an error for these types
                         if so.order_type not in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
-                            raise osv.except_osv(
-                                _('Warning'),
-                                _('Analytic distribution is mandatory for this line: %s') % (line.name or '',),
-                            )
+                            # To display a single error when multiple lines have no AD
+                            ad_sol_tuple = [line.name or '', line.line_number]
+                            if ad_sol_tuple not in missing_ad_lines:
+                                missing_ad_lines.append(ad_sol_tuple)
+                            continue
                         else:
                             continue
 
@@ -211,9 +214,19 @@ class sale_order(osv.osv):
                         sol_obj.write(cr, uid, [line.id], {'analytic_distribution_id': id_ad}, context=context)
                     # UFTP-277: Check funding pool lines if missing
                     ana_obj.create_funding_pool_lines(cr, uid, [id_ad], context=context)
+
+            if missing_ad_lines:
+                if len(missing_ad_lines) == 1:
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s') % (missing_ad_lines[0][0],))
+                else:
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is missing for the lines %s. It must be added manually')
+                                         % (', '.join([str(missing_ad_line[1]) for missing_ad_line in missing_ad_lines]),))
+
         return True
 
+
 sale_order()
+
 
 class sale_order_line(osv.osv):
     _name = 'sale.order.line'

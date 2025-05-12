@@ -72,7 +72,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             updated = 0
             processed = 0
             to_update_vals = []
-            to_create_vals = []
+            to_create_vals = {}
             # Check that a file is given
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('No file given'))
@@ -153,13 +153,15 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                             'identification_id': code,
                         }
                     )
-                    to_create_vals.append(vals)
-                    created += 1
+                    if code not in to_create_vals:
+                        created += 1
+                    to_create_vals[code] = vals
+
                 line_index += 1
             if not rejected_lines:
                 for vals in to_update_vals:
                     hr_emp_obj.write(cr, uid, vals[0], vals[1], context=context)
-                for vals in to_create_vals:
+                for vals in to_create_vals.values():
                     hr_emp_obj.create(cr, uid, vals, context=context)
             else:  # US-7624: To avoid partial import, reject all lines if there is at least one invalid employee line
                 created = 0

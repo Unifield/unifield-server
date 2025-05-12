@@ -21,6 +21,7 @@
                         <field name="property_product_pricelist_purchase" invisible="1" />
                         <field name="property_account_receivable" invisible="1" />
                         <field name="property_account_payable" invisible="1" />
+                        <field name="supplier_ranking" invisible="not context.get('choose_supplier')" />
                         <field name="min_qty" invisible="not context.get('choose_supplier')" />
                         <field name="delay" invisible="not context.get('choose_supplier')" />
                         <field name="price_unit" invisible="not context.get('choose_supplier')" />

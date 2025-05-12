@@ -20,5 +20,7 @@
 ##############################################################################
 from . import product_asset
 from . import report
+from . import asset_register_commons
+from . import asset_register_report
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

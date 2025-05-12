@@ -1261,6 +1261,9 @@ class account_move(osv.osv):
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
 
+                if m.status == 'manu' and vals.get('manual_currency_id'):
+                    ml_vals['currency_id'] = vals['manual_currency_id']
+
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]
@@ -1347,6 +1350,10 @@ class account_move(osv.osv):
                     curr_aml = ml.currency_id
                     partner_journal = ml.transfer_journal_id
                     is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
+                    # US-13963 Check also for inactive employees tagged as not to be used
+                    if ml.employee_id and ml.employee_id.not_to_be_used:
+                        raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                            ml.employee_id.name_resource or '',))
                     if type_for_reg == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != curr_aml.id):
                         raise osv.except_osv(_('Warning'),
                                              _('Account: %s - %s. The Third Party must be a liquidity journal with the same '

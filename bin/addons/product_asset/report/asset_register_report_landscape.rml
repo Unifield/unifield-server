@@ -1,0 +1,238 @@
+<?xml version="1.0"?>
+<document filename="Fixed Assets Register Report.pdf">
+  <template pageSize="(842.0,595.0)" title="Fixed Assets Register" author="TeMPO Consulting" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="8.0" y1="8.0" width="826" height="539"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+    <blockTableStyle id="Table_header_account">
+      <blockAlignment value="CENTER"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#f2f2f2" />
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="4,-1" stop="4,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="5,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="6,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="7,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="8,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="9,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="10,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="11,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="12,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="13,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="14,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="15,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="16,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="17,-1"/>
+      <blockBackground colorName="#e6e6e6" start="0,0" stop="0,-1"/>
+      <blockBackground colorName="#e6e6e6" start="1,0" stop="1,-1"/>
+      <blockBackground colorName="#e6e6e6" start="2,0" stop="2,-1"/>
+      <blockBackground colorName="#e6e6e6" start="3,0" stop="3,-1"/>
+      <blockBackground colorName="#e6e6e6" start="4,0" stop="4,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="5,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="6,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="7,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="8,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="9,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="10,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="11,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="12,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="13,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="14,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="15,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="16,-1"/>
+      <blockBackground colorName="#e6e6e6" start="5,0" stop="17,-1"/>
+
+    </blockTableStyle>
+    <blockTableStyle id="Table1">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="MIDDLE"/>
+      <lineStyle kind="GRID" colorName="#f2f2f2" />
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="Heading" fontName="Helvetica" fontSize="12.0" leading="15" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="Heading Center" fontName="Helvetica-Bold" fontSize="12.0" alignment="CENTER" leading="15" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="Content" fontName="Helvetica" fontSize="6.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="Content Right" fontName="Helvetica" fontSize="6.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="terp_header" fontName="Helvetica-Bold" fontSize="7.0" leading="15" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="terp_header_Right" fontName="Helvetica-Bold" fontSize="7.0" leading="15" alignment="RIGHT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="terp_default_8" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_tblheader_General_Centre" fontName="Helvetica-Bold" fontSize="6.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="terp_tblheader_General_Right" fontName="Helvetica-Bold" fontSize="5.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_tblheader_Details_Right" fontName="Helvetica-Bold" fontSize="7.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+  </stylesheet>
+  <images/>
+  <story>
+    <para style="Standard">[[repeatIn(objects,'o')]]</para>
+    <para style="terp_default_8">[[ setLang(data['lang']) ]]</para>
+    <blockTable colWidths="150.0,526.0,150.0">
+        <tr>
+            <td>
+                <para style="terp_header"> Func. Currency:  [[ company.currency_id.name ]]</para>
+            </td>
+            <td>
+                <para style="Heading Center"> Fixed Assets Register Report </para>
+            </td>
+            <td>
+                <para style="terp_header_Right"></para>
+            </td>
+        </tr>
+    </blockTable>
+    <blockTable colWidths="66.0,66.0,46.0,66.0,46.0,46.0,46.0,46.0,46.0,30.0,21.0,25.0,49.0,49.0,49.0,49.0,34.0,46.0" style="Table_header_account">
+        <tr>
+            <td>
+                <para style="terp_tblheader_General_Centre">Asset code</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Capitalization Entry sequence</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Capitalization Period</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Product code</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Product Description</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Serial Number</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Instance creator</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Instance of use</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Analytic distribution</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Asset type</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Useful life</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Book. Currency</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Initial Value Booking Curr.</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Accumulated Depr. Booking Curr.</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Remaining net value Booking Currency</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Remaining net value Func. Currency</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">Fixed Asset Status</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre">External Asset ID</para>
+            </td>
+        </tr>
+    </blockTable>
+    <section>
+      <para style="Content">[[ repeatIn(all_assets()[0], 'asset') ]]</para>
+      <blockTable colWidths="66.0,66.0,46.0,66.0,46.0,46.0,46.0,46.0,46.0,30.0,21.0,25.0,49.0,49.0,49.0,49.0,34.0,46.0" style="Table1">
+            <tr>
+                <td>
+                    <para style="Content">[[ asset['asset_name'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['ji_entry_sequence'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content"> [[ asset['capitalization_period'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['product_code'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['product_description'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['serial_number'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['instance_creator'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['instance_use'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['ad'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['asset_type'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['useful_life'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['booking_currency'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content Right">[[ formatLang(asset['init_value']) ]]</para>
+                </td>
+                <td>
+                    <para style="Content Right">[[ formatLang(asset['depreciation_amount']) ]]</para>
+                </td>
+                <td>
+                    <para style="Content Right">[[ formatLang(asset['book_remaining_value']) ]]</para>
+                </td>
+                <td>
+                    <para style="Content Right">[[ formatLang(asset['func_remaining_value']) ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['state'] ]]</para>
+                </td>
+                <td>
+                    <para style="Content">[[ asset['external_asset_id'] ]]</para>
+                </td>
+            </tr>
+      </blockTable>
+    </section>
+    <section>
+        <blockTable colWidths="66.0,66.0,418.0,49.0,49.0,49.0,49.0,80.0" style="Table_header_account">
+          <tr>
+            <td>
+                <para style="terp_tblheader_General_Centre">Summary: Total</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_Details_Right">[[ str(all_assets() and all_assets()[1].get('asset_count', 0)) ]]</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Centre"></para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Right">[[ formatLang(all_assets() and all_assets()[1].get('total_init_value', 0)) ]]</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Right">[[ formatLang(all_assets() and all_assets()[1].get('total_depreciation_amount', 0)) ]]</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Right">[[ formatLang(all_assets() and all_assets()[1].get('total_remaining_value_book', 0)) ]]</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Right">[[ formatLang(all_assets() and all_assets()[1].get('total_remaining_value_func', 0)) ]]</para>
+            </td>
+            <td>
+                <para style="terp_tblheader_General_Right"></para>
+            </td>
+          </tr>
+        </blockTable>
+    </section>
+  </story>
+</document>

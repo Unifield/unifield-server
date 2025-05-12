@@ -452,7 +452,7 @@ def trans_parse_rml(de, withtranslate=True):
         for m in n:
             if isinstance(m, SKIPPED_ELEMENT_TYPES) or not m.text:
                 continue
-            string_list = [s.replace('\n', ' ').strip() for s in re.split('\[\[.+?\]\]', m.text)]
+            string_list = [s.replace('\n', ' ').strip() for s in re.split(r'\[\[.+?\]\]', m.text)]
             for s in string_list:
                 if s:
                     res.append(s)
@@ -678,7 +678,7 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
                 parse_func = trans_parse_xsl
                 report_type = "xsl"
             if obj.target_filename:
-                for code in re.findall('\${_\([\'"]([ \w]+)[\'"]\)}',  obj.target_filename):
+                for code in re.findall(r'\${_\([\'"]([ \w]+)[\'"]\)}',  obj.target_filename):
                     push_translation(module, 'code', 'ir.actions.report.xml', 'name:%s'%obj.report_name, code)
             if fname and obj.report_type in ('pdf', 'xsl'):
                 try:
@@ -931,8 +931,11 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
             except:
                 split_id = dic['res_id'].split('.', 1)
                 dic['module'] = split_id[0]
-                dic['xml_id'] = split_id[1]
-                dic['res_id'] = False
+                if len(split_id) < 2:
+                    dic['res_id'] = 0
+                else:
+                    dic['xml_id'] = split_id[1]
+                    dic['res_id'] = False
 
             args = [
                 ('lang', '=', lang),

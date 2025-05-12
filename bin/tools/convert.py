@@ -142,7 +142,7 @@ def _eval_xml(self, node, pool, cr, uid, idref, context=None):
                 return ""
         if t == 'xml':
             def _process(s, idref):
-                m = re.findall('[^%]%\((.*?)\)[ds]', s)
+                m = re.findall(r'[^%]%\((.*?)\)[ds]', s)
                 for id in m:
                     if not id in idref:
                         idref[id]=self.id_get(cr, id)
@@ -1007,7 +1007,7 @@ class ModuleEntityResolver(etree.Resolver):
 # xml import/export
 #
 def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=False, report=None):
-    parser = etree.XMLParser()
+    parser = etree.XMLParser(resolve_entities=True)
 
 
     # if xmlfile is in a subdir (i.e: module/wizard/view.xml)

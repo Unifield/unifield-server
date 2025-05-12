@@ -38,6 +38,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        missing_ad_lines = []
         for line in self.browse(cr, uid, ids, context=context):
             """
             UFTP-336: Do not check AD on FO lines if the lines are
@@ -56,10 +57,11 @@ class sale_order_line(osv.osv):
 
             # US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
             if not distrib_id and not so.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
-                raise osv.except_osv(
-                    _('Warning'),
-                    _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',),
-                )
+                # To display a single error when multiple lines have no AD
+                ad_sol_tuple = [line.name or '', line.line_number]
+                if ad_sol_tuple not in missing_ad_lines:
+                    missing_ad_lines.append(ad_sol_tuple)
+                continue
 
             # Check distribution state
             if distrib_id and line.analytic_distribution_state != 'valid':
@@ -68,10 +70,11 @@ class sale_order_line(osv.osv):
                    not so.analytic_distribution_id:
                     # We don't raise an error for these types
                     if so.order_type not in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
-                        raise osv.except_osv(
-                            _('Warning'),
-                            _('Analytic distribution is mandatory for this line: %s') % (line.name or '',),
-                        )
+                        # To display a single error when multiple lines have no AD
+                        ad_sol_tuple = [line.name or '', line.line_number]
+                        if ad_sol_tuple not in missing_ad_lines:
+                            missing_ad_lines.append(ad_sol_tuple)
+                        continue
                     else:
                         continue
 
@@ -105,6 +108,14 @@ class sale_order_line(osv.osv):
                 else:
                     prefix = _("Analytic Distribution at header level:\n")
                 ana_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix, from_supply=True)
+
+        if missing_ad_lines:
+            if len(missing_ad_lines) == 1:
+                raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s') % (missing_ad_lines[0][0],))
+            else:
+                raise osv.except_osv(_('Warning'), _('Analytic distribution is missing for the lines %s. It must be added manually')
+                                     % (', '.join([str(missing_ad_line[1]) for missing_ad_line in missing_ad_lines]),))
+
         return True
 
     def copy_analytic_distribution_on_lines(self, cr, uid, ids, context=None):
@@ -464,6 +475,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        missing_ad_lines = []
         for sol in self.browse(cr, uid, ids, context=context):
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('sale_id', '=', sol.order_id.id), ('state', '=', 'draft')], context=context)
             if commitment_voucher_id:
@@ -485,8 +497,11 @@ class sale_order_line(osv.osv):
                 ad_header = sol.order_id.analytic_distribution_id.cost_center_lines
 
             if not cc_lines and not ad_header:
-                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
-                                     % (sol.order_id.name, sol.line_number, sol.product_id and sol.product_id.default_code or ''))
+                # To display a single error when multiple lines have no AD
+                ad_sol_tuple = [sol.order_id.name, sol.line_number, sol.product_id and sol.product_id.default_code or '']
+                if ad_sol_tuple not in missing_ad_lines:
+                    missing_ad_lines.append(ad_sol_tuple)
+                continue
 
             if ad_header:  # the line has no AD itself, it uses the AD at header level
                 distrib_id = False
@@ -514,6 +529,14 @@ class sale_order_line(osv.osv):
                     }
                     self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
                 self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], income_account, context=context)
+
+        if missing_ad_lines:
+            if len(missing_ad_lines) == 1:
+                raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                     % (missing_ad_lines[0][0], missing_ad_lines[0][1], missing_ad_lines[0][2]))
+            else:
+                raise osv.except_osv(_('Warning'), _('Analytic distribution is missing for the lines %s. It must be added manually')
+                                     % (', '.join([str(missing_ad_line[1]) for missing_ad_line in missing_ad_lines]),))
 
         return True
 
@@ -657,7 +680,7 @@ class sale_order_line(osv.osv):
         if not ids:
             return True
 
-        # Check the Product Creators if the Partner is Intermision or Inter-section
+        # Check the Product Creators if the Partner is Intermission or Inter-section
         so = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id
         if not so.procurement_request and so.partner_type in ['intermission', 'section']:
             data_obj = self.pool.get('ir.model.data')
@@ -726,8 +749,7 @@ Please check if these can be switched for UniData type product(s) instead, or co
             if sol.product_uom_qty*sol.price_unit >= self._max_value:
                 raise osv.except_osv(_('Warning !'), _('%s line %s: %s') % (sol.order_id.name, sol.line_number, _(self._max_msg)))
             if not sol.order_id.delivery_requested_date:
-                raise osv.except_osv(_('Warning !'),
-                                     _('You can not validate the line without a Requested date.'))
+                raise osv.except_osv(_('Warning !'), _('You can not validate the line without a Requested Delivery date.'))
             if not sol.order_id.procurement_request and sol.order_id.partner_id.partner_type == 'section' and \
                     sol.order_id.order_type == 'regular' and not sol.order_id.client_order_ref:
                 raise osv.except_osv(_('Warning !'),
@@ -953,6 +975,8 @@ class sale_order(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        sol_obj = self.pool.get('sale.order.line')
+
         ftf = ['name', 'procurement_request', 'location_requestor_id', 'delivery_requested_date', 'order_line']
         for so in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             if so.procurement_request and not so.location_requestor_id:
@@ -960,14 +984,20 @@ class sale_order(osv.osv):
                                      _('You can not validate \'%s\' without a Location Requestor.') % (so.name))
             if not so.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
-                                     _('You can not validate \'%s\' without a Requested date.') % (so.name))
+                                     _('You can not validate \'%s\' without a Requested Delivery date.') % (so.name))
 
             # Prevent lines without products created by a NR during synch to be validated
-            sol_ids = []
+            sol_ids, draft_sol_ids = [], []
             for sol in so.order_line:
                 if not sol.no_prod_nr_id:
                     sol_ids.append(sol.id)
-            return self.pool.get('sale.order.line').validated(cr, uid, sol_ids, context=context)
+                    if not so.procurement_request and sol.state == 'draft':
+                        draft_sol_ids.append(sol.id)
+
+            if draft_sol_ids:
+                sol_obj.analytic_distribution_checks(cr, uid, draft_sol_ids, context=context)
+
+            return sol_obj.validated(cr, uid, sol_ids, context=context)
 
         return True
 
