@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -24,11 +24,11 @@ import reportlab
 import reportlab.lib.units
 
 units = [
-    (re.compile('^(-?[0-9\.]+)\s*in$'), reportlab.lib.units.inch),
-    (re.compile('^(-?[0-9\.]+)\s*cm$'), reportlab.lib.units.cm),
-    (re.compile('^(-?[0-9\.]+)\s*mm$'), reportlab.lib.units.mm),
-    (re.compile('^(-?[0-9\.]+)\s*px$'), 0.7),
-    (re.compile('^(-?[0-9\.]+)\s*$'), 1)
+    (re.compile(r'^(-?[0-9\.]+)\s*in$'), reportlab.lib.units.inch),
+    (re.compile(r'^(-?[0-9\.]+)\s*cm$'), reportlab.lib.units.cm),
+    (re.compile(r'^(-?[0-9\.]+)\s*mm$'), reportlab.lib.units.mm),
+    (re.compile(r'^(-?[0-9\.]+)\s*px$'), 0.7),
+    (re.compile(r'^(-?[0-9\.]+)\s*$'), 1)
 ]
 
 def unit_get(size):

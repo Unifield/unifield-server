@@ -26,8 +26,8 @@ import io
 import re
 from reportlab.lib.utils import ImageReader
 
-_regex = re.compile('\[\[(.+?)\]\]')
-utils._regex = re.compile('\[\[\s*(.+?)\s*\]\]',re.DOTALL)
+_regex = re.compile(r'\[\[(.+?)\]\]')
+utils._regex = re.compile(r'\[\[\s*(.+?)\s*\]\]',re.DOTALL)
 class html2html(object):
     def __init__(self, html, localcontext):
         self.localcontext = localcontext

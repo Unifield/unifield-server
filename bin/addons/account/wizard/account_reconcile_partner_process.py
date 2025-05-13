@@ -88,7 +88,7 @@ class account_partner_reconcile_process(osv.osv_memory):
     _columns = {
         'to_reconcile': fields.float('Remaining Partners', readonly=True, help='This is the remaining partners for who you should check if there is something to reconcile or not. This figure already count the current partner as reconciled.'),
         'today_reconciled': fields.float('Partners Reconciled Today', readonly=True, help='This figure depicts the total number of partners that have gone throught the reconciliation process today. The current partner is counted as already processed.'),
-        'progress': fields.float('Progress', readonly=True, help='Shows you the progress made today on the reconciliation process. Given by \nPartners Reconciled Today \ (Remaining Partners + Partners Reconciled Today)'),
+        'progress': fields.float('Progress', readonly=True, help=r'Shows you the progress made today on the reconciliation process. Given by \nPartners Reconciled Today \ (Remaining Partners + Partners Reconciled Today)'),
         'next_partner_id': fields.many2one('res.partner', 'Next Partner to Reconcile', readonly=True, help='This field shows you the next partner that will be automatically chosen by the system to go through the reconciliation process, based on the latest day it have been reconciled.'), # TODO: remove the readonly=True when teh client side will allow to update the context of existing tab, so that the user can change this value if he doesn't want to follow openerp proposal
     }
 

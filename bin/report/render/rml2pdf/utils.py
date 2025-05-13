@@ -48,7 +48,7 @@ from tools.safe_eval import safe_eval as eval
 from tools import ustr
 
 import psycopg2
-_regex = re.compile('\[\[(.+?)\]\]')
+_regex = re.compile(r'\[\[(.+?)\]\]')
 
 def str2xml(s):
     return (s or '').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
@@ -142,10 +142,10 @@ def text_get(node):
     return ''.join([ustr(n.text) for n in node])
 
 units = [
-    (re.compile('^(-?[0-9\.]+)\s*in$'), reportlab.lib.units.inch),
-    (re.compile('^(-?[0-9\.]+)\s*cm$'), reportlab.lib.units.cm),
-    (re.compile('^(-?[0-9\.]+)\s*mm$'), reportlab.lib.units.mm),
-    (re.compile('^(-?[0-9\.]+)\s*$'), 1)
+    (re.compile(r'^(-?[0-9\.]+)\s*in$'), reportlab.lib.units.inch),
+    (re.compile(r'^(-?[0-9\.]+)\s*cm$'), reportlab.lib.units.cm),
+    (re.compile(r'^(-?[0-9\.]+)\s*mm$'), reportlab.lib.units.mm),
+    (re.compile(r'^(-?[0-9\.]+)\s*$'), 1)
 ]
 
 def unit_get(size):
