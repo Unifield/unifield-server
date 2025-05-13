@@ -31,7 +31,7 @@ from openerp.utils import rpc
 from openobject import ustr
 import math
 
-crummy_pseudoliteral_matcher = re.compile('^(True|False|None|-?\d+(\.\d+)?|\[.*?\]|\(.*?\)|\{.*?\})$', re.M)
+crummy_pseudoliteral_matcher = re.compile(r'^(True|False|None|-?\d+(\.\d+)?|\[.*?\]|\(.*?\)|\{.*?\})$', re.M)
 
 
 def format_datetime_value(value, bound):
@@ -216,7 +216,7 @@ class TinyDict(dict):
             setattr(self, k, v)
 
     def chain_get(self, name, default=None):
-        names = re.split('\.|/', ustr(name))
+        names = re.split(r'\.|/', ustr(name))
         value = super(TinyDict, self).get(names[0], default)
 
         for n in names[1:]:
@@ -410,7 +410,7 @@ class TinyForm(object):
 def get_server_version(dbname, remove_timestamp=True):
     version = rpc.session.execute_db('server_version', dbname)
     if version and remove_timestamp:
-        ver_match = re.match('(.*)-\d{8}-\d{6}$', version)
+        ver_match = re.match(r'(.*)-\d{8}-\d{6}$', version)
         if ver_match:
             version = ver_match.group(1)
     return version
