@@ -22,8 +22,13 @@ class asset_register_report_landscape(report_sxw.rml_parse):
 
     def format_data(self, asset):
         commons_obj = self.pool.get('asset.register.commons')
-        booking_rate = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id,
-                                                    fields_to_fetch=['rate'], context=self.context).rate
+        booking_rate = False
+        if asset and asset.invo_currency and asset.invo_currency.id:
+            book_currency = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id, fields_to_fetch=['rate'], context=self.context)
+            booking_rate = book_currency and book_currency.rate or False
+        if not booking_rate or booking_rate <= 0:
+            raise osv.except_osv(_('Error!'), _('No currency or currency rate found for the invoice of %s asset %s') % (asset.state, asset.name))
+
         format_data = {
             'asset_name': asset.name,
             'ji_entry_sequence': asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or '',

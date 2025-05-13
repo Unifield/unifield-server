@@ -5,6 +5,7 @@ from tools import misc
 from tools.translate import _
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Border, Side
+from osv.osv import except_osv
 
 
 class asset_parser(XlsxReportParser):
@@ -135,12 +136,18 @@ class asset_parser(XlsxReportParser):
                     accumulated_depreciation += asset.depreciation_amount or 0
                 if field == _('Remaining net value Booking Currency'):
                     cell_value = asset.disposal_amount
-                    remain_net_value_book += asset.disposal_amount
+                    remain_net_value_book += asset.disposal_amount or 0
                 if field == _('Remaining net value Func. Currency'):
-                    booking_rate = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id, fields_to_fetch=['rate'], context=context).rate
+                    booking_rate = False
+                    if asset and asset.invo_currency and asset.invo_currency.id:
+                        book_currency = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id,
+                                                             fields_to_fetch=['rate'], context=context)
+                        booking_rate = book_currency and book_currency.rate or False
+                    if not booking_rate or booking_rate <= 0:
+                        raise except_osv(_('Error!'), _('No currency or currency rate found for the invoice of %s asset %s') % (asset.state, asset.name))
                     func_amount = asset.disposal_amount / booking_rate
                     cell_value = func_amount
-                    remain_net_value_func += func_amount
+                    remain_net_value_func += func_amount or 0
                 if field == _('Fixed Asset Status'):
                     cell_value = commons_obj.format_asset_state(asset.state, context=context) or ''
                 if field == _('External Asset ID'):
