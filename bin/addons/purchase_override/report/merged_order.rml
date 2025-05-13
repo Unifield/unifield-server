@@ -1,20 +1,19 @@
 <?xml version="1.0" ?>
 <document filename="purchase_order.pdf">
 
-    <template pageSize="(842.0,595.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
+    <template pageSize="(900.0,636.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="30.0" y1="15.0" width="772" height="500" />
+            <frame id="first" x1="15.0" y1="5.0" width="870" height="551" />
 
         <pageGraphics>
-            <drawString x="35" y="560.0">PURCHASE ORDER [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
-            <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <drawString x="15" y="611.0">PURCHASE ORDER [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
+            <image x="778" y="576.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
-            <drawString x="700" y="520.0">Page : <pageNumber /></drawString>
-            <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
-            <drawString x="735" y="520.0">/</drawString>
-            <drawString x="740" y="520.0"><pageCount /> </drawString>
-            <drawString x="700" y="510.0">Print date: [[ time.strftime('%d/%b/%Y') ]]</drawString>
+            <drawString x="778" y="566.0">Page : <pageNumber /></drawString>
+            <drawString x="813" y="566.0">/</drawString>
+            <drawString x="818" y="566.0"><pageCount /> </drawString>
+            <drawString x="778" y="556.0">Print date: [[ time.strftime('%d/%b/%Y') ]]</drawString>
         </pageGraphics>
 
     </pageTemplate>
@@ -107,7 +106,7 @@
 
         <para style="Standard"></para>
 
-        <blockTable colWidths="90.0,600.0,100.0" style="Origin">
+        <blockTable colWidths="90.0,680.0,100.0" style="Origin">
             <tr>
                 <td>
                     <para style="TextInformationH">Source Document :</para>
@@ -159,7 +158,7 @@
                 <td> </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="150.0,5.5,150.0,5.5,150.0,5.5,150.0,5.5,150.0" style="OrderInformations">
+        <blockTable colWidths="184.0,5.5,166.0,5.5,166.0,5.5,166.0,5.5,166.0" style="OrderInformations">
             <tr>
                 <td>
                     <para style="TextInformation">Project : [[ objects[0].company_id.partner_id.name ]]</para>
@@ -635,7 +634,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="772.0" style="LinesTitle">
+        <blockTable colWidths="870.0" style="LinesTitle">
             <tr>
                 <td>
                     <para style="TextInformation">Lines :</para>
@@ -644,7 +643,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="60.5,93.5,280.5,88,53.5,57.0,50.0,55.0,17,17" style="LinesTable">
+        <blockTable colWidths="60.5,93.5,280.5,116,53.5,25.0,95.0,112.0,17,17" style="LinesTable">
             <tr>
                 <td>
                     <para style="Lines"><i>Supplier Code</i></para>
@@ -662,7 +661,7 @@
                     <para style="Lines"><i>Quantity</i></para>
                 </td>
                 <td>
-                    <para style="Lines"><i>Unit of Measure</i></para>
+                    <para style="Lines"><i>UoM</i></para>
                 </td>
                 <td>
                     <para style="Lines"><i>Unit Price</i></para>
@@ -680,7 +679,7 @@
         </blockTable>
 
         <section>
-            <blockTable colWidths="60.5,93.5,280.5,88,53.5,57.0,50.0,55.0,17,17" style="LinesTable">
+            <blockTable colWidths="60.5,93.5,280.5,116,53.5,25.0,95.0,112.0,17,17" style="LinesTable">
                 [[repeatIn(get_merged_lines(objects[0]),'line')]]
                 <tr>
                     <td>
@@ -696,16 +695,16 @@
                         <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}">[[ line['comment'] ]]</para>
                     </td>
                     <td>
-                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ line['quantity'] and formatFloatDigitsToUom(line['quantity'], line['product_uom_rounding']) or '0.00' ]]</para>
+                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}">[[ line['quantity'] and formatFloatDigitsToUom(line['quantity'], line['product_uom_rounding']) or '0.00' ]]</para>
                     </td>
                     <td>
                         <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="CENTER">[[ line['product_uom'] ]]</para>
                     </td>
                     <td>
-                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ round(line['price_unit'], 4) or '0.00' ]]</para>
+                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}">[[ round(line['price_unit'], 4) or '0.00' ]]</para>
                     </td>
                     <td>
-                         <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ line['price_subtotal'] or '0.00' ]]</para>
+                         <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}">[[ line['price_subtotal'] or '0.00' ]]</para>
                     </td>
                     <td>
                         <parawrap rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="CENTER">[[ line['mml_status'] ]]</parawrap>
@@ -718,7 +717,7 @@
 
         </section>
 
-        <blockTable colWidths="772.0" style="LinesTableEnd">
+        <blockTable colWidths="870.0" style="LinesTableEnd">
             <tr>
                 <td>
                     <para style="LinesBlue"> </para>
@@ -730,7 +729,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="772.0" style="RemarkTable" keepWithNext="1">
+        <blockTable colWidths="870.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
                     <para style="TextNotes">Notes : [[ objects[0].notes ]]</para>
@@ -761,7 +760,7 @@
             </tr>
         </blockTable>
  
-        <blockTable colWidths="128.0,130.0,130.0,128.0,128.0,128.0" style="StatusTable">
+        <blockTable colWidths="122.0,150.0,150.0,150.0,149.0,149.0" style="StatusTable">
             <tr>
                 <td>
                     <para style="Standard"> </para>
@@ -779,7 +778,7 @@
                     <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'mr', 'backup') ]]Mission Responsible</para>
                 </td>
                 <td>
-                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'hq', 'backup') ]]HQ</para>
+                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'hq', 'backup') ]]HQ Responsible</para>
                 </td>
             </tr>
             <tr>

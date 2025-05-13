@@ -42,7 +42,7 @@
 					<field name="product_id" readonly="True" />
                     <field name="comment" readonly="True" />
 					<field name="product_uom_qty" string="Qty" attrs="{'readonly': []}" />
-					<field name="product_uom" attrs="{'readonly': []}" /> 
+					<field name="product_uom" string="UoM" attrs="{'readonly': []}" />
                     <button name="open_split_wizard" type="object" string="Split line" icon="terp-stock_effects-object-colorize" 
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
 					<field name="rts" invisible="1" />
@@ -66,13 +66,13 @@
 					<field name="real_stock" />
 					<field name="available_stock" />
                     <field name="virtual_stock" />
-                    <field name="stock_uom_id" readonly="1" string="UoM Stock" />
 					<field name="company_id" invisible="1" />
 					<field name="supplier" colspan="2"
 						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft),('check_partner', '=', active_id), '|', '|', ('supplier', '=', 't'), ('manufacturer', '=', 't'), ('transporter', '=', 't')]"
                         context="{'product_id': product_id, 'choose_supplier': True, 'uom': product_uom, 'product_qty': product_uom_qty}"
 						attrs="{'readonly': ['|', '|', ('po_cft', '=', 'cft'), ('state', '!=', 'validated'), ('type', '=', 'make_to_stock')]}"
 						on_change="onChangeSupplier(supplier, type)" />
+					<field name="supplier_ranking" readonly="1" />
 					<field name="customer" invisible="1" />
 					<field name="sourcing_date" invisible="1"/>
 					<field name="estimated_delivery_date" />

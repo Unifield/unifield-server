@@ -3077,7 +3077,7 @@ class product_attributes(osv.osv):
         if level == 'coordo':
             if blocker:
                 fields_to_check = [
-                    'type', 'subtype', 'perishable', 'batch_management', 'uom_id'
+                    'type', 'subtype', 'perishable', 'batch_management', 'uom_id', 'nomen_manda_0'
                 ]
             else:
                 fields_to_check = [
@@ -3093,8 +3093,10 @@ class product_attributes(osv.osv):
                     'nomen_manda_1', 'nomen_manda_2', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods'
                 ]
 
-        old_values = self.read(cr, uid, old_prod_id, fields_to_check, context=context)
-        new_values = self.read(cr, uid, new_prod_id, fields_to_check, context=context)
+        ftf = fields_to_check.copy()
+        ftf.append('default_code')
+        old_values = self.read(cr, uid, old_prod_id, ftf, context=context)
+        new_values = self.read(cr, uid, new_prod_id, ftf, context=context)
 
         failed = []
         for f in fields_to_check:
@@ -3105,11 +3107,13 @@ class product_attributes(osv.osv):
             fields_data = self.fields_get(cr, uid, failed, context=context)
             values = {'attr': ', '.join([fields_data[x].get('string') for x in failed])}
             if blocker:
+                values['product_old'] = old_values['default_code']
+                values['product_new'] = new_values['default_code']
                 if level == 'coordo':
-                    return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge.') % values
-                return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update (one of) your UniData product\'s %(attr)s and then proceed with the merge.') % values
+                    return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge. Products %(product_old)s and %(product_new)s') % values
+                return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update (one of) your UniData product\'s %(attr)s and then proceed with the merge. Products %(product_old)s and %(product_new)s') % values
 
-            return _('There is an inconsistency between the selected products’  %(attr)s . Do you still want to proceed with the merge?') % values
+            return _('There is an inconsistency between the selected products’ %(attr)s. Do you still want to proceed with the merge ?') % values
 
         return ''
 

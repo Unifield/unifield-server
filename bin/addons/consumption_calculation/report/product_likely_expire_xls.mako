@@ -75,11 +75,13 @@ if n_header_colspan < 0:
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="250" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 % for d, d_str in dates:
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
 ## criteria header
 <Row>
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Location')}</Data></Cell>
@@ -112,13 +114,13 @@ if cols < 0:
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Product Code')}</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Product Description')}</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Monthly Consumption')}</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">${_('Expired Qty')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Already Expired Qty')}</Data></Cell>
 % for d, d_str in dates:
 <Cell ss:StyleID="header"><Data ss:Type="String">${d_str|x}</Data></Cell>
 % endfor
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('In Stock')}</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">${_('Total Expired')}</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">${_('Total Value')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Total Quantity Likely to Expire')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Total Value of Likely to Expire Quantity')}</Data></Cell>
 </Row>
 ## lines
 % for line in o.line_ids:
@@ -148,8 +150,8 @@ if cols < 0:
     <% cnt += 1 %>
 % endfor
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.in_stock or 0.}</Data></Cell>
-<Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.total_expired or 0.}</Data></Cell>
-<Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.total_value or 0.}</Data></Cell>
+<Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.total_likely_expired or 0.}</Data></Cell>
+<Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.total_likely_value or 0.}</Data></Cell>
 </Row>
 % endfor
 ## total row
@@ -163,7 +165,7 @@ if cols < 0:
 % endfor
 <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="line_number"><Data ss:Type="Number">${getExpiryValueTotal(o) or 0.}</Data></Cell>
+<Cell ss:StyleID="line_number"><Data ss:Type="Number">${getLikelyExpiryValueTotal(o) or 0.}</Data></Cell>
 </Row>
 </Table>
 % endfor
@@ -184,15 +186,19 @@ worksheet_name = d_str.replace('/', '-')
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="160" />
 <Row>
 <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch Number')}</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Location')}</Data></Cell>
-<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Available Qty')}</Data></Cell>
-<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Qty')}</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('In Stock')}</Data></Cell>
+% if d == 'expired_qty_col':
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Already Expired Qty')}</Data></Cell>
+% else:
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Total Quantity Likely to Expire')}</Data></Cell>
+% endif
 </Row>
 % for il in getMonthItemLines(o, d, 'xls'):
 <Row>

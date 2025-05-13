@@ -1611,7 +1611,7 @@ class replenishment_segment(osv.osv):
                                     break
                             else:
                                 if oc >= from_fmc and rdd <= to_fmc:
-                                    auto_qty = max(auto_qty, auto_x)
+                                    auto_qty = max(auto_qty or 0, auto_x)
                         elif fmc_d == 1:
                             auto_qty = auto_x
                             break
@@ -2314,7 +2314,8 @@ class replenishment_segment_line(osv.osv):
         view = super(replenishment_segment_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if context is None:
             context = {}
-        if view_type in ('form', 'tree'):
+        if view_type in ('form', 'tree') and \
+                view_id != self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_cycle', 'replenishment_segment_line_paired_form')[1]:
             arch = etree.fromstring(view['arch'])
 
             if view_type == 'form':

@@ -17,7 +17,7 @@
                     <filter name="partial" string="Partially Signed" icon="terp-document-new" domain="[('status', '=', 'partial')]" />
                     <filter name="fully" string="Fully Signed" icon="terp-camera_test" domain="[('status', '=', 'signed')]" />
                     <separator orientation="vertical"/>
-                    <filter name="supply_doc" string="Supply" icon="terp-product" domain="[('doc_type', 'in', ['purchase.order', 'sale.order.fo', 'sale.order.ir', 'stock.picking.in', 'stock.picking.out', 'stock.picking.pick', 'physical.inventory'])]" />
+                    <filter name="supply_doc" string="Supply" icon="terp-product" domain="[('doc_type', 'in', ['purchase.order', 'sale.order.fo', 'sale.order.ir', 'stock.picking.in', 'stock.picking.int', 'stock.picking.out', 'stock.picking.pick', 'physical.inventory'])]" />
                     <filter name="Finance_doc" string="Finance" icon="terp-stock_format-default" domain="[('doc_type', 'in', ['account.bank.statement.cash', 'account.bank.statement.bank', 'account.invoice.si', 'account.invoice.donation', 'physical.inventory'])]" />
                     <separator orientation="vertical"/>
                     <field name="user_id" />
@@ -59,6 +59,17 @@
             <field name="view_id" ref="signature_follow_up_tree"/>
             <field name="search_view_id" ref="signature_follow_up_search"/>
             <field name="context">{}</field>
+        </record>
+
+        <record id="signature_follow_up_to_be_signed_action" model="ir.actions.act_window">
+            <field name="name">Signatures Follow Up to be Signed</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">signature.follow_up</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="signature_follow_up_tree"/>
+            <field name="search_view_id" ref="signature_follow_up_search"/>
+            <field name="context">{'search_default_to_sign': 1}</field>
         </record>
 
         <menuitem id="signature_follow_up_menu" action="signature_follow_up_action" parent="base.signature_menu" sequence="2"/>

@@ -256,13 +256,21 @@ class product_nomenclature(osv.osv):
             raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
 
         parent_ids = None
+        lang = context.get('lang', 'en_MF')
         for path_s in args[0][2].split('|'):
-            dom = [('name', '=ilike', path_s.strip())]
+            sql_cond = {'nomen_name': path_s.strip(), 'lang': lang}
             if parent_ids is None:
-                dom.append(('parent_id', '=', False))
+                sql_parent = " AND parent_id IS NULL"
             else:
-                dom.append(('parent_id', 'in', parent_ids))
-            ids = self.search(cr, uid, dom)
+                sql_parent = " AND parent_id IN %(parent_ids)s"
+                sql_cond['parent_ids'] = tuple(parent_ids)
+            sql = """
+                SELECT n.id FROM product_nomenclature n 
+                LEFT JOIN ir_translation t ON t.lang = %(lang)s AND t.name = 'product.nomenclature,name' AND t.res_id = n.id
+                WHERE (t.value ILIKE %(nomen_name)s OR n.name ILIKE %(nomen_name)s)
+            """ + sql_parent # not_a_user_entry
+            cr.execute(sql, sql_cond)
+            ids = [x[0] for x in cr.fetchall()]
             if not ids:
                 return [('id', '=', 0)]
             parent_ids = ids

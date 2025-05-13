@@ -3,12 +3,12 @@
 
     <template pageSize="(842.0,595.0)" title="Expiry Report" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
+            <frame id="first" x1="35.0" y1="0.0" width="772" height="520" />
 
         <pageGraphics>
-            <image x="35" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <image x="15" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica-Bold" size="10"/>
-            <drawString x="40" y="520.0">[[ getAddress() ]]</drawString>
+            <drawString x="20" y="520.0">[[ getAddress() ]]</drawString>
         </pageGraphics>
 
     </pageTemplate>
@@ -52,7 +52,7 @@
     <story>
 
 
-        <blockTable colWidths="285.0,182.0,285.0" style="TitleTable">
+        <blockTable colWidths="275.0,242.0,275.0" style="TitleTable">
             <tr>
                 <td>
                     <para style="Title"> </para>
@@ -70,7 +70,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="112.0,350.0,310.0" style="DocInfo">
+        <blockTable colWidths="112.0,350.0,350.0" style="DocInfo">
             <tr>
                 <td>
                     <para style="TextInfoBold">Report date : </para>
@@ -140,7 +140,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="80.0,120.0,60.0,60.0,60.0,60.0,60.0,60.0,70.0,65.0,65.0" style="LinesTable" repeatRows="1">
+        <blockTable colWidths="80.0,120.0,60.0,65.0,60.0,60.0,60.0,60.0,70.0,80.0,85.0" style="LinesTable" repeatRows="1">
             [[ repeatIn(getRmlTables(objects[0], 5), 't') ]]
             <tr>
                 <td>
@@ -153,7 +153,7 @@
                     <para style="TextInfoBoldRight">Monthly Consumption</para>
                 </td>
                 <td>
-                    <para style="TextInfoBoldRight">Expired Qty</para>
+                    <para style="TextInfoBoldRight">Already Expired Qty</para>
                 </td>
                 <td>
                     <para style="TextInfoBoldRight">[[ getRmlNextMonth(objects[0]) ]]</para>
@@ -171,10 +171,10 @@
                     <para style="TextInfoBoldRight">In Stock</para>
                 </td>
                 <td>
-                    <para style="TextInfoBoldRight">Total Expired</para>
+                    <para style="TextInfoBoldRight">Total Quantity Likely to Expire</para>
                 </td>
                 <td>
-                    <para style="TextInfoBoldRight">Total Value</para>
+                    <para style="TextInfoBoldRight">Total Value of Likely to Expire Quantity</para>
                 </td>
             </tr>
             <tr>
@@ -207,10 +207,10 @@
                     <para style="TextInfoRight">[[ formatLang(line.in_stock or 0.00) ]]</para>
                 </td>
                 <td>
-                    <para style="TextInfoRight">[[ formatLang(line.total_expired or 0.00) ]]</para>
+                    <para style="TextInfoRight">[[ formatLang(line.total_likely_expired or 0.00) ]]</para>
                 </td>
                 <td>
-                    <para style="TextInfoRight">[[ formatLang(line.total_value or 0.00) ]]</para>
+                    <para style="TextInfoRight">[[ formatLang(line.total_likely_value or 0.00) ]]</para>
                 </td>
             </tr>
             <tr>
@@ -245,7 +245,7 @@
                     <para style="TextInfoRight"></para>
                 </td>
                 <td>
-                    <para style="TextInfoRight">[[ formatLang(getExpiryValueTotal(objects[0]) or 0.00) ]]</para>
+                    <para style="TextInfoRight">[[ formatLang(getLikelyExpiryValueTotal(objects[0]) or 0.00) ]]</para>
                 </td>
             </tr>
         </blockTable>
@@ -265,7 +265,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="80.0,220.0,140.0,100.0,60.0,80.0,80.0" style="LinesTable" repeatRows="1">
+        <blockTable colWidths="80.0,230.0,140.0,100.0,60.0,80.0,110.0" style="LinesTable" repeatRows="1">
             <tr>
                 <td>
                     <para style="TextInfoBold">Product Code</para>
@@ -283,10 +283,10 @@
                     <para style="TextInfoBold">Location</para>
                 </td>
                 <td>
-                    <para style="TextInfoBoldRight">Available Qty</para>
+                    <para style="TextInfoBoldRight">In Stock</para>
                 </td>
                 <td>
-                    <para style="TextInfoBoldRight">Expiry Qty</para>
+                    <para style="TextInfoBoldRight">Total Quantity Likely to Expire</para>
                 </td>
             </tr>
             <tr>

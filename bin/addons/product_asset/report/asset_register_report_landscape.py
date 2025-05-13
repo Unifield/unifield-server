@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import time
-import locale
 from report import report_sxw
-from osv import osv
+from osv.osv import except_osv
 from tools.translate import _
 
 class asset_register_report_landscape(report_sxw.rml_parse):
@@ -27,8 +25,10 @@ class asset_register_report_landscape(report_sxw.rml_parse):
             book_currency = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id, fields_to_fetch=['rate'], context=self.context)
             booking_rate = book_currency and book_currency.rate or False
         if not booking_rate or booking_rate <= 0:
-            raise osv.except_osv(_('Error!'), _('No currency or currency rate found for the invoice of %s asset %s') % (asset.state, asset.name))
+            raise except_osv(_('Error!'), _('No currency or currency rate found for the invoice of %s asset %s') % (asset.state, asset.name))
 
+        booking_rate = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id,
+                                                            fields_to_fetch=['rate'], context=self.context).rate
         format_data = {
             'asset_name': asset.name,
             'ji_entry_sequence': asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or '',

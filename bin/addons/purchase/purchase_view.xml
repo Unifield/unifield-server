@@ -189,6 +189,9 @@
                                 <p id="nr_ad_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>WARNING: Order line(s) not synchronized, please add an AD on line(s): </translate>
                                 </p>
+                                <p id="msg_ad_lines_missing" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                    <translate>WARNING: Analytic distribution is missing for the lines </translate>
+                                </p>
                                 <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
                                 <p id="view_purchase_order_locked_for_signature" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                     <translate>
@@ -263,6 +266,11 @@
                                         $('#nr_ad_lines').append(has_ad_nr);
                                         $('#nr_ad_lines').show();
                                     }
+                                    var has_ad_lines_missing = $('#ad_lines_missing_message').val() || $('#ad_lines_missing_message').text();
+                                    if (has_ad_lines_missing) {
+                                        $('#msg_ad_lines_missing').append(has_ad_lines_missing);
+                                        $('#msg_ad_lines_missing').show();
+                                    }
                                     var catalogue_text = $('#catalogue_exists_text').val() ||  $('#catalogue_exists_text').text();
                                     if (catalogue_text) {
                                          $('#order_line_extra_text').html(catalogue_text);
@@ -289,6 +297,7 @@
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="nb_creation_message_nr" invisible="1"/>
                         <field name="ad_lines_message_nr" invisible="1"/>
+                        <field name="ad_lines_missing_message" invisible="1"/>
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}"/>
                         <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <newline/>
@@ -321,7 +330,7 @@
                                 <field name="po_from_ir" invisible="1"/>
                                 <field name="po_from_fo" invisible="1"/>
                                 <field name="canceled_end" invisible="1"/>
-                                <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
+                                <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': ['|', ('state', 'not in', ['draft']), ('order_type', '=', 'loan_return')]}"/>
                                 <field name="partner_type"/>
                                 <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="origin" readonly="1" widget="char"/>

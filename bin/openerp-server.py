@@ -271,29 +271,31 @@ def quit(restart=False, db_name=''):
 
     ops_event('shutdown')
     logging.shutdown()
-
+    stop_time = time.time()
     # manually join() all threads before calling sys.exit() to allow a second signal
     # to trigger _force_quit() in case some non-daemon threads won't exit cleanly.
     # threading.Thread.join() should not mask signals (at least in python 2.5)
+    running_thread = False
     for thread in threading.enumerate():
         if thread != threading.current_thread() and not thread.daemon:
             while thread.is_alive():
-                # need a busyloop here as thread.join() masks signals
-                # and would present the forced shutdown
-                thread.join(0.05)
-                time.sleep(0.05)
-                time.sleep(1)
-                if os.name == 'nt':
-                    try:
-                        logger.info("Killing", thread.getName())
-                        thread._Thread__stop()
-                    except:
-                        logger.info(str(thread.getName()) + ' could not be terminated')
+                if time.time() - stop_time > 1:
+                    running_thread = True
+                    break
+                else:
+                    # need a busyloop here as thread.join() masks signals
+                    # and would present the forced shutdown
+                    thread.join(0.05)
+                    time.sleep(0.05)
 
     if not restart:
+        if running_thread:
+            os._exit(0)
         sys.exit(0)
     elif os.name == 'nt':
-        sys.exit(1) # require service restart
+        if running_thread:
+            os._exit(1)
+        sys.exit(1)
     else:
         os.execv(sys.executable, [sys.executable] + sys.argv)
 

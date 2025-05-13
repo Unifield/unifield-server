@@ -123,7 +123,7 @@ class msf_language_import(osv.osv_memory):
                         rejected.append(_('Line %s Record %s not found') % (line+1, search_src.decode('utf-8')))
                         continue
                     # BKLG-52: If the translation for a data entry exists already in ir.translation, then just update the new translation, no need to delete-recreate!
-                    # This is then avoid having the delete sync to send to other instances 
+                    # This is then avoid having the delete sync to send to other instances
                     for trans_id in obj_ids:
                         name = '%s,%s' % (obj, field)
                         args = [('lang', '=', import_data.name), ('type', '=', 'model'),
@@ -138,8 +138,8 @@ class msf_language_import(osv.osv_memory):
                                 # ALWAYS get english original src name ('en_US' in context)
                                 # as now default_code is the key in csv file
                                 src = self.pool.get(obj).read(cr, uid,
-                                    [trans_id], ['name'],
-                                    context={'lang': 'en_US', })[0]['name']
+                                                              [trans_id], ['name'],
+                                                              context={'lang': 'en_US', })[0]['name']
                             trans_obj.create(cr, uid, {
                                 'lang': import_data.name,
                                 'type': 'model',
@@ -147,7 +147,7 @@ class msf_language_import(osv.osv_memory):
                                 'res_id': trans_id,
                                 'value': row['value'],
                                 'src': src,
-                                })
+                            })
                     cr.commit()
                 except Exception as e:
                     cr.rollback()

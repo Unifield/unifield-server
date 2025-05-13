@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
-from tools import misc
 from tools.translate import _
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Border, Side
@@ -180,9 +179,9 @@ class asset_parser(XlsxReportParser):
         last_empty_cell.style = total_style
 
         total_row = [total_cell, total_val_cell] +\
-                    ([empty_total_cell] * 10) +\
-                    [total_init_value_cell, total_accumul_depr_cell, remain_net_value_book_cell, remain_net_value_func_cell] +\
-                    [empty_total_cell, last_empty_cell]
+            ([empty_total_cell] * 10) +\
+            [total_init_value_cell, total_accumul_depr_cell, remain_net_value_book_cell, remain_net_value_func_cell] +\
+            [empty_total_cell, last_empty_cell]
 
         sheet.row_dimensions[asset_count + 5].height = 20
         sheet.append(total_row)

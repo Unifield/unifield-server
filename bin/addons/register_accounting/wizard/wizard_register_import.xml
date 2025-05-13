@@ -101,15 +101,23 @@
             </field>
         </record>
 
-        <!-- Actions -->
-        <act_window id="action_register_import"
-          name="Import register lines"
-          res_model="wizard.register.import"
-          src_model="account.bank.statement"
-          key2="client_action_multi"
-          view_mode='form'
-          view_type='form'
-          target='new' />
+
+        <record id="action_open_import_wizard" model="ir.actions.server">
+            <field name="name">Import register lines</field>
+            <field name="model_id" ref="model_account_bank_statement"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_import_wizard(context=context)</field>
+        </record>
+
+        <record id="action_register_import2" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.bank.statement</field>
+            <field name="name">Import register lines</field>
+            <field eval="'ir.actions.server,%d'%action_open_import_wizard" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+
 
     </data>
 </openerp>

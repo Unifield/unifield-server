@@ -93,7 +93,14 @@ class wizard_closing_cashbox(osv.osv_memory):
                         # Create next register starting cashbox_lines if necessary
                         create_cashbox_lines(self, cr, uid, st.id, context=context)
                         # Change cashbox state
-                        res_id = st_obj.write(cr, uid, [st.id], {'name': st_number, 'state':'confirm', 'closing_date': datetime.today()}, context=context)
+                        context['update_next_reg_balance_start'] = True
+                        start_balance = st_obj._get_cash_starting_balance(cr, uid, [st.id], context=context)
+                        vals = {'name': st_number, 'state':'confirm', 'closing_date': datetime.today()}
+                        if start_balance:
+                            vals['balance_start'] = start_balance[st.id]
+                        res_id = st_obj.write(cr, uid, [st.id], vals, context=context)
+                        context['update_next_reg_balance_start'] = False
+
                 return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
             else:
                 raise osv.except_osv(_('Warning'), _("Confirm by ticking the 'Are you sure?' checkbox!"))

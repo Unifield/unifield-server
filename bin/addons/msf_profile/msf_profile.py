@@ -39,7 +39,7 @@ import io
 import csv
 import zlib
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from base.res.signature import _register_log
 import hashlib
@@ -57,6 +57,127 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+    def us_14039_store_cash_migration(self, cr, uid, *a, **b):
+        cr.execute("""
+            select
+                st1.id, sum(c.pieces*c.number)
+            from
+                account_bank_statement st1
+                inner join account_period p1 on p1.id = st1.period_id
+                left join account_cashbox_line c on c.starting_id = st1.id
+            where
+                (st1.journal_id, p1.date_start) in (
+                    select
+                        j.id, min(p.date_start)
+                    from
+                        account_bank_statement st
+                        inner join account_journal j on st.journal_id = j.id
+                        inner join account_period p on st.period_id = p.id
+                    where
+                        j.type='cash'
+                    group by j.id
+                )
+            group by st1.id,  p1.name, st1.name
+            having sum(c.pieces*c.number) != 0;
+        """)
+
+        for x in cr.fetchall():
+            cr.execute("update account_bank_statement set initial_migration_amount = %s where id = %s", (x[1], x[0]))
+
+        return True
+
+    # UF37.0
+    def us_13741_13952_13955_14253_update_prod_supinfo_prices(self, cr, uid, *a, **b):
+        '''
+        The field get_first_price from product.supplierinfo is now stored, so its data will be updated using the same
+        way as the get function
+        '''
+        start_time = time.time()
+        cr.execute("""
+            UPDATE product_supplierinfo si
+            SET get_first_price = (SELECT DISTINCT ON (pi.suppinfo_id) pi.price
+                FROM pricelist_partnerinfo pi WHERE pi.suppinfo_id=si.id ORDER BY pi.suppinfo_id,pi.min_quantity)
+        """)
+        end_time = timedelta(seconds=time.time() - start_time)
+        self.log_info(cr, uid, "US-13741-13952-13955-14253: %s prices of Products Suppliers have been updated in %s" % (cr.rowcount, end_time))
+        return True
+
+
+    def us_13346_13377_set_signee_users(self, cr, uid, *a, **b):
+        '''
+        If there is any user with signature enabled and only the Groups 'Sign_user' and 'Sync / User', make it Signee
+        '''
+        group_obj = self.pool.get('res.groups')
+        user_obj = self.pool.get('res.users')
+        sign_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sign_user')])
+        sync_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+        user_ids = user_obj.search(cr, uid, [('signature_enabled', '=', True)])
+        if sign_group_ids and sync_group_ids and user_ids:
+            action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu',
+                                                                            'signature_follow_up_to_be_signed_action')[1]
+            needed_groups_ids = {sign_group_ids[0], sync_group_ids[0]}
+            signee_user_ids = []
+            for user in user_obj.read(cr, uid, user_ids, ['groups_id']):
+                if user['groups_id'] and needed_groups_ids == set(user['groups_id']):
+                    signee_user_ids.append(user['id'])
+            user_obj.write(cr, uid, signee_user_ids, {'signee_user': True, 'action_id': action_id})
+
+        return True
+
+    def us_12270_13064_13353_sign_roles_and_int_sign(self, cr, uid, *a, **b):
+        '''
+        In the existing signature lines, change the "HQ" role into "HQ Responsible" for FO/PO, and change the
+        "Controller" and "Receiver" roles into "Controlled by" and "Received by"
+        Create the signature lines on existing INTs
+        '''
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'HQ Responsible' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model IN ('sale.order', 'purchase.order') AND sl.name = 'HQ'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'HQ Responsible'" % (cr.rowcount,))
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'Controlled by' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model = 'stock.picking' AND sl.name = 'Controller'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'Controlled by'" % (cr.rowcount,))
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'Received by' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model = 'stock.picking' AND sl.name = 'Receiver'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'Received by'" % (cr.rowcount,))
+
+        # To create signature lines on existing documents, the header signature was added with US-9406
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+        return True
+
+    def us_14124_delete_old_unused_ir_properties(self, cr, uid, *a, **b):
+        '''
+        The fields property_product_pricelist_purchase, property_product_pricelist, property_account_receivable and
+        property_account_payable were changed from fields.property into fields.many2one. The patch script will delete
+        any remnant of data linked to those 4 fields in the table ir_property
+        '''
+        cr.execute("""
+            DELETE FROM ir_property WHERE name IN ('property_product_pricelist_purchase',  'property_product_pricelist', 
+            'property_account_receivable', 'property_account_payable')
+        """)
+        self.log_info(cr, uid, "US-14124: %s ir_properties were deleted" % (cr.rowcount,))
+        return True
+
+    # UF37.0
+    def us_14040_14046_fix_duplicated_users_data(self, cr, uid, *a, **b):
+        '''
+        Set users_last_login.date to NULL on users whose user_last_login.date < res_users.create_date
+        Set res_users.last_password_change date to res_users.create_date on users whose
+        res_users.last_password_change < res_users.create_date or whose res_users.last_password_change < 16/06/2021
+        '''
+        cr.execute("""UPDATE users_last_login ll SET date = NULL FROM res_users u 
+            WHERE ll.user_id = u.id AND ll.date IS NOT NULL AND ll.date < u.create_date""")
+        cr.execute("""UPDATE res_users SET last_password_change = create_date WHERE last_password_change IS NOT NULL
+            AND (last_password_change < create_date OR last_password_change < '2021-06-16 18:00:00')""")
+
+        return True
 
     # UF36.0
     def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
@@ -2923,7 +3044,7 @@ class patch_scripts(osv.osv):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:
             return True
-        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
         self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': instance.level != 'project'}, context={})
         return True
 
@@ -7168,7 +7289,8 @@ class email_configuration(osv.osv):
         'smtp_server': fields.char('SMTP Server', size=512, required=True),
         'email_from': fields.char('Email From', size=512, required=True),
         'smtp_port': fields.integer('SMTP Port', required=True),
-        'smtp_ssl': fields.boolean('Use SSL'),
+        'smtp_ssl': fields.boolean('Use TLS/SSL'),
+        'smtp_ssl_ignore_cert': fields.boolean('Do not verify certificate'),
         'smtp_user': fields.char('SMTP User', size=512),
         'smtp_password': fields.char('SMTP Password', size=512),
         'destination_test': fields.char('Email Destination Test', size=512),
@@ -7180,6 +7302,10 @@ class email_configuration(osv.osv):
 
     def set_config(self, cr):
         data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password']
+
+        if cr.column_exists('email_configuration', 'smtp_ssl_ignore_cert'):
+            data.append('smtp_ssl_ignore_cert')
+
         cr.execute("""select %s from email_configuration
             limit 1""" % ','.join(data))  # not_a_user_entry
         res = cr.fetchone()
@@ -7203,8 +7329,17 @@ class email_configuration(osv.osv):
         res = cr.fetchone()
         if not res or not res[0]:
             raise osv.except_osv(_('Warning !'), _('No destination email given!'))
-        if not tools.email_send(False, [res[0]], 'Test email from UniField', 'This is a test.'):
-            raise osv.except_osv(_('Warning !'), _('Could not deliver email'))
+        try:
+            body = "This is a test.\n\n"
+            for x in ['smtp_server', 'smtp_port', 'smtp_ssl', 'smtp_ssl_ignore_cert']:
+                body += '%s : %s\n' % (x, tools.config.get(x))
+            if tools.config.get('smtp_user') and tools.config.get('smtp_password'):
+                body += 'Auth user: %s' % (tools.config.get('smtp_user'), )
+
+
+            tools.email_send(False, [res[0]], 'Test email from UniField', body, raise_error=True)
+        except Exception as e:
+            raise osv.except_osv(_('Warning !'), _('Could not deliver email: %s') % e)
         return True
 
     _constraints = [

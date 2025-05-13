@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <document filename="allocation_report.pdf">
-  <template pageSize="(842.0,595.0)" title="Test" author="Medecins Sans Frontieres" allowSplitting="20">
+  <template pageSize="(1000.0,707.0)" title="Test" author="Medecins Sans Frontieres" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="42.0" y1="57.0" width="750" height="530"/>
+      <frame id="first" x1="45.0" y1="57.0" width="908" height="642"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -139,7 +139,7 @@
     
     
     <!-- LINES LIST -->
-    <blockTable colWidths="31.0,113.0,49.0,30.0,41.0,31.0,49.0,49.0,87.0,65.0,65.0,49.0,53.0,49.0,59.0" style="ProductList">
+    <blockTable colWidths="31.0,118.0,75.0,30.0,81.0,31.0,120.0,49.0,87.0,65.0,65.0,59.0,53.0,49.0,65.0" style="ProductList">
         <tr>
             <td>
                 <para style="InformationHeader">O. l.</para>
@@ -195,7 +195,7 @@
    
    <section>
    [[ repeatIn(o.allocation_report_lines, 'line') ]]
-   <blockTable colWidths="31.0,113.0,49.0,30.0,41.0,31.0,49.0,49.0,87.0,65.0,65.0,49.0,53.0,49.0,59.0" style="ProductList">
+   <blockTable colWidths="31.0,118.0,75.0,30.0,81.0,31.0,120.0,49.0,87.0,65.0,65.0,59.0,53.0,49.0,65.0" style="ProductList">
         <tr>
             <td>
                 <para style="Information">[[ line.line_number ]]</para>
@@ -250,7 +250,7 @@
    </section>
 
    <!-- TOTAL -->
-   <blockTable colWidths="31.0,113.0,49.0,30.0,41.0,31.0,49.0,49.0,87.0,65.0,65.0,49.0,53.0,49.0,59.0" style="ProductList">
+   <blockTable colWidths="31.0,118.0,75.0,30.0,81.0,200.0,87.0,65.0,65.0,59.0,53.0,49.0,65.0" style="ProductList">
         <tr>
             <td>
                 <para style="Information"></para>
@@ -268,13 +268,7 @@
                 <para style="Information"></para>
             </td>
             <td>
-                <para style="Information"></para>
-            </td>
-            <td>
                 <para style="InformationHeader">[[ formatLang(get_total_amount(o)) or '0.0' ]]</para>
-            </td>
-            <td>
-                <para style="Information"></para>
             </td>
 
             <td>

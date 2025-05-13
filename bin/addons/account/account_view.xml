@@ -97,12 +97,12 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Period">
-                    <field name="name"/>
+                    <field name="name" readonly="1"/>
                     <field name="code"/>
                     <field name="date_start"/>
                     <field name="date_stop"/>
                     <field name="company_id" widget="selection" groups="base.group_multi_company"/>
-                    <field name="fiscalyear_id" widget="selection"/>
+                    <field name="fiscalyear_id" widget="selection" readonly="1"/>
                     <field name="special"/>
                     <separator colspan="4" string="States"/>
                     <field name="state"/>
@@ -271,7 +271,7 @@
                         <filter name="expense_account" string="Expense" domain="[('user_type.code','=', 'expense')]" icon="terp-stock_symbol-selection"/>
                         <filter name="income_account" string="Income" domain="[('user_type.code','=', 'income')]" icon="gtk-go-forward"/>
                         <filter name="asset_account" string="Assets" domain="[('user_type.code','=', 'asset')]" icon="terp-dolar"/>
-                        <filter name="prevent_hq_asset" string="Prevent assets on HQ entries" domain="[('prevent_hq_asset','=', True)]" icon="terp-dolar_ok!"/>
+                        <filter name="prevent_hq_asset" string="Prevent capitalization of entries" domain="[('prevent_hq_asset','=', True)]" icon="terp-dolar_ok!"/>
                         <separator orientation="vertical"/>
                         <newline/>
 
