@@ -102,6 +102,11 @@ class asset_parser(XlsxReportParser):
             asset_row = []
             asset = asset_obj.browse(self.cr, self.uid, asset_id, fields_to_fetch= asset_fields, context=context)
             sheet.row_dimensions[asset_count + 5].height = 45
+            booking_rate = False
+            if asset and asset.invo_currency and asset.invo_currency.id:
+                book_currency = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id,
+                                                                     fields_to_fetch=['rate'], context=context)
+                booking_rate = book_currency and book_currency.rate or False
             for field in row_headers:
                 if field == _('Asset code'):
                     cell_value = asset.name or ''
@@ -128,24 +133,17 @@ class asset_parser(XlsxReportParser):
                 if field == _('Booking Currency'):
                     cell_value = asset.invo_currency and asset.invo_currency.name or ''
                 if field == _('Initial Value Booking Curr.'):
-                    cell_value = asset.invo_value
+                    cell_value = asset.invo_value or ''
                     init_value += asset.invo_value or 0
                 if field == _('Accumulated Depr. Booking Curr.'):
-                    cell_value = asset.depreciation_amount
+                    cell_value = asset.depreciation_amount or ''
                     accumulated_depreciation += asset.depreciation_amount or 0
                 if field == _('Remaining net value Booking Currency'):
-                    cell_value = asset.disposal_amount
+                    cell_value = asset.disposal_amount or ''
                     remain_net_value_book += asset.disposal_amount or 0
                 if field == _('Remaining net value Func. Currency'):
-                    booking_rate = False
-                    if asset and asset.invo_currency and asset.invo_currency.id:
-                        book_currency = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id,
-                                                             fields_to_fetch=['rate'], context=context)
-                        booking_rate = book_currency and book_currency.rate or False
-                    if not booking_rate or booking_rate <= 0:
-                        raise except_osv(_('Error!'), _('No currency or currency rate found for the invoice of %s asset %s') % (asset.state, asset.name))
-                    func_amount = asset.disposal_amount / booking_rate
-                    cell_value = func_amount
+                    func_amount = booking_rate and booking_rate > 0 and asset.disposal_amount / booking_rate or False
+                    cell_value = func_amount or ''
                     remain_net_value_func += func_amount or 0
                 if field == _('Fixed Asset Status'):
                     cell_value = commons_obj.format_asset_state(asset.state, context=context) or ''

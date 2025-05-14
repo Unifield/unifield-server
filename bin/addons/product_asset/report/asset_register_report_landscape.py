@@ -24,13 +24,9 @@ class asset_register_report_landscape(report_sxw.rml_parse):
         if asset and asset.invo_currency and asset.invo_currency.id:
             book_currency = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id, fields_to_fetch=['rate'], context=self.context)
             booking_rate = book_currency and book_currency.rate or False
-        if not booking_rate or booking_rate <= 0:
-            raise except_osv(_('Error!'), _('No currency or currency rate found for the invoice of %s asset %s') % (asset.state, asset.name))
 
-        booking_rate = self.pool.get('res.currency').browse(self.cr, self.uid, asset.invo_currency.id,
-                                                            fields_to_fetch=['rate'], context=self.context).rate
         format_data = {
-            'asset_name': asset.name,
+            'asset_name': asset.name or '',
             'ji_entry_sequence': asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or '',
             'capitalization_period': asset.move_line_id and asset.move_line_id.period_id and asset.move_line_id.period_id.name or '',
             'product_code': asset.prod_int_code or '',
@@ -38,15 +34,15 @@ class asset_register_report_landscape(report_sxw.rml_parse):
             'serial_number': asset.serial_nb or '',
             'instance_creator': asset.instance_id and asset.instance_id.instance or '',
             'instance_use': asset.used_instance_id and asset.used_instance_id.instance or '',
-            'ad': commons_obj.get_asset_ad(asset),
+            'ad': commons_obj.get_asset_ad(asset) or '',
             'asset_type': asset.asset_type_id and asset.asset_type_id.name or '',
             'useful_life': asset.useful_life_id and asset.useful_life_id.year or '',
             'booking_currency': asset.invo_currency and asset.invo_currency.name or '',
-            'init_value': asset.invo_value,
-            'depreciation_amount': asset.depreciation_amount,
-            'book_remaining_value': asset.disposal_amount,
-            'func_remaining_value': asset.disposal_amount / booking_rate,
-            'state': commons_obj.format_asset_state(asset.state, context=self.context),
+            'init_value': asset.invo_value or 0,
+            'depreciation_amount': asset.depreciation_amount or 0,
+            'book_remaining_value': asset.disposal_amount or 0,
+            'func_remaining_value': booking_rate and booking_rate > 0 and asset.disposal_amount / booking_rate or 0,
+            'state': commons_obj.format_asset_state(asset.state, context=self.context) or '',
             'external_asset_id': asset.external_asset_id or '',
         }
         return format_data
