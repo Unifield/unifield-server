@@ -82,6 +82,7 @@
             <rng:optional><rng:attribute name="hide_edit_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_save_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_cancel_button"/></rng:optional>
+            <rng:optional><rng:attribute name="edit_level"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
             <rng:optional><rng:attribute name="force_string"/></rng:optional>
             <rng:ref name="container"/>
@@ -152,6 +153,7 @@
             <rng:optional><rng:attribute name="hide_new_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_delete_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_edit_button"/></rng:optional>
+            <rng:optional><rng:attribute name="edit_level"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
             <rng:optional><rng:attribute name="button_attrs"/></rng:optional>
             <rng:zeroOrMore>
