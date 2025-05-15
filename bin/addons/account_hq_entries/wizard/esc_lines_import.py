@@ -210,7 +210,7 @@ class esc_line_import_wizard(osv.osv):
                     continue
 
                 po_ref = row.cells[0].data.strip()
-                if not re.match('^[0-9]{2}/[^/]+/\w+/PO\d+$', po_ref):
+                if not re.match(r'^[0-9]{2}/[^/]+/\w+/PO\d+$', po_ref):
                     manage_error(line, _('Order ref %s does not match the PO pattern') % po_ref, row)
                     continue
 

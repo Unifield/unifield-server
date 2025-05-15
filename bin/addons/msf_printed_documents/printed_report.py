@@ -93,7 +93,7 @@ class ir_actions_report_xml(osv.osv):
 
         if not report.target_filename:
             if active_model and active_id:
-                report_letters = ''.join(item[0].upper() for item in re.findall("\w+", report.name))
+                report_letters = ''.join(item[0].upper() for item in re.findall(r"\w+", report.name))
                 try:
                     return '%s_%s' % (report_letters, self.pool.get(active_model).read(cr, uid, active_id, ['name'])['name'])
                 except KeyError:
@@ -104,7 +104,7 @@ class ir_actions_report_xml(osv.osv):
         error = ''
         if report.target_filename:
             report_name = self.pool.get('ir.sequence')._process(cr, uid, report.target_filename)
-            values_to_compute = re.findall('\${((?:[\'"\w]+.?)*)}', report_name)
+            values_to_compute = re.findall(r'\${((?:[\'"\w]+.?)*)}', report_name)
             vals_dict = {}
             # No possibility to compute the file name
             if values_to_compute and not active_model or not active_id:
@@ -217,7 +217,7 @@ class ir_actions_report_xml(osv.osv):
                 break
 
             # Check if the fields in ${} are valid
-            fields_name = re.findall('\${((?:[\'"\w+].?)*)}', report_name)
+            fields_name = re.findall(r'\${((?:[\'"\w+].?)*)}', report_name)
             for field_name in fields_name:
                 # Use a function to compute the name
                 if field_name.startswith('_'+'('): # disable translation export

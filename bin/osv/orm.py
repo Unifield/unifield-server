@@ -63,7 +63,7 @@ from . import xmlid_no_delete
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES, cache
 from functools import reduce
-regex_order = re.compile('^(([a-z0-9_\.]+|"[a-z0-9_\.]+")( *desc| *asc)?( *, *|))+$', re.I)
+regex_order = re.compile(r'^(([a-z0-9_\.]+|"[a-z0-9_\.]+")( *desc| *asc)?( *, *|))+$', re.I)
 
 POSTGRES_CONFDELTYPES = {
     'RESTRICT': 'r',
@@ -3997,7 +3997,7 @@ class orm(orm_template):
         """
         Returns some metadata about the given records.
 
-        :param details: if True, \*_uid fields are replaced with the name of the user
+        :param details: if True, *_uid fields are replaced with the name of the user
         :return: list of ownership dictionaries for each requested record
         :rtype: list of dictionaries with the following keys:
 
