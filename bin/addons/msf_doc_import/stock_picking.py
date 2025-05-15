@@ -296,7 +296,17 @@ class stock_picking(osv.osv):
 
         return self.get_processed_rejected_header(cr, uid, filetype, file_content, import_success, context=context)
 
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
 
+        pick = self.read(cr, uid, ids[0], ['name'], context=context)
+
+        return "%s_%s" % (pick['name'].replace('/', '_'), time.strftime('%Y%m%d_%H_%M'))
 
     def export_template_file(self, cr, uid, ids, context=None):
         '''
@@ -373,7 +383,7 @@ class stock_picking(osv.osv):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'pre.packing.excel.export',
-            'datas': {'ids': ids},
+            'datas': {'ids': ids, 'target_filename': self._get_report_name(cr, uid, ids, context=context)},
             'context': context,
         }
 
