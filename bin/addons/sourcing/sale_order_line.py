@@ -1009,7 +1009,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             return True
         # Objects
         product_obj = self.pool.get('product.product')
-        data_obj = self.pool.get('ir.model.data')
 
         if not context:
             context = {}
@@ -1084,9 +1083,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # Define Stock as location_id for each line without location_id
             for line in self.read(cr, uid, ids, ['location_id'], context=context):
                 line_vals = vals.copy()
-                if not line['location_id'] and not vals.get('location_id', False):
-                    stock_loc = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-                    line_vals['location_id'] = stock_loc
                 result = super(sale_order_line, self).write(cr, uid, [line['id']], line_vals, context)
         else:
             result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
