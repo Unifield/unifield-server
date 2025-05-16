@@ -61,13 +61,13 @@ class patch_scripts(osv.osv):
     # UF37.0
     def us_14373_empty_fo_ir_location_id(self, cr, uid, *a, **b):
         '''
-        Remove the location_id from Draft and Validated FO/IR lines with the Procurement Method From Stock
+        Remove the location_id from Draft FO/IR lines with the Procurement Method From Stock
         '''
         cr.execute("""
             UPDATE sale_order_line SET location_id = NULL 
-            WHERE type = 'make_to_stock' AND state IN ('draft', 'validated') AND location_id IS NOT NULL
+            WHERE type = 'make_to_stock' AND state = 'draft' AND location_id IS NOT NULL
         """)
-        self.log_info(cr, uid, "US-14373: The Location was removed from %s Draft/Validated FO and/or IR lines From Stock" % (cr.rowcount))
+        self.log_info(cr, uid, "US-14373: The Location was removed from %s Draft FO and/or IR lines From Stock" % (cr.rowcount))
 
         return True
 
