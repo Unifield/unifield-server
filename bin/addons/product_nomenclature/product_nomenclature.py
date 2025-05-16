@@ -1014,7 +1014,7 @@ class product_product(osv.osv):
                 nomenObj.read(cr, uid, nomen_manda_3, ['status'], context=context)['status'] != 'valid':
             return {
                 'value': {'nomen_manda_3': False},
-                'warning': {'title': _('Warning'), 'message': _('You can not create a product with an archived Root Nomenclature')}
+                'warning': {'title': _('Warning'), 'message': _('You can not create a product with an archived Root Nomenclature.')}
             }
 
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
