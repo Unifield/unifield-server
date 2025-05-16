@@ -59,6 +59,18 @@ class patch_scripts(osv.osv):
     }
 
     # UF37.0
+    def us_14373_empty_fo_ir_location_id(self, cr, uid, *a, **b):
+        '''
+        Remove the location_id from Draft FO/IR lines with the Procurement Method From Stock
+        '''
+        cr.execute("""
+            UPDATE sale_order_line SET location_id = NULL 
+            WHERE type = 'make_to_stock' AND state = 'draft' AND location_id IS NOT NULL
+        """)
+        self.log_info(cr, uid, "US-14373: The Location was removed from %s Draft FO and/or IR lines From Stock" % (cr.rowcount))
+
+        return True
+
     def us_14341_hide_prod_status_inconsistencies(self, cr, uid, *a, **b):
         '''
         Hide the Product Status Inconsistencies menu if it's still active at project
