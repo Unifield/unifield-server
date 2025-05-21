@@ -24,6 +24,8 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+import decimal_precision as dp
+
 
 class hq_entries_split_lines(osv.osv_memory):
     _name = 'hq.entries.split.lines'
@@ -55,7 +57,7 @@ class hq_entries_split_lines(osv.osv_memory):
         'account_id': fields.many2one("account.account", "Account", domain=[('type', '!=', 'view')], required=True),
         'account_hq_correctible': fields.boolean("Is HQ correctible?"),
         'is_not_ad_correctable': fields.boolean("Prevent correction on analytic accounts"),
-        'amount': fields.float('Amount', required=True),
+        'amount': fields.float('Amount', required=True, digits_compute=dp.get_precision('Account')),
         'destination_id': fields.many2one('account.analytic.account', "Destination", domain=[('category', '=', 'DEST'), ('type', '!=', 'view')], required=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", domain=[('category', '=', 'OC'), ('type', '!=', 'view')], required=True),
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain=[('category', '=', 'FUNDING'), ('type', '!=', 'view')], required=True),
@@ -100,7 +102,7 @@ class hq_entries_split_lines(osv.osv_memory):
             res = original_line.amount
             line_ids = self.search(cr, uid, [('wizard_id', '=', context.get('parent_id', False))])
             for line in self.browse(cr, uid, line_ids) or []:
-                res -= line.amount
+                res -= round(line.amount, 2)
         # Do not allow negative amounts if the original amount is positive and vice versa
         if (original_line.amount >= 0 and res < 0.0) or (original_line.amount < 0 and res > 0.0):
             res = 0.0
@@ -197,7 +199,7 @@ class hq_entries_split_lines(osv.osv_memory):
                     # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
                     self.unlink(cr, uid, [res], context=context)
                     raise osv.except_osv(_('Error'), _('Null amount is not allowed!'))
-                expected_max_amount -= line.amount
+                expected_max_amount -= round(line.amount, 2)
             expected_max_amount += line.amount
             # Case where amount is superior to expected
             if abs(line.amount) > abs(expected_max_amount):
@@ -278,6 +280,8 @@ class hq_entries_split(osv.osv_memory):
         Validate wizard lines and create new split HQ lines.
         Do not allow line that have a null amount!
         """
+
+
         # Some checks
         if not context:
             context = {}
@@ -322,7 +326,7 @@ class hq_entries_split(osv.osv_memory):
                     'ref': line.ref,
                     'document_date': wiz.original_id.document_date,
                     'currency_id': wiz.original_id.currency_id and wiz.original_id.currency_id.id or False,
-                    'amount': line.amount,
+                    'amount': round(line.amount, 2), # round 2 digits
                     'account_id_first_value': line.account_id.id,
                     'cost_center_id_first_value': line.cost_center_id.id,
                     'analytic_id_first_value': line.analytic_id.id,
