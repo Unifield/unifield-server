@@ -88,6 +88,7 @@
                         <field name="signature_from" readonly="1"/>
                         <field name="signature_to" readonly="1" />
                         <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
+                        <field name="current_imported_signature" widget="image" height="100" nolabel="1" colspan="4"/>
                         <field name="new_signature_required" invisible="1" />
                         <field name="has_valid_signature" invisible="1" />
                         <button type="object" string="Replace Signature" name="replace_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
@@ -101,6 +102,7 @@
                                 <field name="create_date" />
                                 <field name="inactivation_date" />
                                 <field name="image" widget="image" height="50"/>
+                                <field name="imported_image_data" widget="image" height="50"/>
                             </tree>
                         </field>
                     </group>

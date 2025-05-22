@@ -692,6 +692,8 @@ class signature_line(osv.osv):
         'image_id': fields.many2one('signature.image', 'Image'),
         'image': fields.related('image_id', 'pngb64', type='text', string='Signature', readonly=1),
         'data_image': fields.related('image_id', 'image', type='text', string='Signature', readonly=1),
+        'imported_image': fields.related('image_id', 'imported_image', type='text', string='Signature', readonly=1),
+        'data_imported_image': fields.related('image_id', 'imported_image_data', type='binary', string='Signature', readonly=1),
         'date': fields.datetime('Date'),
         'doc_state': fields.char('Doc State at signature date', size=64, readonly=1),
         'value': fields.float_null('Value', digits=(16,2)),
@@ -762,6 +764,7 @@ class signature_line(osv.osv):
         doc = self.pool.get(line.signature_id.signature_res_model).browse(cr, uid, line.signature_id.signature_res_id, context=context)
 
         image = esignature.pngb64
+        imported_image = esignature.imported_image
 
         unit = saved_unit[line.signature_id.signature_res_model](doc)
         value = saved_value[line.signature_id.signature_res_model](doc)
@@ -780,6 +783,7 @@ class signature_line(osv.osv):
             'line_id': line.id,
             'doc_state': doc_state,
             'image': image,
+            'imported_image': imported_image,
             'backup': line.backup,
         }, context=context)
 
@@ -875,6 +879,15 @@ class signature_image(osv.osv):
                 res[u.id] = False
         return res
 
+    def _get_imported_image_data(self, cr, uid, ids, name=None, arg=None, context=None):
+        res = {}
+        for u in self.browse(cr, uid, ids, fields_to_fetch=['imported_image'], context=context):
+            if u.imported_image:
+                res[u.id] = 'data:image/png;base64,%s' % (u.imported_image.decode('utf-8'),)
+            else:
+                res[u.id] = False
+        return res
+
     def name_get(self, cr, uid, ids, context=None):
         ret = []
         for img in self.browse(cr, uid, ids, fields_to_fetch=['user_name'], context=context):
@@ -901,6 +914,8 @@ class signature_image(osv.osv):
         'user_name': fields.char('User name', size=64),
         'image': fields.text('Signature'),
         'pngb64': fields.function(_get_image, method=1, type='text', string='Image'),
+        'imported_image': fields.binary('Signature'),
+        'imported_image_data': fields.function(_get_imported_image_data, method=1, type='text', string='Signature'),
         'from_date': fields.date('Start Date', readonly=True),
         'to_date': fields.date('End Date', readonly=True),
         'create_date': fields.datetime('Creation Date', readonly=True),
@@ -921,6 +936,7 @@ class signature_document_wizard(osv.osv_memory):
         'role': fields.char('Role/Function', size=256, readonly=1),
         'line_id': fields.many2one('signature.line', 'Line', readonly=1),
         'image': fields.text('Signature', readonly=1),
+        'imported_image': fields.binary('Signature', readonly=1),
         'value': fields.float('Value', digits=(16, 2)),
         'unit': fields.char('Unit', size=16),
         'doc_state': fields.char('Doc state', size=64),
@@ -1152,6 +1168,7 @@ class signature_set_user(osv.osv_memory):
         'b64_image': fields.function(_get_b64, method=1, type='text', string='New Signature'),
         'new_signature': fields.text("Draw your signature"),
         'json_signature': fields.text('Json Signature'),
+        'new_signature_import': fields.binary('Import your signature'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
         'user_name': fields.related('user_id', 'name', type='char', string='User', readonly=1),
         'preview': fields.boolean('Preview'),
@@ -1241,6 +1258,7 @@ class signature_set_user(osv.osv_memory):
             new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,
                 'image': wiz.new_signature,
+                'imported_image': wiz.new_signature_import,
                 'legal_name': wiz.legal_name,
                 'user_name': wiz.user_id.name,
                 'from_date': wiz.user_id.signature_from,

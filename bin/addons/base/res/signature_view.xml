@@ -51,6 +51,7 @@
                     <newline />
                     <field name="legal_name" />
                     <field name="new_signature" widget="signature" colspan="4"/>
+                    <field name="new_signature_import" colspan="4"/>
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
                       <button string="Preview" icon="terp-check" name="preview" type="object" />
@@ -69,6 +70,7 @@
                     <field name="user_name"/>
                     <newline />
                     <field name="b64_image" widget="image" colspan="4" readonly="1"/>
+                    <field name="new_signature_import" widget="image" colspan="4" readonly="1"/>
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
                       <button string="Go back" icon="terp-gtk-go-back-ltr" name="previous" type="object" />
@@ -90,6 +92,8 @@
                     <field name="user_name" colspan="4" />
                     <newline />
                     <field name="image" widget="image" />
+                    <newline />
+                    <field name="imported_image" widget="image" />
                     <newline />
                     <group colspan="4">
                       <button string="Cancel" special="cancel" icon="gtk-cancel" />

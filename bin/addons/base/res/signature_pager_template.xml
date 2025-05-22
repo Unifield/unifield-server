@@ -50,6 +50,7 @@
                 <field name="user_id" invisible="1" />
                 <field name="user_name" string="Signee User" />
                 <field name="data_image" widget="image" height="50" />
+                <field name="data_imported_image" widget="image" height="50" />
                 <field name="date" />
                 <field name="format_value" />
                 <field name="ready_to_sign" invisible="True" />
