@@ -350,8 +350,7 @@ account_balances_per_currency_with_euro_sql = """
     ) AS req
     INNER JOIN account_account acc ON req.account_id = acc.id
     INNER JOIN res_currency c ON req.currency_id = c.id
-    INNER JOIN msf_instance i ON req.instance_id = i.id
-    WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
+    INNER JOIN msf_instance i ON req.instance_id = i.id;
     """
 
 
