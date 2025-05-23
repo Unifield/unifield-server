@@ -11,6 +11,9 @@ import pooler
 from tempfile import NamedTemporaryFile
 from base64 import b64decode
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from openpyxl import load_workbook
+from io import BytesIO
+import re
 
 
 #----------------------------------------------------------
@@ -2009,6 +2012,265 @@ class product_asset_import_entries_errors(osv.osv_memory):
 
 product_asset_import_entries_errors()
 
+
+class import_asset_reference(osv.osv_memory):
+    _name = 'import.asset.reference'
+    _description = 'Import Asset Reference'
+
+    def file_change(self, cr, uid, obj_id, file):
+        """
+            Display the import button only if a file is selected
+        """
+        result = {'value': {'display_import_buttons': False}}
+        if file:
+            result['value']['display_import_buttons'] = True
+        return result
+
+    def button_import(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        updated = 0
+        errors = []
+        current_line_num = None
+        asset_obj = self.pool.get('product.asset')
+        try:
+            # Update wizard
+            self.write(cr, uid, ids, {'message': _('Cleaning up old imports...'), 'progression': 1.00})
+            old_imports_ids = self.pool.get('import.asset.reference.lines').search(cr, uid, [], context=context)
+            if old_imports_ids:
+                self.pool.get('import.asset.reference.lines').unlink(cr, uid, old_imports_ids, context=context)
+
+            for wiz in self.browse(cr, uid, ids):
+                # Check that a file was given
+                if not wiz.file:
+                    raise osv.except_osv(_('Error'), _('Nothing to import.'))
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Reading file...'), 'progression': 2.00})
+                wb = load_workbook(filename=BytesIO(b64decode(wiz.file)), read_only=True)
+                sheet = wb.active
+
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Processing lines...'), 'progression': 4.00})
+                rows = tuple(sheet.rows)
+                nb_rows = len(rows)
+
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Reading headers...'), 'progression': 5.00})
+                # Use the first row to find which column to use
+                cols = {}
+                col_names = ['Asset Code', 'Instance Creator', 'Instance of Use', 'Journal Item', 'Asset Type',
+                             'Product', 'External Asset ID', 'Serial Number', 'Brand', 'Type', 'Model', 'Year']
+                for num, r in enumerate(rows):
+                    line_error = False
+                    updated = 0
+                    if num == 0:
+                        header = [x.value for x in r]
+                        for el in col_names:
+                            if el in header:
+                                cols[el] = header.index(el)
+                            else:
+                                raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el or '',))
+                        continue
+                    else:
+                        # Number of line to bypass in line's count
+                        base_num = 1
+
+                        # Update wizard
+                        self.write(cr, uid, [wiz.id], {'message': _('Reading lines...'), 'progression': 6.00})
+                        # Check file's content
+                        progression = ((float(num + 1) * 94) / float(nb_rows)) + 6
+                        self.write(cr, uid, [wiz.id], {'message': _('Checking file...'), 'progression': progression})
+
+                        current_line_num = num + base_num
+
+                        # Check Asset Code
+                        if not r[cols['Asset Code']].value:
+                            errors.append(
+                                _('Line %s: No Asset Code specified! Update can not be done!') % (current_line_num, ))
+                            line_error = True
+                            continue
+                        else:
+                            asset_id = asset_obj.search(cr, uid, [('name', '=', r[cols['Asset Code']].value)], context=context)
+                            if not asset_id:
+                                errors.append(_('Line %s: No Asset with the code %s found in Unifield!') %
+                                              (current_line_num, r[cols['Asset Code']].value or ''))
+                                line_error = True
+                            else:
+                                # Check if all the fields provided in the line of the import file
+                                # match with the fields of the asset to update
+                                asset = asset_obj.browse(cr, uid, asset_id[0],
+                                                         fields_to_fetch=['external_asset_id', 'instance_id', 'used_instance_id', 'move_line_id',
+                                                                          'asset_type_id', 'product_id'], context=context)
+                                external_asset_id = asset.external_asset_id or ''
+                                if external_asset_id != (r[cols['External Asset ID']].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as External Asset ID in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols['Asset Code']].value or '', external_asset_id,
+                                                   r[cols['External Asset ID']].value or ''))
+                                    line_error = True
+                                asset_instance_creator = asset.instance_id and asset.instance_id.code or ''
+                                if asset.instance_id.code != (r[cols['Instance Creator']].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Instance  Creator in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_instance_creator,
+                                                   r[cols['Instance Creator']].value or ''))
+                                    line_error = True
+                                asset_instance_of_use = asset.used_instance_id and asset.used_instance_id.code or ''
+                                if asset.used_instance_id.code != (r[cols['Instance of Use']].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Instance  of Use in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_instance_of_use,
+                                                   r[cols['Instance of Use']].value or ''))
+                                    line_error = True
+                                asset_ji = asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or ''
+                                if asset_ji != (r[cols['Journal Item']].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Journal Item in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_ji,
+                                                   r[cols['Journal Item']].value or ''))
+                                    line_error = True
+                                asset_type = asset.asset_type_id and asset.asset_type_id.name or ''
+                                if asset_type != (r[cols['Asset Type']].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Asset Type in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_type,
+                                                   r[cols['Asset Type']].value or ''))
+                                    line_error = True
+                                asset_product_name = asset.product_id and asset.product_id.name and asset.product_id.code and\
+                                                     '[%s] %s' % (asset.product_id.code, asset.product_id.name) or ''
+                                if asset_product_name != (r[cols['Product']].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Product in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_product_name,
+                                                   r[cols['Product']].value or ''))
+                                    line_error = True
+                                # Check year format
+                                if not re.match(r'^(19|20)\d{2}$', str(r[cols['Year']].value or '')):
+                                    errors.append(_('Line %s: The year of Asset %s must be a number between 1900 and 2099.') % (current_line_num, r[cols['Asset Code']].value or ''))
+                                    line_error = True
+
+                                vals = {
+                                    'serial_nb': r[cols['Serial Number']].value or '',
+                                    'brand': r[cols['Brand']].value or '',
+                                    'type': r[cols['Type']].value or '',
+                                    'model': r[cols['Model']].value or '',
+                                    'year': r[cols['Year']].value or '',
+                                    'wizard_id': wiz.id,
+                                    'asset_id': asset.id,
+                                }
+                    if not line_error:
+                        line_res = self.pool.get('import.asset.reference.lines').create(cr, uid, vals, context=context)
+                        if not line_res:
+                            errors.append(_('Line %s: A problem occurred for line registration. Please contact an Administrator.') % (current_line_num,))
+                            continue
+            # Update wizard
+            self.write(cr, uid, ids,
+                       {'message': _('Check complete. Reading potential errors or write needed changes.'),
+                        'progression': 100.0})
+            wiz_state = 'done'
+            # If errors, cancel probable modifications
+            if errors:
+                cr.rollback()
+                updated = 0
+                message = _('Import FAILED.')
+                # Delete old errors
+                error_ids = self.pool.get('import.asset.reference.errors').search(cr, uid, [], context=context)
+                if error_ids:
+                    self.pool.get('import.asset.reference.errors').unlink(cr, uid, error_ids, context=context)
+                # create error lines
+                for e in errors:
+                    self.pool.get('import.asset.reference.errors').create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context=context)
+                wiz_state = 'error'
+            else:
+                # Update wizard
+                self.write(cr, uid, ids, {'message': _('Writing changes...'), 'progression': 0.0})
+                # Update all asset entries
+                import_lines_ids = self.pool.get('import.asset.reference.lines').search(cr, uid, [('wizard_id', '=', wiz.id)], context=context)
+                import_lines = self.pool.get('import.asset.reference.lines').browse(cr, uid, import_lines_ids, context=context)
+                context.update({'from_import': True})
+                try:
+                    for asset in import_lines:
+                        asset_vals = {
+                            'serial_nb': asset.serial_nb,
+                            'brand': asset.brand,
+                            'type': asset.type,
+                            'model': asset.model,
+                            'year': asset.year,
+                        }
+                        self.pool.get('product.asset').write(cr, uid, asset.asset_id.id, asset_vals, context=context)
+                        updated += 1
+                    message = _('Import successful. %s assets updated.') % (updated,)
+                except osv.except_osv as osv_error:
+                    cr.rollback()
+                    self.write(cr, uid, ids,
+                               {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,),
+                                'state': 'done', 'progression': 100.0})
+                    cr.close(True)
+
+            # Update wizard
+            self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
+
+        except osv.except_osv as osv_error:
+            cr.rollback()
+            self.write(cr, uid, ids, {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
+        except Exception as e:
+            cr.rollback()
+            if current_line_num is not None:
+                message = _("An error occurred on line %s: %s") % (current_line_num, e.args and e.args[0] or '')
+            else:
+                message = _("An error occurred: %s") % (e.args and e.args[0] or '',)
+            self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
+        return True
+
+    _columns = {
+        'assets_ids': fields.many2many('product.asset','import_asset_reference_product_asset_rel',
+                                          'asset_id', 'wizard_id', string="Assets to update"),
+        'file': fields.binary(string="File", filters='*.xlsx', required=True),
+        'filename': fields.char(string="Imported filename", size=256),
+        'progression': fields.float(string="Progression", readonly=True),
+        'message': fields.char(string="Message", size=256, readonly=True),
+        'display_import_buttons': fields.boolean('Display import buttons'),
+        'state': fields.selection(
+            [('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('done', 'Done')],
+            string="State", readonly=True, required=True),
+        'error_ids': fields.one2many('import.asset.reference.errors', 'wizard_id', "Errors", readonly=True),
+    }
+
+    _defaults = {
+        'display_import_buttons': lambda *a: False,
+        'progression': lambda *a: 0.0,
+        'state': lambda *a: 'draft',
+        'message': lambda *a: _('Initialization...'),
+    }
+
+import_asset_reference()
+
+class import_asset_reference_lines(osv.osv):
+    _name = 'import.asset.reference.lines'
+
+    _columns = {
+        'asset_id': fields.many2one('product.asset', string='Asset'),
+        'serial_nb': fields.char('Serial Number', size=128),
+        'brand': fields.char('Brand', size=128),
+        'type': fields.char('Type', size=128),
+        'model': fields.char('Model', size=128),
+        'year': fields.char('Year', size=4),
+        'wizard_id': fields.integer("Wizard", required=True),
+    }
+
+import_asset_reference_lines()
+
+
+class import_asset_reference_errors(osv.osv_memory):
+    _name = 'import.asset.reference.errors'
+    _description = 'Assets Reference Update - Error List'
+
+    _columns = {
+        'name': fields.text("Description", readonly=True, required=True),
+        'wizard_id': fields.many2one('import.asset.reference', "Wizard", required=True, readonly=True),
+    }
+
+import_asset_reference_errors()
 
 #----------------------------------------------------------
 # Products

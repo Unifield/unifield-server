@@ -697,6 +697,41 @@ action = self.open_asset_account_move(cr, uid, ids, context=context)
 
     <menuitem sequence="300" action="action_product_asset_import_entries" id="menu_product_asset_import_entries" parent="product_asset.menu_asset_sales" />
 
+    <record model="ir.ui.view" id="wizard_import_asset_reference">
+        <field name="name">wizard.import.asset.reference</field>
+        <field name="model">import.asset.reference</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Import Asset Reference - Wizard">
+                <separator string="This will import Entries from an xlsx file." colspan="4"/>
+                <field name="display_import_buttons" invisible="1" />
+                <group colspan="2" col="2" name="file_import">
+                    <separator string="File Import" colspan="2"/>
+                    <field name="file" filename="filename" colspan="4" on_change="file_change(file)"/>
+                    <field name="filename" invisible="1"/>
+                    <button name="button_import" string="Run import" type="object" icon="gtk-execute" colspan="4"
+                            attrs="{'invisible': ['|', ('display_import_buttons', '=', False), ('state', '!=', 'draft')]}"/>
+                </group>
+                <newline/>
+                <field name="state" invisible="1" />
+                <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
+                <newline/>
+                <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4"/>
+                <newline/>
+                <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}" colspan="4"/>
+                <newline />
+            </form>
+        </field>
+    </record>
+
+    <act_window id="action_import_asset_ref"
+                name="Import Asset Reference"
+                res_model="import.asset.reference"
+                src_model="product.asset"
+                key2="client_action_multi"
+                view_mode="form"
+                view_type="form"
+                target="new" />
 
 
 </data>
