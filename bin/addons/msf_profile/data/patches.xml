@@ -1208,5 +1208,13 @@
         <record id="us_14341_hide_prod_status_inconsistencies" model="patch.scripts">
             <field name="method">us_14341_hide_prod_status_inconsistencies</field>
         </record>
+
+        <record id="us_14373_empty_fo_ir_location_id" model="patch.scripts">
+            <field name="method">us_14373_empty_fo_ir_location_id</field>
+        </record>
+
+        <record id="us_14379_period_states_closed_by_sync" model="patch.scripts">
+            <field name="method">update_us_435_2</field>
+        </record>
     </data>
 </openerp>
