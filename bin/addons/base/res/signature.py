@@ -1168,7 +1168,7 @@ class signature_set_user(osv.osv_memory):
         'b64_image': fields.function(_get_b64, method=1, type='text', string='New Signature'),
         'new_signature': fields.text("Draw your signature"),
         'json_signature': fields.text('Json Signature'),
-        'new_signature_import': fields.binary('Import your signature'),
+        'new_signature_import': fields.binary('Import your signature', filters='*.png, *.jpg, *.jpeg'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
         'user_name': fields.related('user_id', 'name', type='char', string='User', readonly=1),
         'preview': fields.boolean('Preview'),
@@ -1230,7 +1230,6 @@ class signature_set_user(osv.osv_memory):
         new_img.save(txt_img, 'PNG')
         wiz.write({'new_signature': 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')}, context=context)
 
-
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_set_user_form_preview')
         return {
             'type': 'ir.actions.act_window',
@@ -1251,14 +1250,14 @@ class signature_set_user(osv.osv_memory):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        if wiz.new_signature:
+        if wiz.new_signature or wiz.new_signature_import:
             if wiz.user_id.esignature_id:
                 self.pool.get('res.users')._archive_signature(cr, root_uid, [real_uid], context=context)
 
             new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,
-                'image': wiz.new_signature,
-                'imported_image': wiz.new_signature_import,
+                'image': wiz.new_signature or '',
+                'imported_image': wiz.new_signature_import or False,
                 'legal_name': wiz.legal_name,
                 'user_name': wiz.user_id.name,
                 'from_date': wiz.user_id.signature_from,
