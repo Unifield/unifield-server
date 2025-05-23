@@ -733,6 +733,14 @@ action = self.open_asset_account_move(cr, uid, ids, context=context)
                 view_type="form"
                 target="new" />
 
+    <report id="asset_reference_import_template_xlsx"
+                string="Generate Asset Reference xlsx Import Template"
+                model="product.asset"
+                name="asset.reference.import.template.xlsx"
+                report_type="openpyxl"
+                target_filename="${_('Asset_Reference_Import_Template')}"
+                auto="False"
+                menu="True" />
 
 </data>
 </openerp>

@@ -186,3 +186,79 @@ class asset_parser(XlsxReportParser):
         return True
 
 XlsxReport('report.asset.register.report.xlsx', parser=asset_parser, template='addons/product_asset/report/Fixed_assets_register_mockup.xlsx')
+
+
+
+class asset_ref_parser(XlsxReportParser):
+
+    def generate(self, context=None):
+        asset_obj = self.pool.get('product.asset')
+
+        sheet = self.workbook.active
+
+        locked_header_style = self.create_style_from_template('locked_header_style', 'A1')
+        unlocked_header_style = self.create_style_from_template('unlocked_header_style', 'I1')
+        locked_cell_style = self.create_style_from_template('locked_cell_style', 'B2')
+        unlocked_cell_style = self.create_style_from_template('unlocked_cell_style', 'I2')
+
+        self.duplicate_row_dimensions(range(1, 6))
+        self.duplicate_column_dimensions(default_width=15)
+
+        sheet.title = _('Assets')
+
+        row_headers = [_('Asset Code'), _('Instance Creator'), _('Instance of Use'), _('Journal Item'),
+                       _('Asset Type'), _('Product'), _('External Asset ID'), _('Serial Number'),
+                       _('Brand'), _('Type'), _('Model'), _('Year')]
+        header_row = []
+        for header in row_headers:
+            cell_t = WriteOnlyCell(sheet, value=header)
+            if header in [_('Serial Number'), _('Brand'), _('Type'), _('Model'), _('Year')]:
+                cell_t.style = unlocked_header_style
+            else:
+                cell_t.style = locked_header_style
+            header_row.append(cell_t)
+        sheet.append(header_row)
+
+        for asset_id in self.ids:
+            asset_row = []
+            asset = asset_obj.browse(self.cr, self.uid, asset_id,
+                             fields_to_fetch=['name', 'instance_id', 'used_instance_id', 'move_line_id',
+                                              'asset_type_id', 'product_id', 'external_asset_id'], context=context)
+            for field in row_headers:
+                if field == _('Asset Code'):
+                    cell_value = asset.name or ''
+                elif field == _('Instance Creator'):
+                    cell_value = asset.instance_id and asset.instance_id.instance or ''
+                elif field == _('Instance of Use'):
+                    cell_value = asset.used_instance_id and asset.used_instance_id.instance or ''
+                elif field == _('Journal Item'):
+                    cell_value = asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or ''
+                elif field == _('Asset Type'):
+                    cell_value = asset.asset_type_id and asset.asset_type_id.name or ''
+                elif field == _('Product'):
+                    asset_product_name = asset.product_id and asset.product_id.name and asset.product_id.code and \
+                                         '[%s] %s' % (asset.product_id.code, asset.product_id.name) or ''
+                    cell_value = asset_product_name
+                elif field == _('External Asset ID'):
+                    cell_value = asset.external_asset_id or ''
+                elif field == _('Serial Number'):
+                    cell_value = asset.serial_nb or ''
+                elif field == _('Brand'):
+                    cell_value = asset.brand or ''
+                elif field == _('Type'):
+                    cell_value = asset.type or ''
+                elif field == _('Model'):
+                    cell_value = asset.model or ''
+                elif field == _('Year'):
+                    cell_value = asset.year or ''
+
+                cell = WriteOnlyCell(sheet, value=cell_value)
+                if field in [_('Serial Number'), _('Brand'), _('Type'), _('Model'), _('Year')]:
+                    cell_t.style = unlocked_cell_style
+                else:
+                    cell_t.style = locked_cell_style
+                asset_row.append(cell)
+            sheet.append(asset_row)
+        return True
+
+XlsxReport('report.asset.reference.import.template.xlsx', parser=asset_ref_parser, template='addons/product_asset/report/Asset_Reference_Template.xlsx')
