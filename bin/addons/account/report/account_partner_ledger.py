@@ -176,7 +176,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if (amount == '0'):
             return ' '
         orig = amount
-        new = re.sub("^(-?\d+)(\d{3})", "\g<1>'\g<2>", amount)
+        new = re.sub(r"^(-?\d+)(\d{3})", r"\g<1>'\g<2>", amount)
         if orig == new:
             return new
         else:

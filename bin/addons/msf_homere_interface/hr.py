@@ -155,6 +155,7 @@ class hr_employee(osv.osv):
         'expat_creation_date': fields.date('Creation Date', readonly=1),
         'former_identification_id': fields.char('Former ID', size=32, readonly=1, help='Used for the OCP migration', select=1),
         'workday_identification_id': fields.char('Workday ID', size=32, readonly=1, help='Used for the OCP migration', select=1),
+        'not_to_be_used': fields.boolean('Not To be Used'),
     }
 
     _defaults = {
@@ -165,6 +166,7 @@ class hr_employee(osv.osv):
         'gender': lambda *a: 'unknown',
         'ex_allow_edition': lambda *a: True,
         'expat_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'not_to_be_used': lambda *a: False,
     }
 
     def _set_sync_update_as_run(self, cr, uid, data, sdref, context=None):
@@ -340,7 +342,9 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
-            self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
+            updated_emp = self.browse(cr, uid, emp.id, fields_to_fetch=['active'], context=context)
+            if updated_emp and updated_emp.active:
+                self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):

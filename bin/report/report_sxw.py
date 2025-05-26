@@ -246,7 +246,7 @@ class rml_parse(object):
         self.lang_dict = {}
         self.default_lang = {}
         self.lang_dict_called = False
-        self._transl_regex = re.compile('(\[\[.+?\]\])')
+        self._transl_regex = re.compile(r'(\[\[.+?\]\])')
         self.log_export = False
         self.sheet_name_used = []
         self.total_sheet_number = 0

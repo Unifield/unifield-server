@@ -1080,6 +1080,7 @@ class supplier_catalogue_line(osv.osv):
                         vals['ranking'] = 3
                     else:
                         raise osv.except_osv(_('Error'), _('The Ranking is mandatory on a confirmed catalogue line if there is none at header level'))
+                vals['sequence'] = vals.get('ranking', 3)
                 vals = self._create_supplier_info(cr, uid, vals, context=context)
             if catalogue.partner_id:
                 vals['partner_type'] = catalogue.partner_id.partner_type
@@ -1164,7 +1165,7 @@ class supplier_catalogue_line(osv.osv):
                 supinfo_data = {}
                 if new_vals.get('ranking') and line.supplier_info_id.sequence != new_vals['ranking']:
                     supinfo_data['sequence'] = new_vals['ranking']
-                elif not new_vals.get('ranking') and not line.ranking and line.catalogue_id.ranking \
+                elif 'ranking' in new_vals and not new_vals.get('ranking') and line.catalogue_id.ranking \
                         and line.supplier_info_id.sequence != line.catalogue_id.ranking:
                     supinfo_data['sequence'] = line.catalogue_id.ranking
                 # Update the pricelist line on product supplier information tab

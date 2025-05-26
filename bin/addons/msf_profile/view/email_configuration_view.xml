@@ -28,7 +28,10 @@
                 </group>
                 <group colspan="4" col="4">
                     <field name="email_from" colspan="4" />
-                    <field name="smtp_ssl"/>
+                    <group colspan="2" col="4">
+                        <field name="smtp_ssl"/>
+                        <field name="smtp_ssl_ignore_cert" attrs="{'invisible': [('smtp_ssl', '=', False)]}" />
+                    </group>
                     <newline />
                     <field name="smtp_user"/>
                     <field name="smtp_password" password="True"/>
@@ -36,7 +39,7 @@
                 <newline />
                 <separator colspan="4" string="Test the connection" />
                 <field name="destination_test" />
-                <button type="object" string="Send a test email" name="test_email" />
+                <button type="object" string="Send a test email" name="test_email" icon="terp-mail-"/>
             </form>
         </field>
     </record>

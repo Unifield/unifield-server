@@ -787,7 +787,7 @@ class stock_mission_report(osv.osv):
                 search_level = ('section', 'coordo')
             else:
                 # on Coordo we want to pregenerate Coordo and Project MSR
-                search_level = ('coordo', 'poject')
+                search_level = ('coordo',)  # Was initially ('coordo', 'poject')
             instance_obj = self.pool.get('msf.instance')
             instance_ids = instance_obj.search(cr, uid,
                                                [('level', 'in', search_level)],

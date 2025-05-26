@@ -1406,7 +1406,8 @@ class account_move_line(osv.osv):
             set_of_reconcile_ids = set()
             for aml in self.browse(cr, uid, same_seq_ji_ids,
                                    fields_to_fetch=['ref', 'reconcile_id', 'reconcile_partial_id'], context=context):
-                aml.ref and set_of_refs.add(aml.ref)
+                if not aml.is_addendum_line and aml.ref:
+                    set_of_refs.add(aml.ref)
                 aml.reconcile_id and set_of_reconcile_ids.add(aml.reconcile_id.id)
                 aml.reconcile_partial_id and set_of_reconcile_ids.add(aml.reconcile_partial_id.id)
 

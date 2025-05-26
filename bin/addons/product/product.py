@@ -290,9 +290,10 @@ class product_template(osv.osv):
                     product_supplierinfo s
                     left join res_partner p on p.id = s.name
                     left join product_product prod on prod.product_tmpl_id = s.product_id
+                    left join pricelist_partnerinfo pi on pi.suppinfo_id = s.id
                 where
-                    product_id in %s
-                order by product_id, sequence, id
+                    product_id in %s and pi.valid_from <= NOW() and (pi.valid_till IS NULL or pi.valid_till >= NOW())
+                order by product_id, s.sequence, pi.price, id
                 ''', (tuple(ids), )
             )
             for seller in cr.fetchall():
@@ -302,23 +303,6 @@ class product_template(osv.osv):
                     'seller_id': seller[4] or False,
                     'seller_info_id': seller[5] or False,
                 }
-        return result
-
-
-
-        for product in self.browse(cr, uid, ids, context=context):
-            for field in fields:
-                result[product.id] = {field:False}
-            result[product.id]['seller_delay'] = 1
-            if product.seller_ids:
-                partner_list = sorted([(partner_id.sequence, partner_id)
-                                       for partner_id in  product.seller_ids
-                                       if partner_id and isinstance(partner_id.sequence, int)], key=lambda a: (a[0], a[1].id))
-                main_supplier = partner_list and partner_list[0] and partner_list[0][1] or False
-                result[product.id]['seller_delay'] =  main_supplier and main_supplier.delay or 1
-                result[product.id]['seller_qty'] =  main_supplier and main_supplier.qty or 0.0
-                result[product.id]['seller_id'] = main_supplier and main_supplier.name.id or False
-                result[product.id]['seller_info_id'] = main_supplier and main_supplier.id or False
         return result
 
     def _get_list_price(self, cr, uid, ids, fields, arg, context=None):
@@ -909,7 +893,7 @@ class product_product(osv.osv):
             if not len(ids):
                 ids = self.search(cr, user, ['|',('name',operator,name),('default_code',operator,name)] + args, limit=limit, context=context)
             if not len(ids):
-                ptrn=re.compile('(\[(.*?)\])')
+                ptrn=re.compile(r'(\[(.*?)\])')
                 res = ptrn.search(name)
                 if res:
                     ids = self.search(cr, user, [('default_code','=', res.group(2))] + args, limit=limit, context=context)
@@ -1033,6 +1017,29 @@ class product_product(osv.osv):
                 res_context[col] = False
         res_context['search_default_product_id'] = context.get('active_id', False)
         res['context'] = res_context
+
+        return res
+
+    def get_supplier_ranking_for_line(self, cr, uid, prod_id, partner_id):
+        """
+        Get the ranking of the product_supplierinfo for a product, ordered by rank then price
+        """
+        res = False
+        if not prod_id or not partner_id:
+            return res
+
+        cr.execute("""
+            SELECT DISTINCT ON (prod.id) s.sequence FROM product_product prod
+                LEFT JOIN product_supplierinfo s ON prod.product_tmpl_id = s.product_id
+                LEFT JOIN res_partner p ON p.id = s.name
+                LEFT JOIN pricelist_partnerinfo pi ON pi.suppinfo_id = s.id
+            WHERE prod.id = %s AND p.id = %s AND pi.valid_from <= NOW() 
+                AND (pi.valid_till IS NULL OR pi.valid_till >= NOW())
+            ORDER BY prod.id, s.sequence, pi.price
+        """, (prod_id, partner_id))
+        prod_data = cr.fetchone()
+        if prod_data:
+            res = prod_data[0]
 
         return res
 
@@ -1178,7 +1185,7 @@ class product_supplierinfo(osv.osv):
     _constraints = [
         (_check_uom, 'Error: The default UOM and the Supplier Product UOM must be in the same category.', ['product_uom']),
     ]
-    _order = 'sequence'
+    _order = 'sequence,get_first_price,id'
 
     def onchange_sequence(self, cr, uid, ids, sequence=False, context=None):
         """

@@ -381,11 +381,14 @@ class memory_usage(osv.osv, ratelimit):
                 for proc in psutil.process_iter():
                     if proc.username() != current_user_name:
                         continue
-                    command_list = proc.cmdline()
-                    if len(command_list) >1 \
-                            and command_list[0] == 'python'\
-                            and proc_name in command_list[1]:
-                        proc_list.append(proc)
+                    try:
+                        command_list = proc.cmdline()
+                        if len(command_list) >1 \
+                                and command_list[0] == 'python'\
+                                and proc_name in command_list[1]:
+                            proc_list.append(proc)
+                    except psutil.ZombieProcess:
+                        pass
         return proc_list
 
     def get_memory_usage(self, proc_name):

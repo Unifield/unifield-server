@@ -634,7 +634,7 @@ class actions_server(osv.osv):
                 return str("--------")
             return tools.ustr(result)
 
-        com = re.compile('(\[\[.+?\]\])')
+        com = re.compile(r'(\[\[.+?\]\])')
         message = com.sub(merge, keystr)
 
         return message

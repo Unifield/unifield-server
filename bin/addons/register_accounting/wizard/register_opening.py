@@ -52,7 +52,7 @@ class wizard_register_opening_confirmation(osv.osv_memory):
         if not period_ok:
             raise osv.except_osv(_('Warning'), _('You must tick the box before clicking on Yes.'))
         else:
-            reg_obj.open_register(cr, uid, reg_id, cash_opening_balance=0.0, context=context)
+            reg_obj.open_register(cr, uid, reg_id, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 

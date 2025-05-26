@@ -45,7 +45,7 @@ class account_mcdb(osv.osv):
         'posting_date_to': fields.date('Ending posting date'),
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
-        'document_code': fields.char(string='Sequence number', size=255),
+        'document_code': fields.char(string='Sequence number', size=365),
         'include_related_entries': fields.boolean('Related entries', help='Entries related to the Sequence numbers set'),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Entry Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
@@ -1357,7 +1357,10 @@ class account_mcdb(osv.osv):
         data['header'] = header
         context['keep_open'] = 1
         a = export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
-        a['datas']['keep_open'] = 1
+        if 'datas' in a:
+            a['datas']['keep_open'] = 1
+        else:
+            raise osv.except_osv(_('Warning'), _('There is more than 50000 records.'))
         return a
 
     def load_mcdb_template(self, cr, buid, ids, context=None):

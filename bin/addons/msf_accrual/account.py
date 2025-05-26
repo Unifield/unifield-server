@@ -30,7 +30,7 @@ class account_account(osv.osv):
 
     _columns = {
         'accrual_account': fields.boolean('Accrual Account'),
-        'prevent_hq_asset': fields.boolean('Prevent fixed assets on HQ entries'),
+        'prevent_hq_asset': fields.boolean('Prevent capitalization of entries'),
     }
 
     _defaults = {

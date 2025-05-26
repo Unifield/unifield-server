@@ -206,6 +206,10 @@
                         <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|','|', ('instance_level', '=', 'project'), ('lock_open', '!=', False), ('state', '!=', 'open')]}" />
                         <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('lock_open', '=', False), ('state', '!=', 'open')]}" />
                         <button type="object" name="button_set_as_open" string="Set as Open" icon="gtk-goto-first" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
+                        <field name="has_unposted_entries" invisible="1"/>
+                        <button name="delete_unposted" type="object" icon="terp-gtk-stop"
+                                string="Delete Unposted Entries"
+                                attrs="{'invisible': ['|', ('instance_level', '=', 'project'), ('has_unposted_entries', '=', False)]}"/>
                         <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', 'not in', ['running', 'depreciated', 'open']), ('can_be_disposed', '=', False)]}"/>
                     </group>
                 </group>
@@ -219,7 +223,7 @@
         <field name="model">product.asset</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Asset Forms">
+            <tree string="Asset Forms" colors="blue:state == 'draft';grey:state == 'disposed'">
                 <field name="name" />
                 <field name="instance_id"/>
                 <field name="used_instance_id" />
@@ -283,6 +287,24 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="asset_search_form_view" />
     </record>
+
+    <report id="asset_register_report_xlsx"
+            string="Export Fixed Assets Register Xlsx"
+            model="product.asset"
+            name="asset.register.report.xlsx"
+            report_type="openpyxl"
+            target_filename="${_('Fixed_Assets_Register')}_%(instance)s_%(year)s%(month)s%(day)s"
+            auto="False"
+            menu="True" />
+
+    <report id="asset_register_report_landscape"
+                string="Export Fixed Assets Register PDF"
+                model="product.asset"
+                name="asset.register.report.landscape"
+                rml="product_asset/report/asset_register_report_landscape.rml"
+                target_filename="${_('Fixed_Assets_Register')}_%(instance)s_%(year)s%(month)s%(day)s"
+                auto="False"
+                menu="True" />
 
     <!-- Assets in SALES>Products -->
     <menuitem id="menu_asset_sales" name="Assets" parent="account.menu_finance_periodical_processing" sequence="20" active_config="fixed_asset_ok"/>
