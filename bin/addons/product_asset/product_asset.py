@@ -2058,8 +2058,9 @@ class import_asset_reference(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'message': _('Reading headers...'), 'progression': 5.00})
                 # Use the first row to find which column to use
                 cols = {}
-                col_names = ['Asset Code', 'Instance Creator', 'Instance of Use', 'Journal Item', 'Asset Type',
-                             'Product', 'External Asset ID', 'Serial Number', 'Brand', 'Type', 'Model', 'Year']
+                col_names = [_('Asset Code'), _('Instance Creator'), _('Instance of Use'), _('Journal Item'),
+                             _('Asset Type'), _('Product'), _('External Asset ID'), _('Serial Number'),
+                             _('Brand'), _('Type'), _('Model'), _('Year')]
                 for num, r in enumerate(rows):
                     line_error = False
                     updated = 0
@@ -2084,16 +2085,16 @@ class import_asset_reference(osv.osv_memory):
                         current_line_num = num + base_num
 
                         # Check Asset Code
-                        if not r[cols['Asset Code']].value:
+                        if not r[cols[_('Asset Code')]].value:
                             errors.append(
                                 _('Line %s: No Asset Code specified! Update can not be done!') % (current_line_num, ))
                             line_error = True
                             continue
                         else:
-                            asset_id = asset_obj.search(cr, uid, [('name', '=', r[cols['Asset Code']].value)], context=context)
+                            asset_id = asset_obj.search(cr, uid, [('name', '=', r[cols[_('Asset Code')]].value)], context=context)
                             if not asset_id:
                                 errors.append(_('Line %s: No Asset with the code %s found in Unifield!') %
-                                              (current_line_num, r[cols['Asset Code']].value or ''))
+                                              (current_line_num, r[cols[_('Asset Code')]].value or ''))
                                 line_error = True
                             else:
                                 # Check if all the fields provided in the line of the import file
@@ -2102,59 +2103,59 @@ class import_asset_reference(osv.osv_memory):
                                                          fields_to_fetch=['external_asset_id', 'instance_id', 'used_instance_id', 'move_line_id',
                                                                           'asset_type_id', 'product_id'], context=context)
                                 external_asset_id = asset.external_asset_id or ''
-                                if external_asset_id != (r[cols['External Asset ID']].value or ''):
+                                if external_asset_id != (r[cols[_('External Asset ID')]].value or ''):
                                     errors.append(_('Line %s: The Asset %s has \'%s\' as External Asset ID in Unifield '
                                                     'but \'%s\' was provided in the import file.') %
-                                                  (current_line_num, r[cols['Asset Code']].value or '', external_asset_id,
-                                                   r[cols['External Asset ID']].value or ''))
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', external_asset_id,
+                                                   r[cols[_('External Asset ID')]].value or ''))
                                     line_error = True
                                 asset_instance_creator = asset.instance_id and asset.instance_id.code or ''
-                                if asset.instance_id.code != (r[cols['Instance Creator']].value or ''):
+                                if asset.instance_id.code != (r[cols[_('Instance Creator')]].value or ''):
                                     errors.append(_('Line %s: The Asset %s has \'%s\' as Instance  Creator in Unifield '
                                                     'but \'%s\' was provided in the import file.') %
-                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_instance_creator,
-                                                   r[cols['Instance Creator']].value or ''))
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_instance_creator,
+                                                   r[cols[_('Instance Creator')]].value or ''))
                                     line_error = True
                                 asset_instance_of_use = asset.used_instance_id and asset.used_instance_id.code or ''
-                                if asset.used_instance_id.code != (r[cols['Instance of Use']].value or ''):
+                                if asset.used_instance_id.code != (r[cols[_('Instance of Use')]].value or ''):
                                     errors.append(_('Line %s: The Asset %s has \'%s\' as Instance  of Use in Unifield '
                                                     'but \'%s\' was provided in the import file.') %
-                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_instance_of_use,
-                                                   r[cols['Instance of Use']].value or ''))
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_instance_of_use,
+                                                   r[cols[_('Instance of Use')]].value or ''))
                                     line_error = True
                                 asset_ji = asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or ''
-                                if asset_ji != (r[cols['Journal Item']].value or ''):
+                                if asset_ji != (r[cols[_('Journal Item')]].value or ''):
                                     errors.append(_('Line %s: The Asset %s has \'%s\' as Journal Item in Unifield '
                                                     'but \'%s\' was provided in the import file.') %
-                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_ji,
-                                                   r[cols['Journal Item']].value or ''))
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_ji,
+                                                   r[cols[_('Journal Item')]].value or ''))
                                     line_error = True
                                 asset_type = asset.asset_type_id and asset.asset_type_id.name or ''
-                                if asset_type != (r[cols['Asset Type']].value or ''):
+                                if asset_type != (r[cols[_('Asset Type')]].value or ''):
                                     errors.append(_('Line %s: The Asset %s has \'%s\' as Asset Type in Unifield '
                                                     'but \'%s\' was provided in the import file.') %
-                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_type,
-                                                   r[cols['Asset Type']].value or ''))
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_type,
+                                                   r[cols[_('Asset Type')]].value or ''))
                                     line_error = True
                                 asset_product_name = asset.product_id and asset.product_id.name and asset.product_id.code and\
                                                      '[%s] %s' % (asset.product_id.code, asset.product_id.name) or ''
-                                if asset_product_name != (r[cols['Product']].value or ''):
+                                if asset_product_name != (r[cols[_('Product')]].value or ''):
                                     errors.append(_('Line %s: The Asset %s has \'%s\' as Product in Unifield '
                                                     'but \'%s\' was provided in the import file.') %
-                                                  (current_line_num, r[cols['Asset Code']].value or '', asset_product_name,
-                                                   r[cols['Product']].value or ''))
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_product_name,
+                                                   r[cols[_('Product')]].value or ''))
                                     line_error = True
                                 # Check year format
-                                if not re.match(r'^(19|20)\d{2}$', str(r[cols['Year']].value or '')):
-                                    errors.append(_('Line %s: The year of Asset %s must be a number between 1900 and 2099.') % (current_line_num, r[cols['Asset Code']].value or ''))
+                                if not re.match(r'^(19|20)\d{2}$', str(r[cols[_('Year')]].value or '')):
+                                    errors.append(_('Line %s: The year of Asset %s must be a number between 1900 and 2099.') % (current_line_num, r[cols[_('Asset Code')]].value or ''))
                                     line_error = True
 
                                 vals = {
-                                    'serial_nb': r[cols['Serial Number']].value or '',
-                                    'brand': r[cols['Brand']].value or '',
-                                    'type': r[cols['Type']].value or '',
-                                    'model': r[cols['Model']].value or '',
-                                    'year': r[cols['Year']].value or '',
+                                    'serial_nb': r[cols[_('Serial Number')]].value or '',
+                                    'brand': r[cols[_('Brand')]].value or '',
+                                    'type': r[cols[_('Type')]].value or '',
+                                    'model': r[cols[_('Model')]].value or '',
+                                    'year': r[cols[_('Year')]].value or '',
                                     'wizard_id': wiz.id,
                                     'asset_id': asset.id,
                                 }
