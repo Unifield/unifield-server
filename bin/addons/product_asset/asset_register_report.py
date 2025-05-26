@@ -228,9 +228,9 @@ class asset_ref_parser(XlsxReportParser):
                 if field == _('Asset Code'):
                     cell_value = asset.name or ''
                 elif field == _('Instance Creator'):
-                    cell_value = asset.instance_id and asset.instance_id.instance or ''
+                    cell_value = asset.instance_id and asset.instance_id.code or ''
                 elif field == _('Instance of Use'):
-                    cell_value = asset.used_instance_id and asset.used_instance_id.instance or ''
+                    cell_value = asset.used_instance_id and asset.used_instance_id.code or ''
                 elif field == _('Journal Item'):
                     cell_value = asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or ''
                 elif field == _('Asset Type'):
