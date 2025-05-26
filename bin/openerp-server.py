@@ -167,7 +167,10 @@ if tools.config['db_name']:
 
         except Exception as e:
             logger.error('Unable to load %s: %s', dbname, e)
-            logger.warning('if db %s does not exist anymore you can edit %s and change "db_name"', dbname, tools.config.rcfile)
+            try:
+                tools.config.delete_db_name(dbname)
+            except Exception as e:
+                logger.error('unable to remove %s from %s, error: %s', dbname, tools.config.rcfile, e)
             if cr:
                 cr.close()
 

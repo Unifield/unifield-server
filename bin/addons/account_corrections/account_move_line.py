@@ -446,7 +446,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         return True
 
     def correct_aml(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, new_third_party=None, context=None):
-        """
+        r"""
         Corrects the G/L account and/or the Third Party of the JIs having their ids in param.
         Generates the related REV/COR lines.
 

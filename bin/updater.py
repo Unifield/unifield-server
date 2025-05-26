@@ -694,8 +694,8 @@ def _find_pg_patch():
     (oldVer, newVer) = pfiles[0].split('-')[1:3]
 
     # Check version format: 8.4.14 or 10.1
-    if not re.match('\d+\.\d+(\.\d+)?', oldVer) or \
-       not re.match('\d+\.\d+(\.\d+)?', newVer):
+    if not re.match(r'\d+\.\d+(\.\d+)?', oldVer) or \
+       not re.match(r'\d+\.\d+(\.\d+)?', newVer):
         return None, None, None
 
     return pfiles[0], oldVer, newVer

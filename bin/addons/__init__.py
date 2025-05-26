@@ -20,7 +20,8 @@
 #
 ##############################################################################
 
-import os, sys, imp
+import os, sys
+import importlib
 from os.path import join as opj
 import itertools
 import zipimport
@@ -215,7 +216,7 @@ def zip_directory(directory, b64enc=True, src=True):
     @return: a string containing the zip file
     """
 
-    RE_exclude = re.compile('(?:^\..+\.swp$)|(?:\.py[oc]$)|(?:\.bak$)|(?:\.~.~$)', re.I)
+    RE_exclude = re.compile(r'(?:^\..+\.swp$)|(?:\.py[oc]$)|(?:\.bak$)|(?:\.~.~$)', re.I)
 
     def _zippy(archive, path, src=True):
         path = os.path.abspath(path)
@@ -458,12 +459,7 @@ def register_class(m):
     try:
         zip_mod_path = mod_path + '.zip'
         if not os.path.isfile(zip_mod_path):
-            fm = imp.find_module(m, ad_paths)
-            try:
-                imp.load_module(m, *fm)
-            finally:
-                if fm[0]:
-                    fm[0].close()
+            importlib.__import__(m)
         else:
             zimp = zipimport.zipimporter(zip_mod_path)
             zimp.load_module(m)
@@ -595,13 +591,14 @@ class MigrationManager(object):
                     try:
                         fp = tools.file_open(pyfile, 'r')
 
-                        # imp.load_source need a real file object, so we create
-                        # one from the file-like object we get from file_open
                         fp2 = tempfile.NamedTemporaryFile('w', delete=False)
                         fp2.write(fp.read())
                         fp2.seek(0)
                         try:
-                            mod = imp.load_source(name, fp2.name, fp2)
+                            loader = importlib.machinery.SourceFileLoader(name, fp2.name)
+                            spec = importlib.util.spec_from_file_location(name, fp2.name, loader=loader)
+                            mod = importlib.util.module_from_spec(spec)
+                            loader.exec_module(mod)
                             logger.notifyChannel('migration', netsvc.LOG_INFO, 'module %(addon)s: Running migration %(version)s %(name)s' % mergedict({'name': mod.__name__}, strfmt))
                             mod.migrate(self.cr, pkg.installed_version)
                         except ImportError:

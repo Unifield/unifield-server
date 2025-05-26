@@ -3405,7 +3405,7 @@ class patch_scripts(osv.osv):
 
     def us_6453_set_ref_on_in(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.entity'):
-            cr.execute('''
+            cr.execute(r'''
             update stock_picking set customer_ref=x.ref, customers=x.cust from (
                 select
                     p.id,

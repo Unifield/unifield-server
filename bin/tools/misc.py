@@ -581,7 +581,7 @@ def html2plaintext(html, body_id=None, encoding='utf-8'):
     html = html.replace('<em>','/').replace('</em>','/')
     html = html.replace('<tr>', '\n')
     html = html.replace('</p>', '\n')
-    html = re.sub('<br\s*/?>', '\n', html)
+    html = re.sub(r'<br\s*/?>', '\n', html)
     html = re.sub('<.*?>', ' ', html)
     html = html.replace(' ' * 2, ' ')
 
@@ -979,7 +979,7 @@ class cache(object):
             raise Exception("Can not use a cache instance on more than one function")
         self.fun = fn
 
-        argspec = inspect.getargspec(fn)
+        argspec = inspect.getfullargspec(fn)
         self.fun_arg_names = argspec[0][self.skiparg:]
         self.fun_default_values = {}
         if argspec[3]:
@@ -1110,7 +1110,7 @@ class read_cache(object):
             raise Exception("Can not use a cache instance on more than one function")
         self.fun = fn
 
-        argspec = inspect.getargspec(fn)
+        argspec = inspect.getfullargspec(fn)
         # get rid of self and the database cursor
         self.fun_arg_names = argspec[0][2:]
         self.fun_default_values = {}
@@ -1530,7 +1530,7 @@ def debug(what):
     from inspect import stack
     from pprint import pformat
     st = stack()[1]
-    param = re.split("debug *\((.+)\)", st[4][0].strip())[1].strip()
+    param = re.split(r"debug *\((.+)\)", st[4][0].strip())[1].strip()
     while param.count(')') > param.count('('): param = param[:param.rfind(')')]
     what = pformat(what)
     if param != what:
