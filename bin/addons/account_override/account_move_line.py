@@ -35,6 +35,43 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
 
+
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        if context is None:
+            context = {}
+        new_dom = []
+        search_open_items = False
+
+        for args in domain:
+            if args[0] == 'open_items':
+                if args[1] != '=' or not args[2] or not isinstance(args[2], int):
+                    raise osv.except_osv(_('Error'), _('Filter not implemented. '
+                                                       'Please check that you have selected one Period in \"Open Items at\".'))
+                search_open_items = args[2]
+            else:
+                new_dom.append(args)
+        ret = super(account_move_line, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+
+        if search_open_items:
+            period_obj = self.pool.get('account.period')
+            period_id = period_obj.browse(cr, uid, search_open_items, fields_to_fetch=['date_stop'], context=context)
+            period_end_date = period_id.date_stop
+
+            ret.tables.append('"account_account"')
+            ret.tables.append('"account_move_line" m2')
+            ret.joins.setdefault('"account_move_line"', [])
+            ret.joins['"account_move_line"'] += [('"account_account"', 'account_id', 'id', 'INNER JOIN')]
+            ret.joins['"account_move_line"'] += [('"account_move_line" m2', 'reconcile_id', 'reconcile_id', 'LEFT JOIN')]
+            ret.where_clause.append(' "account_account"."reconcile" = \'t\' and "account_move_line"."date" <=%s ')
+            ret.where_clause_params.append(period_end_date)
+            ret.having_group_by = ' GROUP BY "account_move_line"."id" '
+            ret.having = ' HAVING (count(m2.id)=0 or count(m2.date>%s OR NULL)>0) '
+            ret.where_clause_params.append(period_end_date)
+
+        return ret
+
+
+
     def join_without_redundancy(self, text='', string=''):
         """
         Add string @ begining of text like that:
@@ -246,42 +283,6 @@ class account_move_line(osv.osv):
             ret[i] = False
         return ret
 
-    def _search_open_items(self, cr, uid, obj, name, args, context):
-        """
-        Returns a domain with all reconcilable JIs EXCEPT:
-        - those fully reconciled at the period end date or before
-        - those fully reconciled after the period end date, if all legs of the reconciliation are <= to the period end date
-        """
-        if not args:
-            return []
-        if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], int):
-            raise osv.except_osv(_('Error'), _('Filter not implemented. '
-                                               'Please check that you have selected one Period in \"Open Items at\".'))
-        if context is None:
-            context = {}
-        aml_list = []
-        period_obj = self.pool.get('account.period')
-        period_id = period_obj.browse(cr, uid, args[0][2], fields_to_fetch=['date_stop'], context=context)
-        period_end_date = period_id.date_stop
-        aml_query = '''
-              SELECT aml.id, aml.reconcile_id
-              FROM account_move_line aml
-              INNER JOIN account_account acc ON aml.account_id = acc.id
-              WHERE acc.reconcile = 't'
-              AND (aml.reconcile_id IS NULL OR reconcile_date > %s);
-              '''
-        cr.execute(aml_query, (period_end_date,))
-        lines = cr.dictfetchall()
-        for l in lines:
-            if not l['reconcile_id']:
-                aml_list.append(l['id'])
-            else:
-                # get the JIs with the same reconcile_id
-                same_rec_list = self.search(cr, uid, [('reconcile_id', '=', l['reconcile_id'])], order='NO_ORDER', context=context)
-                # check that at least one of them has a posting date later than the period end date
-                if self.search_exist(cr, uid, [('id', 'in', same_rec_list), ('date', '>', period_end_date)], context=context):
-                    aml_list.append(l['id'])
-        return [('id', 'in', aml_list)]
 
     def _get_db_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -309,7 +310,7 @@ class account_move_line(osv.osv):
                                            help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
         'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True, join=True),
         'name': fields.char('Description', size=64, required=True, readonly=True),
-        'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
+        'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1, join=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
         'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry.", select=1),
@@ -336,7 +337,7 @@ class account_move_line(osv.osv):
                                          ),
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
         'open_items': fields.function(_get_fake, method=True, type='many2one', relation='account.period', string='Open Items at',
-                                      store=False, fnct_search=_search_open_items, domain=[('state', '!=', 'created')]),
+                                      store=False, domain=[('state', '!=', 'created')]),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
         'corrected_upstream': fields.boolean('Corrected from CC/HQ', readonly=True, help='This line have been corrected from Coordo or HQ level to a cost center that have the same level or superior.'),
         'line_number': fields.integer(string='Line Number'),

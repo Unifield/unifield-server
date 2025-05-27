@@ -1405,6 +1405,8 @@ class orm_template(object):
                     res[f]['with_null'] = True
                 if hasattr(field_col, 'null_value') and field_col.null_value:
                     res[f]['null_value'] = field_col.null_value
+                if hasattr(field_col, 'join') and field_col.join:
+                    res[f]['join'] = field_col.join
                 # This additional attributes for M2M and function field is added
                 # because we need to display tooltip with this additional information
                 # when client is started in debug mode.
