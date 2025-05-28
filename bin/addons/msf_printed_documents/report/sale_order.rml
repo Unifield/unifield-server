@@ -700,19 +700,19 @@
                     <para style="Standard"> </para>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'sr', 'imported_image') or getSign(objects[0], 'sr', 'image') or removeParentNode('image') ]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(objects[0], 'sr', 'imported_image') or getSign(objects[0], 'sr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'tr', 'imported_image') or getSign(objects[0], 'tr', 'image') or removeParentNode('image') ]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(objects[0], 'tr', 'imported_image') or getSign(objects[0], 'tr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'fr', 'imported_image') or getSign(objects[0], 'fr', 'image') or removeParentNode('image') ]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(objects[0], 'fr', 'imported_image') or getSign(objects[0], 'fr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'mr', 'imported_image') or getSign(objects[0], 'mr', 'image') or removeParentNode('image') ]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(objects[0], 'mr', 'imported_image') or getSign(objects[0], 'mr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'hq', 'imported_image') or getSign(objects[0], 'hq', 'image') or removeParentNode('image') ]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(objects[0], 'hq', 'imported_image') or getSign(objects[0], 'hq', 'image') or removeParentNode('image') ]]</image>
                 </td>
             </tr>
         </blockTable>

@@ -14,6 +14,8 @@ from report.render.rml2pdf import customfonts
 from PIL import Image, ImageDraw, ImageFont
 import base64
 from io import BytesIO
+import cv2
+import numpy
 
 list_sign = {
     'purchase.order': [
@@ -1185,6 +1187,21 @@ class signature_set_user(osv.osv_memory):
         'position': 'bottom',
         #'legal_name': lambda self, cr, uid, *a, **b: self._get_name(cr, uid, *a, **b),
     }
+    def onchange_signature_import(self, cr, uid, ids, sign_import, context=None):
+        if not context:
+            context = {}
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        res = {}
+        if sign_import and not sign_import.endswith(('.png', '.jpg', '.jpeg')):
+            res.update({'value': {'new_signature_import': False}, 'warning': {
+                    'title': _('Warning'),
+                    'message': _('Only PNG, JPG and JPEG images are accepted as imported file for the signature')
+                }})
+        return res
+
     def closepref(self, cr, uid, ids, context=None):
         return {'type': 'closepref'}
 
@@ -1204,31 +1221,66 @@ class signature_set_user(osv.osv_memory):
 
     def preview(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
-        if not wiz.new_signature:
+        if not wiz.new_signature and not wiz.new_signature_import:
             return {'type': 'closepref'}
 
         msg = ustr(wiz.legal_name)
+        to_write = {}
+        if wiz.new_signature:
+            # Add legal name to signature
+            image = Image.open(BytesIO(base64.b64decode(wiz.b64_image)))
+            W, H = image.size
+            fit = False
+            init_font_size = 28
+            font_size = init_font_size
+            while not fit and font_size > 3:
+                font_path = customfonts.GetFontPath('DejaVuSans.ttf')
+                font = ImageFont.truetype(font_path, font_size)
+                left, top, w,h = font.getbbox(msg)
+                fit = w <= W
+                font_size -= 1
+            new_img = Image.new("RGBA", (W, H+init_font_size))
+            new_img.paste(image, (0, 0))
+            draw = ImageDraw.Draw(new_img)
+            # H-5 to emulate anchor='md' which does not work on this PIL version
+            draw.text(((W-w)/2,H-5), msg, font=font, fill="black")
+            txt_img = BytesIO()
+            new_img.save(txt_img, 'PNG')
+            to_write.update({'new_signature': 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')})
 
-        # Add legal name to signature
-        image = Image.open(BytesIO(base64.b64decode(wiz.b64_image)))
-        W, H = image.size
-        fit = False
-        init_font_size = 28
-        font_size = init_font_size
-        while not fit and font_size > 3:
-            font_path = customfonts.GetFontPath('DejaVuSans.ttf')
-            font = ImageFont.truetype(font_path, font_size)
-            left, top, w,h = font.getbbox(msg)
-            fit = w <= W
-            font_size -= 1
-        new_img = Image.new("RGBA", (W, H+init_font_size))
-        new_img.paste(image, (0, 0))
-        draw = ImageDraw.Draw(new_img)
-        # H-5 to emulate anchor='md' which does not work on this PIL version
-        draw.text(((W-w)/2,H-5), msg, font=font, fill="black")
-        txt_img = BytesIO()
-        new_img.save(txt_img, 'PNG')
-        wiz.write({'new_signature': 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')}, context=context)
+        if wiz.new_signature_import:
+            nparr = numpy.frombuffer(base64.b64decode(wiz.new_signature_import), dtype=numpy.uint8)
+            img_imp = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+            hsv = cv2.cvtColor(img_imp, cv2.COLOR_BGR2HSV)
+            mask = cv2.inRange(hsv, numpy.array([90, 38, 0]), numpy.array([145, 255, 255]))
+            result = cv2.bitwise_and(img_imp, img_imp, mask=mask)
+            result[mask == 0] = (255, 255, 255)
+
+            # Find contours on extracted mask, combine boxes, and extract ROI
+            cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+            cnts = numpy.concatenate(cnts)
+            x, y, w, h = cv2.boundingRect(cnts)
+            ROI = result[y:y + h, x:x + w]
+
+            # Add legal name to signature
+            font = cv2.FONT_HERSHEY_DUPLEX
+            textsize = cv2.getTextSize(msg, font, 0.8, 1)[0]
+            extra_width = 0
+            if textsize[0] >= ROI.shape[1]:
+                extra_width = ((textsize[0] - ROI.shape[1]) // 2) + 5
+            ROI = cv2.copyMakeBorder(ROI, 5, textsize[1] + 15, extra_width, extra_width, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+
+            textX = (ROI.shape[1] - textsize[0]) // 2
+            ROI = cv2.putText(ROI, msg, (textX, ROI.shape[0] - 10), font, 0.8, (0, 0, 0), 1, cv2.LINE_AA)
+
+            # Convert img to jpg
+            retval, buffer = cv2.imencode('.jpg', ROI)
+
+            to_write.update({'new_signature_import': base64.b64encode(buffer)})
+
+        wiz.write(to_write, context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_set_user_form_preview')
         return {

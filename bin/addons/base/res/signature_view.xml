@@ -51,7 +51,7 @@
                     <newline />
                     <field name="legal_name" />
                     <field name="new_signature" widget="signature" colspan="4"/>
-                    <field name="new_signature_import" colspan="4"/>
+                    <field name="new_signature_import" on_change="onchange_signature_import(new_signature_import)" colspan="4"/>
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
                       <button string="Preview" icon="terp-check" name="preview" type="object" />
