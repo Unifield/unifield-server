@@ -758,7 +758,7 @@ class hq_report_ocp_workday(hq_report_ocp):
 
         cr.execute('delete from hq_report_no_decimal where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
         cr.execute('delete from hq_report_func_adj where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
-        # round AJI for match JI funct amount
+        # round AJI to match JI funct amount (not EUR)
         cr.execute("""
             select
                 aml.id, round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2)), array_agg(al.id)
@@ -788,6 +788,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     AND j.type not in %(j_type)s
                     AND al.instance_id in %(instance_ids)s
                     AND aml.is_addendum_line = 'f'
+                    AND c.name != 'EUR'
             group by
                 aml.id
             having
@@ -815,6 +816,39 @@ class hq_report_ocp_workday(hq_report_ocp):
                         id in %s
                     order by abs(amount) desc, id limit 1
             ''', (bal[1], bal[0], period_id, tuple(bal[2])))
+
+        # round AJI to match JI funct amount (EUR)
+        aj_type = excluded_journal_types + ['cur_adj']
+        cr.execute("""
+            select
+                al.id, al.amount_currency, al.instance_id
+            from
+                account_analytic_line AS al,
+                res_currency AS c,
+                account_analytic_journal AS j
+            where
+                    c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+                    AND c.name = 'EUR'
+                    AND abs(al.amount_currency - al.amount) >= 0.01
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(aj_type),
+        })
+        for bal in cr.fetchall():
+            cr.execute('''
+                insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
+                    values (%s, round(%s, 2), %s, %s)
+            ''', (bal[0], bal[1], period_id, bal[2]))
 
         # pure AD
         cr.execute("""
