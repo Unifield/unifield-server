@@ -548,16 +548,16 @@
                     <para style="terp_default_9"> </para>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(o, 'sr', 'image') or removeParentNode('image') ]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(o, 'sr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(o, 'tr', 'image') or removeParentNode('image')]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(o, 'tr', 'image') or removeParentNode('image')]]</image>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(o, 'fr', 'image') or removeParentNode('image')]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(o, 'fr', 'image') or removeParentNode('image')]]</image>
                 </td>
                 <td>
-                    <image width="100" height="25" mask="auto">[[ getSign(o, 'mr', 'image') or removeParentNode('image')]]</image>
+                    <image width="140" height="35" mask="auto">[[ getSign(o, 'mr', 'image') or removeParentNode('image')]]</image>
                 </td>
             </tr>
         </blockTable>

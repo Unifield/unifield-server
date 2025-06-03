@@ -156,7 +156,6 @@
                                         <button type="object" string="Change End Date" name="change_date" attrs="{'invisible': [('has_signature', '=', False)]}" icon="terp-go-month" />
                                     </group>
                                     <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
-                                    <field name="current_imported_signature" widget="image" height="100" nolabel="1" colspan="4"/>
                                     <field name="has_signature" invisible="1" />
                                     <field name="has_valid_signature" invisible="1" />
                                     <button type="object" string="De-activate Signature" name="reset_signature" icon="gtk-stop" colspan="4" confirm="Do you want to disable this signature, this operation cannot be undone ?" attrs="{'invisible': [('has_signature', '=', False)]}"/>
@@ -169,7 +168,6 @@
                                         <field name="create_date" />
                                         <field name="inactivation_date" />
                                         <field name="image" widget="image" height="50"/>
-                                        <field name="imported_image_data" widget="image" height="50"/>
                                     </tree>
                                 </field>
                             </group>

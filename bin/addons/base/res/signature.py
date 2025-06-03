@@ -16,6 +16,7 @@ import base64
 from io import BytesIO
 import cv2
 import numpy
+import pdf2image
 
 list_sign = {
     'purchase.order': [
@@ -694,8 +695,6 @@ class signature_line(osv.osv):
         'image_id': fields.many2one('signature.image', 'Image'),
         'image': fields.related('image_id', 'pngb64', type='text', string='Signature', readonly=1),
         'data_image': fields.related('image_id', 'image', type='text', string='Signature', readonly=1),
-        'imported_image': fields.related('image_id', 'imported_image', type='text', string='Signature', readonly=1),
-        'data_imported_image': fields.related('image_id', 'imported_image_data', type='binary', string='Signature', readonly=1),
         'date': fields.datetime('Date'),
         'doc_state': fields.char('Doc State at signature date', size=64, readonly=1),
         'value': fields.float_null('Value', digits=(16,2)),
@@ -766,7 +765,6 @@ class signature_line(osv.osv):
         doc = self.pool.get(line.signature_id.signature_res_model).browse(cr, uid, line.signature_id.signature_res_id, context=context)
 
         image = esignature.pngb64
-        imported_image = esignature.imported_image
 
         unit = saved_unit[line.signature_id.signature_res_model](doc)
         value = saved_value[line.signature_id.signature_res_model](doc)
@@ -785,7 +783,6 @@ class signature_line(osv.osv):
             'line_id': line.id,
             'doc_state': doc_state,
             'image': image,
-            'imported_image': imported_image,
             'backup': line.backup,
         }, context=context)
 
@@ -881,15 +878,6 @@ class signature_image(osv.osv):
                 res[u.id] = False
         return res
 
-    def _get_imported_image_data(self, cr, uid, ids, name=None, arg=None, context=None):
-        res = {}
-        for u in self.browse(cr, uid, ids, fields_to_fetch=['imported_image'], context=context):
-            if u.imported_image:
-                res[u.id] = 'data:image/png;base64,%s' % (u.imported_image.decode('utf-8'),)
-            else:
-                res[u.id] = False
-        return res
-
     def name_get(self, cr, uid, ids, context=None):
         ret = []
         for img in self.browse(cr, uid, ids, fields_to_fetch=['user_name'], context=context):
@@ -916,8 +904,6 @@ class signature_image(osv.osv):
         'user_name': fields.char('User name', size=64),
         'image': fields.text('Signature'),
         'pngb64': fields.function(_get_image, method=1, type='text', string='Image'),
-        'imported_image': fields.binary('Signature'),
-        'imported_image_data': fields.function(_get_imported_image_data, method=1, type='text', string='Signature'),
         'from_date': fields.date('Start Date', readonly=True),
         'to_date': fields.date('End Date', readonly=True),
         'create_date': fields.datetime('Creation Date', readonly=True),
@@ -938,7 +924,6 @@ class signature_document_wizard(osv.osv_memory):
         'role': fields.char('Role/Function', size=256, readonly=1),
         'line_id': fields.many2one('signature.line', 'Line', readonly=1),
         'image': fields.text('Signature', readonly=1),
-        'imported_image': fields.binary('Signature', readonly=1),
         'value': fields.float('Value', digits=(16, 2)),
         'unit': fields.char('Unit', size=16),
         'doc_state': fields.char('Doc state', size=64),
@@ -1170,7 +1155,8 @@ class signature_set_user(osv.osv_memory):
         'b64_image': fields.function(_get_b64, method=1, type='text', string='New Signature'),
         'new_signature': fields.text("Draw your signature"),
         'json_signature': fields.text('Json Signature'),
-        'new_signature_import': fields.binary('Import your signature', filters='*.png, *.jpg, *.jpeg'),
+        'new_signature_import': fields.binary('Import your signature', filters='*.png, *.jpg, *.jpeg, *.pdf'),
+        'pdf_import': fields.boolean('Is the imported file PDF'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
         'user_name': fields.related('user_id', 'name', type='char', string='User', readonly=1),
         'preview': fields.boolean('Preview'),
@@ -1186,7 +1172,9 @@ class signature_set_user(osv.osv_memory):
         'preview': False,
         'position': 'bottom',
         #'legal_name': lambda self, cr, uid, *a, **b: self._get_name(cr, uid, *a, **b),
+        'pdf_import': False,
     }
+
     def onchange_signature_import(self, cr, uid, ids, sign_import, context=None):
         if not context:
             context = {}
@@ -1195,11 +1183,16 @@ class signature_set_user(osv.osv_memory):
         if isinstance(ids, int):
             ids = [ids]
         res = {}
-        if sign_import and not sign_import.endswith(('.png', '.jpg', '.jpeg')):
-            res.update({'value': {'new_signature_import': False}, 'warning': {
-                    'title': _('Warning'),
-                    'message': _('Only PNG, JPG and JPEG images are accepted as imported file for the signature')
-                }})
+        if sign_import:
+            if not sign_import.endswith(('.png', '.jpg', '.jpeg', '.pdf')):
+                res.update({'value': {'new_signature_import': False}, 'warning': {
+                        'title': _('Warning'),
+                        'message': _('Only PNG, JPG, JPEG images, and PDFs are accepted as imported file for the signature')
+                    }})
+            elif sign_import.endswith('.pdf'):
+                res.update({'value': {'pdf_import': True}})
+            else:
+                res.update({'value': {'pdf_import': False}})
         return res
 
     def closepref(self, cr, uid, ids, context=None):
@@ -1225,8 +1218,59 @@ class signature_set_user(osv.osv_memory):
             return {'type': 'closepref'}
 
         msg = ustr(wiz.legal_name)
-        to_write = {}
-        if wiz.new_signature:
+        if wiz.new_signature_import:
+            imported_signature = wiz.new_signature_import
+            if wiz.pdf_import:
+                # [0] because the conversion get all the pages
+                img_pdf = pdf2image.convert_from_bytes(base64.b64decode(imported_signature))[0]
+                img_pdf_txt = BytesIO()
+                img_pdf.save(img_pdf_txt, 'PNG')
+                imported_signature = str(base64.b64encode(img_pdf_txt.getvalue()), 'utf8')
+
+            nparr = numpy.frombuffer(base64.b64decode(imported_signature), dtype=numpy.uint8)
+            img_imp = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+            hsv = cv2.cvtColor(img_imp, cv2.COLOR_BGR2HSV)
+            mask = cv2.inRange(hsv, numpy.array([90, 38, 38]), numpy.array([145, 255, 255]))
+            result = cv2.bitwise_and(img_imp, img_imp, mask=mask)
+            result[mask == 0] = (255, 255, 255)
+
+            # Find contours on extracted mask, combine boxes, and extract ROI
+            cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+            if not cnts:
+                raise osv.except_osv(_('Warning'), _("No signature was found in the Imported document"))
+            cnts = numpy.concatenate(cnts)
+            x, y, w, h = cv2.boundingRect(cnts)
+            final_img = result[y:y + h, x:x + w]
+
+            # Resize if the image is too large or long
+            size_limit = 500
+            if final_img.shape[1] > final_img.shape[0] and final_img.shape[1] > size_limit:
+                aspect_ratio = size_limit / final_img.shape[1]
+                new_height = int(final_img.shape[0] * aspect_ratio)
+                final_img = cv2.resize(final_img, (size_limit, new_height))
+            elif final_img.shape[1] < final_img.shape[0] and final_img.shape[0] > size_limit:
+                aspect_ratio = size_limit / final_img.shape[0]
+                new_width = int(final_img.shape[1] * aspect_ratio)
+                final_img = cv2.resize(final_img, (new_width, size_limit))
+
+            # Add legal name to signature
+            font = cv2.FONT_HERSHEY_DUPLEX
+            textsize = cv2.getTextSize(msg, font, 0.8, 1)[0]
+            extra_width = 0
+            if textsize[0] >= final_img.shape[1]:
+                extra_width = ((textsize[0] - final_img.shape[1]) // 2) + 5
+            final_img = cv2.copyMakeBorder(final_img, 5, textsize[1] + 15, extra_width, extra_width, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+
+            textX = (final_img.shape[1] - textsize[0]) // 2
+            final_img = cv2.putText(final_img, msg, (textX, final_img.shape[0] - 10), font, 0.8, (0, 0, 0), 1, cv2.LINE_AA)
+
+            # Convert img to jpg
+            retval, buffer = cv2.imencode('.jpg', final_img)
+
+            new_signature = 'data:image/png;base64,%s' % str(base64.b64encode(buffer), 'utf8')
+        else:
             # Add legal name to signature
             image = Image.open(BytesIO(base64.b64decode(wiz.b64_image)))
             W, H = image.size
@@ -1246,41 +1290,9 @@ class signature_set_user(osv.osv_memory):
             draw.text(((W-w)/2,H-5), msg, font=font, fill="black")
             txt_img = BytesIO()
             new_img.save(txt_img, 'PNG')
-            to_write.update({'new_signature': 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')})
+            new_signature = 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')
 
-        if wiz.new_signature_import:
-            nparr = numpy.frombuffer(base64.b64decode(wiz.new_signature_import), dtype=numpy.uint8)
-            img_imp = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-            hsv = cv2.cvtColor(img_imp, cv2.COLOR_BGR2HSV)
-            mask = cv2.inRange(hsv, numpy.array([90, 38, 0]), numpy.array([145, 255, 255]))
-            result = cv2.bitwise_and(img_imp, img_imp, mask=mask)
-            result[mask == 0] = (255, 255, 255)
-
-            # Find contours on extracted mask, combine boxes, and extract ROI
-            cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-            cnts = numpy.concatenate(cnts)
-            x, y, w, h = cv2.boundingRect(cnts)
-            ROI = result[y:y + h, x:x + w]
-
-            # Add legal name to signature
-            font = cv2.FONT_HERSHEY_DUPLEX
-            textsize = cv2.getTextSize(msg, font, 0.8, 1)[0]
-            extra_width = 0
-            if textsize[0] >= ROI.shape[1]:
-                extra_width = ((textsize[0] - ROI.shape[1]) // 2) + 5
-            ROI = cv2.copyMakeBorder(ROI, 5, textsize[1] + 15, extra_width, extra_width, cv2.BORDER_CONSTANT, value=[255, 255, 255])
-
-            textX = (ROI.shape[1] - textsize[0]) // 2
-            ROI = cv2.putText(ROI, msg, (textX, ROI.shape[0] - 10), font, 0.8, (0, 0, 0), 1, cv2.LINE_AA)
-
-            # Convert img to jpg
-            retval, buffer = cv2.imencode('.jpg', ROI)
-
-            to_write.update({'new_signature_import': base64.b64encode(buffer)})
-
-        wiz.write(to_write, context=context)
+        wiz.write({'new_signature': new_signature}, context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_set_user_form_preview')
         return {
@@ -1309,7 +1321,6 @@ class signature_set_user(osv.osv_memory):
             new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,
                 'image': wiz.new_signature or '',
-                'imported_image': wiz.new_signature_import or False,
                 'legal_name': wiz.legal_name,
                 'user_name': wiz.user_id.name,
                 'from_date': wiz.user_id.signature_from,
@@ -1318,6 +1329,20 @@ class signature_set_user(osv.osv_memory):
             self.pool.get('res.users').write(cr, root_uid, real_uid, {'esignature_id': new_image}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
+
+    def signature_import_template(self, cr, uid, ids, context=None):
+        '''
+        Get the PDF template for the signature import
+        '''
+        if context is None:
+            context = {}
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'signature.import.template.report',
+            'context': context,
+        }
+
 
 signature_set_user()
 
