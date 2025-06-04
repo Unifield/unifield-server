@@ -440,7 +440,7 @@ if (auto_field && auto_field.val()){
                                 </tr>
                             % endfor
                         </tbody>
-                        % if field_total or field_real_total:
+                        % if field_total or field_real_total or field_sum_field:
                             <tfoot>
                                 <tr class="field_sum">
                                     % if selector:
@@ -470,6 +470,8 @@ if (auto_field && auto_field.val()){
                                                             <span class="sum_value_field" id="${field}">${val[1]}</span>
                                                         % endif
                                                     % endfor
+                                                % elif 'sum_field' in field_attrs:
+                                                    <span class="sum_value_field super_sum" id="${field_attrs['sum_field']}">${field_sum_field.get(field, '')}</span>
                                                 % else:
                                                     &nbsp;
                                                 % endif

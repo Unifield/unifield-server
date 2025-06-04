@@ -44,7 +44,7 @@ class List(TinyWidget):
               'hiddens', 'edit_inline', 'field_total', 'field_real_total',
               'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
               'dashboard', 'impex', 'hide_new_button', 'hide_delete_button',
-              'hide_edit_button', 'notselectable', 'filter_selector', 'default_selector', 'button_attrs', 'bothedit', 'extra_button']
+              'hide_edit_button', 'notselectable', 'filter_selector', 'default_selector', 'button_attrs', 'bothedit', 'extra_button', 'field_sum_field']
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
@@ -116,6 +116,7 @@ class List(TinyWidget):
         self.rounding_values = view.get('uom_rounding', {})
 
         self.field_no_sum = []
+        self.field_sum_field = {}
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
             if terp_params.get('_terp_model'):
@@ -452,7 +453,6 @@ class List(TinyWidget):
 
         set_tooltip = {}
         for node in root.childNodes:
-
             if node.nodeName == 'button':
                 if self.force_readonly:
                     continue
@@ -531,6 +531,9 @@ class List(TinyWidget):
                     if 'sum_selected' in attrs:
                         self.field_no_sum.append(name)
 
+                    if 'sum_field' in attrs and attrs['sum_field']:
+                        self.field_sum_field[name] = format.format_decimal(round(sum([x.get(attrs['sum_field'], 0) for x in data]), 2) or 0)
+
                     if 'real_sum' in attrs:
                         field_real_total[name] = [attrs['real_sum'], 0.0]
 
@@ -574,7 +577,6 @@ class List(TinyWidget):
                         row[to_set].tooltip = row[set_tooltip[to_set]].widget.get_display_value()
                     else:
                         row[to_set].tooltip = row[set_tooltip[to_set]].get_display_value()
-
 
         return headers, hiddens, data, field_total, field_real_total, buttons
 
