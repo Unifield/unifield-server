@@ -13,7 +13,7 @@
     <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=36.0rc1"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/m2o.js?v=14.0"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/m2m.js?v=27.0rc1"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/m2m.js?v=38.0rc1"></script>
     <script type="text/javascript" src="/openerp/static/javascript/o2m.js?v=10.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/binary.js"></script>
     <script type="text/javascript" src="/openerp/static/jscal/calendar.js"></script>

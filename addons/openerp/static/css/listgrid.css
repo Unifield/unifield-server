@@ -236,6 +236,11 @@ strong#total_sum_label {
     color: #7D7979;
     font-size: 0.9em;
 }
+.super_sum {
+    border-top: 0px !important;
+    color: blue;
+}
+
 .o2m_filter_block {
     width: 99.5%;
     border-bottom: 1px solid rgb(153, 153, 153);
