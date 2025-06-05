@@ -34,6 +34,10 @@ class account_bank_statement(osv.osv):
         if context is None:
             context = {}
 
+        if context.get('sync_update_execution') and 'prev_reg_id' in vals and not vals['prev_reg_id']:
+            # do not reset prev_reg_id by sync (could be former register from coo to proj)
+            del(vals['prev_reg_id'])
+
         if not context.get('sync_update_execution'):
             if 'balance_end_real' in vals:
                 new_vals = {'balance_start': vals['balance_end_real']}

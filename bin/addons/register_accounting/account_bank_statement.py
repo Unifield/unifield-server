@@ -519,7 +519,7 @@ class account_bank_statement(osv.osv):
                     raise osv.except_osv(_('Warning'), _('Bank statement balance is not equal to Calculated balance.'))
         context.update({'active_ids': ids, 'active_id': ids[0]})
         st = self.browse(cr, uid, ids[0], context=context)
-        prev_reg_id = previous_register_id(self, cr, uid, st.period_id.id, st.journal_id.id)
+        prev_reg_id = previous_register_id(self, cr, uid, st.period_id.id, st.journal_id.id, raise_error=False)
         if prev_reg_id:
             prev_reg_state = self.browse(cr, uid, prev_reg_id, context=context).state
         else:
