@@ -227,6 +227,7 @@ class account_move_line(osv.osv):
     def _check_employee_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Check that analytic distribution could be retrieved from given employee.
+        Not executed in a sync context
         If not employee, return True.
         """
         if context is None:
@@ -313,7 +314,8 @@ class account_move_line(osv.osv):
         Check analytic distribution for employee (if given)
         """
         res = super(account_move_line, self).create(cr, uid, vals, context, check)
-        self._check_employee_analytic_distribution(cr, uid, res, context)
+        if not context or not context.get('sync_update_execution'):
+            self._check_employee_analytic_distribution(cr, uid, res, context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
