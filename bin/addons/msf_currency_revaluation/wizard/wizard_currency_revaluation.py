@@ -44,7 +44,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             required=True),
         'period_id': fields.many2one(
             'account.period', string=_("Period"),
-            domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '<=', 12)]"),
+            domain="[('number', 'not in', [0,13,14,16])]"),
         'currency_table_id': fields.many2one(
             'res.currency.table', string=_("Currency table"),
             domain=[('state', '=', 'valid')]),
@@ -87,10 +87,30 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             context=context)
         return fiscalyear_ids and fiscalyear_ids[0] or False
 
+    def _get_default_period_id(self, cr, uid, context=None):
+        """Get default period to process."""
+        if context is None:
+            context = {}
+        user_obj = self.pool.get('res.users')
+        cp = user_obj.browse(cr, uid, uid, context=context).company_id
+        current_date = datetime.date.today().strftime('%Y-%m-%d')
+        period_obj = self.pool.get('account.period')
+        current_period_id = period_obj.find(cr, uid)[0]
+        first_revaluable_period = period_obj.search(
+            cr, uid,
+            [('date_start', '<=', current_date),
+             ('company_id', '=', cp.id),
+             ('state', '=', 'draft'),
+             ('number', 'not in', [0,13,14,16])],
+            order='date_start asc',
+            context=context)
+        return first_revaluable_period and first_revaluable_period[0] or current_period_id
+
     _defaults = {
         'label': "%(currency)s %(account)s %(rate)s",
         'revaluation_method': lambda *args: 'liquidity_month',
         'fiscalyear_id': _get_default_fiscalyear_id,
+        'period_id': _get_default_period_id,
     }
 
     def _get_last_yearly_reval_period_id(self, cr, uid, fy_id, context=None):
@@ -162,28 +182,29 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         user_obj = self.pool.get('res.users')
         period_obj = self.pool.get('account.period')
         journal_obj = self.pool.get('account.journal')
-        # Fiscalyear
         cp = user_obj.browse(cr, uid, uid, context=context).company_id
-        current_date = datetime.date.today().strftime('%Y-%m-%d')
-        fiscalyear_obj = self.pool.get('account.fiscalyear')
-        fiscalyear_ids = fiscalyear_obj.search(
-            cr, uid,
-            [('date_start', '<', current_date),
-             ('date_stop', '>', current_date),
-             ('company_id', '=', cp.id)],
-            limit=1,
-            context=context)
-        res['fiscalyear_id'] = fiscalyear_ids and fiscalyear_ids[0] or False
-
         # Period
-        period_date = datetime.date.today()
-        # NOTE: the method 'get_period_from_date()' supplied by the
-        #       'account_tools' module is used here
-        period_ids = period_obj.get_period_from_date(
-            cr, uid, period_date.strftime('%Y-%m-%d'))
-        res['period_id'] = period_ids and period_ids[0] or False
+        period_id = self._get_default_period_id(cr, uid, context=context)
+        res['period_id'] = period_id or False
         res['result_period_internal_id'] = \
             res['result_period_id'] = res['period_id']
+        # Fiscalyear
+        # Use by default the fiscal year of the default period or else current fiscal year
+        if period_id:
+            fiscalyear_id = period_obj.browse(cr, uid, period_id, context=context).fiscalyear_id.id
+        else:
+            cp = user_obj.browse(cr, uid, uid, context=context).company_id
+            current_date = datetime.date.today().strftime('%Y-%m-%d')
+            fiscalyear_obj = self.pool.get('account.fiscalyear')
+            fiscalyear_ids = fiscalyear_obj.search(
+                cr, uid,
+                [('date_start', '<', current_date),
+                 ('date_stop', '>', current_date),
+                 ('company_id', '=', cp.id)],
+                limit=1,
+                context=context)
+            fiscalyear_id = fiscalyear_ids and fiscalyear_ids[0]
+        res['fiscalyear_id'] =  fiscalyear_id or False
 
         # Journal
         # UFTP-44: journal of instance and of type 'revaluation'
