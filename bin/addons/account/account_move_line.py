@@ -686,6 +686,19 @@ class account_move_line(osv.osv):
                 arg.append(x)
         return arg
 
+    def _get_amount(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        cr.execute('select id, round(debit - credit,2) from account_move_line where id in %s', (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = round(x[1] or 0, 2)
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'quantity': fields.float('Quantity', digits=(16,2), help="The optional quantity expressed by this line, eg: number of product sold. The quantity is not a legal requirement but is very useful for some reports."),
@@ -703,6 +716,7 @@ class account_move_line(osv.osv):
         'reconcile_id': fields.many2one('account.move.reconcile', 'Reconcile', readonly=True, ondelete='set null', select=2),
         'reconcile_partial_id': fields.many2one('account.move.reconcile', 'Partial Reconcile', readonly=True, ondelete='set null', select=2),
         'amount_currency': fields.float('Amount Currency', help="The amount expressed in an optional other currency if it is a multi-currency entry.", digits_compute=dp.get_precision('Account')),
+        'amount': fields.function(_get_amount, string='Amount debit - credit', method=1, type='float'),
         'currency_id': fields.many2one('res.currency', 'Currency', help="The optional other currency if it is a multi-currency entry.", select=1),
         'period_id': fields.many2one('account.period', 'Period', required=True, select=2, join=1),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear', string='Fiscal Year', store=False, write_relate=False),

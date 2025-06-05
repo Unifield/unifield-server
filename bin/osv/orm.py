@@ -1711,6 +1711,12 @@ class orm_template(object):
 
     def __view_look_dom_arch(self, cr, user, node, view_id, context=None):
         fields_def = self.__view_look_dom(cr, user, node, view_id, context=context)
+        if node.tag == 'tree':
+            # add sum_field to the list of fields
+            # to allow the web to compute the sum on the 1st display
+            for x in node.iterfind('.//field[@sum_field]'):
+                if x.get('sum_field') and x.get('sum_field') not in fields_def:
+                    fields_def[x.get('sum_field')] = {'views': {}}
         node = self._disable_workflow_buttons(cr, user, node)
         #for page_view_id in node.getiterator('page'):
         for page_view_id in node.iterfind(".//page[@view_id]"):
