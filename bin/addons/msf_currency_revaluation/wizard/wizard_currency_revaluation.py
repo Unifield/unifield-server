@@ -93,18 +93,14 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             context = {}
         user_obj = self.pool.get('res.users')
         cp = user_obj.browse(cr, uid, uid, context=context).company_id
-        current_date = datetime.date.today().strftime('%Y-%m-%d')
         period_obj = self.pool.get('account.period')
-        current_period_id = period_obj.find(cr, uid)[0]
         first_revaluable_period = period_obj.search(
             cr, uid,
-            [('date_start', '<=', current_date),
-             ('company_id', '=', cp.id),
-             ('state', '=', 'draft'),
+            [('state', '=', 'draft'),
              ('number', 'not in', [0,13,14,16])],
             order='date_start asc',
             context=context)
-        return first_revaluable_period and first_revaluable_period[0] or current_period_id
+        return first_revaluable_period and first_revaluable_period[0] or False
 
     _defaults = {
         'label': "%(currency)s %(account)s %(rate)s",
