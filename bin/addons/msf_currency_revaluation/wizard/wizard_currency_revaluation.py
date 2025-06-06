@@ -307,6 +307,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 ]
                 # pre-select the period if it is opened
                 value['result_period_id'] = check_period_res[0] and check_period_res[1] or False
+            elif method == 'liquidity_month':
+                if period_id:
+                    period = period_obj.browse(cr, uid, period_id)
+                    value['posting_date'] = period.date_stop
         else:
             if period_id:
                 period = period_obj.browse(cr, uid, period_id)
