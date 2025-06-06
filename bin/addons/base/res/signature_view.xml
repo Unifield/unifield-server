@@ -51,10 +51,11 @@
                     <field name="json_signature" invisible="1" />
                     <field name="pdf_import" invisible="1" />
                     <newline />
-                    <field name="legal_name" />
-                    <field name="new_signature" widget="signature" colspan="4" attrs="{'readonly': [('new_signature_import', '!=', False)]}"/>
-                    <group colspan="4">
-                        <field name="new_signature_import" on_change="onchange_signature_import(new_signature_import)" attrs="{'readonly': [('new_signature', '!=', False)]}" />
+                    <field name="legal_name" colspan="4" />
+                    <field name="sign_creation_type" colspan="4" on_change="onchange_sign_creation_type(sign_creation_type)" />
+                    <field name="new_signature" widget="signature" colspan="4" attrs="{'invisible': [('sign_creation_type', '!=', 'draw')]}"/>
+                    <group colspan="4" attrs="{'invisible': [('sign_creation_type', '!=', 'import')]}">
+                        <field name="new_signature_import" on_change="onchange_signature_import(new_signature_import)" />
                         <button string="Export template" icon="gtk-edit" name="signature_import_template" type="object" />
                     </group>
                     <group colspan="4">

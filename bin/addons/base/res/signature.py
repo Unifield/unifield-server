@@ -17,6 +17,8 @@ from io import BytesIO
 import cv2
 import numpy
 import pdf2image
+import os
+import tools
 
 list_sign = {
     'purchase.order': [
@@ -1162,6 +1164,7 @@ class signature_set_user(osv.osv_memory):
         'preview': fields.boolean('Preview'),
         'legal_name': fields.char('Legal Name', size=128, required=1),
         'position': fields.selection([('top', 'Top'), ('middle', 'Middle'), ('bottom', 'Bottom')], string='Position'),
+        'sign_creation_type': fields.selection([('import', 'Importing'), ('draw', 'Drawing')], string='Type of Signature Creation', required=1),
     }
 
     #def _get_name(self, cr, uid, *a, **b):
@@ -1175,13 +1178,22 @@ class signature_set_user(osv.osv_memory):
         'pdf_import': False,
     }
 
+    def onchange_sign_creation_type(self, cr, uid, ids, sign_creation_type, context=None):
+        if not context:
+            context = {}
+        res = {}
+        if sign_creation_type == 'import':
+            # TOFIX: Doesn't clear the drawing, javascript is used for this: $('#sig_new_signature').signature('clear')
+            res.update({'value': {'new_signature': False}})
+        elif sign_creation_type == 'draw':
+            res.update({'value': {'new_signature_import': False}})
+        return res
+
     def onchange_signature_import(self, cr, uid, ids, sign_import, context=None):
         if not context:
             context = {}
         if not ids:
             return {}
-        if isinstance(ids, int):
-            ids = [ids]
         res = {}
         if sign_import:
             if not sign_import.endswith(('.png', '.jpg', '.jpeg', '.pdf')):
@@ -1230,30 +1242,109 @@ class signature_set_user(osv.osv_memory):
             nparr = numpy.frombuffer(base64.b64decode(imported_signature), dtype=numpy.uint8)
             img_imp = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-            hsv = cv2.cvtColor(img_imp, cv2.COLOR_BGR2HSV)
-            mask = cv2.inRange(hsv, numpy.array([90, 38, 38]), numpy.array([145, 255, 255]))
-            result = cv2.bitwise_and(img_imp, img_imp, mask=mask)
-            result[mask == 0] = (255, 255, 255)
+            # Find the template
+            path = os.path.join('base', 'res', 'images', 'template_sign_zone_mini.png')
+            image_file = tools.file_open(path, 'rb')
+            try:
+                sign_zone_template =  base64.b64encode(image_file.read())
+            finally:
+                image_file.close()
+            if sign_zone_template is None:
+                raise osv.except_osv(_('Warning'), _("The template for the signature zone could not be found"))
 
-            # Find contours on extracted mask, combine boxes, and extract ROI
-            cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-            if not cnts:
-                raise osv.except_osv(_('Warning'), _("No signature was found in the Imported document"))
-            cnts = numpy.concatenate(cnts)
-            x, y, w, h = cv2.boundingRect(cnts)
-            final_img = result[y:y + h, x:x + w]
+            template_nparr = numpy.frombuffer(base64.b64decode(sign_zone_template), dtype=numpy.uint8)
 
-            # Resize if the image is too large or long
-            size_limit = 500
-            if final_img.shape[1] > final_img.shape[0] and final_img.shape[1] > size_limit:
-                aspect_ratio = size_limit / final_img.shape[1]
-                new_height = int(final_img.shape[0] * aspect_ratio)
-                final_img = cv2.resize(final_img, (size_limit, new_height))
-            elif final_img.shape[1] < final_img.shape[0] and final_img.shape[0] > size_limit:
-                aspect_ratio = size_limit / final_img.shape[0]
-                new_width = int(final_img.shape[1] * aspect_ratio)
-                final_img = cv2.resize(final_img, (new_width, size_limit))
+            # Grayscale of the template + imported image
+            gray_template = cv2.imdecode(template_nparr, cv2.IMREAD_GRAYSCALE)
+            w, h = gray_template.shape[::-1]
+            gray_img = cv2.cvtColor(img_imp, cv2.COLOR_BGR2GRAY)
+            w_img, h_img = gray_img.shape[::-1]
+
+            # Appliquer un flou pour réduire le bruit
+            blurred = cv2.GaussianBlur(gray_img, (5, 5), 0)
+
+            # Détection des contours (on cherche les bords noirs donc seuil bas)
+            edges = cv2.Canny(blurred, 30, 100)
+
+            # Trouver les contours dans l'image
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            # Parcourir les contours trouvés
+            coord = []
+            for cnt in contours:
+                # Approximons le contour à un polygone
+                approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
+
+                # Si c'est un quadrilatère (4 sommets) et qu'il est suffisamment grand
+                if len(approx) == 4 and cv2.contourArea(cnt) > 1000:
+                    # Vérifie si les bords sont bien noirs
+                    mask = numpy.zeros(gray_img.shape, dtype=numpy.uint8)
+                    cv2.drawContours(mask, [approx], -1, (255, 255, 255), thickness=cv2.FILLED)
+                    mean_val = cv2.mean(gray_img, mask=mask)[0]
+
+                    if mean_val < 255:  # seuil pour considérer "noir"
+                        cv2.drawContours(img_imp, [approx], -1, (0, 255, 0), 3)
+
+                        # Used to flatted the array containing
+                        # the co-ordinates of the vertices.
+                        n = approx.ravel()
+                        i = 0
+                        for j in n:
+                            if (i % 2 == 0):
+                                x = n[i]
+                                y = n[i + 1]
+
+                                coord.append((x, y))
+                            i = i + 1
+                        break
+
+            # Afficher le résultat
+            if coord:
+                final_img = img_imp[coord[0][0]:coord[2][0], coord[1][0]:coord[3][0]]
+            else:
+                final_img = img_imp
+
+            # The template is scaled to a smaller size to find the best match in coordinates in the imported file
+            # best_scaled = []
+            # for scale in numpy.linspace(0.2, 1.0, 20)[::-1]:
+            #     scaled_img = cv2.resize(gray_img, (int(w_img * scale), int(h_img * scale)), interpolation=cv2.INTER_AREA)
+            #     r = w_img / float(scaled_img.shape[1])
+            #     # Don't continue the loop if the resized image is smaller than the template
+            #     if scaled_img.shape[1] < w or scaled_img.shape[0] < h:
+            #         break
+            #
+            #     res_img = cv2.matchTemplate(scaled_img, gray_template, cv2.TM_CCOEFF_NORMED)
+            #     if res_img is not None:
+            #         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res_img)
+            #         if not best_scaled or max_val > best_scaled[0]:
+            #             best_scaled = [max_val, max_loc, r]
+            #
+            # if not best_scaled:
+            #     raise osv.except_osv(_('Warning'), _("The signature could not be found, please use the template file"))
+            # # Use the best scale found to get the signature zone
+            # scale_up = best_scaled[2]
+            # scaled_w = int(w * scale_up)
+            # scaled_h = int(h * scale_up)
+            # top_left = (int(best_scaled[1][0] * scale_up), int(best_scaled[1][1] * scale_up))
+            # bottom_right = (top_left[0] + scaled_w, top_left[1] + scaled_h)
+            # cv2.rectangle(img_imp, top_left, bottom_right, (0, 255, 0), 2)
+            #
+            # # "+" and "-" to remove the extra space from the template
+            # extra_w = int(w_img * 0.02)
+            # extra_h = int(h_img * 0.07)
+            # final_img = img_imp
+            # final_img = img_imp[top_left[1] + extra_w : bottom_right[1] - extra_w, top_left[0] + extra_h:bottom_right[0] - extra_h]
+
+            # Resize if the image is too large or too long
+            # size_limit = 400
+            # if final_img.shape[1] >= final_img.shape[0] and final_img.shape[1] > size_limit:
+            #     aspect_ratio = size_limit / final_img.shape[1]
+            #     new_height = int(final_img.shape[0] * aspect_ratio)
+            #     final_img = cv2.resize(final_img, (size_limit, new_height))
+            # elif final_img.shape[1] <= final_img.shape[0] and final_img.shape[0] > size_limit:
+            #     aspect_ratio = size_limit / final_img.shape[0]
+            #     new_width = int(final_img.shape[1] * aspect_ratio)
+            #     final_img = cv2.resize(final_img, (new_width, size_limit))
 
             # Add legal name to signature
             font = cv2.FONT_HERSHEY_DUPLEX
