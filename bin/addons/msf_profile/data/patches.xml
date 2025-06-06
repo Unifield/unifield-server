@@ -1217,8 +1217,8 @@
             <field name="method">update_us_435_2</field>
         </record>
 
-        <record id="us_13995_2_sign_roles_and_in_sign" model="patch.scripts">
-            <field name="method">us_13995_2_sign_roles_and_in_sign</field>
+        <record id="us_14450_sign_roles_in" model="patch.scripts">
+            <field name="method">us_14450_sign_roles_in</field>
         </record>
     </data>
 </openerp>

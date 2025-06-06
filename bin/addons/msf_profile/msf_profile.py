@@ -59,26 +59,10 @@ class patch_scripts(osv.osv):
     }
 
     # UF37.0
-    def us_13995_2_sign_roles_and_in_sign(self, cr, uid, *a, **b):
+    def us_14450_sign_roles_in(self, cr, uid, *a, **b):
         '''
-        In the existing signature lines, change the "Received by" role into "Approved by" and "Controlled by" role into
-        "Received by" for INs
-        Create the signature lines for the new third role on existing INs
+        To create "Approved by" signature lines on existing INs
         '''
-        cr.execute("""
-            UPDATE signature_line sl SET name = 'Approved by' FROM signature s, stock_picking p 
-                WHERE sl.signature_id = s.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = p.id 
-                    AND p.type = 'in' AND p.subtype = 'standard' AND sl.name = 'Received by'
-        """)
-        self.log_info(cr, uid, "US-12270-13064-13353: %s IN signature line's roles were updated to 'Approved by'" % (cr.rowcount,))
-        cr.execute("""
-            UPDATE signature_line sl SET name = 'Received by' FROM signature s, stock_picking p 
-                WHERE sl.signature_id = s.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = p.id 
-                    AND p.type = 'in' AND p.subtype = 'standard' AND sl.name = 'Controlled by'
-        """)
-        self.log_info(cr, uid, "US-12270-13064-13353: %s IN signature line's roles were updated to 'Received by'" % (cr.rowcount,))
-
-        # To create signature lines on existing documents, the header signature was added with US-9406
         setup_obj = self.pool.get('signature.setup')
         sign_install = setup_obj.create(cr, uid, {})
         setup_obj.execute(cr, uid, [sign_install])
