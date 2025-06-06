@@ -80,8 +80,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         fiscalyear_obj = self.pool.get('account.fiscalyear')
         fiscalyear_ids = fiscalyear_obj.search(
             cr, uid,
-            [('date_start', '<', current_date),
-             ('date_stop', '>', current_date),
+            [('date_start', '<=', current_date),
+             ('date_stop', '>=', current_date),
              ('company_id', '=', cp.id)],
             limit=1,
             context=context)
@@ -194,8 +194,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             fiscalyear_obj = self.pool.get('account.fiscalyear')
             fiscalyear_ids = fiscalyear_obj.search(
                 cr, uid,
-                [('date_start', '<', current_date),
-                 ('date_stop', '>', current_date),
+                [('date_start', '<=', current_date),
+                 ('date_stop', '>=', current_date),
                  ('company_id', '=', cp.id)],
                 limit=1,
                 context=context)
