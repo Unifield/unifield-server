@@ -1216,5 +1216,9 @@
         <record id="us_14379_period_states_closed_by_sync" model="patch.scripts">
             <field name="method">update_us_435_2</field>
         </record>
+
+        <record id="us_13995_2_sign_roles_and_in_sign" model="patch.scripts">
+            <field name="method">us_13995_2_sign_roles_and_in_sign</field>
+        </record>
     </data>
 </openerp>

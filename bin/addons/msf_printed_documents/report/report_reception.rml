@@ -801,13 +801,13 @@
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT">[[ translate('Approved by') ]] :</para>
+                  <para style="TextInformation" alignment="LEFT">[[ translate('Approved by') ]] [[ getSign(objects[0], 'tr', 'backup') ]]:</para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT">[[ translate('Received by') ]] [[ getSign(objects[0], 'tr', 'backup') ]]:</para>
+                  <para style="TextInformation" alignment="LEFT">[[ translate('Received by') ]] [[ getSign(objects[0], 'sr', 'backup') ]]:</para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT">[[ translate('Controlled by') ]] [[ getSign(objects[0], 'sr', 'backup') ]]:</para>
+                  <para style="TextInformation" alignment="LEFT">[[ translate('Controlled by') ]] [[ getSign(objects[0], 'fr', 'backup') ]]:</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
@@ -824,13 +824,13 @@
                   <para style="TextInformation" alignment="LEFT">Name :</para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT"></para>
-                </td>
-                <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'tr', 'user_name') ]]</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'sr', 'user_name') ]]</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'fr', 'user_name') ]]</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
@@ -848,13 +848,13 @@
                   <para style="TextInformation" alignment="LEFT">Date :</para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT"></para>
-                </td>
-                <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'tr', 'date', '%d/%m/%Y %H:%M') ]]</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'sr', 'date', '%d/%m/%Y %H:%M') ]]</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'fr', 'date', '%d/%m/%Y %H:%M') ]]</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
@@ -871,13 +871,13 @@
                   <para style="TextInformation" alignment="LEFT">Value :</para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT"></para>
-                </td>
-                <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'tr', 'format_value') ]]</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'sr', 'format_value') ]]</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'fr', 'format_value') ]]</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
@@ -894,11 +894,9 @@
                 <td>
                   <para style="TextInformation" alignment="LEFT">Signature :</para>
                 </td>
-                <td>
-                  <para style="TextInformation" alignment="LEFT"></para>
-                </td>
                 <td><image width="100" height="25" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image')]]</image></td>
                 <td><image width="100" height="25" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image')]]</image></td>
+                <td><image width="100" height="25" mask="auto">[[ getSign(objects[0], 'fr', 'image') or removeParentNode('image')]]</image></td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>

@@ -58,8 +58,9 @@ list_sign = {
         ('mr', _('Mission Responsible'), False, 1),
     ],
     'stock.picking.in': [
-        ('tr', _('Received by'), True, 1),
-        ('sr', _('Controlled by'), True, 2),
+        ('tr', _('Approved by'), True, 1),
+        ('sr', _('Received by'), True, 2),
+        ('fr', _('Controlled by'), True, 2),
     ],
     'stock.picking.int': [
         ('tr', _('Approved by'), True, 1),
