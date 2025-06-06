@@ -19,7 +19,6 @@
                         attrs="{'invisible': [('revaluation_method', '!=', 'liquidity_month')],
                                 'required': [('revaluation_method', '=', 'liquidity_month')]}"
                         on_change="on_change_reval(revaluation_method, fiscalyear_id, period_id, 'period_id')" />
-                    <field name="current_period_id" invisible="1"/>
                     <newline/>
                     <field name="currency_table_id"
                         attrs="{'invisible': [('revaluation_method', '=', 'liquidity_month')],
