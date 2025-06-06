@@ -97,7 +97,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         first_revaluable_period = period_obj.search(
             cr, uid,
             [('state', '=', 'draft'),
-             ('number', 'not in', [0,13,14,16])],
+             ('number', '<=', 12)],
             order='date_start asc',
             context=context)
         return first_revaluable_period and first_revaluable_period[0] or False
