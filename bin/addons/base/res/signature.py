@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from curses.textpad import rectangle
 
 from osv import fields, osv
 from tools.translate import _
