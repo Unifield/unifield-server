@@ -2321,3 +2321,7 @@ def search_global_instance_level(self, cr, uid, obj, name, args, context=None):
         if not self.pool.get('msf.instance').search_exists(cr, uid, [('level', arg[1], arg[2]), ('id', '=', instance_id)]):
             return [('id', '=', 0)]
     return []
+
+class ParsedException(Exception):
+    pass
+

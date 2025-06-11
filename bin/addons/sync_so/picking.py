@@ -179,8 +179,11 @@ class stock_picking(osv.osv):
             'resourced_original_remote_line': data.get('sale_line_id', False) and data['sale_line_id'].get('resourced_original_remote_line', False) or False,
 
         }
-        for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width']:
-            result[k] = data.get(k)
+        for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width', 'parcel_ids']:
+            if not data.get(k) and data.get('shipment_line_id') and data.get('shipment_line_id', {}).get(k):
+                result[k] = data['shipment_line_id'][k]
+            else:
+                result[k] = data.get(k)
         return result
 
     def package_data_update_in(self, cr, uid, source, pick_dict, context=None):
@@ -425,6 +428,7 @@ class stock_picking(osv.osv):
                                 'total_length': data['length'],
                                 'total_width': data['width'],
                                 'packing_list': data.get('packing_list'),
+                                'parcel_ids': data.get('parcel_ids'),
                                 'ppl_name': data.get('ppl_name'),
                             })
                         data['pack_info_id'] = pack_info_created[pack_key]
@@ -1281,17 +1285,3 @@ class stock_picking(osv.osv):
 
 stock_picking()
 
-class shipment(osv.osv):
-    _inherit = "shipment"
-
-    def on_change(self, cr, uid, changes, context=None):
-        if context is None \
-           or not context.get('sync_message_execution') \
-           or context.get('no_store_function'):
-            return
-        for id, changes in list(changes.items()):
-            logger = get_sale_purchase_logger(cr, uid, self, id, \
-                                              context=context)
-            logger.is_status_modified = True
-
-shipment()

@@ -11,7 +11,7 @@
                     <button name="select_all" string="Copy all" colspan="2" type="object" icon="gtk-jump-to" />
                     <button name="deselect_all" string="Clear all" colspan="2" type="object" icon="gtk-undo" />
                     <field name="family_ids" nolabel="1" colspan="4" mode="tree" widget="one2many_list" editable="top">
-                        <tree string="Packs" editable="top" hide_delete_button="1" hide_new_button="1">
+                        <tree string="Packs" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:parcel_ids_error">
                             <field name="sale_order_id" readonly="1"/>
                             <field name="ppl_id" readonly="1" />
                             <field name="from_pack" readonly="1" />
@@ -21,7 +21,11 @@
                             <field name="volume" readonly="1" />
                             <field name="weight" readonly="1" />
                             <field name="selected_number" />
+                            <field name="parcel_ids_error" invisible="1" />
+                            <field name="has_parcels_info" invisible="1" />
+                            <button name="select_parcel_ids" string="Select Parcel Ids" icon="terp-accessories-archiver-minus" type="object" attrs="{'invisible': ['|', ('selected_number', '=', 0), ('has_parcels_info', '=', False)]}" />
                             <field name="selected_weight" readonly="1" />
+                            <field name="integrity_status" readonly="1" />
                         </tree>
                     </field>
                     <separator colspan="4" string="Actions" />

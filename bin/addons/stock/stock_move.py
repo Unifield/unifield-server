@@ -362,29 +362,41 @@ class stock_move(osv.osv):
 
     def _get_qty_per_pack(self, cr, uid, ids, field, arg, context=None):
         result = {}
-        for move in self.read(cr, uid, ids, ['to_pack', 'from_pack', 'product_qty'], context=context):
-            result[move['id']] = 0.0
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['to_pack', 'from_pack', 'product_qty', 'shipment_line_id'], context=context):
+            result[move.id] = 0.0
             # number of packs with from/to values (integer)
-            if move['to_pack'] == 0:
+            if move.shipment_line_id:
+                to_pack = move.shipment_line_id.to_pack
+                from_pack = move.shipment_line_id.from_pack
+            else:
+                to_pack = move.to_pack
+                from_pack = move.from_pack
+            if to_pack == 0:
                 num_of_packs = 0
             else:
-                num_of_packs = move['to_pack'] - move['from_pack'] + 1
+                num_of_packs = to_pack - from_pack + 1
                 if num_of_packs:
-                    result[move['id']] = move['product_qty'] / num_of_packs
+                    result[move.id] = move.product_qty / num_of_packs
                 else:
-                    result[move['id']] = 0
+                    result[move.id] = 0
         return result
 
     def _get_num_of_pack(self, cr, uid, ids, field, arg, context=None):
         result = {}
-        for move in self.read(cr, uid, ids, ['to_pack', 'from_pack'], context=context):
-            result[move['id']] = 0
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['to_pack', 'from_pack', 'shipment_line_id'], context=context):
+            result[move.id] = 0
+            if move.shipment_line_id:
+                to_pack = move.shipment_line_id.to_pack
+                from_pack = move.shipment_line_id.from_pack
+            else:
+                to_pack = move.to_pack
+                from_pack = move.from_pack
             # number of packs with from/to values (integer)
-            if move['to_pack'] == 0:
+            if to_pack == 0:
                 num_of_packs = 0
             else:
-                num_of_packs = move['to_pack'] - move['from_pack'] + 1
-            result[move['id']] = num_of_packs
+                num_of_packs = to_pack - from_pack + 1
+            result[move.id] = num_of_packs
         return result
 
     def _get_danger(self, cr, uid, ids, fields, arg, context=None):
@@ -594,6 +606,7 @@ class stock_move(osv.osv):
         # msf_outgoing
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
+        'parcel_ids': fields.related('pack_info_id', 'parcel_ids', type='text', string='Parcel Ids'),
         'ppl_returned_ok': fields.boolean(string='Has been returned ?', readonly=True, internal=True),
         'integrity_error': fields.selection(INTEGRITY_STATUS_SELECTION, 'Error', readonly=True),
         'pack_type': fields.many2one('pack.type', string='Pack Type'),

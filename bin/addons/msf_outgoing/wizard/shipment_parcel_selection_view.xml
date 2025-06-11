@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="shipment_parcel_selection_ppl_form_view" model="ir.ui.view">
+            <field name="name">shipment.parcel.selection.ppl.form.view</field>
+            <field name="model">shipment.parcel.ppl.selection</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="List PPL Parcel Ids">
+                    <separator string="One Parcel ID per line" colspan="4"/>
+                    <field name="parcel_number" invisible="1" />
+                    <html colspan="4">
+                        <div id="parcels-for">
+                            <div>
+                                <span id="number_to_select">0</span> parcels to selected,
+                                <span id="number_selected">0</span> selected parcels.
+                            </div>
+                        </div>
+                        <script language="javascript">
+                            function update_number_selected() {
+                                var to_select = $('#parcel_number').val();
+
+                                var cont = $('#parcel_ids').val();
+                                var selected = 0;
+
+                                cont.split(/\r|\r\n|\n/).forEach(function(line) {
+                                    if (line.replace(/\s+/g,"")) {
+                                        selected += 1;
+                                    }
+                                });
+
+                                $('#number_selected').html(selected);
+
+
+                                if ( selected == to_select) {
+                                    $("#select_parcels").show()
+                                } else {
+                                    $("#select_parcels").hide()
+
+                                }
+                            }
+
+                            $(document).ready(function() {
+
+                                var to_select_number = $('#parcel_number').val()
+                                $('#number_to_select').html(to_select_number);
+
+                                update_number_selected();
+                                $('#parcel_ids').bind('keyup', update_number_selected);
+
+                            });
+
+                        </script>
+                    </html>
+                    <group>
+                        <field name="parcel_ids" colspan="4" rowspan="30" nolabel="1" />
+                    </group>
+                    <newline />
+                    <button name="cancel" string="Cancel" type="object" icon="gtk-cancel"/>
+                    <button name="select_parcels" string="Ok" type="object" icon="gtk-ok"/>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="shipment_parcel_selection_form_view" model="ir.ui.view">
+            <field name="name">shipment.parcel.selection.form.view</field>
+            <field name="model">shipment.parcel.selection</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Select Parcel Ids">
+                    <separator string="Click on the box to select or unselect the parcel" colspan="4"/>
+                    <field name="parcel_number" invisible="1"/>
+                    <field name="selected_item_ids" invisible="1"/>
+                    <field name="available_items_ids" invisible="1"/>
+                    <html colspan="4">
+                        <div id="parcels-form">
+                            <div id="select-buttons">
+                                <span  onclick="select_all()" class="button parcel-select">Select All</span>
+                                <span  onclick="unselect_all()" class="button parcel-select">Unselect All</span>
+                            </div>
+                            <div>
+                                Search Parcels: <input onkeyup="search_items($(this).val())" id="parcel-search" /> <span onclick="$('#parcel-search').val(''); search_items();" class="button">Clear</span>
+                            </div>
+                            <div>
+                                <span id="number_to_select">0</span> parcels to selected, 
+                                <span id="number_selected">0</span> selected parcels.
+                            </div>
+                            <div id="parcel-list">
+                                <ul id="parcelids"/>
+                            </div>
+                        </div>
+                        <script language="javascript">
+                            function update_number_selected() {
+                                var selected = $('#parcelids li.selected').length;
+                                var to_select = $('#parcel_number').val();
+                                $('#number_selected').html(selected);
+
+                                if ( selected == to_select) {
+                                    $("#select_parcels").show()
+                                } else {
+                                    $("#select_parcels").hide()
+
+                                }
+                            }
+
+                            function search_items(s) {
+                                if (!s) {
+                                    $('#parcelids li').show();
+                                } else {
+                                    $('#parcelids li').each(function () {
+                                        $(this).toggle($(this).children("input").attr('value').includes(s));
+                                });
+                                }
+                            }
+
+                            function select_all() {
+                                $('#parcelids li').addClass('selected');
+                                $('#parcelids input').attr('checked', true);
+                                update_number_selected()
+                            }
+
+                            function unselect_all() {
+                                $('#parcelids li').removeClass('selected');
+                                $('#parcelids input').attr('checked', false);
+                                update_number_selected()
+                            }
+
+                            function click_box() {
+                                $(this).toggleClass('selected'); 
+                                $(this).children("input").attr('checked', $(this).hasClass('selected'));
+                                update_number_selected();
+                            }
+
+                            $(document).ready(function() {
+
+                                var to_select_number = $('#parcel_number').val()
+                                $('#number_to_select').html(to_select_number);
+
+                                var available_items_ids = $('#available_items_ids').val().split(',');
+
+                                var all_pack = to_select_number == available_items_ids.length
+
+                                var selected_item_ids = Array()
+
+                                if (all_pack) {
+                                    selected_item_ids = available_items_ids;
+                                    $('.parcel-select').hide();
+                                } else {
+                                    var selected_item = $('#selected_item_ids').val()
+                                    if (selected_item) {
+                                        selected_item_ids=selected_item.split(',');
+                                    } else if (to_select_number >= available_items_ids.length / 2) {
+                                        selected_item_ids = available_items_ids;
+                                    }
+                                }
+
+                                available_items_ids.forEach(function (f){
+                                    var myclass = '';
+                                    var mycheck = '';
+                                    if (selected_item_ids.includes(f)) {
+                                        myclass = 'selected';
+                                        mycheck = 'checked';
+                                    }
+                                    if (all_pack) {
+                                        mycheck += ' disabled ';
+                                        onclick = '';
+                                    } else {
+                                        onclick = click_box;
+                                    }
+                                    $("&lt;li&gt; &lt;input type='checkbox' "+mycheck+" value=" + f + " / &gt;"+f+"&lt;/li&gt;").addClass(myclass).click(onclick).appendTo('#parcelids');
+                                })
+
+                                update_number_selected();
+
+                                var original_onclick = $('#select_parcels').attr('onclick');
+                                $('#select_parcels').removeAttr('onclick');
+                                $("#select_parcels").click(function() {
+                                    list_selected = Array()
+                                    $('#parcelids input:checked').each(function(){
+                                        list_selected.push($(this).attr('value'));
+                                    });
+                                    $('#selected_item_ids').val(list_selected.join(','));
+
+                                    original_onclick();
+                                });
+                            });
+
+                        </script>
+                    </html>
+                    <button name="cancel" string="Cancel" type="object" icon="gtk-cancel"/>
+                    <button name="select_parcels" string="Ok" type="object" icon="gtk-ok"/>
+            </form>
+
+            </field>
+        </record>
+
+    </data>
+</openerp>

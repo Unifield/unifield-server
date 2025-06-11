@@ -1220,5 +1220,10 @@
         <record id="us_14450_sign_roles_in" model="patch.scripts">
             <field name="method">us_14450_sign_roles_in</field>
         </record>
+
+        <record id="us_9592_pack_family_to_table" model="patch.scripts">
+            <field name="method">us_9592_pack_family_to_table</field>
+        </record>
+
     </data>
 </openerp>

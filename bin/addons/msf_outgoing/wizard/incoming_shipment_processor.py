@@ -59,6 +59,7 @@ class in_family_processor(osv.osv):
         'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
         'volume': fields.float('Volume', digits=(16,2)),
         'packing_list': fields.char('Supplier Packing List', size=30),
+        #'parcel_id': fields.text('Parcel ID'),
         'integrity_status': fields.selection(
             string='Integrity status',
             selection=[
@@ -1241,6 +1242,7 @@ class stock_move_in_processor(osv.osv):
         'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
         'from_pack': fields.integer_null(string='From p.'),
         'to_pack': fields.integer_null(string='To p.'),
+        'parcel_ids': fields.text('Parcel Ids'),
         'weight': fields.float_null('Weight', digits=(16,2)),
         'volume': fields.float_null('Volume', digits=(16,2)),
         'height': fields.float_null('Height', digits=(16,2)),

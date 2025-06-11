@@ -206,13 +206,14 @@
                         on_change="onchange_uom_qty(uom_id, quantity)"
                         />
                     <field name="uom_id" readonly="1" />
-                    <field name="from_pack" readonly="1" />
-                    <field name="to_pack" readonly="1" />
+                    <field name="from_pack" readonly="1" tooltip="parcel_ids" />
+                    <field name="to_pack" readonly="1" tooltip="parcel_ids" />
                     <field name="filter_pack" filter_selector="1" invisible="1" />
                     <field name="total_volume" readonly="1" />
                     <field name="total_weight" readonly="1" />
                     <field name="ppl_name" readonly="1" filter_selector="1" />
                     <field name="packing_list" readonly="1" filter_selector="1" />
+                    <field name="parcel_ids" filter_selector="1" invisible="1" />
                     <button name="open_split_wizard"
                         type="object"
                         icon="terp-stock_effects-object-colorize"
