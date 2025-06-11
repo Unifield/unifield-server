@@ -1009,7 +1009,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             return True
         # Objects
         product_obj = self.pool.get('product.product')
-        data_obj = self.pool.get('ir.model.data')
 
         if not context:
             context = {}
@@ -1079,17 +1078,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if vals.get('po_cft') == 'cft':
             vals['supplier'] = False
 
-        # UFTP-139: if make_to_stock and no location, put Stock as location
-        if ids and 'type' in vals and vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
-            # Define Stock as location_id for each line without location_id
-            for line in self.read(cr, uid, ids, ['location_id'], context=context):
-                line_vals = vals.copy()
-                if not line['location_id'] and not vals.get('location_id', False):
-                    stock_loc = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-                    line_vals['location_id'] = stock_loc
-                result = super(sale_order_line, self).write(cr, uid, [line['id']], line_vals, context)
-        else:
-            result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
+        result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
 
         f_to_check = ['type', 'order_id', 'po_cft', 'product_id', 'supplier', 'state', 'location_id']
         for f in f_to_check:
@@ -2243,7 +2232,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         return res
         else:
             related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
-            value['related_sourcing_ok'] = related_sourcing_ok
+            value.update({
+                'related_sourcing_ok': related_sourcing_ok,
+                'location_id': False,
+            })
             if not related_sourcing_ok:
                 value['related_sourcing_id'] = False
 
