@@ -1110,3 +1110,50 @@ iframe.ui-dialog-content {
     width: 100% !important;
 }
 
+#parcelids {
+  border: 1px solid #eee;
+  width: 100%;
+  min-height: 20px;
+  list-style-type: none;
+  margin: 0;
+  margin-right: 0px;
+  padding: 5px 0 0 0;
+  float: left;
+  margin-right: 10px;
+  background: white:
+}
+
+#parcelids li {
+  margin: 0 5px 5px 5px;
+  padding: 5px;
+  font-size: 1.2em;
+  width: 25%;
+  border: 1px solid black;
+  cursor: pointer;
+  background: ghostwhite;
+  float:left;
+  display:inline;
+}
+
+#parcelids .selected {
+    background: lightgrey;
+    text-decoration: none;
+}
+
+#parcels-form .button {
+    margin-left: 10px;
+}
+
+#parcels-form #select-buttons {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#parcels-form #parcel-list {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#parcels-form input {
+    margin-right: 4px;
+}

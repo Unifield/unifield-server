@@ -285,13 +285,15 @@ register_widget(Notebook, ["notebook"])
 
 class Page(Frame):
 
-    params = ['view_id']
+    params = ['view_id', 'on_change']
 
     def __init__(self, **attrs):
         super(Page, self).__init__(**attrs)
         self.view_id = ''
         if attrs.get('view_id'):
             self.view_id = attrs['view_id']
+        if attrs.get('on_change'):
+            self.on_change = attrs['on_change']
         if self.invisible:
             self.attributes = "{'invisible': [1]}"
 

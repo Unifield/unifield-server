@@ -596,6 +596,9 @@ class Char(TinyWidget):
         self.text = self.get_text()
         self.link = self.get_link()
 
+        # fill the value attribute an span, used if state is both displayed on line and used in a readonly condition
+        self.default = attrs.get('value', '')
+
         self.truncate = attrs.get('truncate', False)
 
         self.color = None
@@ -627,6 +630,7 @@ class Char(TinyWidget):
 
     def __str__(self):
         return ustr(self.text)
+
 
 class Image(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/image.mako"

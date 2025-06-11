@@ -366,6 +366,10 @@ Notebook.prototype = {
             if (page.attributes.view_id.value) {
                 this.loadtab(tab, page.attributes.view_id.value);
             }
+            if (page.attributes.on_change) {
+                page.callback = page.attributes.on_change.value
+                onChangePop(page)
+            }
             MochiKit.DOM.addElementClass(tab, 'notebook-tab-active');
             MochiKit.DOM.addElementClass(page, 'notebook-page-active');
         }
