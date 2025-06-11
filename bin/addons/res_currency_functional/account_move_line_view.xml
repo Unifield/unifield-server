@@ -26,10 +26,10 @@
                     <field name="partner_type" invisible="1"/>
                     <field name="debit_currency" sum="Total Book. Debit"/>
                     <field name="credit_currency" sum="Total Book. Credit"/>
-                    <field name="currency_id"/>
+                    <field name="currency_id" sum_field="amount_currency"/>
                     <field name="debit" sum="Total Func. Debit"/>
                     <field name="credit" sum="Total Func. Credit"/>
-                    <field name="functional_currency_id"/>
+                    <field name="functional_currency_id" sum_field="amount"/>
                     <field name="reconcile_txt"/>
                     <field name="state"/>
                 </tree>
@@ -144,10 +144,10 @@
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
                     <field name="credit_currency" sum="Total Booking Credit"/>
-                    <field name="currency_id"/>
+                    <field name="currency_id" sum_field="amount_currency" />
                     <field name="debit" sum="Total Functional Debit" readonly="1"/>
                     <field name="credit" sum="Total Functional Credit" readonly="1"/>
-                    <field name="functional_currency_id" readonly="1"/>
+                    <field name="functional_currency_id" readonly="1" sum_field="amount"/>
                     <field name="reconcile_txt" readonly="1"/>
                     <field name="state"/>
                     <field name="product_code" invisible="1"/>

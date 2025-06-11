@@ -2199,7 +2199,7 @@ class account_bank_statement_line(osv.osv):
         distrib_id = False
         if 'analytic_distribution_id' in values and values.get('analytic_distribution_id') != False:
             distrib_id = values.get('analytic_distribution_id')
-        if not distrib_id:
+        if not distrib_id and not context.get('sync_update_execution'):
             values = self.update_employee_analytic_distribution(cr, uid,
                                                                 values=values)
         self._check_cheque_number_uniticy(cr, uid, values.get('statement_id'),

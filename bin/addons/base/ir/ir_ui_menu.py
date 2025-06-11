@@ -169,7 +169,7 @@ class ir_ui_menu(osv.osv):
         ir_values_obj = self.pool.get('ir.values')
         res = super(ir_ui_menu, self).copy(cr, uid, id, context=context)
         datas=self.read(cr,uid,[res],['name'])[0]
-        rex=re.compile('\([0-9]+\)')
+        rex=re.compile(r'\([0-9]+\)')
         concat=rex.findall(datas['name'])
         if concat:
             next_num=int(concat[0])+1
