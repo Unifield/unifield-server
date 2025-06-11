@@ -897,8 +897,8 @@
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>
-                <td><image width="140" height="35" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image')]]</image></td>
-                <td><image width="140" height="35" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image')]]</image></td>
+                <td><image width="140" height="40" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image')]]</image></td>
+                <td><image width="140" height="40" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image')]]</image></td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>

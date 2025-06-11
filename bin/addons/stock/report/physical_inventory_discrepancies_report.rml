@@ -471,13 +471,13 @@
           <para style="table_header_label_center">Signature</para>
         </td>
         <td>
-          <image width="140" height="35" mask="auto">[[ getSign(o, 'wr', 'image') or removeParentNode('image') ]]</image>
+          <image width="140" height="40" mask="auto">[[ getSign(o, 'wr', 'image') or removeParentNode('image') ]]</image>
         </td>
         <td>
-          <image width="140" height="35" mask="auto">[[ getSign(o, 'sr', 'image') or removeParentNode('image') ]]</image>
+          <image width="140" height="40" mask="auto">[[ getSign(o, 'sr', 'image') or removeParentNode('image') ]]</image>
         </td>
         <td>
-          <image width="140" height="35" mask="auto">[[ getSign(o, 'so', 'image') or removeParentNode('image') ]]</image>
+          <image width="140" height="40" mask="auto">[[ getSign(o, 'so', 'image') or removeParentNode('image') ]]</image>
         </td>
         <td><para></para></td>
       </tr>

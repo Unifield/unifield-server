@@ -56,7 +56,7 @@
                     <field name="new_signature" widget="signature" colspan="4" attrs="{'invisible': [('sign_creation_type', '!=', 'draw')]}"/>
                     <group colspan="4" attrs="{'invisible': [('sign_creation_type', '!=', 'import')]}">
                         <field name="new_signature_import" on_change="onchange_signature_import(new_signature_import)" />
-                        <button string="Export template" icon="gtk-edit" name="signature_import_template" type="object" />
+                        <button string="Export Template" icon="gtk-edit" name="signature_import_template" type="object" />
                     </group>
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
@@ -67,7 +67,7 @@
         </record>
 
         <report id="signature_import_template_report"
-                string="Signature Import Template PDF"
+                string="Signature Import Template"
                 model="signature.set_user"
                 name="signature.import.template.report"
                 rml="base/res/report_module/signature_import_template.rml"

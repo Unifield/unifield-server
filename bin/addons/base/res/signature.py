@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from curses.textpad import rectangle
 
 from osv import fields, osv
 from tools.translate import _
@@ -1242,148 +1243,84 @@ class signature_set_user(osv.osv_memory):
             nparr = numpy.frombuffer(base64.b64decode(imported_signature), dtype=numpy.uint8)
             img_imp = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-            # Find the template
-            path = os.path.join('base', 'res', 'images', 'template_sign_zone_mini.png')
-            image_file = tools.file_open(path, 'rb')
-            try:
-                sign_zone_template =  base64.b64encode(image_file.read())
-            finally:
-                image_file.close()
-            if sign_zone_template is None:
-                raise osv.except_osv(_('Warning'), _("The template for the signature zone could not be found"))
-
-            template_nparr = numpy.frombuffer(base64.b64decode(sign_zone_template), dtype=numpy.uint8)
-
-            # Grayscale of the template + imported image
-            gray_template = cv2.imdecode(template_nparr, cv2.IMREAD_GRAYSCALE)
-            w, h = gray_template.shape[::-1]
+            # Grayscale of the imported image
             gray_img = cv2.cvtColor(img_imp, cv2.COLOR_BGR2GRAY)
-            w_img, h_img = gray_img.shape[::-1]
 
-            # Appliquer un flou pour réduire le bruit
+            # Adding a blur to reduce the noise
             blurred = cv2.GaussianBlur(gray_img, (5, 5), 0)
 
-            # Détection des contours (on cherche les bords noirs donc seuil bas)
-            edges = cv2.Canny(blurred, 30, 100)
+            # Detect the black contours
+            edges = cv2.Canny(blurred, 50, 100)
 
-            # Trouver les contours dans l'image
-            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # Find the contours in the image
+            contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            # Parcourir les contours trouvés
-            coord = []
+            x, y, w, h = None, None, None, None
             for cnt in contours:
-                # Approximons le contour à un polygone
+                # Create an approximative polygon with the contour
                 approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
 
-                # Si c'est un quadrilatère (4 sommets) et qu'il est suffisamment grand
+                # If it has a quadrilateral shape (4 peaks) and a good size
                 if len(approx) == 4 and cv2.contourArea(cnt) > 1000:
-                    # Vérifie si les bords sont bien noirs
+                    # Check if the edges are black
                     mask = numpy.zeros(gray_img.shape, dtype=numpy.uint8)
                     cv2.drawContours(mask, [approx], -1, (255, 255, 255), thickness=cv2.FILLED)
                     mean_val = cv2.mean(gray_img, mask=mask)[0]
 
-                    if mean_val < 255:  # seuil pour considérer "noir"
-                        cv2.drawContours(img_imp, [approx], -1, (0, 255, 0), 3)
-
-                        # Used to flatted the array containing
-                        # the co-ordinates of the vertices.
-                        n = approx.ravel()
-                        i = 0
-                        for j in n:
-                            if (i % 2 == 0):
-                                x = n[i]
-                                y = n[i + 1]
-
-                                coord.append((x, y))
-                            i = i + 1
+                    if mean_val < 250:  # threshold to detect darker colors, and we get the coordinates of the rectangle
+                        x, y, w, h = cv2.boundingRect(cnt)
                         break
 
-            # Afficher le résultat
-            if coord:
-                final_img = img_imp[coord[0][0]:coord[2][0], coord[1][0]:coord[3][0]]
+            # get the results, "+" and "-" to remove the extra space from the cropped image
+            if x is not None and y is not None and w is not None and h is not None:
+                extra_w = int(w * 0.02)
+                extra_h = int(h * 0.07)
+                final_img = img_imp[y + extra_h: y + h - extra_h, x + extra_w: x + w - extra_w]
             else:
-                final_img = img_imp
+                raise osv.except_osv(_('Warning'), _("The signature could not be found in the file, please make sure to follow the instructions at the top of the template"))
 
-            # The template is scaled to a smaller size to find the best match in coordinates in the imported file
-            # best_scaled = []
-            # for scale in numpy.linspace(0.2, 1.0, 20)[::-1]:
-            #     scaled_img = cv2.resize(gray_img, (int(w_img * scale), int(h_img * scale)), interpolation=cv2.INTER_AREA)
-            #     r = w_img / float(scaled_img.shape[1])
-            #     # Don't continue the loop if the resized image is smaller than the template
-            #     if scaled_img.shape[1] < w or scaled_img.shape[0] < h:
-            #         break
-            #
-            #     res_img = cv2.matchTemplate(scaled_img, gray_template, cv2.TM_CCOEFF_NORMED)
-            #     if res_img is not None:
-            #         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res_img)
-            #         if not best_scaled or max_val > best_scaled[0]:
-            #             best_scaled = [max_val, max_loc, r]
-            #
-            # if not best_scaled:
-            #     raise osv.except_osv(_('Warning'), _("The signature could not be found, please use the template file"))
-            # # Use the best scale found to get the signature zone
-            # scale_up = best_scaled[2]
-            # scaled_w = int(w * scale_up)
-            # scaled_h = int(h * scale_up)
-            # top_left = (int(best_scaled[1][0] * scale_up), int(best_scaled[1][1] * scale_up))
-            # bottom_right = (top_left[0] + scaled_w, top_left[1] + scaled_h)
-            # cv2.rectangle(img_imp, top_left, bottom_right, (0, 255, 0), 2)
-            #
-            # # "+" and "-" to remove the extra space from the template
-            # extra_w = int(w_img * 0.02)
-            # extra_h = int(h_img * 0.07)
-            # final_img = img_imp
-            # final_img = img_imp[top_left[1] + extra_w : bottom_right[1] - extra_w, top_left[0] + extra_h:bottom_right[0] - extra_h]
+            # Resize if the image is too large
+            size_limit = 400
+            if final_img.shape[1] >= final_img.shape[0] and final_img.shape[1] > size_limit:
+                aspect_ratio = size_limit / final_img.shape[1]
+                new_height = int(final_img.shape[0] * aspect_ratio)
+                final_img = cv2.resize(final_img, (size_limit, new_height))
 
-            # Resize if the image is too large or too long
-            # size_limit = 400
-            # if final_img.shape[1] >= final_img.shape[0] and final_img.shape[1] > size_limit:
-            #     aspect_ratio = size_limit / final_img.shape[1]
-            #     new_height = int(final_img.shape[0] * aspect_ratio)
-            #     final_img = cv2.resize(final_img, (size_limit, new_height))
-            # elif final_img.shape[1] <= final_img.shape[0] and final_img.shape[0] > size_limit:
-            #     aspect_ratio = size_limit / final_img.shape[0]
-            #     new_width = int(final_img.shape[1] * aspect_ratio)
-            #     final_img = cv2.resize(final_img, (new_width, size_limit))
+            # Convert img to png
+            retval, buffer = cv2.imencode('.png', final_img)
 
-            # Add legal name to signature
-            font = cv2.FONT_HERSHEY_DUPLEX
-            textsize = cv2.getTextSize(msg, font, 0.8, 1)[0]
-            extra_width = 0
-            if textsize[0] >= final_img.shape[1]:
-                extra_width = ((textsize[0] - final_img.shape[1]) // 2) + 5
-            final_img = cv2.copyMakeBorder(final_img, 5, textsize[1] + 15, extra_width, extra_width, cv2.BORDER_CONSTANT, value=[255, 255, 255])
-
-            textX = (final_img.shape[1] - textsize[0]) // 2
-            final_img = cv2.putText(final_img, msg, (textX, final_img.shape[0] - 10), font, 0.8, (0, 0, 0), 1, cv2.LINE_AA)
-
-            # Convert img to jpg
-            retval, buffer = cv2.imencode('.jpg', final_img)
-
-            new_signature = 'data:image/png;base64,%s' % str(base64.b64encode(buffer), 'utf8')
+            new_signature = base64.b64decode(str(base64.b64encode(buffer), 'utf8'))
         else:
-            # Add legal name to signature
-            image = Image.open(BytesIO(base64.b64decode(wiz.b64_image)))
-            W, H = image.size
-            fit = False
-            init_font_size = 28
-            font_size = init_font_size
-            while not fit and font_size > 3:
-                font_path = customfonts.GetFontPath('DejaVuSans.ttf')
-                font = ImageFont.truetype(font_path, font_size)
-                left, top, w,h = font.getbbox(msg)
-                fit = w <= W
-                font_size -= 1
-            new_img = Image.new("RGBA", (W, H+init_font_size))
-            new_img.paste(image, (0, 0))
-            draw = ImageDraw.Draw(new_img)
-            # H-5 to emulate anchor='md' which does not work on this PIL version
-            draw.text(((W-w)/2,H-5), msg, font=font, fill="black")
-            txt_img = BytesIO()
-            new_img.save(txt_img, 'PNG')
-            new_signature = 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')
+            new_signature = base64.b64decode(wiz.b64_image)
 
-        wiz.write({'new_signature': new_signature}, context=context)
+        # Add legal name to signature
+        # Not done with OpenCV for the import because the available fonts are limited and do not handle special characters
+        image = Image.open(BytesIO(new_signature))
+        W, H = image.size
+        font, fit = False, False
+        font_path = customfonts.GetFontPath('DejaVuSans.ttf')
+        init_font_size = 28
+        font_size = init_font_size
+        w_font, h_font = 0, 0
+        while not fit and font_size > 3:
+            font = ImageFont.truetype(font_path, font_size)
+            left, top, w_font, h_font = font.getbbox(msg)
+            fit = w_font <= W
+            font_size -= 1
+
+        if wiz.new_signature_import:  # White background for import only
+            new_img = Image.new("RGBA", (W, H + h_font), "white")
+        else:
+            new_img = Image.new("RGBA", (W, H + h_font))
+
+        new_img.paste(image, (0, 0))
+        draw = ImageDraw.Draw(new_img)
+        # H-5 to emulate anchor='md' which does not work on this PIL version
+        draw.text(((W-w_font)/2,H-5), msg, font=font, fill="black")
+        txt_img = BytesIO()
+        new_img.save(txt_img, 'PNG')
+
+        wiz.write({'new_signature': 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')}, context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_set_user_form_preview')
         return {

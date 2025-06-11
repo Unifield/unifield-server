@@ -123,7 +123,7 @@
       <blockTable colWidths="120mm, 60mm" style="table_sign">
         <tr>
           <td><para style="medium_text">[[ o.register_closed_by or '' ]] [[ getSign(objects[0], 'fr', 'user_name') ]] [[ getSign(objects[0], 'fr', 'date') ]] [[ getSign(objects[0], 'fr', 'format_value') ]]</para></td>
-          <td><image width="140" height="35" mask="auto">[[ getSign(objects[0], 'fr', 'image') or removeParentNode('image') ]]</image></td>
+          <td><image width="140" height="40" mask="auto">[[ getSign(objects[0], 'fr', 'image') or removeParentNode('image') ]]</image></td>
         </tr>
         <tr>
           <td><para>(Name, Function)</para></td>
@@ -133,7 +133,7 @@
       <blockTable colWidths="120mm, 60mm" style="table_sign">
         <tr>
           <td><para style="medium_text">[[ getSign(objects[0], 'mr', 'user_name') ]] [[ getSign(objects[0], 'mr', 'date') ]] [[ getSign(objects[0], 'mr', 'format_value') ]]</para></td>
-          <td><image width="140" height="35" mask="auto">[[ getSign(objects[0], 'mr', 'image') or removeParentNode('image') ]]</image></td>
+          <td><image width="140" height="40" mask="auto">[[ getSign(objects[0], 'mr', 'image') or removeParentNode('image') ]]</image></td>
         </tr>
         <tr>
           <td><para>(Name, Function)</para></td>
