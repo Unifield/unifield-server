@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import io
 
 from osv import fields, osv
 from tools.translate import _
@@ -16,8 +17,8 @@ import base64
 from io import BytesIO
 import cv2
 import numpy
-import pdf2image
-import os
+from pypdf import PdfReader
+from tempfile import NamedTemporaryFile
 import tools
 
 list_sign = {
@@ -1232,15 +1233,29 @@ class signature_set_user(osv.osv_memory):
 
         msg = ustr(wiz.legal_name)
         if wiz.new_signature_import:
-            imported_signature = wiz.new_signature_import
             if wiz.pdf_import:
-                # [0] because the conversion get all the pages
-                img_pdf = pdf2image.convert_from_bytes(base64.b64decode(imported_signature))[0]
-                img_pdf_txt = BytesIO()
-                img_pdf.save(img_pdf_txt, 'PNG')
-                imported_signature = str(base64.b64encode(img_pdf_txt.getvalue()), 'utf8')
+                # Create a temporary file to use it with pypdf
+                temp_file = NamedTemporaryFile('w+b', delete=False)
+                filename = temp_file.name
+                temp_file.write(base64.b64decode(wiz.new_signature_import))
+                temp_file.close()
+                reader = PdfReader(filename)
+                # [0] because the template is expected to be the first page
+                page = reader.pages[0]
+                img_data = None
+                # Only check what is recognized as image
+                for image_file_object in page.images:
+                    # not sure for PNG, the TIFF (Tagged Image File Format) images are ignored
+                    if image_file_object.image.format in ('JPEG', 'PNG'):
+                        img_data = image_file_object.data
+                        break
+                if img_data is None:
+                    raise osv.except_osv(_('Warning'), _('The signature could not be found in the file, please make sure to follow the instructions at the top of the template'))
+                imported_signature = img_data  # bytes
+            else:
+                imported_signature = base64.b64decode(wiz.new_signature_import)  # bytes
 
-            nparr = numpy.frombuffer(base64.b64decode(imported_signature), dtype=numpy.uint8)
+            nparr = numpy.frombuffer(imported_signature, dtype=numpy.uint8)
             img_imp = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
             # Grayscale of the imported image
@@ -1277,7 +1292,7 @@ class signature_set_user(osv.osv_memory):
                 extra_h = int(h * 0.07)
                 final_img = img_imp[y + extra_h: y + h - extra_h, x + extra_w: x + w - extra_w]
             else:
-                raise osv.except_osv(_('Warning'), _("The signature could not be found in the file, please make sure to follow the instructions at the top of the template"))
+                raise osv.except_osv(_('Warning'), _('The signature could not be found in the file, please make sure to follow the instructions at the top of the template'))
 
             # Resize if the image is too large
             size_limit = 400
