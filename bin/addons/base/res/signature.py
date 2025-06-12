@@ -1235,11 +1235,11 @@ class signature_set_user(osv.osv_memory):
         if wiz.new_signature_import:
             if wiz.pdf_import:
                 # Create a temporary file to use it with pypdf
-                temp_file = NamedTemporaryFile('w+b', delete=False)
+                temp_file = NamedTemporaryFile('w+b', delete=True)
                 filename = temp_file.name
                 temp_file.write(base64.b64decode(wiz.new_signature_import))
-                temp_file.close()
                 reader = PdfReader(filename)
+                temp_file.close()
                 # [0] because the template is expected to be the first page
                 page = reader.pages[0]
                 img_data = None
