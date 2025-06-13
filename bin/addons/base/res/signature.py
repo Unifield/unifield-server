@@ -1317,21 +1317,31 @@ class signature_set_user(osv.osv_memory):
         init_font_size = 28
         font_size = init_font_size
         w_font, h_font = 0, 0
-        while not fit and font_size > 3:
+        while not fit and font_size > 11:
             font = ImageFont.truetype(font_path, font_size)
             left, top, w_font, h_font = font.getbbox(msg)
             fit = w_font <= W
             font_size -= 1
 
-        if wiz.new_signature_import:  # White background for import only
-            new_img = Image.new("RGBA", (W, H + h_font), "white")
+        # To better center the signature and the legal name
+        if w_font > W:
+            largest_w = w_font
+            text_w_pos = 0
+            img_w_pos = int((w_font - W)/2)
         else:
-            new_img = Image.new("RGBA", (W, H + h_font))
+            largest_w = W
+            text_w_pos = int((W - w_font)/2)
+            img_w_pos = 0
 
-        new_img.paste(image, (0, 0))
+        if wiz.new_signature_import:  # White background for import only
+            new_img = Image.new("RGBA", (largest_w, H + h_font), "white")
+        else:
+            new_img = Image.new("RGBA", (largest_w, H + h_font))
+
+        new_img.paste(image, (img_w_pos, 0))
         draw = ImageDraw.Draw(new_img)
         # H-5 to emulate anchor='md' which does not work on this PIL version
-        draw.text(((W-w_font)/2,H-5), msg, font=font, fill="black")
+        draw.text((text_w_pos, H-5), msg, font=font, fill="black")
         txt_img = BytesIO()
         new_img.save(txt_img, 'PNG')
 
