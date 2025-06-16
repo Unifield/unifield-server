@@ -18,7 +18,6 @@ from io import BytesIO
 import cv2
 import numpy
 from pypdf import PdfReader
-from tempfile import NamedTemporaryFile
 import tools
 
 list_sign = {
@@ -1235,20 +1234,20 @@ class signature_set_user(osv.osv_memory):
         if wiz.new_signature_import:
             if wiz.pdf_import:
                 # Create a temporary file to use it with pypdf
-                temp_file = NamedTemporaryFile('w+b', delete=True)
-                filename = temp_file.name
-                temp_file.write(base64.b64decode(wiz.new_signature_import))
-                reader = PdfReader(filename)
-                temp_file.close()
-                # [0] because the template is expected to be the first page
-                page = reader.pages[0]
+                temp_file = BytesIO()
                 img_data = None
-                # Only check what is recognized as image
-                for image_file_object in page.images:
-                    # not sure for PNG, the TIFF (Tagged Image File Format) images are ignored
-                    if image_file_object.image.format in ('JPEG', 'PNG'):
-                        img_data = image_file_object.data
-                        break
+                try:
+                    temp_file.write(base64.b64decode(wiz.new_signature_import))
+                    reader = PdfReader(temp_file)
+                    page = reader.pages[0]
+                    # Only check what is recognized as image
+                    for image_file_object in page.images:
+                        # The TIFF (Tagged Image File Format) images are ignored
+                        if image_file_object.image.format in ('JPEG', 'PNG'):
+                            img_data = image_file_object.data
+                            break
+                finally:
+                    temp_file.close()
                 if img_data is None:
                     raise osv.except_osv(_('Warning'), _('The signature could not be found in the file, please make sure to follow the instructions at the top of the template'))
                 imported_signature = img_data  # bytes
