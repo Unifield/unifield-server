@@ -865,8 +865,9 @@ class po_follow_up_mixin(object):
             self.cr.execute("""
                 SELECT pl.id, pl.state, pl.line_number, adl.id, ppr.id, ppr.default_code, COALESCE(tr.value, pt.name), 
                     uom.id, uom.name, pl.confirmed_delivery_date, pl.date_planned, pl.product_qty, pl.price_unit, 
-                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd, so.date_order
+                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd, so.date_order, p.order_type
                 FROM purchase_order_line pl
+                    LEFT JOIN purchase_order p ON pl.order_id = p.id
                     LEFT JOIN analytic_distribution adl ON pl.analytic_distribution_id = adl.id
                     LEFT JOIN product_product ppr ON pl.product_id = ppr.id
                     LEFT JOIN product_template pt ON ppr.product_tmpl_id = pt.id
@@ -927,9 +928,7 @@ class po_follow_up_mixin(object):
 
     def get_qty_backordered(self, pol_id, qty_ordered, qty_received, first_line):
         pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id)
-        if pol.state.startswith('cancel'):
-            return 0.0
-        if not qty_ordered:
+        if not qty_ordered or pol.state.startswith('cancel') or (pol.order_id.order_type == 'direct' and pol.state == 'done'):
             return 0.0
         try:
             qty_ordered = float(qty_ordered)
@@ -1056,7 +1055,7 @@ class po_follow_up_mixin(object):
                     'description': line[6] or '',
                     'qty_ordered': line[11] or '',
                     'uom': line[8] or '',
-                    'qty_received': '0.00',
+                    'qty_received': line[1] == 'done' and line[19] == 'direct' and line[11] or '0.00',
                     'in': '',
                     'qty_backordered': self.get_qty_backordered(line[0], line[11], 0.0, first_line),
                     'destination': analytic_lines[0].get('destination'),
