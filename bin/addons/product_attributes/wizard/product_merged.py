@@ -17,6 +17,11 @@ class product_merged_wizard(osv.osv_memory):
         'warning_msg': fields.text('Warning Message'),
         'warning_checked': fields.boolean('Warning Checked'),
         'level': fields.char('Level', size=16),
+        'local': fields.boolean('Merge local products'),
+    }
+
+    _defaults = {
+        'local': False,
     }
 
     def do_merge_product(self, cr, uid, ids, context=None):
@@ -30,13 +35,15 @@ class product_merged_wizard(osv.osv_memory):
             if prod_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('kept_product_id', '=', wiz.new_product_id.id)], count=True, context=context) >= 2:
                 raise osv.except_osv(_('Warning'), _('Merge products is limited to 2 merge actions, %s can not be merged') % wiz.new_product_id.default_code)
 
-        block_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, level=wiz.level, blocker=True, context=context)
+        block_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, level=wiz.level,
+                                              blocker=True, local=wiz.local, context=context)
         if block_msg:
             raise osv.except_osv(_('Warning'), block_msg)
 
         if not wiz.warning_checked:
             warn_msg = []
-            warn_value = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, level=wiz.level, blocker=False, context=context)
+            warn_value = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, level=wiz.level,
+                                                   blocker=False, local=wiz.local, context=context)
             if warn_value:
                 warn_msg.append(warn_value)
             if wiz.level != 'coordo':
@@ -56,6 +63,8 @@ class product_merged_wizard(osv.osv_memory):
                 view_id = False
                 if wiz.level != 'coordo':
                     view_id = [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'hq_product_merged_wizard_form_view')[1]]
+                elif wiz.local:
+                    view_id = [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'local_product_merged_wizard_form_view')[1]]
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'product.merged.wizard',
@@ -70,7 +79,7 @@ class product_merged_wizard(osv.osv_memory):
                 }
 
         if wiz.level == 'coordo':
-            prod_obj.merge_product(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, context=context)
+            prod_obj.merge_product(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, wiz.local, context=context)
         else:
             prod_obj.merge_hq_product(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, context=context)
 
@@ -79,6 +88,9 @@ class product_merged_wizard(osv.osv_memory):
         if wiz.level == 'section':
             res['popup_message'] = _("Products successfully merged")
         return res
+
+    def do_merge_local_product(self, cr, uid, ids, context=None):
+        return self.do_merge_product(cr, uid, ids, context=context)
 
     def do_hq_merge_product(self, cr, uid, ids, context=None):
         return self.do_merge_product(cr, uid, ids, context=context)
