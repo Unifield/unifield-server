@@ -1031,7 +1031,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type, -- 4
                     CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 5
                     CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 6
-                    c.name AS booking_currency, -- 7
+                    CASE WHEN aml.is_addendum_line = 'f' THEN c.name ELSE move_c.name END AS booking_currency, -- 7
                     CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) < 0 THEN ABS(ROUND(coalesce(func_rounded.rounded_func_amount,al.amount), 2)) ELSE 0.0 END AS func_debit, -- 8
                     CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) > 0 THEN ROUND(coalesce(func_rounded.rounded_func_amount, al.amount), 2) ELSE 0.0 END AS func_credit, -- 9
                     al.name as description, -- 10
@@ -1056,6 +1056,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     account_analytic_account AS dest,
                     account_analytic_account AS cost_center,
                     res_currency AS c,
+                    res_currency AS move_c,
                     account_analytic_journal AS j,
                     account_move_line aml
                         left outer join hr_employee hr on hr.id = aml.employee_id,
@@ -1071,6 +1072,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     AND j.id = al.journal_id
                     AND aml.id = al.move_id
                     AND am.id = aml.move_id
+                    AND move_c.id = aml.currency_id
                     AND p.id = am.period_id
                     AND p.number not in (0, 16)
                     AND (
