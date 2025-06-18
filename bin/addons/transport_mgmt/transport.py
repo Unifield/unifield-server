@@ -659,6 +659,7 @@ class transport_order_in(osv.osv):
                     'shipment_type': 'out',
                     'supplier_partner_id': self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id,
                     'line_ids': [],
+                    'ito_ref': x['name'],
                 })
 
                 for line in self.pool.get('transport.order.in.line').read(cr, uid, x['line_ids'], [
@@ -815,6 +816,7 @@ class transport_order_out(osv.osv):
         'parent_oto_id': fields.many2one('transport.order.out', 'Backorder of', readonly=True, copy=False),
         'next_partner_id': fields.many2one('res.partner', 'Sync to', readonly=True, copy=False),
         'next_partner_type': fields.selection([('via', 'via'), ('customer', 'customer')], 'Next partner type', readonly=True, copy=False),
+        'ito_ref': fields.char('ITO Reference', size=64, readonly=True, copy=False, select=1),
     }
     _defaults = {
         'shipment_type': 'out',
@@ -963,6 +965,38 @@ class transport_order_in_line(osv.osv):
     }
     def create(self, cr, uid, vals, context=None):
         return super(transport_order_in_line, self).create(cr, uid, vals, context=context)
+
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+        if not fields:
+            fields = []
+
+        single = False
+        pick_details = {}
+        if isinstance(ids, int):
+            single = True
+            ids = [ids]
+
+        if not fields or 'description' in fields:
+            cr.execute('''
+                select
+                    l.id, pick.details
+                from
+                    transport_order_in_line l,stock_picking pick
+                where
+                    pick.id = l.incoming_id and
+                    l.id in %s
+            ''', (tuple(ids),))
+            pick_details = dict(cr.fetchall())
+
+        d = super(transport_order_in_line, self).read(cr, uid, ids, fields, context, load)
+        if pick_details:
+            for x in d:
+                if x['id'] in pick_details:
+                    x['description'] = pick_details[x['id']]
+
+        if single:
+            d = d[0]
+        return d
 
     def change_incoming(self, cr, uid, id, incoming_id, context=None):
         if incoming_id:

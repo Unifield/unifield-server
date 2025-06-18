@@ -396,6 +396,7 @@
                     <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="ito_ref" />
                     <field name="supplier_partner_id" readonly="1" invisible="1"/>
                     <notebook colspan="4">
                         <page string="Transport Object">
