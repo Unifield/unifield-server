@@ -728,7 +728,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     if emp[0] and not emp[2]:
                         # extract identification_id from partner_txt
                         if abs(line_amount) > 0.001:
-                            m = re.search('([0-9]+)\s*$', emp[0])
+                            m = re.search(r'([0-9]+)\s*$', emp[0])
                             if m:
                                 if m.group(1) not in partner_txt_lines:
                                     partner_txt_lines[m.group(1)] = {'name': emp[0], 'amount': line_amount}

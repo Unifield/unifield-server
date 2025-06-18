@@ -29,6 +29,8 @@ import time
 from tools.translate import _
 from lxml import etree
 from msf_field_access_rights.osv_override import _record_matches_domain
+from datetime import datetime
+
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -74,28 +76,45 @@ class res_partner(osv.osv):
             context = {}
         res = {}
 
-        product_obj = self.pool.get('product.product')
-
         # If we aren't in the context of choose supplier on procurement list
         if not context.get('product_id', False) or 'choose_supplier' not in context:
             for i in ids:
-                res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
+                res[i] = {'in_product': False, 'min_qty': 'N/A', 'supplier_ranking': 'N/A', 'delay': 'N/A'}
         else:
-            product = product_obj.browse(cr, uid, context.get('product_id'), fields_to_fetch=['product_tmpl_id'])
             seller_ids = []
             seller_info = {}
-            supinfo_obj = self.pool.get('product.supplierinfo')
-            sup_ids = supinfo_obj.search(cr, uid, [('name', 'in', ids), ('product_id', '=', product.product_tmpl_id.id)], context=context)
+            today = datetime.today().strftime('%Y-%m-%d')
+
+            cr.execute("""
+                SELECT DISTINCT ON (s.sequence, s.get_first_price, s.id) s.name, s.min_qty, s.sequence,
+                    CASE 
+                        WHEN s.name IS NOT NULL THEN rp.supplier_lt 
+                        WHEN s.product_id IS NOT NULL THEN pp.procure_delay
+                        ELSE 1
+                    END AS delay
+                FROM pricelist_partnerinfo p 
+                    LEFT JOIN product_supplierinfo s ON p.suppinfo_id = s.id 
+                    LEFT JOIN product_product pp ON s.product_id = pp.product_tmpl_id 
+                    LEFT JOIN res_partner rp ON s.name = rp.id
+                WHERE s.name IN %s AND pp.id = %s AND p.valid_from <= %s AND (p.valid_till IS NULL OR p.valid_till >= %s) 
+                ORDER BY s.sequence, s.get_first_price, s.id
+            """, (tuple(ids), context.get('product_id'), today, today))
+
             # Get all suppliers defined on product form
-            for s in  supinfo_obj.browse(cr, uid, sup_ids, context=context):
-                seller_ids.append(s.name.id)
-                seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay}})
+            for s in cr.fetchall():
+                seller_ids.append(s[0])
+                seller_info.update({s[0]: {'min_qty': s[1], 'supplier_ranking': s[2], 'delay': s[3]}})
             # Check if the partner is in product form
             for i in ids:
                 if i in seller_ids:
-                    res[i] = {'in_product': True, 'min_qty': '%s' %seller_info[i]['min_qty'], 'delay': '%s' %seller_info[i]['delay']}
+                    res[i] = {
+                        'in_product': True,
+                        'min_qty': '%s' %seller_info[i]['min_qty'],
+                        'delay': '%s' %seller_info[i]['delay'],
+                        'supplier_ranking': seller_info[i]['supplier_ranking']
+                    }
                 else:
-                    res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
+                    res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A', 'supplier_ranking': 'N/A'}
 
         return res
 
@@ -302,6 +321,11 @@ class res_partner(osv.osv):
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
+        'supplier_ranking': fields.function(_set_in_product, string='Ranking', type='selection', method=True,
+                                            selection=[(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'), (5, '5th choice'),
+                                                       (6, '6th choice'),  (7, '7th choice'), (8, '8th choice'), (9, '9th choice'), (10, '10th choice'),
+                                                       (11, '11th choice'), (12, '12th choice'), (13, '-99'), (14, '0'), (15, '1'), (16, '2'), (17, '3'),
+                                                       (18, '4')], readonly=True, multi='in_product'),
         'property_product_pricelist_purchase': fields.many2one(
             'product.pricelist',
             domain=[('type', '=', 'purchase')],
@@ -1099,12 +1123,10 @@ class res_partner(osv.osv):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list
         '''
-        supinfo_obj = self.pool.get('product.supplierinfo')
         if context is None:
             context = {}
         if args is None:
             args = []
-
 
         # Get all supplier
         if not context.get('product_id', False) or 'choose_supplier' not in context or count:
@@ -1126,19 +1148,28 @@ class res_partner(osv.osv):
         new_res = []
 
         # Sort suppliers by sequence in product form
-        if 'product_id' in context:
-            supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
+        if 'product_id' in context and res_in_prod:
+            today = datetime.today().strftime('%Y-%m-%d')
 
-            for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
+            cr.execute("""
+                SELECT DISTINCT ON (s.sequence, s.get_first_price, s.id) s.name  
+                FROM pricelist_partnerinfo p 
+                    LEFT JOIN product_supplierinfo s ON p.suppinfo_id = s.id 
+                    LEFT JOIN product_product pp ON s.product_id = pp.product_tmpl_id 
+                WHERE s.name IN %s AND pp.id = %s AND p.valid_from <= %s AND (p.valid_till IS NULL OR p.valid_till >= %s) 
+                ORDER BY s.sequence, s.get_first_price, s.id
+            """, (tuple(res_in_prod), context.get('product_id'), today, today))
+
+            for result in cr.fetchall():
                 try:
-                    tmp_res.remove(result['name'][0])
+                    tmp_res.remove(result[0])
                 except:
                     try:
                         tmp_res.pop()
                     except:
                         pass
                 finally:
-                    new_res.append(result['name'][0])
+                    new_res.append(result[0])
 
         #return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
 
@@ -1157,6 +1188,12 @@ class res_partner(osv.osv):
             if not context or not context.get('show_button_show_inactive', False):
                 tree = etree.fromstring(view['arch'])
                 fields = tree.xpath('//filter[@name="inactive"]|//filter[@name="active"]')
+                for field in fields:
+                    field.set('invisible', "1")
+                view['arch'] = etree.tostring(tree, encoding='unicode')
+            if context.get('from_history_consumption', False):
+                tree = etree.fromstring(view['arch'])
+                fields = tree.xpath('//filter[@name="supplier"]')
                 for field in fields:
                     field.set('invisible', "1")
                 view['arch'] = etree.tostring(tree, encoding='unicode')

@@ -25,7 +25,7 @@ from tools.translate import _
 def filter_chars(text):
     # US-583: exclude chars in action name
     # (chars to exclude list obtained using string.printable and testing)
-    exclude_list = "\"'`^\@~;$&#"
+    exclude_list = r"\"'`^\@~;$&#"
 
     res = text
     for c in exclude_list:

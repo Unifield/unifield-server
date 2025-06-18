@@ -1181,10 +1181,6 @@
         </record>
 
         <!-- UF37.0 -->
-        <record id="us_9592_pack_family_to_table" model="patch.scripts">
-            <field name="method">us_9592_pack_family_to_table</field>
-        </record>
-
         <record id="us_12270_13064_13353_sign_roles_and_int_sign" model="patch.scripts">
             <field name="method">us_12270_13064_13353_sign_roles_and_int_sign</field>
         </record>
@@ -1195,6 +1191,38 @@
 
         <record id="us_14039_store_cash_migration" model="patch.scripts">
             <field name="method">us_14039_store_cash_migration</field>
+        </record>
+
+        <record id="us_13346_13377_set_signee_users" model="patch.scripts">
+            <field name="method">us_13346_13377_set_signee_users</field>
+        </record>
+
+        <record id="us_13741_13952_13955_14253_update_prod_supinfo_prices" model="patch.scripts">
+            <field name="method">us_13741_13952_13955_14253_update_prod_supinfo_prices</field>
+        </record>
+
+        <record id="us_14040_14046_fix_duplicated_users_data" model="patch.scripts">
+            <field name="method">us_14040_14046_fix_duplicated_users_data</field>
+        </record>
+
+        <record id="us_14341_hide_prod_status_inconsistencies" model="patch.scripts">
+            <field name="method">us_14341_hide_prod_status_inconsistencies</field>
+        </record>
+
+        <record id="us_14373_empty_fo_ir_location_id" model="patch.scripts">
+            <field name="method">us_14373_empty_fo_ir_location_id</field>
+        </record>
+
+        <record id="us_14379_period_states_closed_by_sync" model="patch.scripts">
+            <field name="method">update_us_435_2</field>
+        </record>
+
+        <record id="us_14450_sign_roles_in" model="patch.scripts">
+            <field name="method">us_14450_sign_roles_in</field>
+        </record>
+
+        <record id="us_9592_pack_family_to_table" model="patch.scripts">
+            <field name="method">us_9592_pack_family_to_table</field>
         </record>
 
     </data>

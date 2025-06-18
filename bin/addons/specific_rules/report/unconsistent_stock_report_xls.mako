@@ -65,7 +65,7 @@
   </Style>
 </Styles>
 
-<ss:Worksheet ss:Name="${_('BN/ED inconsistencies')|x}">
+<ss:Worksheet ss:Name="${_('BN_ED inconsistencies')|x}">
 <Table x:FullColumns="1" x:FullRows="1">
 
     # Product code

@@ -1667,7 +1667,7 @@ class replenishment_segment(osv.osv):
                 }
 
                 if seg.rule == 'cycle':
-                    line_data['buffer_ss_qty'] = '%d / %s' % (line.buffer_qty or 0,  re.sub('\.?0+$', '', '%s' % (round(ss_stock, 2) or '0.0')))
+                    line_data['buffer_ss_qty'] = '%d / %s' % (line.buffer_qty or 0,  re.sub(r'\.?0+$', '', '%s' % (round(ss_stock, 2) or '0.0')))
                 if seg.rule == 'minmax':
                     min_max_list = []
                     for v in [min_qty, max_qty]:
@@ -2442,7 +2442,7 @@ class replenishment_segment_line(osv.osv):
             if f.startswith('rr_min_max_'):
                 get_min_max = True
 
-            pattern = re.search('(\d+)$', f)
+            pattern = re.search(r'(\d+)$', f)
             if pattern:
                 n = int(pattern.group(1))
                 numbers.append(n)

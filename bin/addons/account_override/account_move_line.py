@@ -35,6 +35,56 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
 
+    def _raise_open_items_error(self, cr, uid, context=None):
+        raise osv.except_osv(_('Error'), _('Filter not implemented. '
+                                           'Please check that you have selected one Period in \"Open Items at\".'))
+
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        if context is None:
+            context = {}
+        new_dom = []
+        search_open_items = False
+
+        for args in domain:
+            if args[0] == 'open_items':
+                if not args[2] or \
+                        args[1] not in ('=', 'ilike') or \
+                        args[1] == '=' and not isinstance(args[2], int) or \
+                        args[1] == 'ilike' and not isinstance(args[2], str):
+                    self._raise_open_items_error(cr, uid, context)
+                search_open_items = args[2]
+            else:
+                new_dom.append(args)
+        ret = super(account_move_line, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+
+        if search_open_items:
+            period_obj = self.pool.get('account.period')
+            if isinstance(search_open_items, int):
+                period_id = period_obj.browse(cr, uid, search_open_items, fields_to_fetch=['date_stop'], context=context)
+                period_end_date = period_id.date_stop
+            else:
+                period_ids = self.pool.get('account.period').name_search(cr, uid, search_open_items, context=context)
+                if not period_ids:
+                    self._raise_open_items_error(cr, uid, context)
+                cr.execute("select max(date_stop) from account_period where id in %s", (tuple([x[0] for x in period_ids]),))
+                period_end_date = cr.fetchone()[0]
+
+            ret.tables.append('"account_account"')
+            ret.joins.setdefault('"account_move_line"', [])
+            ret.joins['"account_move_line"'] += [('"account_account"', 'account_id', 'id', 'INNER JOIN')]
+            ret.where_clause.append('''
+                "account_account"."reconcile" = \'t\' and "account_move_line"."date" <=%s  and (
+                    "account_move_line"."reconcile_id" IS NULL or
+                    exists(select id from account_move_line m3 where m3.reconcile_id="account_move_line".reconcile_id and m3.date>%s)
+                )
+            ''')
+            ret.where_clause_params.append(period_end_date)
+            ret.where_clause_params.append(period_end_date)
+
+        return ret
+
+
+
     def join_without_redundancy(self, text='', string=''):
         """
         Add string @ begining of text like that:
@@ -246,42 +296,6 @@ class account_move_line(osv.osv):
             ret[i] = False
         return ret
 
-    def _search_open_items(self, cr, uid, obj, name, args, context):
-        """
-        Returns a domain with all reconcilable JIs EXCEPT:
-        - those fully reconciled at the period end date or before
-        - those fully reconciled after the period end date, if all legs of the reconciliation are <= to the period end date
-        """
-        if not args:
-            return []
-        if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], int):
-            raise osv.except_osv(_('Error'), _('Filter not implemented. '
-                                               'Please check that you have selected one Period in \"Open Items at\".'))
-        if context is None:
-            context = {}
-        aml_list = []
-        period_obj = self.pool.get('account.period')
-        period_id = period_obj.browse(cr, uid, args[0][2], fields_to_fetch=['date_stop'], context=context)
-        period_end_date = period_id.date_stop
-        aml_query = '''
-              SELECT aml.id, aml.reconcile_id
-              FROM account_move_line aml
-              INNER JOIN account_account acc ON aml.account_id = acc.id
-              WHERE acc.reconcile = 't'
-              AND (aml.reconcile_id IS NULL OR reconcile_date > %s);
-              '''
-        cr.execute(aml_query, (period_end_date,))
-        lines = cr.dictfetchall()
-        for l in lines:
-            if not l['reconcile_id']:
-                aml_list.append(l['id'])
-            else:
-                # get the JIs with the same reconcile_id
-                same_rec_list = self.search(cr, uid, [('reconcile_id', '=', l['reconcile_id'])], order='NO_ORDER', context=context)
-                # check that at least one of them has a posting date later than the period end date
-                if self.search_exist(cr, uid, [('id', 'in', same_rec_list), ('date', '>', period_end_date)], context=context):
-                    aml_list.append(l['id'])
-        return [('id', 'in', aml_list)]
 
     def _get_db_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -309,7 +323,7 @@ class account_move_line(osv.osv):
                                            help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
         'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True, join=True),
         'name': fields.char('Description', size=64, required=True, readonly=True),
-        'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
+        'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1, join=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
         'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry.", select=1),
@@ -336,7 +350,7 @@ class account_move_line(osv.osv):
                                          ),
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
         'open_items': fields.function(_get_fake, method=True, type='many2one', relation='account.period', string='Open Items at',
-                                      store=False, fnct_search=_search_open_items, domain=[('state', '!=', 'created')]),
+                                      store=False, domain=[('state', '!=', 'created')]),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
         'corrected_upstream': fields.boolean('Corrected from CC/HQ', readonly=True, help='This line have been corrected from Coordo or HQ level to a cost center that have the same level or superior.'),
         'line_number': fields.integer(string='Line Number'),
@@ -563,6 +577,9 @@ class account_move_line(osv.osv):
             aml = self.browse(cr, uid, [res], context)
             if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
+            # US-13963 Check also for inactive employees tagged as not to be used
+            if aml and aml[0] and aml[0].employee_id and aml[0].employee_id.not_to_be_used:
+                raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (aml[0].employee_id.name_resource or '',))
 
         # US-852: Make an extra call to post-check all move lines when the "last" line got executed
         if vals.get('move_id'):
@@ -594,6 +611,10 @@ class account_move_line(osv.osv):
                     new_ji_name_empty = 'name' in vals and not vals['name']
                     if no_ji_name or new_ji_name_empty:
                         vals.update({'name': ml.move_id.manual_name})
+                # US-13963 Check also for inactive employees tagged as not to be used
+                if ml.employee_id and ml.employee_id.not_to_be_used:
+                    raise osv.except_osv(_('Warning'), _("Employee '%s' can not be used anymore.") % (
+                        ml.employee_id.name_resource or '',))
             # Check date validity with period
             self._check_date_validity(cr, uid, ids, vals)
             if 'move_id' in vals:

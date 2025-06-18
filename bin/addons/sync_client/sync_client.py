@@ -391,7 +391,7 @@ def get_hardware_id():
         # vpn, ...)
 
         import winreg
-        sub_key = 'SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0'
+        sub_key = r'SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0'
 
         try:
             # check if there is hwid stored in the registry

@@ -686,6 +686,19 @@ class account_move_line(osv.osv):
                 arg.append(x)
         return arg
 
+    def _get_amount(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        cr.execute('select id, round(debit - credit,2) from account_move_line where id in %s', (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = round(x[1] or 0, 2)
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'quantity': fields.float('Quantity', digits=(16,2), help="The optional quantity expressed by this line, eg: number of product sold. The quantity is not a legal requirement but is very useful for some reports."),
@@ -695,7 +708,7 @@ class account_move_line(osv.osv):
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),
         'account_id': fields.many2one('account.account', 'Account',
                                       required=True, ondelete="cascade", domain=[('type','<>','view'),
-                                                                                 ('type', '<>', 'closed')], select=2, hide_default_menu=True),
+                                                                                 ('type', '<>', 'closed')], select=2, hide_default_menu=True, join=1),
         'move_id': fields.many2one('account.move', 'Move', ondelete="cascade", help="The move of this entry line.", select=2, required=True),
         'narration': fields.related('move_id','narration', type='text', relation='account.move', string='Narration', write_relate=False),
         'ref': fields.related('move_id', 'ref', string='Reference', type='char', size=64, store=True, write_relate=False),
@@ -703,10 +716,11 @@ class account_move_line(osv.osv):
         'reconcile_id': fields.many2one('account.move.reconcile', 'Reconcile', readonly=True, ondelete='set null', select=2),
         'reconcile_partial_id': fields.many2one('account.move.reconcile', 'Partial Reconcile', readonly=True, ondelete='set null', select=2),
         'amount_currency': fields.float('Amount Currency', help="The amount expressed in an optional other currency if it is a multi-currency entry.", digits_compute=dp.get_precision('Account')),
+        'amount': fields.function(_get_amount, string='Amount debit - credit', method=1, type='float'),
         'currency_id': fields.many2one('res.currency', 'Currency', help="The optional other currency if it is a multi-currency entry.", select=1),
-        'period_id': fields.many2one('account.period', 'Period', required=True, select=2),
+        'period_id': fields.many2one('account.period', 'Period', required=True, select=2, join=1),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear', string='Fiscal Year', store=False, write_relate=False),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, select=1),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, select=1, join=1),
         'blocked': fields.boolean('Litigation', help="You can check this box to mark this journal item as a litigation with the associated partner"),
         'partner_id': fields.many2one('res.partner', 'Partner', select=1, ondelete='restrict'),
         'date_maturity': fields.date('Due date', select=True ,help="This field is used for payable and receivable journal entries. You can put the limit date for the payment of this line."),
@@ -1406,7 +1420,8 @@ class account_move_line(osv.osv):
             set_of_reconcile_ids = set()
             for aml in self.browse(cr, uid, same_seq_ji_ids,
                                    fields_to_fetch=['ref', 'reconcile_id', 'reconcile_partial_id'], context=context):
-                aml.ref and set_of_refs.add(aml.ref)
+                if not aml.is_addendum_line and aml.ref:
+                    set_of_refs.add(aml.ref)
                 aml.reconcile_id and set_of_reconcile_ids.add(aml.reconcile_id.id)
                 aml.reconcile_partial_id and set_of_reconcile_ids.add(aml.reconcile_partial_id.id)
 

@@ -60,6 +60,7 @@ list_sign = {
     'stock.picking.in': [
         ('tr', _('Received by'), True, 1),
         ('sr', _('Controlled by'), True, 2),
+        ('fr', _('Approved by'), False, 3),
     ],
     'stock.picking.int': [
         ('tr', _('Approved by'), True, 1),
@@ -201,6 +202,21 @@ class signature(osv.osv):
             res[sign['id']] = allow
         return res
 
+    def _get_is_signee_user(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Check if the current user is Signee Only, to hide Create/Edit/... header buttons
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        signee_user = self.pool.get('res.users').read(cr, uid, uid, ['signee_user'])['signee_user']
+        for sign in self.read(cr, uid, ids, ['id']):
+            res[sign['id']] = signee_user
+        return res
+
     _columns = {
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
         'signature_res_model': fields.char('Model', size=254, select=1),
@@ -215,6 +231,7 @@ class signature(osv.osv):
         'allowed_to_be_locked': fields.function(_get_allowed_to_be_locked, type='boolean', string='Allowed to be locked', method=1),
         'allowed_to_be_closed': fields.function(_get_allowed_to_be_closed, type='boolean', string='Allowed to be closed', method=1),
         'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
+        'is_signee_user': fields.function(_get_is_signee_user, type='boolean', string='Is the current user Signee Only ?', method=1),
     }
 
     _defaults = {
@@ -1290,7 +1307,12 @@ class signature_change_date(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
+    def cancel(self, cr, uid, ids, context=None):
+        return {'type': 'ir.actions.act_window_close'}
+
+
 signature_change_date()
+
 
 class signature_setup(osv.osv_memory):
     _name = 'signature.setup'

@@ -589,6 +589,7 @@ class users(osv.osv):
         'dont_ask_email': fields.boolean("Don't ask for email", readonly=1),  # deprecated
         'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1),  # deprecated
         'reactivation_date': fields.datetime('Reactivation date', readonly=1),
+        'signee_user': fields.boolean('Signee Only'),
     }
 
     def search_web(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -956,6 +957,14 @@ class users(osv.osv):
                 if xuser.has_valid_signature:
                     values.update(self.reset_signature(cr, uid, ids, context=context, from_write_user=True))
 
+        if 'signee_user' in values:
+            if values.get('signee_user'):
+                values['action_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu',
+                                                                                          'signature_follow_up_to_be_signed_action')[1]
+            else:
+                values['signee_user'] = False
+        if 'signature_enabled' in values and not values.get('signature_enabled'):
+            values['signee_user'] = False
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
         if values.get('never_expire'):
@@ -1037,6 +1046,7 @@ class users(osv.osv):
                        synchronize=False,
                        is_synchronizable=False,
                        signature_enabled=False,
+                       signee_user=False,
                        esignature_id=False,
                        signature_from=False,
                        signature_to=False,
@@ -1047,6 +1057,7 @@ class users(osv.osv):
                        dont_ask_department=False,
                        nb_department_asked=False,
                        reactivation_date=False,
+                       last_password_change=time.strftime('%Y-%m-%d %H:%M:%S'),
                        )
         copydef.update(default)
         return super(users, self).copy(cr, uid, id, copydef, context)
@@ -1344,10 +1355,42 @@ class users(osv.osv):
             'width': '720px',
         }
 
-    def change_signature_enabled(self, cr, uid, ids, sign, groups, context=None):
+    def change_signature_enabled(self, cr, uid, ids, sign, signee_user, groups, context=None):
         ret = {}
         if sign:
-            ret['value'] = {'signature_from': fields.date.today()}
+            ret.update({'value': {'signature_from': fields.date.today()}})
+        elif not sign and signee_user:
+            ret.update({'value': {'signee_user': False, 'action_id': False}})
+        return ret
+
+    def change_signee_user(self, cr, uid, ids, signee_user, groups, context=None):
+        if context is None:
+            context = {}
+        ret = {}
+
+        can_be_signee = False
+        sign_group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
+        sync_group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sync / User')])
+        if signee_user:
+            if sign_group_ids and sync_group_ids and groups and isinstance(groups, list) and groups[0] \
+                    and isinstance(groups[0], tuple) and len(groups[0]) == 3 and groups[0][2] \
+                    and {sign_group_ids[0], sync_group_ids[0]} == set(groups[0][2]):
+                can_be_signee = True
+            if can_be_signee:
+                action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu',
+                                                                                'signature_follow_up_to_be_signed_action')[1]
+                ret.update({'value': {'action_id': action_id}})
+            else:
+                ret.update({
+                    'value': {'signee_user': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _("An User can not be Signee if it doesn't have exactly the Groups 'Sign_user' and 'Sync / User'")
+                    }
+                })
+        else:
+            ret.update({'value': {'action_id': False}})
+
         return ret
 
     def open_my_signature(self, cr, uid, context=None):

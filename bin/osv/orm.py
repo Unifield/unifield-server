@@ -63,7 +63,7 @@ from . import xmlid_no_delete
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES, cache
 from functools import reduce
-regex_order = re.compile('^(([a-z0-9_\.]+|"[a-z0-9_\.]+")( *desc| *asc)?( *, *|))+$', re.I)
+regex_order = re.compile(r'^(([a-z0-9_\.]+|"[a-z0-9_\.]+")( *desc| *asc)?( *, *|))+$', re.I)
 
 POSTGRES_CONFDELTYPES = {
     'RESTRICT': 'r',
@@ -1405,6 +1405,8 @@ class orm_template(object):
                     res[f]['with_null'] = True
                 if hasattr(field_col, 'null_value') and field_col.null_value:
                     res[f]['null_value'] = field_col.null_value
+                if hasattr(field_col, 'join') and field_col.join:
+                    res[f]['join'] = field_col.join
                 # This additional attributes for M2M and function field is added
                 # because we need to display tooltip with this additional information
                 # when client is started in debug mode.
@@ -1709,6 +1711,12 @@ class orm_template(object):
 
     def __view_look_dom_arch(self, cr, user, node, view_id, context=None):
         fields_def = self.__view_look_dom(cr, user, node, view_id, context=context)
+        if node.tag == 'tree':
+            # add sum_field to the list of fields
+            # to allow the web to compute the sum on the 1st display
+            for x in node.iterfind('.//field[@sum_field]'):
+                if x.get('sum_field') and x.get('sum_field') not in fields_def:
+                    fields_def[x.get('sum_field')] = {'views': {}}
         node = self._disable_workflow_buttons(cr, user, node)
         #for page_view_id in node.getiterator('page'):
         for page_view_id in node.iterfind(".//page[@view_id]"):
@@ -3985,7 +3993,7 @@ class orm(orm_template):
         """
         Returns some metadata about the given records.
 
-        :param details: if True, \*_uid fields are replaced with the name of the user
+        :param details: if True, *_uid fields are replaced with the name of the user
         :return: list of ownership dictionaries for each requested record
         :rtype: list of dictionaries with the following keys:
 

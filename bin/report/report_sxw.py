@@ -74,7 +74,8 @@ def isDate(date, date_format=False):
     if not date_format:
         date_format = '%Y-%m-%d'
     try:
-        datetime.strptime(date, date_format)
+        r = datetime.strptime(date, date_format)
+        return date == r.strftime(date_format) # do not match 2025-1-1 as date
     except ValueError:
         return False
     return True
@@ -246,7 +247,7 @@ class rml_parse(object):
         self.lang_dict = {}
         self.default_lang = {}
         self.lang_dict_called = False
-        self._transl_regex = re.compile('(\[\[.+?\]\])')
+        self._transl_regex = re.compile(r'(\[\[.+?\]\])')
         self.log_export = False
         self.sheet_name_used = []
         self.total_sheet_number = 0

@@ -897,6 +897,14 @@ class stock_move_in_processor(osv.osv):
                 res[move.id] = move.sequence_issue
         return res
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if order and isinstance(order, str) and 'has_pack_id' in order:
+            order = order.replace('has_pack_id', 'parcel_ids')
+
+        return super(stock_move_in_processor, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+
+
+
     def _get_batch_location_ids(self, cr, uid, ids, field_name, args, context=None):
         """
         UFTP-53: specific get stock locations ids for incoming shipment
@@ -1244,6 +1252,7 @@ class stock_move_in_processor(osv.osv):
         'from_pack': fields.integer_null(string='From p.'),
         'to_pack': fields.integer_null(string='To p.'),
         'parcel_ids': fields.text('Parcel Ids'),
+        'has_pack_id': fields.boolean('P.ID', readonly=1),
         'weight': fields.float_null('Weight', digits=(16,2)),
         'volume': fields.float_null('Volume', digits=(16,2)),
         'height': fields.float_null('Height', digits=(16,2)),

@@ -209,6 +209,7 @@
                     <field name="uom_id" readonly="1" />
                     <field name="from_pack" readonly="1" tooltip="parcel_ids" />
                     <field name="to_pack" readonly="1" tooltip="parcel_ids" />
+                    <field name="has_pack_id" />
                     <field name="filter_pack" filter_selector="1" invisible="1" />
                     <field name="total_volume" readonly="1" />
                     <field name="total_weight" readonly="1" />
