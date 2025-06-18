@@ -301,7 +301,10 @@ class automated_import_job(osv.osv):
                     if not error:
                         if no_file:
                             if not prev_job_id:
-                                error = _('No file to import in %s !') % import_data.src_path
+                                if job.import_id.function_id.startswith:
+                                    error = _('No files to import that start with prefix "%s" found in location "%s" !') % (job.import_id.function_id.startswith, import_data.src_path)
+                                else:
+                                    error = _('No files to import found in location "%s" !') % import_data.src_path
                             else:
                                 # files already processed in previous loop: delete the in_progress job
                                 self.unlink(cr, 1, [job_id], context=context)
@@ -439,10 +442,12 @@ class automated_import_job(osv.osv):
                                 tools.cache.clean_caches_for_db(cr.dbname)
                                 tools.read_cache.clean_caches_for_db(cr.dbname)
 
-                            if import_data.function_id.model_id.model == 'supplier.catalogue' and \
-                                    context.get('auto_import_catalogue_overlap'):
-                                error_message.insert(0, _('No data will be imported until all the duplicates have been removed'))
-                                context.pop('auto_import_catalogue_overlap')
+                            if import_data.function_id.model_id.model == 'supplier.catalogue':
+                                if context.get('auto_import_catalogue_overlap'):
+                                    error_message.insert(0, _('No data will be imported until all the duplicates have been removed'))
+                                    context.pop('auto_import_catalogue_overlap')
+                                elif nb_processed and nb_rejected:
+                                    state = 'partial'
 
                         if context.get('rejected_confirmation'):
                             nb_rejected += context['rejected_confirmation']
