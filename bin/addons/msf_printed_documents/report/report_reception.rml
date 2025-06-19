@@ -886,7 +886,7 @@
         </blockTable>
 
 
-        <blockTable colWidths="150,125,125,125,125,1505" style="OrderInformationsFin2_2" keepWithNext="1">
+        <blockTable colWidths="150,125,125,125,125,150" style="OrderInformationsFin2_2" keepWithNext="1">
             <tr>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>
