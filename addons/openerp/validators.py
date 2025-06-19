@@ -19,21 +19,14 @@
 #
 ###############################################################################
 import base64
-import cgi
 import locale
 import math
 import re
 import time
 from openobject import ustr
+from cherrypy._cpreqbody import Part
 
-BINARY_FIELD_STORAGE_CLASS = cgi.FieldStorage
-try:
-    # binary data send/get with cherrypy >= 3.2.X
-    # are wrapper inside 'Part' class
-    from cherrypy._cpreqbody import Part
-    BINARY_FIELD_STORAGE_CLASS = ( cgi.FieldStorage, Part )
-except ImportError:
-    pass
+BINARY_FIELD_STORAGE_CLASS = Part
 
 import formencode.validators
 import formencode.api
@@ -155,9 +148,9 @@ class Selection(BaseValidator):
         if isinstance(value, str):
             if re.match('True|False|None', value):
                 return eval(value)
-            if re.match('^\-+|\d+$', value):
+            if re.match(r'^\-+|\d+$', value):
                 return int(value)
-            if re.match('^\-+|\d+(\.\d+)$', value):
+            if re.match(r'^\-+|\d+(\.\d+)$', value):
                 return float(value)
 
         return value

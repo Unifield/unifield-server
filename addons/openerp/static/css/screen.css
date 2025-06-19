@@ -2495,3 +2495,9 @@ table #rr-chrono  {
     background-position: -94px 1px;
     vertical-align: middle;
 }
+
+/* US-14112 */
+p#manufacturer_txt {
+    align-content: center;
+    background: #fff;
+}

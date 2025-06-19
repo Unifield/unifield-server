@@ -1,5 +1,5 @@
 from itertools import islice
-from inspect import getargspec
+from inspect import getfullargspec
 
 import cherrypy
 from formencode.api import Invalid
@@ -11,9 +11,9 @@ __all__ = ["validate", "error_handler", "exception_handler"]
 
 
 def to_kw(func, args, kw):
-
-    argnames, defaults = getargspec(func)[::3]
-    defaults = defaults or []
+    full_arg = getfullargspec(func)
+    argnames = full_arg.args
+    defaults = full_arg.defaults or []
 
     kv = list(zip(islice(argnames, 0, len(argnames) - len(defaults)), args))
     kw.update(kv)
@@ -22,8 +22,9 @@ def to_kw(func, args, kw):
 
 def from_kw(func, args, kw):
 
-    argnames, defaults = getargspec(func)[::3]
-    defaults = defaults or []
+    full_arg = getfullargspec(func)
+    argnames = full_arg.args
+    defaults = full_arg.defaults or []
 
     newargs = [kw.pop(name) for name in islice(argnames, 0, len(argnames) - len(defaults)) if name in kw]
     newargs.extend(args)

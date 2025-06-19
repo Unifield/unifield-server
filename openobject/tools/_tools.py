@@ -23,7 +23,7 @@ import logging
 from urllib import parse
 import cherrypy
 from formencode import NestedVariables
-import cgitb, sys
+import sys
 from datetime import datetime
 import pytz
 from dateutil import relativedelta
@@ -48,7 +48,7 @@ def cgitb_traceback(ignore=None, severity=logging.DEBUG):
     typ, value, tb = sys.exc_info()
     if ignore and issubclass(typ, tuple(ignore)):
         return
-    cherrypy.log(cgitb.text((typ, value, tb)), 'HTTP', severity=severity)
+    cherrypy.log('', 'HTTP', severity=severity, traceback=True)
 cherrypy.tools.cgitb = cherrypy.Tool('before_error_response', cgitb_traceback)
 
 def cookie_secure_flag():

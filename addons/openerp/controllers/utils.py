@@ -55,7 +55,7 @@ def get_db_list():
         headers = cherrypy.request.headers
         host = headers.get('X-Forwarded-Host', headers.get('Host'))
 
-        base = re.split('\.|:|/', host)[0]
+        base = re.split(r'\.|:|/', host)[0]
 
         if dbfilter == 'EXACT':
             if dblist is None:
