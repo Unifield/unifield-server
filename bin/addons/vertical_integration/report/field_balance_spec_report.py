@@ -275,7 +275,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
 
 
-        sheet.title = '%s %s' % (report.period_id.name, report.instance_id.code)
+        sheet.title = _('Balance %s %s') % (report.period_id.name, report.instance_id.code)
         sheet.row_dimensions[1].height = 25
 
 
