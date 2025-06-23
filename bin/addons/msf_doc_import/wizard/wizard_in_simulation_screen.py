@@ -1557,6 +1557,14 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                             'error_msg': errors[-1],
                             'type_change': 'error',
                         })
+                        job_comment = context.get('job_comment', [])
+                        for msg in errors:
+                            job_comment.append({
+                                'res_model': 'stock.picking',
+                                'res_id': line.simu_id.picking_id.id,
+                                'msg': _('%s Line %s: %s') % (line.simu_id.picking_id.name, line.line_number, msg)
+                            })
+                        context['job_comment'] = job_comment
                         self.write(cr, uid, [line.id], write_vals, context=context)
                         continue
                     else:
@@ -1754,6 +1762,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             write_vals['error_msg'] = error_msg
             job_comment = context.get('job_comment', [])
+            for msg in errors:
+                job_comment.append({
+                    'res_model': 'stock.picking',
+                    'res_id': line.simu_id.picking_id.id,
+                    'msg': _('%s Line %s: %s') % (line.simu_id.picking_id.name, line.line_number, msg)
+                })
             for msg in warnings:
                 job_comment.append({
                     'res_model': 'stock.picking',
