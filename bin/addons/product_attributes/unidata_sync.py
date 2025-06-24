@@ -437,6 +437,7 @@ class ud_sync():
                 'ud': 'supply/thermosensitiveGroup/thermosensitiveInfo/code',
                 'relation': 'product.cold_chain',
                 'key_field': 'ud_code',
+                'ignored_values': ['Mix/Check'],
             },
             'heat_sensitive_item': {
                 'ud': 'supply/thermosensitiveGroup/thermosensitive',
@@ -892,9 +893,6 @@ class ud_sync():
 
                 elif field_desc.get('relation'):
                     self.uf_product_cache.setdefault(uf_key, {})
-                    # TODO: Remove after US-14507, put empty thermosensitivity instead of the (yet) non-existing Mix/Check
-                    if uf_key == 'cold_chain' and uf_value == 'Mix/Check':
-                        uf_value = False
                     if not uf_value:
                         self.uf_product_cache[uf_key][uf_value] = [False]
                     if uf_value not in self.uf_product_cache[uf_key]:
