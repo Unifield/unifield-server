@@ -437,7 +437,6 @@ class ud_sync():
                 'ud': 'supply/thermosensitiveGroup/thermosensitiveInfo/code',
                 'relation': 'product.cold_chain',
                 'key_field': 'ud_code',
-                'ignored_values': ['Mix/Check'],
             },
             'heat_sensitive_item': {
                 'ud': 'supply/thermosensitiveGroup/thermosensitive',
