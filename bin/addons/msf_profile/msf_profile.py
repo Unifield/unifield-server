@@ -58,6 +58,17 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF38.0
+    def us_14507_fix_ct30_cold_chain(self, cr, uid, *a, **b):
+        '''
+        Update the Code and Name of the product.cold_chain CT3+
+        '''
+        cr.execute("""
+            UPDATE product_cold_chain SET code = 'CT3+', name = 'CT3+ - Temperature Monitoring 2-40°C' 
+                WHERE code = 'CT30' AND ud_code = 'CT3+'
+        """)
+        return True
+
     # UF37.0
     def us_14450_sign_roles_in(self, cr, uid, *a, **b):
         '''
