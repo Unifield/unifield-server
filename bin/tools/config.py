@@ -614,6 +614,8 @@ class configmanager(object):
                 config_file_parser = self._load_current()
                 dbs = set(config_file_parser['options']['db_name'].split(','))
                 dbs.discard(db_name)
+                if not dbs:
+                    dbs.add('')
                 self._save_config(config_file_parser, {'dbs_set': dbs})
                 logging.getLogger('server').info('Delete %s in %s', db_name, self.rcfile)
             finally:

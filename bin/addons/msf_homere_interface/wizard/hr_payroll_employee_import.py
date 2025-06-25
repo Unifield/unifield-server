@@ -590,7 +590,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 # read the ini file
                 if ini_file in zip_namelist:
                     ini_desc = zipobj.open(ini_file, 'r')
-                    config_parser = configparser.SafeConfigParser()
+                    config_parser = configparser.ConfigParser()
                     # io.TextIOWrapper to open the file as text instead of binary (required by config_parser)
                     config_parser.read_file(io.TextIOWrapper(ini_desc, encoding='utf_8_sig'))
         else:
@@ -619,8 +619,8 @@ class hr_payroll_employee_import(osv.osv_memory):
             if os.path.isfile(ini_file_name):
                 ini_file_desc = open(ini_file_name, 'r', encoding='utf_8_sig')
                 desc_to_close.append(ini_file_desc)
-                config_parser = configparser.SafeConfigParser()
-                config_parser.readfp(ini_file_desc)
+                config_parser = configparser.ConfigParser()
+                config_parser.read_file(ini_file_desc)
 
         if not contract_reader:
             raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (contract_file,))
