@@ -1222,8 +1222,8 @@
         </record>
 
         <!-- UF38.0 -->
-        <record id="us_14507_fix_ct30_cold_chain" model="patch.scripts">
-            <field name="method">us_14507_fix_ct30_cold_chain</field>
+        <record id="us_14507_fix_ct30_mix_cold_chain" model="patch.scripts">
+            <field name="method">us_14507_fix_ct30_mix_cold_chain</field>
         </record>
     </data>
 </openerp>
