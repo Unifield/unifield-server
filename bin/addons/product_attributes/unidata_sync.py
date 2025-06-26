@@ -525,6 +525,9 @@ class ud_sync():
             'golden_status': {
                 'ud': 'state',
             },
+            'new_code': {
+                'ud': 'mergeToCode',
+            },
             'sterilized': {
                 'ud': 'medical/sterile',
                 'mapping': {
@@ -1159,7 +1162,7 @@ class ud_sync():
                         if not x.get('ocSubscriptions').get(self.oc):
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
                                 if x.get('state') != 'Golden' or is_full:
-                                    self.cr.execute("update product_product set golden_status=%s, ud_seen='t' where id=%s", (x.get('state'), prod_ids[0]))
+                                    prod_obj.write(self.cr, self.uid, [prod_ids[0]], {'ud_seen': True, 'golden_status': x.get('state')})
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
@@ -1686,13 +1689,6 @@ class unidata_sync(osv.osv):
             first_merged = param_obj.get_param(cr, 1, 'UD_GETALL_MERGED')
             if first_merged == '1':
                 if not full:
-                    cr.execute('''
-                        update product_product p set golden_status='Golden'
-                            from product_international_status st
-                            where
-                                st.id = p.international_status and
-                                st.code = 'unidata'
-                        ''')
                     trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products('(./metaData/state!="Golden")', False, session_id, is_full=is_full)
                     nb_prod += tmp_nb_prod
                     updated += tmp_updated
@@ -1761,14 +1757,11 @@ class unidata_sync(osv.osv):
             return False
 
         if is_full:
-            cr.execute('''
-                update product_product p set golden_status=''
-                    from product_international_status st
-                    where
-                        st.id = p.international_status and
-                        st.code = 'unidata' and
-                        p.ud_seen = 'f'
-                ''')
+            # TODO 'f' or False
+            prod_obj = self.pool.get('product.product')
+            not_seen_ud_ids = prod_obj.search(self.cr, self.uid, [('ud_seen', '=', False), ('international_status', '=', self.unidata_id), ('active', 'in', ['t', 'f'])])
+            if not_seen_ud_ids:
+                prod_obj.write(self.cr, self.uid, not_seen_ud_ids, {'golden_status': ''})
 
         logger.info('End of Script')
         handler.close()

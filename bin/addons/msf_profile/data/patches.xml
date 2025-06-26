@@ -1220,5 +1220,9 @@
         <record id="us_14450_sign_roles_in" model="patch.scripts">
             <field name="method">us_14450_sign_roles_in</field>
         </record>
+
+        <record id="us_13980_update_new_code_on_merged" model="patch.scripts">
+            <field name="method">us_13980_update_new_code_on_merged</field>
+        </record>
     </data>
 </openerp>
