@@ -527,6 +527,7 @@ class ud_sync():
             },
             'new_code': {
                 'ud': 'mergeToCode',
+                'ignore_missing': True,
             },
             'sterilized': {
                 'ud': 'medical/sterile',
@@ -829,8 +830,17 @@ class ud_sync():
                     continue
 
                 uf_value = ud_data
+                ignore_missing = False
+
                 for key in field_desc['ud'].split('/'):
+                    if self.uf_config[uf_key].get('ignore_missing') and key not in uf_value:
+                        ignore_missing = True
+                        break
                     uf_value = uf_value.get(key, {})
+
+                if ignore_missing:
+                    continue
+
                 if not uf_value:
                     uf_value = False
 
