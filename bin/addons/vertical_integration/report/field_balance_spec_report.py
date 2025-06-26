@@ -78,8 +78,8 @@ field_balance_spec_report()
 class field_balance_spec_parser(XlsxReportParser):
     _name = "field.balance.spec.parser"
 
-    def append_line(self, data):
-        if not self.eoy:
+    def append_line(self, data, fxa=False):
+        if not self.eoy and not fxa:
             del(data[9])
             del(data[8])
         self.workbook.active.append([self.cell_ro(x[0], x[1], unlock=len(x)>2 and x[2]) for x in data])
@@ -88,6 +88,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
         bk_id = self.context.get('background_id')
         bk_obj = self.pool.get('memory.background.report')
+        analytic_obj = self.pool.get('account.analytic.account')
 
         company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=context).company_id
 
@@ -1091,5 +1092,330 @@ class field_balance_spec_parser(XlsxReportParser):
             sheet.print_area = 'A1:L%d' % line
         if bk_id:
             bk_obj.write(self.cr, self.uid, bk_id, {'percent': 1.})
+
+        # FXA tab
+        sheet2 = self.workbook.create_sheet()
+        self.workbook.active = sheet2
+        sheet2.sheet_view.zoomScale = 75
+        sheet2.protection.formatCells = False
+        sheet2.protection.autoFilter = False
+        sheet2.protection.sheet = True
+        sheet2.sheet_view.showGridLines = True
+        sheet2.page_setup.orientation = 'landscape'
+        sheet2.page_setup.fitToPage = True
+        sheet2.page_setup.fitToHeight = False
+        sheet2.page_setup.paperSize = 9  # A4
+
+        page_title = _('Field Monthly Currency Adjustment Report From UniField')
+
+        footer = HeaderFooterItem()
+        footer.left.text = "%s, %s, %s, %s &[Page]/&N" % (page_title, report.instance_id.mission, report.period_id.name,
+                                                          _('page'))
+        footer.left.size = 8
+        sheet2.oddFooter = footer
+        sheet2.evenFooter = footer
+        sheet2.page_margins.left = 0.2
+        sheet2.page_margins.right = 0.2
+        sheet2.page_margins.top = 0.2
+        sheet2.page_margins.bottom = 1
+        sheet2.freeze_panes = 'C9'
+
+        self.duplicate_column_dimensions()
+        self.duplicate_row_dimensions(range(1, 9))
+
+        # Adapt columns dimensions to fxa AJI data needs
+        sheet2.column_dimensions['A'].width = sheet.column_dimensions['A'].width + 10
+        sheet2.column_dimensions['B'].width = sheet.column_dimensions['B'].width - 15
+        sheet2.column_dimensions['C'].width = sheet.column_dimensions['C'].width + 15
+        sheet2.column_dimensions['D'].width = sheet.column_dimensions['D'].width - 5
+        sheet2.column_dimensions['E'].width = sheet.column_dimensions['E'].width + 10
+        sheet2.column_dimensions['F'].width = sheet.column_dimensions['F'].width - 5
+        sheet2.column_dimensions['I'].width = sheet.column_dimensions['I'].width - 5
+
+        # MSF logo
+        img2 = image.Image(pil_img)
+        orig_width = img2.width
+        orig_height = img2.height
+        img2.width = 100.
+        img2.height = orig_height * (img2.width/orig_width)
+
+        sheet2.add_image(img2, 'A1')
+
+        sheet2.title = 'FXA %s %s' % (report.period_id.name, report.instance_id.code)
+        sheet2.row_dimensions[1].height = 25
+
+        self.append_line([
+            ('', 'logo_style'),
+            (page_title, 'title_cell1_style'),
+            ('', 'title_style'),
+            ('', 'title_style'),
+            ('', 'title_style'),
+            ('', 'title_style'),
+            (_('Rates'), 'rate_style'),
+            (_('Current period'), 'current_period_style'),
+            ('', 'title_style'),
+            ('', 'title_style'),
+            ('', 'first_field_comment', True),
+            ('', 'first_hq_comment', True)
+        ], fxa = True)
+        sheet2.merged_cells.ranges.append("B1:F1")
+
+        self.append_line(
+            [('', 'header_1st_info_title')] +
+            [('', 'default_header_style')] * 5 +
+            [
+                (company.currency_id.name, 'func_curr_name'),
+                (1, 'func_curr_value'),
+            ] +
+            [('', 'default_header_style')] * 2 +
+            [
+                ('', 'field_comment', True),
+                ('', 'hq_comment', True),
+            ], fxa = True
+        )
+
+        self.append_line([
+                             (_('Country Program'), 'header_1st_info_title'),
+                             (report.instance_id.mission or '', 'default_header_style'),
+                             (_('Date of the report'), 'header_other_info_title'),
+                             (datetime.now(), 'header_full_date'),
+                             ('', 'default_header_style'),
+                             (_('Report exported from'), 'header_other_info_title'),
+                         ] + [
+                             (rates.get(0, {}).get('name', ''), 'cur_name'),
+                             (rates.get(0, {}).get('value', ''), 'cur_value'),
+                         ] +
+                         [('', 'default_header_style')] * 2 +
+                         [
+                             ('', 'field_comment', True),
+                             ('', 'hq_comment', True)
+                         ], fxa = True
+                         )
+
+        self.append_line([
+                             (_('Month:'), 'header_1st_info_title'),
+                             (datetime.strptime(report.period_id.date_start, '%Y-%m-%d'), 'header_month_date'),
+                             (_('Date of review'), 'header_other_info_title'),
+                             ('', 'header_full_date'),
+                             ('', 'default_header_style'),
+                             (company.instance_id.instance, 'default_header_style'),
+                         ] + [
+                             (rates.get(1, {}).get('name', ''), 'cur_name'),
+                             (rates.get(1, {}).get('value', ''), 'cur_value'),
+                         ] + [('', 'default_header_style')] * 2 +
+                         [
+                             ('', 'field_comment', True),
+                             ('', 'hq_comment', True)
+                         ], fxa = True
+                         )
+
+        self.append_line([
+                             (_('Finco Name:'), 'header_1st_info_title'),
+                             ('', 'user_name', True),
+                             ('', 'user_date', True),
+                         ] +
+                         [('', 'default_header_style')] * 3 +
+                         [
+                             (rates.get(2, {}).get('name', ''), 'cur_name'),
+                             (rates.get(2, {}).get('value', ''), 'cur_value'),
+                         ] +
+                         [('', 'default_header_style')] * 2 +
+                         [
+                             ('', 'field_comment', True),
+                             ('', 'hq_comment', True)
+                         ], fxa = True
+                         )
+
+        self.append_line([
+                             (_('HoM Name:'), 'header_1st_info_title'),
+                             ('', 'user_name', True),
+                             ('', 'user_date', True),
+                         ] +
+                         [('', 'default_header_style')] * 3 +
+                         [
+                             (rates.get(3, {}).get('name', ''), 'cur_name'),
+                             (rates.get(3, {}).get('value', ''), 'cur_value'),
+                         ] +
+                         [('', 'default_header_style')] * 2 +
+                         [
+                             ('', 'field_comment', True),
+                             ('', 'hq_comment', True)
+                         ], fxa = True
+                         )
+
+        self.append_line([
+                             (_('HQ reviewer Name:'), 'header_1st_info_title'),
+                             ('', 'user_name', True),
+                             ('', 'user_date', True),
+                         ] +
+                         [('', 'default_header_style')] * 3 +
+                         [
+                             (rates.get(4, {}).get('name', ''), 'cur_name'),
+                             (rates.get(4, {}).get('value', ''), 'cur_value'),
+                         ] +
+                         [('', 'default_header_style')] * 2 +
+                         [
+                             ('', 'field_comment', True),
+                             ('', 'hq_comment', True)
+                         ], fxa = True
+                         )
+        line = 8
+
+        self.append_line(
+            [('', 'header_1st_info_title')] + [('', 'default_header_style')] * 9 + [('', 'field_comment', True), ('', 'hq_comment', True)], fxa = True)
+        line += 1
+
+        self.append_line(
+            [(_('Currency Adjustment Accounts'), 'title_account')] +
+            [('', 'title_text')] * 6 +
+            [(_('UniField Balance in %s') % (company.currency_id.name,), 'title_amount')] +
+            [('', 'title_text')] * 2 +
+            [(_("Field's Comments"), 'title_text'), (_("HQ Comments"), 'title_hq_comment')], fxa = True
+        )
+        line += 1
+
+        # sum of fxa accounts
+        fxa_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('code', 'in', ['67040', '67050'])],
+                                                                  context=context)
+        fxa_accounts = self.pool.get('account.account').browse(self.cr, self.uid, fxa_account_ids,
+                                                                   fields_to_fetch=['code', 'name'], context=context)
+        fxa_general_total = 0
+        subtotals = {}
+        for fxa_account in fxa_accounts:
+            self.cr.execute('''
+                            select
+                                general_account_id, 
+                                sum(coalesce(amount, 0))
+                            from 
+                                account_analytic_line
+                            where 
+                                real_period_id = %(period_id)s and
+                                instance_id in %(instance)s and
+                                general_account_id = %(account_id)s
+                            group by
+                                general_account_id
+                            ''', {
+                                'instance': tuple(all_instance_ids),
+                                'period_id': report.period_id.id,
+                                'account_id': fxa_account.id,
+                            }
+                            )
+            fxa_account_total = 0
+            for fxa in self.cr.fetchall():
+                fxa_account_total += fxa[1]
+                fxa_general_total += fxa_account_total
+
+            subtotals[fxa_account.code] = fxa_account_total
+
+            self.append_line(
+                [('%s %s' % (fxa_account.code, fxa_account.name), 'line_account')] +
+                [('', 'line_text')] * 6 +
+                [(round(fxa_account_total, 2), 'line_amount')] +
+                [('', 'line_text')] * 2 +
+                [('', 'field_comment', True), ('', 'hq_comment', True)], fxa = True
+            )
+            line += 1
+
+        self.append_line(
+            [('', 'header_1st_info_title')] + [('', 'default_header_style')] * 9 + [('', 'field_comment', True), ('', 'hq_comment', True)], fxa = True)
+        line += 1
+
+        self.append_line(
+            [('Total FXA', 'line_account')] +
+            [('', 'line_text')] * 6 +
+            [(round(fxa_general_total, 2), 'line_amount')] +
+            [('', 'line_text')] * 2 +
+            [('', 'field_comment', True), ('', 'hq_comment', True)], fxa = True
+        )
+        line += 1
+
+        self.append_line(
+            [('', 'header_1st_info_title')] + [('', 'default_header_style')] * 9 + [('', 'field_comment', True), ('', 'hq_comment', True)], fxa = True)
+        line += 1
+
+        for fxa_account in fxa_accounts:
+            self.append_line(
+                [('%s - %s' % (fxa_account.code, fxa_account.name), 'title_account')] +
+                [(_('Description of the entry'), 'title_text')] +
+                [(_('Reference of the entry'), 'title_text')] +
+                [(_('Posting date'), 'title_text')] +
+                [(_('Destination'), 'title_text')] +
+                [(_('Cost Center'), 'title_text')] +
+                [(_('Funding Pool'), 'title_text')] +
+                [(_('%s Amount') % (company.currency_id.name,), 'title_amount')] +
+                [('', 'title_text')] +
+                [(_('Third Party'), 'title_text')] +
+                [(_("Field's Comments"), 'title_text'), (_("HQ Comments"), 'title_hq_comment')], fxa = True
+            )
+            line += 1
+
+            self.cr.execute('''
+                            select
+                                entry_sequence,
+                                name,
+                                ref,
+                                date,
+                                destination_id,
+                                cost_center_id,
+                                account_id,
+                                amount,
+                                partner_txt
+                            from
+                                account_analytic_line
+                            where 
+                                real_period_id = %(period_id)s and
+                                instance_id in %(instance)s and
+                                general_account_id = %(account_id)s
+                            order by
+                                date desc, entry_sequence asc
+                            ''', {
+                                'instance': tuple(all_instance_ids),
+                                'period_id': report.period_id.id,
+                                'account_id': fxa_account.id,
+                            }
+                            )
+            fxa_entries = self.cr.fetchall()
+            for entry in fxa_entries:
+                self.append_line(
+                    [(entry[0], 'line_text')] +
+                    [(entry[1], 'line_text')] +
+                    [(entry[2], 'line_text')] +
+                    [(self.to_datetime(entry[3]), 'line_date')] +
+                    [(analytic_obj.browse(self.cr, self.uid, entry[4], context=context).code, 'line_text')] +
+                    [(analytic_obj.browse(self.cr, self.uid, entry[5], context=context).code, 'line_text')] +
+                    [(analytic_obj.browse(self.cr, self.uid, entry[6], context=context).code, 'line_text')] +
+                    [(entry[7], 'line_amount')] +
+                    [('', 'line_text')] +
+                    [(entry[8], 'line_text')] +
+                    [('', 'field_comment', True), ('', 'hq_comment', True)], fxa = True
+                )
+                line += 1
+            self.append_line(
+                [('', 'header_1st_info_title')] + [('', 'default_header_style')] * 9 + [('', 'field_comment', True), ('', 'hq_comment', True)], fxa=True)
+            line += 1
+            self.append_line(
+                [('', 'header_1st_info_title')] + [('', 'default_header_style')] * 6 + [(subtotals.get(fxa_account.code, 0), 'line_amount')] + [('', 'default_header_style')] * 2 + [('', 'field_comment', True), ('', 'hq_comment', True)], fxa=True)
+            line += 1
+            self.append_line(
+                [('', 'header_1st_info_title')] + [('', 'default_header_style')] * 9 + [('', 'field_comment', True), ('', 'hq_comment', True)], fxa=True)
+            line += 1
+
+        self.append_line(
+            [('', 'header_1st_info_title')] + [('', 'default_header_style')] * 9 + [('', 'field_comment', True), ('', 'hq_comment', True)], fxa = True)
+        line += 1
+
+        self.append_line(
+            [('', 'end_doc_left')] +
+            [('---%s---' % _('END OF FIELD MONTHLY CURRENCY ADJUSTMENT REPORT'), 'end_doc')] +
+            [('', 'end_doc')] * 9 +
+            [('', 'end_doc_right')], fxa = True
+        )
+        line += 1
+
+        sheet.print_area = 'A1:L%d' % line
+
+        # Set back the first sheet as the active one in order to get the first tab as default when we open the report
+        self.workbook.active = sheet
+
 
 XlsxReport('report.field_balance_spec_report', parser=field_balance_spec_parser, template='addons/vertical_integration/report/field_balance_spec_report_template.xlsx')
