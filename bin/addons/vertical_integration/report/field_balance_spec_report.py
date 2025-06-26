@@ -1367,7 +1367,7 @@ class field_balance_spec_parser(XlsxReportParser):
                                 instance_id in %(instance)s and
                                 general_account_id = %(account_id)s
                             order by
-                                date desc, entry_sequence asc
+                                date desc, entry_sequence desc
                             ''', {
                                 'instance': tuple(all_instance_ids),
                                 'period_id': report.period_id.id,
