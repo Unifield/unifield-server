@@ -1757,11 +1757,13 @@ class unidata_sync(osv.osv):
             return False
 
         if is_full:
-            # TODO 'f' or False
             prod_obj = self.pool.get('product.product')
-            not_seen_ud_ids = prod_obj.search(self.cr, self.uid, [('ud_seen', '=', False), ('international_status', '=', self.unidata_id), ('active', 'in', ['t', 'f'])])
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            not_seen_ud_ids = prod_obj.search(cr, uid, [('ud_seen', '=', False), ('international_status', '=', unidata_id), ('active', 'in', ['t', 'f'])])
+
             if not_seen_ud_ids:
-                prod_obj.write(self.cr, self.uid, not_seen_ud_ids, {'golden_status': ''})
+                prod_obj.write(cr, uid, not_seen_ud_ids, {'golden_status': ''})
 
         logger.info('End of Script')
         handler.close()
