@@ -11,6 +11,7 @@ import pooler
 from tempfile import NamedTemporaryFile
 from base64 import b64decode
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from lxml import etree
 
 
 #----------------------------------------------------------
@@ -487,17 +488,21 @@ class product_asset(osv.osv):
         ret = {}
         for _id in ids:
             ret[_id] = {'depreciation_amount': False,  'disposal_amount': False}
+
+        cond = " l.move_id is not null "
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'project':
+            cond = " l.project_has_coordo_move_id = 't' "
         cr.execute('''
             select
                 a.id, sum(l.amount), a.invo_value, a.from_invoice, a.from_hq_entry, a.state
             from
                 product_asset a
-                left join product_asset_line l on a.id = l.asset_id and l.move_id is not null
+                left join product_asset_line l on a.id = l.asset_id and ''' + cond + '''
             where
                 a.id in %s
                 and coalesce(l.is_initial_line, 'f') = 'f'
             group by a.id, a.invo_value, a.from_invoice, a.state
-        ''', (tuple(ids), ))
+        ''', (tuple(ids), ))  # not_a_user_entry
         for x in cr.fetchall():
             ret[x[0]] = {'depreciation_amount': x[1] or 0}
             if not x[1] and not x[3] and not x[4] and x[5] in ('depreciated', 'disposed'):
@@ -658,12 +663,16 @@ class product_asset(osv.osv):
         asset_line_obj = self.pool.get('product.asset.line')
         je_to_delete_ids = []
         disposal_to_delete_id = []
+        trigger_update = []
         for asset in self.browse(cr, uid, ids, fields_to_fetch=['line_ids'], context=context):
             for depline in asset.line_ids:
                 if depline.move_id and depline.move_id.state == 'draft':  # draft = Unposted state
                     je_to_delete_ids.append(depline.move_id.id)
+                    trigger_update.append(depline.id)
                     if depline.is_disposal:
                         disposal_to_delete_id.append(depline.id)
+        if trigger_update:
+            asset_line_obj.write(cr, uid, trigger_update, {'move_id': False}, context=context)
         if je_to_delete_ids:
             je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
         if disposal_to_delete_id:
@@ -1247,6 +1256,15 @@ class product_asset_line(osv.osv):
     _description = "Depreciation Lines"
     _trace = True
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view = super(product_asset_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and self.pool.get('res.company')._get_instance_level(cr, uid) == 'project':
+            view_xml = etree.fromstring(view['arch'])
+            for field in view_xml.xpath('//button[@name="button_analytic_distribution"]|//field[@name="analytic_distribution_state_recap"]|//field[@name="move_id"]|//field[@name="move_state"]'):
+                field.set('invisible', "1")
+            view['arch'] = etree.tostring(view_xml, encoding='unicode')
+        return view
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
@@ -1358,6 +1376,21 @@ class product_asset_line(osv.osv):
                 res[x[0]] = {'depreciation_amount': round(x[1], 2) , 'remaining_amount': max(round(x[2], 2), 0)}
         return res
 
+    def _sync_data(self, cr, uid, values, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            values['project_has_coordo_move_id'] = bool(values.get('move_state'))
+
+
+
+    def create(self, cr, uid, values, context=None):
+        self._sync_data(cr, uid, values, context=context)
+        return super(product_asset_line, self).create(cr, uid, values, context=context)
+
+    def write(self, cr, uid, ids, values, context=None):
+        self._sync_data(cr, uid, values, context=context)
+        return super(product_asset_line, self).write(cr, uid, ids, values, context=context)
 
     _columns = {
         'date': fields.date('Date', readonly=1, select=1),
@@ -1384,6 +1417,8 @@ class product_asset_line(osv.osv):
         'is_initial_line': fields.boolean('Initial Line'),
         'depreciation_amount': fields.function(_get_dep, type='float', with_null=True, method=1, string="Cumulative Amount", multi='get_dep'),
         'remaining_amount': fields.function(_get_dep, type='float', with_null=True, method=1, string="Remaining Amount", multi='get_dep'),
+        'used_instance_id': fields.related('asset_id', 'used_instance_id', type='many2one', relation='msf.instance', string='Instance of use', readonly=1, write_relate=False),
+        'project_has_coordo_move_id': fields.boolean('Linked to JI', help='Relevant at project level only', readonly=1),
     }
 
     _defaults = {
