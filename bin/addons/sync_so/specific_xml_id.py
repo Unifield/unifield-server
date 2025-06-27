@@ -1009,3 +1009,33 @@ class product_asset(osv.osv):
         return res
 
 product_asset()
+
+"""
+class product_asset_line(osv.osv):
+    _inherit = 'product.asset.line'
+
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if dest_field != 'used_instance_id':
+            return super(product_asset_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+        if not ids:
+            return {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = []
+        cr.execute('''
+            select asset_line.id, array_agg(distinct((i.instance)))
+                from product_asset_line asset_line
+                left join product_asset asset on asset.id = asset_line.asset_id
+                left join asset_owner_instance_rel rel on rel.asset_id = asset.id
+                left join msf_instance i on i.id = rel.instance_id or i.id = asset.used_instance_id
+            where
+                asset_line.id in %s and
+                i.level = 'project'
+            group by asset_line.id
+        ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            res[x[0]] = x[1]
+        return res
+"""

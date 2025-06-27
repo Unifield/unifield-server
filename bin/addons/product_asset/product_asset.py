@@ -240,6 +240,21 @@ class product_asset(osv.osv):
 
         instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
 
+        if instance_level == 'coordo' and vals.get('used_instance_id'):
+            # trigger update on asset line if used_instance has changed
+            cr.execute('''
+                update ir_model_data d set
+                    last_modification=now(), touched='[''used_instance_id'']'
+                from product_asset_line line, product_asset asset
+                where
+                    d.model = 'product.asset.line' and
+                    d.res_id = line.id and
+                    line.asset_id = asset.id and
+                    asset.id in %s and
+                    asset.used_instance_id != %s
+            ''', (tuple(ids), vals['used_instance_id']))
+
+
         if context.get('sync_update_execution', False):
             if not self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
                 raise osv.except_osv(_("Error"), _("The fixed asset feature is not activated on this instance."))
