@@ -1291,8 +1291,8 @@ class field_balance_spec_parser(XlsxReportParser):
 
     def _end_doc(self, sheet, title, line):
         self.append_line(
-            [('', 'end_doc_left')] +
-            [('---%s---' % title, 'end_doc')] +
+            [('---%s---' % title, 'end_doc_left')] +
+            [('', 'end_doc')] +
             [('', 'end_doc')] * 11 +
             [('', 'end_doc_right')]
         )
