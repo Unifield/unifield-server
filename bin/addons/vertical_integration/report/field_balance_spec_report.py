@@ -84,155 +84,7 @@ class field_balance_spec_parser(XlsxReportParser):
             del(data[8])
         self.workbook.active.append([self.cell_ro(x[0], x[1], unlock=len(x)>2 and x[2]) for x in data])
 
-    def generate(self, context=None):
-
-        bk_id = self.context.get('background_id')
-        bk_obj = self.pool.get('memory.background.report')
-
-        company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=context).company_id
-
-        if currency_date.get_date_type(self, self.cr) == 'document':
-            date_used = 'document_date'
-            date_used_label = _('Document date')
-            rate_title_main = _('Booking Rate')
-        else:
-            date_used = 'date'
-            date_used_label = _('Posting date')
-            rate_title_main = _('Posting Rate')
-
-        report = self.pool.get('field.balance.spec.report').browse(self.cr, self.uid, self.ids[0], context=context)
-
-
-        self.eoy = report.eoy
-        all_instance_ids = [report.instance_id.id] + [x.id for x in report.instance_id.child_ids]
-
-        self.cr.execute('''
-            select
-                distinct cur.id, cur.name
-            from
-                account_move_line l, account_move m, res_currency cur, account_account a, account_period p
-            where
-                cur.id = l.currency_id
-                and a.id = l.account_id
-                and l.date <= %(last_date)s
-                and p.id = l.period_id
-                and p.number not in (0, 16)
-                and m.id = l.move_id
-                and m.state='posted'
-                and m.instance_id in %(instance)s
-                and (a.reconcile = 't' or a.type = 'liquidity')
-                and l.reconcile_id is null
-            group by
-                cur.id, cur.name
-            order by
-                cur.name
-        ''', {'last_date': report.period_id.date_stop, 'instance': tuple(all_instance_ids)} )
-
-        list_curr = ['EUR', 'USD']
-        curr_id = {}
-        for x in self.cr.fetchall():
-            if x[1] not in ('EUR', 'USD'):
-                list_curr.append(x[1])
-            curr_id[x[0]] = x[1]
-
-        if bk_id:
-            bk_obj.write(self.cr, self.uid, bk_id, {'percent': 0.1})
-
-        fx_rates = {}
-        fx_rates_by_id = {}
-        self.cr.execute('''
-            select cur.name,
-                (select rate.rate
-                    from res_currency_rate rate
-                    where rate.currency_id = cur.id and rate.name <= %s
-                    order by
-                    rate.name desc
-                    limit 1
-                ) as fx_rate,
-                cur.id
-            from res_currency cur
-            where currency_table_id is null and cur.name in %s
-        ''', (report.period_id.date_start, tuple(list_curr) ))
-        for x in self.cr.fetchall():
-            fx_rates[x[0]] = x[1]
-            fx_rates_by_id[x[2]] = x[1]
-
-        ct_fx_rates = {}
-        ct_fx_rates_by_id = {}
-        if report.eoy:
-            self.cr.execute('''
-                select cur.name,
-                    (select rate.rate
-                        from res_currency_rate rate
-                        where rate.currency_id = cur.id
-                        order by
-                        rate.name desc
-                        limit 1
-                    ) as fx_rate,
-                    cur.reference_currency_id
-                from res_currency cur, res_currency_table t
-                where
-                    cur.currency_table_id = t.id
-                    and t.state = 'valid'
-                    and cur.name in %s
-            ''', (tuple(list_curr), ))
-            for x in self.cr.fetchall():
-                ct_fx_rates[x[0]] = x[1]
-                ct_fx_rates_by_id[x[2]] = x[1]
-
-        rates = {}
-        ct_rates = {}
-        for n, cur in enumerate(list_curr[1:]):
-            rates[n] = {'name': cur, 'value': fx_rates[cur]}
-            if report.eoy:
-                ct_rates[n] = {'name': cur, 'value': ct_fx_rates[cur]}
-
-        page_title = _('Field Balance Specification Report From UniField')
-
-        sheet = self.workbook.active
-        sheet.sheet_view.zoomScale = 75
-        sheet.protection.formatCells = False
-        #sheet.protection.formatRows = False
-        #sheet.protection.formatColumns = False
-        sheet.protection.autoFilter = False
-        sheet.protection.sheet = True
-        sheet.sheet_view.showGridLines = True
-        sheet.page_setup.orientation = 'landscape'
-        sheet.page_setup.fitToPage = True
-        sheet.page_setup.fitToHeight = False
-        sheet.page_setup.paperSize = 9 # A4
-
-        footer = HeaderFooterItem()
-        footer.left.text = "%s, %s, %s, %s &[Page]/&N" % (page_title, report.instance_id.mission, report.period_id.name, _('page'))
-        footer.left.size = 8
-        sheet.oddFooter = footer
-        sheet.evenFooter = footer
-        sheet.page_margins.left = 0.2
-        sheet.page_margins.right = 0.2
-        sheet.page_margins.top = 0.2
-        sheet.page_margins.bottom = 1
-        sheet.freeze_panes = 'C9'
-
-        self.duplicate_column_dimensions()
-        self.duplicate_row_dimensions(range(1, 9))
-        if self.eoy:
-            sheet.column_dimensions['N'].width = sheet.column_dimensions['L'].width
-            sheet.column_dimensions['M'].width = sheet.column_dimensions['K'].width
-            sheet.column_dimensions['L'].width = sheet.column_dimensions['J'].width
-            sheet.column_dimensions['K'].width = sheet.column_dimensions['I'].width
-            sheet.column_dimensions['J'].width = sheet.column_dimensions['H'].width
-            sheet.column_dimensions['I'].width = sheet.column_dimensions['G'].width
-
-        pil_img = PILImage.open(tools.file_open('addons/msf_doc_import/report/images/msf-logo.png', 'rb'))
-        img = image.Image(pil_img)
-        orig_width = img.width
-        orig_height = img.height
-        img.width = 100.
-        img.height = orig_height * (img.width/orig_width)
-
-        sheet.add_image(img, 'A1')
-
-
+    def _set_style(self):
         self.create_style_from_template('logo_style', 'A1')
         self.create_style_from_template('title_cell1_style', 'B1')
         self.create_style_from_template('title_style', 'I1')
@@ -273,9 +125,56 @@ class field_balance_spec_parser(XlsxReportParser):
         self.create_style_from_template('field_comment', 'K10')
         self.create_style_from_template('hq_comment', 'L10')
 
+    def _common_header_footer(self, sheet, sheet_title, nb=1):
+        page_title = _('Field Balance Specification Report From UniField')
 
+        sheet.sheet_view.zoomScale = 75
+        sheet.protection.formatCells = False
+        #sheet.protection.formatRows = False
+        #sheet.protection.formatColumns = False
+        sheet.protection.autoFilter = False
+        sheet.protection.sheet = True
+        sheet.sheet_view.showGridLines = True
+        sheet.page_setup.orientation = 'landscape'
+        sheet.page_setup.fitToPage = True
+        sheet.page_setup.fitToHeight = False
+        sheet.page_setup.paperSize = 9 # A4
 
-        sheet.title = '%s %s' % (report.period_id.name, report.instance_id.code)
+        footer = HeaderFooterItem()
+        footer.left.text = "%s, %s, %s, %s &[Page]/&N" % (page_title, self.report.instance_id.mission, self.report.period_id.name, _('page'))
+        footer.left.size = 8
+        sheet.oddFooter = footer
+        sheet.evenFooter = footer
+        sheet.page_margins.left = 0.2
+        sheet.page_margins.right = 0.2
+        sheet.page_margins.top = 0.2
+        sheet.page_margins.bottom = 1
+        sheet.freeze_panes = 'C9'
+
+        self.duplicate_column_dimensions()
+        self.duplicate_row_dimensions(range(1, 9))
+        if nb == 2:
+            sheet.column_dimensions['B'].width = 25
+            sheet.column_dimensions['C'].width = 47
+            sheet.column_dimensions['E'].width = 15
+        if self.eoy:
+            sheet.column_dimensions['N'].width = sheet.column_dimensions['L'].width
+            sheet.column_dimensions['M'].width = sheet.column_dimensions['K'].width
+            sheet.column_dimensions['L'].width = sheet.column_dimensions['J'].width
+            sheet.column_dimensions['K'].width = sheet.column_dimensions['I'].width
+            sheet.column_dimensions['J'].width = sheet.column_dimensions['H'].width
+            sheet.column_dimensions['I'].width = sheet.column_dimensions['G'].width
+
+        pil_img = PILImage.open(tools.file_open('addons/msf_doc_import/report/images/msf-logo.png', 'rb'))
+        img = image.Image(pil_img)
+        orig_width = img.width
+        orig_height = img.height
+        img.width = 100.
+        img.height = orig_height * (img.width/orig_width)
+
+        sheet.add_image(img, 'A1')
+
+        sheet.title = sheet_title
         sheet.row_dimensions[1].height = 25
 
 
@@ -301,9 +200,9 @@ class field_balance_spec_parser(XlsxReportParser):
             [('', 'header_1st_info_title')] +
             [('', 'default_header_style')] * 5 +
             [
-                (company.currency_id.name, 'func_curr_name'),
+                (self.company.currency_id.name, 'func_curr_name'),
                 (1,  'func_curr_value'),
-                (company.currency_id.name, 'func_curr_name'),
+                (self.company.currency_id.name, 'func_curr_name'),
                 (1,  'func_curr_value'),
             ] +
             [('', 'default_header_style')] * 2 +
@@ -315,16 +214,16 @@ class field_balance_spec_parser(XlsxReportParser):
 
         self.append_line([
             (_('Country Program'), 'header_1st_info_title'),
-            (report.instance_id.mission or '', 'default_header_style'),
+            (self.report.instance_id.mission or '', 'default_header_style'),
             (_('Date of the report'), 'header_other_info_title'),
             (datetime.now(), 'header_full_date'),
             ('', 'default_header_style'),
             (_('Report exported from'), 'header_other_info_title'),
         ] + [
-            (rates.get(0, {}).get('name', ''), 'cur_name'),
-            (rates.get(0, {}).get('value', ''), 'cur_value'),
-            (ct_rates.get(0, {}).get('name', ''), 'cur_name'),
-            (ct_rates.get(0, {}).get('value', ''), 'cur_value')
+            (self.rates.get(0, {}).get('name', ''), 'cur_name'),
+            (self.rates.get(0, {}).get('value', ''), 'cur_value'),
+            (self.ct_rates.get(0, {}).get('name', ''), 'cur_name'),
+            (self.ct_rates.get(0, {}).get('value', ''), 'cur_value')
         ] +
             [('', 'default_header_style')] * 2 +
             [
@@ -335,16 +234,16 @@ class field_balance_spec_parser(XlsxReportParser):
 
         self.append_line([
             (_('Month:'), 'header_1st_info_title'),
-            (datetime.strptime(report.period_id.date_start, '%Y-%m-%d'), 'header_month_date'),
+            (datetime.strptime(self.report.period_id.date_start, '%Y-%m-%d'), 'header_month_date'),
             (_('Date of review'), 'header_other_info_title'),
             ('', 'header_full_date'),
             ('', 'default_header_style'),
-            (company.instance_id.instance, 'default_header_style'),
+            (self.company.instance_id.instance, 'default_header_style'),
         ] + [
-            (rates.get(1, {}).get('name', ''), 'cur_name'),
-            (rates.get(1, {}).get('value', ''), 'cur_value'),
-            (ct_rates.get(1, {}).get('name', ''), 'cur_name'),
-            (ct_rates.get(1, {}).get('value', ''), 'cur_value'),
+            (self.rates.get(1, {}).get('name', ''), 'cur_name'),
+            (self.rates.get(1, {}).get('value', ''), 'cur_value'),
+            (self.ct_rates.get(1, {}).get('name', ''), 'cur_name'),
+            (self.ct_rates.get(1, {}).get('value', ''), 'cur_value'),
         ] + [('', 'default_header_style')] * 2 +
             [
             ('', 'field_comment', True),
@@ -359,10 +258,10 @@ class field_balance_spec_parser(XlsxReportParser):
         ] +
             [('', 'default_header_style')] * 3 +
             [
-            (rates.get(2, {}).get('name', ''), 'cur_name'),
-            (rates.get(2, {}).get('value', ''), 'cur_value'),
-            (ct_rates.get(2, {}).get('name', ''), 'cur_name'),
-            (ct_rates.get(2, {}).get('value', ''), 'cur_value')
+            (self.rates.get(2, {}).get('name', ''), 'cur_name'),
+            (self.rates.get(2, {}).get('value', ''), 'cur_value'),
+            (self.ct_rates.get(2, {}).get('name', ''), 'cur_name'),
+            (self.ct_rates.get(2, {}).get('value', ''), 'cur_value')
         ] +
             [('', 'default_header_style')] * 2 +
             [
@@ -378,10 +277,10 @@ class field_balance_spec_parser(XlsxReportParser):
         ] +
             [('', 'default_header_style')] * 3 +
             [
-            (rates.get(3, {}).get('name', ''), 'cur_name'),
-            (rates.get(3, {}).get('value', ''), 'cur_value'),
-            (ct_rates.get(3, {}).get('name', ''), 'cur_name'),
-            (ct_rates.get(3, {}).get('value', ''), 'cur_value')
+            (self.rates.get(3, {}).get('name', ''), 'cur_name'),
+            (self.rates.get(3, {}).get('value', ''), 'cur_value'),
+            (self.ct_rates.get(3, {}).get('name', ''), 'cur_name'),
+            (self.ct_rates.get(3, {}).get('value', ''), 'cur_value')
         ] +
             [('', 'default_header_style')] * 2 +
             [
@@ -397,10 +296,10 @@ class field_balance_spec_parser(XlsxReportParser):
         ] +
             [('', 'default_header_style')] * 3 +
             [
-            (rates.get(4, {}).get('name', ''), 'cur_name'),
-            (rates.get(4, {}).get('value', ''), 'cur_value'),
-            (ct_rates.get(4, {}).get('name', ''), 'cur_name'),
-            (ct_rates.get(4, {}).get('value', ''), 'cur_value')
+            (self.rates.get(4, {}).get('name', ''), 'cur_name'),
+            (self.rates.get(4, {}).get('value', ''), 'cur_value'),
+            (self.ct_rates.get(4, {}).get('name', ''), 'cur_name'),
+            (self.ct_rates.get(4, {}).get('value', ''), 'cur_value')
         ] +
             [('', 'default_header_style')] * 2 +
             [
@@ -410,15 +309,15 @@ class field_balance_spec_parser(XlsxReportParser):
         )
         rate_idx = 5
         line = 8
-        while rates.get(rate_idx):
+        while self.rates.get(rate_idx):
             self.append_line(
                 [('', 'header_1st_info_title')] +
                 [('', 'default_header_style')] * 5 +
                 [
-                    (rates.get(rate_idx, {}).get('name', ''), 'cur_name'),
-                    (rates.get(rate_idx, {}).get('value', ''), 'cur_value'),
-                    (ct_rates.get(rate_idx, {}).get('name', ''), 'cur_name'),
-                    (ct_rates.get(rate_idx, {}).get('value', ''), 'cur_value')
+                    (self.rates.get(rate_idx, {}).get('name', ''), 'cur_name'),
+                    (self.rates.get(rate_idx, {}).get('value', ''), 'cur_value'),
+                    (self.ct_rates.get(rate_idx, {}).get('name', ''), 'cur_name'),
+                    (self.ct_rates.get(rate_idx, {}).get('value', ''), 'cur_value')
                 ] +
                 [('', 'default_header_style')] * 2 +
                 [
@@ -431,12 +330,269 @@ class field_balance_spec_parser(XlsxReportParser):
 
         self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
         line += 1
+        return line
+
+    def _tab_fxa(self, context=None):
+        sheet2 = self.workbook.create_sheet()
+        self.workbook.active = sheet2
+        self.eoy = False
+        line = self._common_header_footer(sheet2, 'FXA %s %s' % (self.report.period_id.name, self.report.instance_id.code), nb=2)
+
+        j_type = ['cur_adj', 'revaluation']
+
+        self.append_line(
+            [(_('Currency Adjustment Accounts'), 'title_account')] +
+            [('', 'title_text')] * 6 +
+            [(_('UniField Balance in %s') % (self.company.currency_id.name,) , 'title_amount')] +
+            [('', 'title_text')] +
+            [('', 'title_amount')] +
+            [('', 'title_text')] * 2 +
+            [(_("Field's Comments"), 'title_text'), (_("HQ Comments"), 'title_hq_comment')]
+        )
+
+        line += 1
+
+        account_sum = {}
+        self.cr.execute('''
+            select
+                l.general_account_id, sum(round(l.amount, 2))
+            from
+                account_analytic_line l, account_analytic_journal j, account_account a
+            where
+                a.id = l.general_account_id and
+                l.real_period_id = %(period_id)s and
+                l.journal_id = j.id and
+                j.type in %(j_type)s and
+                l.instance_id in %(instance)s
+            group by
+                a.code, l.general_account_id
+            order by
+                a.code
+            ''', {
+            'instance': tuple(self.all_instance_ids),
+            'period_id': self.report.period_id.id,
+            'j_type': tuple(j_type)
+        })
+        account_sum = dict(self.cr.fetchall())
+
+        for fxa_account in self.pool.get('account.account').browse(self.cr, self.uid, list(account_sum.keys()), fields_to_fetch=['code', 'name'], context=context):
+            self.append_line(
+                [('%s %s' % (fxa_account.code, fxa_account.name), 'line_account')] +
+                [('', 'line_text')] * 6 +
+                [(round(account_sum[fxa_account.id], 2), 'line_amount')] +
+                [('', 'line_text')]  +
+                [('', 'line_amount')] +
+                [('', 'line_text')] * 2 +
+                [('', 'field_comment', True), ('', 'hq_comment', True)]
+            )
+            line += 1
+        self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
+        line += 1
+
+        for fxa_account in self.pool.get('account.account').browse(self.cr, self.uid, list(account_sum.keys()), fields_to_fetch=['code', 'name'], context=context):
+            self.append_line([
+                ('%s %s' % (fxa_account.code, fxa_account.name), 'title_account'),
+                (_('Description of the entry'), 'title_text'),
+                (_('Reference of the entry'), 'title_text'),
+                (_('Posting date'), 'title_text'),
+                (_('Destination'), 'title_text'),
+                (_('Cost Center'), 'title_text'),
+                (_('Funding Pool'), 'title_text'),
+                (_('%s Amount') % self.company.currency_id.name, 'title_amount'),
+                ('', 'title_text'),
+                ('', 'title_text'),
+                ('', 'title_text'),
+                (_('Third Party'), 'title_text'),
+                (_("Field's Comments"), 'title_text'),
+                (_("HQ Comments"), 'title_hq_comment')
+            ])
+            line += 1
+            self.cr.execute('''
+                select
+                    l.entry_sequence,
+                    l.name,
+                    l.ref,
+                    l.date,
+                    dest.code,
+                    cc.code,
+                    fp.code,
+                    l.amount,
+                    l.partner_txt
+                from
+                    account_analytic_line l
+                    left join account_analytic_journal j on j.id = l.journal_id
+                    left join account_analytic_account dest on dest.id = l.destination_id
+                    left join account_analytic_account cc on cc.id = l.cost_center_id
+                    left join account_analytic_account fp on fp.id = l.account_id
+                where
+                    l.real_period_id = %(period_id)s and
+                    j.type in %(j_type)s and
+                    l.instance_id in %(instance)s and
+                    l.general_account_id = %(account_id)s
+                order by
+                    l.entry_sequence
+                ''', {
+                'instance': tuple(self.all_instance_ids),
+                'period_id': self.report.period_id.id,
+                'account_id': fxa_account.id,
+                'j_type': tuple(j_type),
+            })
+            sum = 0
+            for al in self.cr.fetchall():
+                self.append_line([
+                    (al[0], 'line_account'),
+                    (al[1], 'line_text'),
+                    (al[2], 'line_text'),
+                    (self.to_datetime(al[3]), 'line_date'),
+                    (al[4], 'line_text'),
+                    (al[5], 'line_text'),
+                    (al[6], 'line_text'),
+                    (al[7], 'line_amount'),
+                    ('', 'line_text'),
+                    ('', 'line_text'),
+                    ('', 'line_text'),
+                    (al[8], 'line_text'),
+                    ('', 'field_comment', True),
+                    ('', 'hq_comment', True)
+                ])
+                line += 1
+                sum += round(al[7], 2)
+
+            self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
+            line += 1
+
+            self.append_line(
+                [('', 'header_1st_info_title')] +
+                [('', 'default_header_style')] * 6  +
+                [(sum, 'line_total')] +
+                [('', 'default_header_style'), ('', 'line_total')]  +
+                [('', 'default_header_style')] * 2 +
+                [('', 'field_comment', True), ('', 'hq_comment', True)]
+            )
+            line += 1
+
+
+            self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
+            line += 1
+
+        self._end_doc(sheet2, _('END OF FIELD MONTHLY CURRENCY ADJUSTMENT REPORT'), line)
+
+    def generate(self, context=None):
+
+        bk_id = self.context.get('background_id')
+        bk_obj = self.pool.get('memory.background.report')
+
+        self.company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=context).company_id
+
+        if currency_date.get_date_type(self, self.cr) == 'document':
+            date_used = 'document_date'
+            date_used_label = _('Document date')
+            rate_title_main = _('Booking Rate')
+        else:
+            date_used = 'date'
+            date_used_label = _('Posting date')
+            rate_title_main = _('Posting Rate')
+
+        self.report = self.pool.get('field.balance.spec.report').browse(self.cr, self.uid, self.ids[0], context=context)
+
+
+        self.eoy = self.report.eoy
+        all_instance_ids = [self.report.instance_id.id] + [x.id for x in self.report.instance_id.child_ids]
+        self.all_instance_ids = all_instance_ids
+
+        self.cr.execute('''
+            select
+                distinct cur.id, cur.name
+            from
+                account_move_line l, account_move m, res_currency cur, account_account a, account_period p
+            where
+                cur.id = l.currency_id
+                and a.id = l.account_id
+                and l.date <= %(last_date)s
+                and p.id = l.period_id
+                and p.number not in (0, 16)
+                and m.id = l.move_id
+                and m.state='posted'
+                and m.instance_id in %(instance)s
+                and (a.reconcile = 't' or a.type = 'liquidity')
+                and l.reconcile_id is null
+            group by
+                cur.id, cur.name
+            order by
+                cur.name
+        ''', {'last_date': self.report.period_id.date_stop, 'instance': tuple(all_instance_ids)} )
+
+        list_curr = ['EUR', 'USD']
+        curr_id = {}
+        for x in self.cr.fetchall():
+            if x[1] not in ('EUR', 'USD'):
+                list_curr.append(x[1])
+            curr_id[x[0]] = x[1]
+
+        if bk_id:
+            bk_obj.write(self.cr, self.uid, bk_id, {'percent': 0.1})
+
+        fx_rates = {}
+        fx_rates_by_id = {}
+        self.cr.execute('''
+            select cur.name,
+                (select rate.rate
+                    from res_currency_rate rate
+                    where rate.currency_id = cur.id and rate.name <= %s
+                    order by
+                    rate.name desc
+                    limit 1
+                ) as fx_rate,
+                cur.id
+            from res_currency cur
+            where currency_table_id is null and cur.name in %s
+        ''', (self.report.period_id.date_start, tuple(list_curr) ))
+        for x in self.cr.fetchall():
+            fx_rates[x[0]] = x[1]
+            fx_rates_by_id[x[2]] = x[1]
+
+        ct_fx_rates = {}
+        ct_fx_rates_by_id = {}
+        if self.report.eoy:
+            self.cr.execute('''
+                select cur.name,
+                    (select rate.rate
+                        from res_currency_rate rate
+                        where rate.currency_id = cur.id
+                        order by
+                        rate.name desc
+                        limit 1
+                    ) as fx_rate,
+                    cur.reference_currency_id
+                from res_currency cur, res_currency_table t
+                where
+                    cur.currency_table_id = t.id
+                    and t.state = 'valid'
+                    and cur.name in %s
+            ''', (tuple(list_curr), ))
+            for x in self.cr.fetchall():
+                ct_fx_rates[x[0]] = x[1]
+                ct_fx_rates_by_id[x[2]] = x[1]
+
+        self.rates = {}
+        self.ct_rates = {}
+        for n, cur in enumerate(list_curr[1:]):
+            self.rates[n] = {'name': cur, 'value': fx_rates[cur]}
+            if self.report.eoy:
+                self.ct_rates[n] = {'name': cur, 'value': ct_fx_rates[cur]}
+
+        sheet = self.workbook.active
+        self._set_style()
+        line = self._common_header_footer(sheet, '%s %s %s' % (_('Balance'), self.report.period_id.name, self.report.instance_id.code))
+
+
+
         self.append_line(
             [(_('Balance accounts'), 'title_account')] +
             [('', 'title_text')] * 6 +
-            [(_('UniField Balance in %s') % (company.currency_id.name,) , 'title_amount')] +
+            [(_('UniField Balance in %s') % (self.company.currency_id.name,) , 'title_amount')] +
             [('', 'title_text')] +
-            [(_('%s Amount with Year End Rate Currency Table') % (company.currency_id.name, ), 'title_amount')] +
+            [(_('%s Amount with Year End Rate Currency Table') % (self.company.currency_id.name, ), 'title_amount')] +
             [('', 'title_text')] * 2 +
             [(_("Field's Comments"), 'title_text'), (_("HQ Comments"), 'title_hq_comment')]
         )
@@ -466,8 +622,8 @@ class field_balance_spec_parser(XlsxReportParser):
                     l.currency_id, j.id
                 ''', {
                 'instance': tuple(all_instance_ids),
-                'period_start': report.period_id.date_start,
-                'period_number': report.period_id.number,
+                'period_start': self.report.period_id.date_start,
+                'period_number': self.report.period_id.number,
                 'account_id': liq_account.id,
             }
             )
@@ -495,7 +651,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
         # sum of reconciliable accounts
         ctx_with_date = context.copy()
-        ctx_with_date['date'] = (datetime.strptime(report.period_id.date_stop, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+        ctx_with_date['date'] = (datetime.strptime(self.report.period_id.date_stop, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
         inactive_accounts = {}
 
         req_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True), ('code', '!=', '15640')], context=context)
@@ -550,14 +706,14 @@ class field_balance_spec_parser(XlsxReportParser):
                     l.account_id, l.currency_id
                 ''', {
                 'account_id': tuple(list_accounts),
-                'period_number': report.period_id.number,
-                'period_start': report.period_id.date_start,
+                'period_number': self.report.period_id.number,
+                'period_start': self.report.period_id.date_start,
                 'instance': tuple(all_instance_ids),
             })
             for ssum in self.cr.fetchall():
                 list_sum.setdefault(ssum[1], 0)
                 ct_list_sum.setdefault(ssum[1], 0)
-                if ssum[1] in chq_account and company.revaluation_default_account:
+                if ssum[1] in chq_account and self.company.revaluation_default_account:
                     list_sum[ssum[1]] += ssum[2] / fx_rates_by_id.get(ssum[3], 1)
                 else:
                     list_sum[ssum[1]] += ssum[0]
@@ -586,7 +742,7 @@ class field_balance_spec_parser(XlsxReportParser):
         self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
         line += 1
 
-        year = datetime.strptime(report.period_id.date_start, '%Y-%m-%d').year
+        year = datetime.strptime(self.report.period_id.date_start, '%Y-%m-%d').year
         for j_type in ['cash', 'bank']:
             j_ids = self.pool.get('account.journal').search(self.cr, self.uid, ['&', ('type', '=', j_type), '|', ('is_active', '=', True), ('inactivation_date', '>', '%s-01-31' % (year, )), ('instance_id', 'in', all_instance_ids)], context=context)
             first_line = True
@@ -603,9 +759,9 @@ class field_balance_spec_parser(XlsxReportParser):
                             (_('Curr'), 'title_info'),
                             (_('Currency Amount'), 'title_amount'),
                             (_('Period Rate'), 'title_amount'),
-                            (_('%s Amount with Current Period Rate') % company.currency_id.name, 'title_amount'),
+                            (_('%s Amount with Current Period Rate') % self.company.currency_id.name, 'title_amount'),
                             (_('Year End Rate Currency Table'), 'title_amount'),
-                            (_('%s Amount with Year End Rate Currency Table') % (company.currency_id.name, ), 'title_amount'),
+                            (_('%s Amount with Year End Rate Currency Table') % (self.company.currency_id.name, ), 'title_amount'),
                             ('', 'title_text'),
                             ('', 'title_text'),
                             (_("Field's Comments"), 'title_text'),
@@ -632,14 +788,14 @@ class field_balance_spec_parser(XlsxReportParser):
                 ])
                 line += 1
                 account_sum += round(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), 2)
-                if report.eoy:
+                if self.report.eoy:
                     ct_account_sum += round(register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1), 2)
 
             self.append_line(
                 [('', 'header_1st_info_title')] +
                 [('', 'default_header_style')] * 6  +
                 [(account_sum, 'line_total')] +
-                [('', 'default_header_style'), (ct_account_sum if report.eoy else '', 'line_total')]  +
+                [('', 'default_header_style'), (ct_account_sum if self.report.eoy else '', 'line_total')]  +
                 [('', 'default_header_style')] * 2 +
                 [('', 'field_comment', True), ('', 'hq_comment', True)]
             )
@@ -665,7 +821,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     [('%s - %s' % (req_account.code, req_account.name), 'title_account')] +
                     [('', 'title_text')] * 6 +
                     [
-                        (_('%s Amount') % (company.currency_id.name, ), 'title_amount'),
+                        (_('%s Amount') % (self.company.currency_id.name, ), 'title_amount'),
                         ('', 'title_text'),
                         ('', 'title_text'),
                         (_('Subaccount Number'), 'title_info'),
@@ -717,8 +873,8 @@ class field_balance_spec_parser(XlsxReportParser):
                         EMP_ALL.identification_id NULLS FIRST
                     ''', {
                     'account_id': req_account.id,
-                    'period_number': report.period_id.number,
-                    'period_start': report.period_id.date_start,
+                    'period_number': self.report.period_id.number,
+                    'period_start': self.report.period_id.date_start,
                     'instance': tuple(all_instance_ids),
                 })
                 partner_txt_lines = {}
@@ -778,7 +934,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     account_sum += round(emp[1], 2)
 
 
-                if report.selection == 'details':
+                if self.report.selection == 'details':
                     title_sum = _('List of entries reconciled in later periods >>>')
                 else:
                     title_sum = _('Total of entries reconciled in later periods >>>')
@@ -792,10 +948,10 @@ class field_balance_spec_parser(XlsxReportParser):
 
             else:
                 rate_title = rate_title_main
-                amount_title = _('%s Amount') % (company.currency_id.name, )
-                if req_account.id in chq_account and company.revaluation_default_account:
+                amount_title = _('%s Amount') % (self.company.currency_id.name, )
+                if req_account.id in chq_account and self.company.revaluation_default_account:
                     rate_title = _('Period Rate')
-                    amount_title = _('%s Amount with Current Period Rate') % (company.currency_id.name, )
+                    amount_title = _('%s Amount with Current Period Rate') % (self.company.currency_id.name, )
 
                 self.append_line([
                     ('%s - %s' % (req_account.code, req_account.name), 'title_account'),
@@ -807,7 +963,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     (rate_title, 'title_amount'),
                     (amount_title, 'title_amount'),
                     (_('Year End Rate Currency Table'), 'title_amount'),
-                    (_('%s Amount with Year End Rate Currency Table') % (company.currency_id.name, ), 'title_amount'),
+                    (_('%s Amount with Year End Rate Currency Table') % (self.company.currency_id.name, ), 'title_amount'),
                     (_('Reconcile Number'), 'title_info'),
                     (_('Third Party'), 'title_info'),
                     (_("Field's Comments"), 'title_text'),
@@ -862,13 +1018,13 @@ class field_balance_spec_parser(XlsxReportParser):
                         m.name, l.id
                     ''', {
                     'account_id': req_account.id,
-                    'period_number': report.period_id.number,
-                    'period_start': report.period_id.date_start,
+                    'period_number': self.report.period_id.number,
+                    'period_start': self.report.period_id.date_start,
                     'instance': tuple(all_instance_ids),
                 })
 
                 for account_line in self.cr.fetchall():
-                    if req_account.id in chq_account and company.revaluation_default_account:
+                    if req_account.id in chq_account and self.company.revaluation_default_account:
                         line_rate = fx_rates_by_id.get(account_line[11],'')
                         line_amount = account_line[5] / fx_rates_by_id.get(account_line[11], 1)
                     else:
@@ -898,7 +1054,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     account_sum += round(line_amount, 2)
                     ct_account_sum += round(ct_line_amount, 2)
 
-                if report.selection == 'details':
+                if self.report.selection == 'details':
                     self.append_line(
                         [(_('List of entries reconciled in later periods >>>'), 'line_selection')] +
                         [('', 'default_header_style')] * 11 +
@@ -959,12 +1115,12 @@ class field_balance_spec_parser(XlsxReportParser):
                             m.name, l.id
                         ''', {
                         'account_id': req_account.id,
-                        'period_number': report.period_id.number,
-                        'period_start': report.period_id.date_start,
+                        'period_number': self.report.period_id.number,
+                        'period_start': self.report.period_id.date_start,
                         'instance': tuple(all_instance_ids),
                     })
                     for account_line in self.cr.fetchall():
-                        if req_account.id in chq_account and company.revaluation_default_account:
+                        if req_account.id in chq_account and self.company.revaluation_default_account:
                             line_rate = fx_rates_by_id.get(account_line[10],'')
                             line_amount = account_line[5] / fx_rates_by_id.get(account_line[10], 1)
                         else:
@@ -1029,14 +1185,14 @@ class field_balance_spec_parser(XlsxReportParser):
                         group by l.currency_id
                         ''', {
                         'account_id': req_account.id,
-                        'period_number': report.period_id.number,
-                        'period_start': report.period_id.date_start,
+                        'period_number': self.report.period_id.number,
+                        'period_start': self.report.period_id.date_start,
                         'instance': tuple(all_instance_ids),
                     })
                     total_later = 0
                     ct_total_later = 0
                     for later_rec in self.cr.fetchall():
-                        if req_account.id in chq_account and company.revaluation_default_account:
+                        if req_account.id in chq_account and self.company.revaluation_default_account:
                             total_later += later_rec[1] / fx_rates_by_id.get(later_rec[2], 1)
                         else:
                             total_later += later_rec[0]
@@ -1077,9 +1233,19 @@ class field_balance_spec_parser(XlsxReportParser):
                 bk_obj.write(self.cr, self.uid, bk_id, {'percent': min(0.95, 0.5 + 0.45 * nb_account_done/total_account)})
 
 
+        self._end_doc(sheet, _('END OF FIELD BALANCE SPECIFICATION REPORT'), line)
+
+        self._tab_fxa(context=context)
+
+        self.workbook.active = sheet
+
+        if bk_id:
+            bk_obj.write(self.cr, self.uid, bk_id, {'percent': 1.})
+
+    def _end_doc(self, sheet, title, line):
         self.append_line(
             [('', 'end_doc_left')] +
-            [('---%s---' % _('END OF FIELD BALANCE SPECIFICATION REPORT'), 'end_doc')] +
+            [('---%s---' % title, 'end_doc')] +
             [('', 'end_doc')] * 11 +
             [('', 'end_doc_right')]
         )
@@ -1089,7 +1255,4 @@ class field_balance_spec_parser(XlsxReportParser):
             sheet.print_area = 'A1:N%d' % line
         else:
             sheet.print_area = 'A1:L%d' % line
-        if bk_id:
-            bk_obj.write(self.cr, self.uid, bk_id, {'percent': 1.})
-
 XlsxReport('report.field_balance_spec_report', parser=field_balance_spec_parser, template='addons/vertical_integration/report/field_balance_spec_report_template.xlsx')
