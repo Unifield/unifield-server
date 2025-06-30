@@ -397,8 +397,13 @@ class field_balance_spec_parser(XlsxReportParser):
             account_sum[x[0]] = x[1]
 
 
+        account_ids = []
+        if account_sum:
+            # get the correct order
+            account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('id', 'in', list(account_sum.keys()))], context=context)
+
         total = 0
-        for fxa_account in self.pool.get('account.account').browse(self.cr, self.uid, list(account_sum.keys()), fields_to_fetch=['code', 'name'], context=context):
+        for fxa_account in self.pool.get('account.account').browse(self.cr, self.uid, account_ids, fields_to_fetch=['code', 'name'], context=context):
             self.append_line(
                 [('%s %s' % (fxa_account.code, fxa_account.name), 'line_account')] +
                 [('', 'line_text')] * 6 +
@@ -428,7 +433,7 @@ class field_balance_spec_parser(XlsxReportParser):
         self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
         line += 1
 
-        for fxa_account in self.pool.get('account.account').browse(self.cr, self.uid, list(account_sum.keys()), fields_to_fetch=['code', 'name'], context=context):
+        for fxa_account in self.pool.get('account.account').browse(self.cr, self.uid, account_ids, fields_to_fetch=['code', 'name'], context=context):
             self.append_line([
                 ('%s %s' % (fxa_account.code, fxa_account.name), 'title_account'),
                 (_('Description of the entry'), 'title_text'),
