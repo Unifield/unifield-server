@@ -125,7 +125,7 @@ class field_balance_spec_parser(XlsxReportParser):
         self.create_style_from_template('field_comment', 'K10')
         self.create_style_from_template('hq_comment', 'L10')
 
-    def _common_header_footer(self, sheet, sheet_title, nb=1):
+    def _common_header_footer(self, sheet, sheet_title, nb=1, context=None):
         page_title = _('Field Balance Specification Report From UniField')
 
         sheet.sheet_view.zoomScale = 75
@@ -336,7 +336,7 @@ class field_balance_spec_parser(XlsxReportParser):
         sheet2 = self.workbook.create_sheet()
         self.workbook.active = sheet2
         self.eoy = False
-        line = self._common_header_footer(sheet2, 'FXA %s %s' % (self.report.period_id.name, self.report.instance_id.code), nb=2)
+        line = self._common_header_footer(sheet2, 'FXA %s %s' % (self.report.period_id.name, self.report.instance_id.code), nb=2, context=context)
 
         j_type = ['cur_adj', 'revaluation']
 
@@ -583,7 +583,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
         sheet = self.workbook.active
         self._set_style()
-        line = self._common_header_footer(sheet, '%s %s %s' % (_('Balance'), self.report.period_id.name, self.report.instance_id.code))
+        line = self._common_header_footer(sheet, '%s %s %s' % (_('Balance'), self.report.period_id.name, self.report.instance_id.code), context=context)
 
 
 
