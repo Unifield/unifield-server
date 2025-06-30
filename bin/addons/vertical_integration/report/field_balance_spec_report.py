@@ -125,8 +125,7 @@ class field_balance_spec_parser(XlsxReportParser):
         self.create_style_from_template('field_comment', 'K10')
         self.create_style_from_template('hq_comment', 'L10')
 
-    def _common_header_footer(self, sheet, sheet_title, nb=1, context=None):
-        page_title = _('Field Balance Specification Report From UniField')
+    def _common_header_footer(self, sheet, sheet_title, page_title, nb=1, context=None):
 
         sheet.sheet_view.zoomScale = 75
         sheet.protection.formatCells = False
@@ -336,7 +335,7 @@ class field_balance_spec_parser(XlsxReportParser):
         sheet2 = self.workbook.create_sheet()
         self.workbook.active = sheet2
         self.eoy = False
-        line = self._common_header_footer(sheet2, 'FXA %s %s' % (self.report.period_id.name, self.report.instance_id.code), nb=2, context=context)
+        line = self._common_header_footer(sheet2, 'FXA %s %s' % (self.report.period_id.name, self.report.instance_id.code), _('Currency Adjustment Report From UniField'), nb=2, context=context)
 
         j_type = ['cur_adj', 'revaluation']
 
@@ -353,14 +352,34 @@ class field_balance_spec_parser(XlsxReportParser):
         line += 1
 
         account_sum = {}
+
+        if self.company.revaluation_default_account:
+            account_sum[self.company.revaluation_default_account.id] = 0
+
+        self.cr.execute('''select
+            default_credit_account_id,default_debit_account_id
+            from
+                account_journal where type='cur_adj' and
+                instance_id in %s
+        ''', (tuple(self.all_instance_ids),))
+        for x in self.cr.fetchall():
+            if x[0]:
+                account_sum[x[0]] = 0
+            if x[1]:
+                account_sum[x[1]] = 0
+
+        period_cond =" p.id = %(period_id)s and "
+        if self.report.eoy:
+            period_cond = "p.fiscalyear_id = %(fy)s and p.number not in (0, 16) and "
         self.cr.execute('''
             select
                 l.general_account_id, sum(round(l.amount, 2))
             from
-                account_analytic_line l, account_analytic_journal j, account_account a
+                account_analytic_line l, account_analytic_journal j, account_account a, account_period p
             where
+                p.id = l.real_period_id and
                 a.id = l.general_account_id and
-                l.real_period_id = %(period_id)s and
+            ''' + period_cond + '''
                 l.journal_id = j.id and
                 j.type in %(j_type)s and
                 l.instance_id in %(instance)s
@@ -371,9 +390,12 @@ class field_balance_spec_parser(XlsxReportParser):
             ''', {
             'instance': tuple(self.all_instance_ids),
             'period_id': self.report.period_id.id,
-            'j_type': tuple(j_type)
+            'j_type': tuple(j_type),
+            'fy': self.report.period_id.fiscalyear_id.id,
         })
-        account_sum = dict(self.cr.fetchall())
+        for x in self.cr.fetchall():
+            account_sum[x[0]] = x[1]
+
 
         total = 0
         for fxa_account in self.pool.get('account.account').browse(self.cr, self.uid, list(account_sum.keys()), fields_to_fetch=['code', 'name'], context=context):
@@ -441,9 +463,10 @@ class field_balance_spec_parser(XlsxReportParser):
                     left join account_analytic_account dest on dest.id = l.destination_id
                     left join account_analytic_account cc on cc.id = l.cost_center_id
                     left join account_analytic_account fp on fp.id = l.account_id
+                    left join account_period p on p.id = l.real_period_id
                 where
-                    l.real_period_id = %(period_id)s and
                     j.type in %(j_type)s and
+                    ''' + period_cond + '''
                     l.instance_id in %(instance)s and
                     l.general_account_id = %(account_id)s
                 order by
@@ -453,27 +476,29 @@ class field_balance_spec_parser(XlsxReportParser):
                 'period_id': self.report.period_id.id,
                 'account_id': fxa_account.id,
                 'j_type': tuple(j_type),
+                'fy': self.report.period_id.fiscalyear_id.id,
             })
             sum = 0
-            for al in self.cr.fetchall():
-                self.append_line([
-                    (al[0], 'line_account'),
-                    (al[1], 'line_text'),
-                    (al[2], 'line_text'),
-                    (self.to_datetime(al[3]), 'line_date'),
-                    (al[4], 'line_text'),
-                    (al[5], 'line_text'),
-                    (al[6], 'line_text'),
-                    (al[7], 'line_amount'),
-                    ('', 'line_text'),
-                    ('', 'line_text'),
-                    ('', 'line_text'),
-                    (al[8], 'line_text'),
-                    ('', 'field_comment', True),
-                    ('', 'hq_comment', True)
-                ])
-                line += 1
-                sum += round(al[7], 2)
+            while rows := self.cr.fetchmany(200):
+                for al in rows:
+                    self.append_line([
+                        (al[0], 'line_account'),
+                        (al[1], 'line_text'),
+                        (al[2], 'line_text'),
+                        (self.to_datetime(al[3]), 'line_date'),
+                        (al[4], 'line_text'),
+                        (al[5], 'line_text'),
+                        (al[6], 'line_text'),
+                        (al[7], 'line_amount'),
+                        ('', 'line_text'),
+                        ('', 'line_text'),
+                        ('', 'line_text'),
+                        (al[8], 'line_text'),
+                        ('', 'field_comment', True),
+                        ('', 'hq_comment', True)
+                    ])
+                    line += 1
+                    sum += round(al[7], 2)
 
             self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
             line += 1
@@ -596,11 +621,11 @@ class field_balance_spec_parser(XlsxReportParser):
         for n, cur in enumerate(list_curr[1:]):
             self.rates[n] = {'name': cur, 'value': fx_rates[cur]}
             if self.report.eoy:
-                self.ct_rates[n] = {'name': cur, 'value': ct_fx_rates[cur]}
+                self.ct_rates[n] = {'name': cur, 'value': ct_fx_rates.get(cur, 0)}
 
         sheet = self.workbook.active
         self._set_style()
-        line = self._common_header_footer(sheet, '%s %s %s' % (_('Balance'), self.report.period_id.name, self.report.instance_id.code), context=context)
+        line = self._common_header_footer(sheet, '%s %s %s' % (_('Balance'), self.report.period_id.name, self.report.instance_id.code), _('Field Balance Specification Report From UniField'),  context=context)
 
 
 
