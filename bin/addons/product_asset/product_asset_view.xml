@@ -170,24 +170,7 @@
                         <field colspan="4" name="line_ids" nolabel="1" mode="tree" readonly="1"
                                 on_change="change_line()"
                                 filter_selector="[('Show all', []), ('Hide Posted', ['|', ('move_id', '=', False), ('move_id.state', '!=', 'posted')])]"
-                                o2m_selectable="2">
-                            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');green:is_initial_line and analytic_distribution_state not in ('invalid', 'invalid_small_amount')">
-                                <field name="date" />
-                                <field name="is_initial_line" invisible="1" />
-                                <field name="amount" />
-                                <field name="depreciation_amount" />
-                                <field name="remaining_amount" />
-                                <field name="asset_bs_depreciation_account_id" />
-                                <field name="asset_pl_account_id" />
-                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
-                                <field name="analytic_distribution_state_recap"/>
-                                <field name="have_analytic_distribution_from_header" invisible="1"/>
-                                <field name="analytic_distribution_state" invisible="1"/>
-                                <field name="is_allocatable" invisible="1"/>
-                                <field name="move_id" />
-                                <field name="move_state" />
-                            </tree>
-                        </field>
+                                o2m_selectable="2" />
                     </page>
                 </notebook>
                 <group colspan="4" col="10">
@@ -217,6 +200,29 @@
         </field>
     </record>
 
+    <record id="asset_line_tree_view" model="ir.ui.view">
+        <field name="name">asset.line.tree</field>
+        <field name="model">product.asset.line</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');green:is_initial_line and analytic_distribution_state not in ('invalid', 'invalid_small_amount')">
+                <field name="date" />
+                <field name="is_initial_line" invisible="1" />
+                <field name="amount" />
+                <field name="depreciation_amount" />
+                <field name="remaining_amount" />
+                <field name="asset_bs_depreciation_account_id" />
+                <field name="asset_pl_account_id" />
+                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                <field name="analytic_distribution_state_recap" />
+                <field name="have_analytic_distribution_from_header" invisible="1"/>
+                <field name="analytic_distribution_state" invisible="1"/>
+                <field name="is_allocatable" invisible="1"/>
+                <field name="move_id" />
+                <field name="move_state" />
+            </tree>
+        </field>
+    </record>
 
     <record id="asset_normal_tree_view" model="ir.ui.view">
         <field name="name">asset.normal.tree</field>

@@ -83,6 +83,7 @@ WHITE_LIST_MODEL = [
     'msf.instance.cloud',
     'pack.type',
     'product.asset',
+    'product.asset.line',
     'product.asset.type',
     'product.asset.event.type',
     'product.asset.useful.life',
