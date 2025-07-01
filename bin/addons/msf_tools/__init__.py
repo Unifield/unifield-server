@@ -29,3 +29,4 @@ from . import automated_export
 from . import automated_export_job
 from . import report
 from . import message_action
+from . import deactivate_phase_out_partners

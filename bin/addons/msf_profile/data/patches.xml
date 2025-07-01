@@ -1220,5 +1220,10 @@
         <record id="us_14450_sign_roles_in" model="patch.scripts">
             <field name="method">us_14450_sign_roles_in</field>
         </record>
+
+        <!-- UF38.0 -->
+        <record id="us_12985_partner_state" model="patch.scripts">
+            <field name="method">us_12985_partner_state</field>
+        </record>
     </data>
 </openerp>

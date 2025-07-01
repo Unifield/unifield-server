@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <!-- The associated ir_cron will be created during the task creation -->
+        <record id="deactivate_phase_out_partners_default" model="deactivate.phase.out.partners">
+            <field name="name">Deactivate Phase Out Partners</field>
+            <field name="interval">6</field>
+            <field name="interval_unit">months</field>
+        </record>
+    </data>
+
+    <data>
+        <record id="deactivate_phase_out_partners_form_view" model="ir.ui.view">
+            <field name="name">deactivate.phase.out.partners.form.view</field>
+            <field name="model">deactivate.phase.out.partners</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Deactivate Phase Out Partners" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <separator colspan="4" string="General configuration" />
+                    <field name="name" readonly="1" />
+                    <field name="active" />
+                    <newline />
+                    <button name="manual_run_phase_out_partner_deactivation" string="Run task manually" colspan="4" type="object" icon="gtk-execute" />
+
+                    <separator colspan="4" string="Scheduler configuration" />
+                    <group colspan="4" col="4">
+                        <field name="interval" attrs="{'required': [('interval_unit', '&gt;', 0)]}" />
+                        <field name="interval_unit" />
+                        <field name="start_time" />
+                        <field name="next_scheduled_task" />
+                    </group>
+                    <field name="message" colspan="4" />
+                    <separator colspan="4" string="Activation" />
+                    <group colspan="4" col="1">
+                        <button name="activate_phase_out_partner_deactivation" string="Activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', True)]}" />
+                        <button name="deactivate_phase_out_partner_deactivation" string="De-activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', False)]}" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="log_phase_out_partner_deactivation_search_view" model="ir.ui.view">
+            <field name="name">log.phase.out.partner.deactivation.search.view</field>
+            <field name="model">log.phase.out.partner.deactivation</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Phase Out Partners deactivation logs">
+                    <field name="message" />
+                    <field name="date" />
+                </search>
+            </field>
+        </record>
+
+        <record id="log_phase_out_partner_deactivation_tree_view" model="ir.ui.view">
+            <field name="name">log.phase.out.partner.deactivation.tree.view</field>
+            <field name="model">log.phase.out.partner.deactivation</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Phase Out Partners deactivation logs" hide_delete_button="1" hide_new_button="1">
+                    <field name="date" />
+                    <field name="user_id" />
+                    <field name="message" truncate="250"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="log_phase_out_partner_deactivation_form_view" model="ir.ui.view">
+            <field name="name">rlog.phase.out.partner.deactivation.form.view</field>
+            <field name="model">log.phase.out.partner.deactivation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Logs" hide_delete_button="1" hide_new_button="1" hide_duplicate_button="1">
+                  <group colspan="4" col="4">
+                      <field name="date" />
+                      <field name="user_id" />
+                      <field name="message" colspan="8" />
+                  </group>
+                </form>
+            </field>
+        </record>
+
+
+        <menuitem id="deactivate_phase_out_partners_main_menu" name="Partners deactivation"
+                  parent="object_query.menu_preferences" sequence="55" />
+
+        <record id="ir_actions_server_deactivate_phase_out_partners" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'deactivate_phase_out_partners_default')
+action = {
+'res_model' : 'deactivate.phase.out.partners',
+'view_type' : 'form',
+'view_mode' : 'form',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_deactivate_phase_out_partners"/>
+            <field name="condition">True</field>
+            <field name="name">Open Deactivate Phase Out Partners</field>
+        </record>
+
+        <record id="deactivate_phase_out_partners_menu" model="ir.ui.menu">
+            <field name="name">Deactivate Phase Out Partners</field>
+            <field name="parent_id" ref="deactivate_phase_out_partners_main_menu"/>
+            <field name="sequence" eval="10" />
+        </record>
+        <record id="ir_values_menuitem_deactivate_phase_out_partners" model="ir.values">
+            <field name="name">Menuitem Deactivate Phase Out Partners</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('msf_tools.ir_actions_server_deactivate_phase_out_partners')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('deactivate_phase_out_partners_menu')" name="res_id"/>
+        </record>
+
+        <record id="action_log_phase_out_partner_deactivation" model="ir.actions.act_window">
+            <field name="name">Phase Out Partners deactivation logs</field>
+            <field name="res_model">log.phase.out.partner.deactivation</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_type">form</field>
+            <field name="view_search_id" ref="log_phase_out_partner_deactivation_search_view" />
+            <field name="view_id" ref="log_phase_out_partner_deactivation_tree_view" />
+        </record>
+        <menuitem id="log_phase_out_partner_deactivation_menu" action="action_log_phase_out_partner_deactivation"
+                  parent="deactivate_phase_out_partners_main_menu" sequence="11" />
+    </data>
+</openerp>

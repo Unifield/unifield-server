@@ -50,6 +50,7 @@
         'report/report_stock_pipe_per_product_instance_view.xml',
         'automated_import_data.xml',
         'automated_export_data.xml',
+        'deactivate_phase_out_partners_view.xml',
     ],
     'demo_xml': [
     ],

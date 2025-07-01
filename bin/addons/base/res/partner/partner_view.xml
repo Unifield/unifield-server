@@ -253,11 +253,14 @@
             <field name="arch" type="xml">
                 <form string="Partners" col='1'>
                     <group col="6" colspan="4">
-                        <group colspan="5" col="6">
+                        <group colspan="3" col="4">
                             <field name="name" select="1" default_focus="1"/>
                             <field name="ref" groups="base.group_extended"/>
-                            <field domain="[('domain', '=', 'partner')]" name="title" size="0" groups="base.group_extended" widget="selection"/>
+<!--                            <field domain="[('domain', '=', 'partner')]" name="title" size="0" groups="base.group_extended" widget="selection"/>-->
                             <field name="legal_name"/>
+                        </group>
+                        <group colspan="2" col="2">
+                            <field name="state" attrs="{'invisible': [('partner_type', '!=', 'external')]}" />
                         </group>
                         <group colspan="1" col="2">
                             <field name="customer" select="1"/>

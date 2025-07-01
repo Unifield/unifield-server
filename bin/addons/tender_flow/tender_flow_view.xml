@@ -301,7 +301,7 @@
                     <notebook colspan="4">
                         <page string="Request for Quotation">
                             <group attrs="{'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}">
-                                <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
+                                <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,False,order_type)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
                                 <field name="partner_type"/>
                                 <field name="allocation_setup" invisible="1" />
                                 <field name="partner_address_id"/>

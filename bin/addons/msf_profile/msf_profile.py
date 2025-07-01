@@ -58,6 +58,18 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF38.0
+    def us_12985_partner_state(self, cr, uid, *a, **b):
+        '''
+        Set the partners' Status to Active for Active partners and Inactive for deactivated partners
+        '''
+        cr.execute("""UPDATE res_partner SET state = 'active' WHERE active = 't'""")
+        self.log_info(cr, uid, "US-12985: %s active partners had their set Status set to Active" % (cr.rowcount,))
+        cr.execute("""UPDATE res_partner SET state = 'inactive' WHERE active = 'f'""")
+        self.log_info(cr, uid, "US-12985: %s deactivated partners had their set Status set to Inactive" % (cr.rowcount,))
+
+        return True
+
     # UF37.0
     def us_14450_sign_roles_in(self, cr, uid, *a, **b):
         '''
