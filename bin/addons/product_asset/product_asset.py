@@ -2146,7 +2146,7 @@ class import_asset_reference(osv.osv_memory):
                                                    r[cols[_('Product')]].value or ''))
                                     line_error = True
                                 # Check year format
-                                if not re.match(r'^(19|20)\d{2}$', str(r[cols[_('Year')]].value or '')):
+                                if r[cols[_('Year')]].value and not re.match(r'^(19|20)\d{2}$', str(r[cols[_('Year')]].value)):
                                     errors.append(_('Line %s: The year of Asset %s must be a number between 1900 and 2099.') % (current_line_num, r[cols[_('Asset Code')]].value or ''))
                                     line_error = True
 
