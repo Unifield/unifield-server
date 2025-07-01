@@ -341,7 +341,6 @@ class field_balance_spec_parser(XlsxReportParser):
         self.eoy = False
         line = self._common_header_footer(sheet2, 'FXA %s %s' % (self.report.period_id.name, self.report.instance_id.code), _('Currency Adjustment Report From UniField'), nb=2, context=context)
 
-        j_type = ['cur_adj', 'revaluation']
 
         self.append_line(
             [(_('Currency Adjustment Accounts'), 'title_account')] +
@@ -372,6 +371,11 @@ class field_balance_spec_parser(XlsxReportParser):
             if x[1]:
                 account_sum[x[1]] = 0
 
+        account_ids = [0]
+        if account_sum:
+            # get the correct order
+            account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('id', 'in', list(account_sum.keys()))], context=context)
+
         period_cond =" p.id = %(period_id)s and "
         if self.report.eoy:
             period_cond = "p.fiscalyear_id = %(fy)s and p.number not in (0, 16) and "
@@ -379,13 +383,12 @@ class field_balance_spec_parser(XlsxReportParser):
             select
                 l.general_account_id, sum(round(l.amount, 2))
             from
-                account_analytic_line l, account_analytic_journal j, account_account a, account_period p
+                account_analytic_line l, account_account a, account_period p
             where
                 p.id = l.real_period_id and
                 a.id = l.general_account_id and
             ''' + period_cond + '''
-                l.journal_id = j.id and
-                j.type in %(j_type)s and
+                l.general_account_id in %(account_id)s and
                 l.instance_id in %(instance)s
             group by
                 a.code, l.general_account_id
@@ -394,17 +397,11 @@ class field_balance_spec_parser(XlsxReportParser):
             ''', {
             'instance': tuple(self.all_instance_ids),
             'period_id': self.report.period_id.id,
-            'j_type': tuple(j_type),
+            'account_id': tuple(account_ids),
             'fy': self.report.period_id.fiscalyear_id.id,
         })
         for x in self.cr.fetchall():
             account_sum[x[0]] = x[1]
-
-
-        account_ids = []
-        if account_sum:
-            # get the correct order
-            account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('id', 'in', list(account_sum.keys()))], context=context)
 
         total = 0
         for fxa_account in self.pool.get('account.account').browse(self.cr, self.uid, account_ids, fields_to_fetch=['code', 'name'], context=context):
@@ -468,15 +465,13 @@ class field_balance_spec_parser(XlsxReportParser):
                     l.partner_txt
                 from
                     account_analytic_line l
-                    left join account_analytic_journal j on j.id = l.journal_id
                     left join account_analytic_account dest on dest.id = l.destination_id
                     left join account_analytic_account cc on cc.id = l.cost_center_id
                     left join account_analytic_account fp on fp.id = l.account_id
                     left join account_period p on p.id = l.real_period_id
                 where
-                    j.type in %(j_type)s and
-                    ''' + period_cond + '''
                     l.instance_id in %(instance)s and
+                    ''' + period_cond + '''
                     l.general_account_id = %(account_id)s
                 order by
                     l.entry_sequence
@@ -484,7 +479,6 @@ class field_balance_spec_parser(XlsxReportParser):
                 'instance': tuple(self.all_instance_ids),
                 'period_id': self.report.period_id.id,
                 'account_id': fxa_account.id,
-                'j_type': tuple(j_type),
                 'fy': self.report.period_id.fiscalyear_id.id,
             })
             sum = 0
