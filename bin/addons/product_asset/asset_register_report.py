@@ -207,7 +207,11 @@ class asset_ref_parser(XlsxReportParser):
         unlocked_cell_style = self.create_style_from_template('unlocked_cell_style', 'I2')
 
         self.duplicate_row_dimensions(range(1, 6))
-        self.duplicate_column_dimensions(default_width=15)
+        self.duplicate_column_dimensions(default_width=20)
+        sheet.column_dimensions['A'].width = 25
+        sheet.column_dimensions['D'].width = 25
+        sheet.column_dimensions['G'].width = 15
+        sheet.column_dimensions['F'].width = 75
 
         sheet.title = _('Assets')
 
