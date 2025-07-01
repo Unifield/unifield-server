@@ -4,6 +4,7 @@ from spreadsheet_xml.xlsx_write import XlsxReportParser
 from tools.translate import _
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Border, Side
+from openpyxl.styles.protection import Protection
 
 
 class asset_parser(XlsxReportParser):
@@ -196,6 +197,10 @@ class asset_ref_parser(XlsxReportParser):
 
         sheet = self.workbook.active
 
+        sheet.protection.formatCells = False
+        sheet.protection.autoFilter = False
+        sheet.protection.sheet = True
+
         locked_header_style = self.create_style_from_template('locked_header_style', 'A1')
         unlocked_header_style = self.create_style_from_template('unlocked_header_style', 'I1')
         locked_cell_style = self.create_style_from_template('locked_cell_style', 'B2')
@@ -252,12 +257,13 @@ class asset_ref_parser(XlsxReportParser):
                 elif field == _('Year'):
                     cell_value = asset.year or ''
 
-                cell = WriteOnlyCell(sheet, value=cell_value)
+                cell_t = WriteOnlyCell(sheet, value=cell_value)
                 if field in [_('Serial Number'), _('Brand'), _('Type'), _('Model'), _('Year')]:
                     cell_t.style = unlocked_cell_style
+                    cell_t.protection = Protection(locked=False)
                 else:
                     cell_t.style = locked_cell_style
-                asset_row.append(cell)
+                asset_row.append(cell_t)
             sheet.append(asset_row)
         return True
 
