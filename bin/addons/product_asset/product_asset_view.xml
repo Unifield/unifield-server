@@ -740,6 +740,7 @@ action = self.open_asset_account_move(cr, uid, ids, context=context)
                 report_type="openpyxl"
                 target_filename="${_('Asset_Reference_Import_Template')}"
                 auto="False"
+                keyword="client_action_multi"
                 menu="True" />
 
 </data>
