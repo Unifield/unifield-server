@@ -2302,11 +2302,13 @@ def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, co
             'field_description': desc,
         }, context=context)
 
-def get_global_instance_level(self, cr, uid, ids, *a, **b):
+def get_instance_level(self, cr, uid):
     if self.pool.get('msf.instance'):
-        level = self.pool.get('res.company')._get_instance_level(cr, uid)
-    else:
-        level = False
+        return self.pool.get('res.company')._get_instance_level(cr, uid)
+    return False
+
+def get_global_instance_level(self, cr, uid, ids, *a, **b):
+    level = get_instance_level(self, cr, uid)
     ret = {}
     for _id in ids:
         ret[_id] = level

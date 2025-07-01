@@ -1723,6 +1723,18 @@ class orm_template(object):
             if page_view_id.get('view_id'):
                 module, xml_id = page_view_id.get('view_id').rsplit('.', 1)
                 page_view_id.set('view_id', '%d'%self.pool.get('ir.model.data').get_object_reference(cr, user, module, xml_id)[1])
+
+        for node_restriction in node.xpath("/tree[@edit_level]|/form[@edit_level]"):
+            required_level = node_restriction.get('edit_level').split(',')
+            current_level = tools.misc.get_instance_level(self, cr, user)
+            if current_level not in required_level:
+                node_restriction.set('hide_edit_button', '1')
+                node_restriction.set('hide_new_button', '1')
+                node_restriction.set('hide_save_button', '1')
+                node_restriction.set('hide_delete_button', '1')
+                node_restriction.set('hide_duplicate_button', '1')
+                node_restriction.set('noteditable', '1')
+
         arch = etree.tostring(node, encoding="unicode").replace('\t', '')
         fields = {}
         if node.tag == 'diagram':

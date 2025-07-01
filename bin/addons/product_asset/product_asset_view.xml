@@ -412,7 +412,7 @@
         <field name="model">product.asset.event.type</field>
         <field name="type">form</field>
         <field name="arch" type="xml">
-            <form string="Asset Event Type" hide_delete_button="True">
+            <form string="Asset Event Type" hide_delete_button="True" edit_level="section">
                 <field name="name" />
                 <field name="active" />
                 <newline />
@@ -428,7 +428,7 @@
         <field name="model">product.asset.event.type</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Asset Event Types" colors="grey: not is_active" hide_delete_button="True" editable="top">
+            <tree string="Asset Event Types" colors="grey: not is_active" hide_delete_button="True" editable="top" edit_level="section">
                 <field name="name" />
                 <field name="active" />
                 <field name="is_disposal" />
@@ -471,7 +471,7 @@
         <field name="model">product.asset.type</field>
         <field name="type">form</field>
         <field name="arch" type="xml">
-            <form string="Asset Type" hide_delete_button="True">
+            <form string="Asset Type" hide_delete_button="True" edit_level="section">
                 <separator string="Asset Type Information" colspan="4" />
                 <field name="name" />
                 <field name="description" />
@@ -494,7 +494,7 @@
         <field name="model">product.asset.type</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Asset Types" colors="grey: not is_active" hide_delete_button="True">
+            <tree string="Asset Types" colors="grey: not is_active" hide_delete_button="True" edit_level="section">
                 <field name="name" />
                 <field name="description" />
                 <field name="active" />
