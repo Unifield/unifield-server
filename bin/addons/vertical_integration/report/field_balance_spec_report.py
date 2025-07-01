@@ -231,9 +231,13 @@ class field_balance_spec_parser(XlsxReportParser):
         ],
         )
 
+        if nb == 2 and self.report.eoy:
+            month_field = ('%s %s' % (_('Full year export'), self.report.period_id.date_start[0:4]), 'default_header_style')
+        else:
+            month_field = (datetime.strptime(self.report.period_id.date_start, '%Y-%m-%d'), 'header_month_date')
         self.append_line([
             (_('Month:'), 'header_1st_info_title'),
-            (datetime.strptime(self.report.period_id.date_start, '%Y-%m-%d'), 'header_month_date'),
+            month_field,
             (_('Date of review'), 'header_other_info_title'),
             ('', 'header_full_date'),
             ('', 'default_header_style'),
