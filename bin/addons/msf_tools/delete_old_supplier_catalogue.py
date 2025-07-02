@@ -37,8 +37,8 @@ class delete_old_supplier_catalogue(osv.osv):
     _columns = {
         'name': fields.char('Name', size=128),
         'start_time': fields.datetime(string='Force Date and time of next execution'),
-        'interval': fields.integer(string='Interval number'),
-        'interval_unit': fields.selection(selection=[('weeks', 'Weeks'), ('months', 'Months')], string='Interval Unit'),
+        'interval': fields.integer(string='Interval number', required=True),
+        'interval_unit': fields.selection(selection=[('weeks', 'Weeks'), ('months', 'Months')], string='Interval Unit', required=True),
         'active': fields.boolean(string='Active', readonly=True),
         'cron_id': fields.many2one('ir.cron', string='Associated cron job', readonly=True),
         'next_scheduled_task': fields.related('cron_id', 'nextcall', type='datetime', readonly=1, string="Next Execution Date"),
@@ -93,8 +93,9 @@ class delete_old_supplier_catalogue(osv.osv):
             ids = [ids]
 
         cron_obj = self.pool.get('ir.cron')
-        if vals.get('interval') and vals['interval'] < 0:
-            raise osv.except_osv(_('Error'), _('Interval number cannot be negative !'))
+        if 'interval' in vals and vals['interval'] <= 0:
+                raise osv.except_osv(_('Error'), _('Interval number can not be negative or zero !'))
+
         res = super(delete_old_supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
 
         for cat_del in self.browse(cr, uid, ids, context=context):
