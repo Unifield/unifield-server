@@ -533,7 +533,7 @@ class sync_rule(osv.osv):
             if self.search(cr, uid,
                            [('sequence_number','=',rec.sequence_number)],
                            order='NO_ORDER', context=context, count=True) > 1:
-                message.append("failed!\n")
+                message.append("%s failed!\n" % rec.sequence_number)
                 error = True
             else:
                 message.append("pass.\n")

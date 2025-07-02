@@ -57,6 +57,42 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    # UF37.0
+    def us_14450_sign_roles_in(self, cr, uid, *a, **b):
+        '''
+        To create "Approved by" signature lines on existing INs
+        '''
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+        return True
+
+    def us_14373_empty_fo_ir_location_id(self, cr, uid, *a, **b):
+        '''
+        Remove the location_id from Draft FO/IR lines with the Procurement Method From Stock
+        '''
+        cr.execute("""
+            UPDATE sale_order_line SET location_id = NULL 
+            WHERE type = 'make_to_stock' AND state = 'draft' AND location_id IS NOT NULL
+        """)
+        self.log_info(cr, uid, "US-14373: The Location was removed from %s Draft FO and/or IR lines From Stock" % (cr.rowcount))
+
+        return True
+
+    def us_14341_hide_prod_status_inconsistencies(self, cr, uid, *a, **b):
+        '''
+        Hide the Product Status Inconsistencies menu if it's still active at project
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance or instance.level != 'project':
+            return True
+        menu_obj = self.pool.get('ir.ui.menu')
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
+        if menu_obj.read(cr, uid, report_prod_inconsistencies_menu_id, ['active'], context={})['active']:
+            menu_obj.write(cr, uid, report_prod_inconsistencies_menu_id, {'active': False}, context={})
+        return True
+
     def us_14039_store_cash_migration(self, cr, uid, *a, **b):
         cr.execute("""
             select
@@ -86,7 +122,6 @@ class patch_scripts(osv.osv):
 
         return True
 
-    # UF37.0
     def us_13741_13952_13955_14253_update_prod_supinfo_prices(self, cr, uid, *a, **b):
         '''
         The field get_first_price from product.supplierinfo is now stored, so its data will be updated using the same
@@ -165,7 +200,6 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, "US-14124: %s ir_properties were deleted" % (cr.rowcount,))
         return True
 
-    # UF37.0
     def us_14040_14046_fix_duplicated_users_data(self, cr, uid, *a, **b):
         '''
         Set users_last_login.date to NULL on users whose user_last_login.date < res_users.create_date

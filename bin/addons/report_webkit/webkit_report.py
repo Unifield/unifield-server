@@ -385,10 +385,10 @@ class WebKitParser(report_sxw):
         return result
 
     def sanitizeWorksheetName(self, name):
-        '''
+        r'''
         according to microsoft documentation :
         https://msdn.microsoft.com/en-us/library/office/aa140066(v=office.10).aspx#odc_xmlss_ss:worksheet
-        The following caracters are not allowed : /, \, ?, *, [, ]
+        The following caracters are not allowed : /, \ , ?, *, [, ]
         It also seems that microsoft excel do not accept Worksheet name longer
         than 31 characters.
         '''
