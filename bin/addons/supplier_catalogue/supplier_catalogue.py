@@ -103,6 +103,10 @@ class supplier_catalogue(osv.osv):
         if context is None:
             context = {}
 
+        # Check URs before trying to delete
+        self.pool.get('ir.model.access').check(cr, uid, self._name, 'unlink', context=context)
+        self.check_access_rule(cr, uid, ids, 'unlink', context=context)
+
         # forbid supplier catalogue coming from higher instance level to be manually deleted:
         to_unlink = set()
         for catalogue in self.read(cr, uid, ids, ['from_sync'], context=context):
@@ -124,15 +128,11 @@ class supplier_catalogue(osv.osv):
             self._logger.warning(msg)
             self.pool.get('res.log').create(cr, uid, {'name': '%s' % msg, 'read': True, }, context=context)
 
-            to_unlink = tuple(to_unlink)
-            id_cond = len(to_unlink) == 1 and ' = %s' % (to_unlink[0],) or ' IN %s' % (to_unlink,)
-            cr.execute("""DELETE FROM supplier_catalogue WHERE id""" + id_cond)
+            cr.execute("""DELETE FROM supplier_catalogue WHERE id IN %s""", (tuple(to_unlink),))
             # To sync the deletion
             cr.execute("""
-                UPDATE ir_model_data SET touched='["active", "comment", "currency_id", "data", "esc_update_ts", 
-                "file_to_import", "filename", "filename_template", "id", "import_error_ok", "line_ids", "name", 
-                "partner_id", "period_from", "period_to", "ranking", "sequence_id", "state", "supplierinfo_ids", 
-                "text_error"]', last_modification=NOW() WHERE model='supplier.catalogue' AND res_id""" + id_cond)
+                UPDATE ir_model_data SET last_modification=NOW() WHERE model='supplier.catalogue' AND res_id IN %s
+            """, (tuple(to_unlink),))
 
         return True
 
