@@ -562,20 +562,28 @@ class stock_picking(osv.osv):
             v.update({'address_id': addr})
 
         if partner_id:
-            if not ids and type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
-                return {
-                    'value': {'partner_id2': False, 'partner_id': False,},
-                    'warning': {
-                        'title': _('Error'),
-                        'message': _("You are not allowed to choose this type of partner in this document from scratch."),
-                    },
-                }
+            if not ids:
+                if type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
+                    return {
+                        'value': {'partner_id2': False, 'partner_id': False},
+                        'warning': {
+                            'title': _('Error'),
+                            'message': _("You are not allowed to choose this type of partner in this document from scratch."),
+                        },
+                    }
+                if partner and partner.state == 'phase_out':
+                    return {
+                        'value': {'partner_id2': False, 'partner_id': False},
+                        'warning': {
+                            'title': _('Error'),
+                            'message': _('The selected Partner is Phase Out, please select another Partner')},
+                    }
             elif ids:
                 picking = self.browse(cr, uid, ids[0], context=context)
                 if not picking.from_wkf:
                     if type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
                         return {
-                            'value': {'partner_id2': False, 'partner_id': False,},
+                            'value': {'partner_id2': False, 'partner_id': False},
                             'warning': {
                                 'title': _('Error'),
                                 'message': _("You are not allowed to choose this type of partner in this document from scratch."),
@@ -583,7 +591,7 @@ class stock_picking(osv.osv):
                         }
                     if partner and partner.state == 'phase_out':
                         return {
-                            'value': {'partner_id2': False, 'partner_id': False, },
+                            'value': {'partner_id2': False, 'partner_id': False},
                             'warning': {
                                 'title': _('Error'),
                                 'message': _('The selected Partner is Phase Out, please select another Partner')},
