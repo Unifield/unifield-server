@@ -94,7 +94,7 @@ class delete_old_supplier_catalogue(osv.osv):
 
         cron_obj = self.pool.get('ir.cron')
         if 'interval' in vals and vals['interval'] <= 0:
-                raise osv.except_osv(_('Error'), _('Interval number can not be negative or zero !'))
+            raise osv.except_osv(_('Error'), _('Interval number can not be negative or zero !'))
 
         res = super(delete_old_supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
 
