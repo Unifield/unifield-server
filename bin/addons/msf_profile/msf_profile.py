@@ -66,7 +66,7 @@ class patch_scripts(osv.osv):
         '''
         cr.execute("""
             UPDATE product_cold_chain SET code = 'CT3+', name = 'CT3+ - Temperature Monitoring 2-40°C' 
-                WHERE code = 'CT30' AND ud_code = 'CT3+'
+                WHERE id IN (SELECT res_id FROM ir_model_data WHERE name = 'product_attributes_cold_20')
         """)
 
         if self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id.instance == 'HQ_OCA':
