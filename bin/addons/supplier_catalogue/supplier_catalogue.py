@@ -575,7 +575,7 @@ class supplier_catalogue(osv.osv):
         Check if the To date is older than the From date
         '''
         for catalogue in self.browse(cr, uid, ids):
-            if catalogue.period_to and catalogue.period_to < catalogue.period_from:
+            if catalogue.period_from and catalogue.period_to and catalogue.period_to < catalogue.period_from:
                 return False
         return True
 
