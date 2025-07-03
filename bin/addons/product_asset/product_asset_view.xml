@@ -154,7 +154,7 @@
                         <newline />
                         <field name="depreciation_amount" />
                         <field name="disposal_amount" />
-                        <group col="6" colspan="4"  attrs="{'invisible': [('lock_open', '!=', False)]}">
+                        <group col="6" colspan="4"  attrs="{'invisible': ['|', ('state', 'in', ['disposed', 'depreciated']), ('has_lines_without_ji', '=', False)]}">
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                                 <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                                 <button name="button_reset_distribution" string="Reset AD at line level" type="object"
@@ -176,6 +176,7 @@
                 <group colspan="4" col="10">
                     <field name="lock_open" invisible="1" />
                     <field name="has_posted_lines" invisible="1" />
+                    <field name="has_lines_without_ji" invisible="1" />
                     <field name="can_be_disposed" invisible="1" />
                     <field name="instance_level" invisible="1" />
                     <field name="used_in_current_instance"  invisible="1"/>
