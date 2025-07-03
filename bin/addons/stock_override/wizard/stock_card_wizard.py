@@ -313,7 +313,7 @@ class stock_card_wizard(osv.osv_memory):
                 'qty_out': out_qty,
                 'balance': initial_stock,
                 'src_dest': move_location,
-                'notes': move.picking_id and move.picking_id.note  or '',
+                'notes': move.picking_id and move.picking_id.note or move.comment or '',
             }
 
             line_obj.create(cr, uid, line_values, context=context)
