@@ -188,6 +188,12 @@ class PhysicalInventory(osv.osv):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
 
+        if values.get('location_id'):
+            states = ['confirmed', 'closed', 'cancel']
+            pi_loc_error_msg = self.get_non_finished_pi_for_loc_msg(cr, uid, [], values['location_id'], states, context=context)
+            if pi_loc_error_msg:
+                raise osv.except_osv(_('Warning'), pi_loc_error_msg)
+
         if values and 'type' not in values and values.get('hidden_type'):
             values['type'] = values['hidden_type']
 
@@ -201,6 +207,18 @@ class PhysicalInventory(osv.osv):
         if values and 'type' not in values and values.get('hidden_type'):
             values['type'] = values['hidden_type']
         return super(PhysicalInventory, self).write_web(cr, uid, ids, values, context=context, ignore_access_error=ignore_access_error)
+
+    def change_location(self, cr, uid, ids, loc_id, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        pi_loc_error_msg = self.get_non_finished_pi_for_loc_msg(cr, uid, ids, loc_id, ['confirmed', 'closed', 'cancel'], context=context)
+        if pi_loc_error_msg:
+            return {'value': {'location_id': False}, 'warning': {'title': 'warning', 'message': pi_loc_error_msg}}
+
+        return {}
 
     def change_inventory_type(self, cr, uid, ids, inv_type, context=None):
         return {'value': {'hidden_type': inv_type}}
@@ -294,24 +312,28 @@ class PhysicalInventory(osv.osv):
         assert len(ids) == 1
         inventory_id = ids[0]
 
-
+        pi_data = self.read(cr, uid, inventory_id, ['max_filter_months', 'multiple_filter_months', 'location_id'], context=context)
+        # Adding the Draft state to the list in case multiple Draft PIs already exist for a location so at least one can be processed
+        states = ['draft', 'confirmed', 'closed', 'cancel']
+        pi_loc_error_msg = self.get_non_finished_pi_for_loc_msg(cr, uid, inventory_id, pi_data['location_id'][0], states, context=context)
+        if pi_loc_error_msg:
+            raise osv.except_osv(_('Error'), pi_loc_error_msg)
 
         # Create the wizard
         wiz_model = 'physical.inventory.generate.counting.sheet'
-        filter_months_data = self.read(cr, uid, inventory_id, ['max_filter_months', 'multiple_filter_months'], context=context)
         wiz_vals = {
             'inventory_id': inventory_id,
-            'only_with_stock_level': filter_months_data['max_filter_months'] == -1,
-            'only_with_pos_move': filter_months_data['max_filter_months'] != -1,
+            'only_with_stock_level': pi_data['max_filter_months'] == -1,
+            'only_with_pos_move': pi_data['max_filter_months'] != -1,
         }
 
         # Check if the 4th bool needs to be checked: if the 2 first are checked (default) and the recent filter has been used
         # If 'Moved in the last' has not been used ('first_filter_months' is 0), set 'only_with_stock_level' to True by default
-        if filter_months_data['max_filter_months'] != -1:
-            if filter_months_data['multiple_filter_months']:
-                wiz_vals['recent_moves_months'] = _('Multiple selections up to: %s months') % (filter_months_data['max_filter_months'], )
+        if pi_data['max_filter_months'] != -1:
+            if pi_data['multiple_filter_months']:
+                wiz_vals['recent_moves_months'] = _('Multiple selections up to: %s months') % (pi_data['max_filter_months'], )
             else:
-                wiz_vals['recent_moves_months'] = _('Products moved in the last: %s month%s') % (filter_months_data['max_filter_months'], filter_months_data['max_filter_months'] > 1 and 's' or '')
+                wiz_vals['recent_moves_months'] = _('Products moved in the last: %s month%s') % (pi_data['max_filter_months'], pi_data['max_filter_months'] > 1 and 's' or '')
 
         wiz_id = self.pool.get(wiz_model).create(cr, uid, wiz_vals, context=context)
         context['wizard_id'] = wiz_id
@@ -1379,7 +1401,12 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         if context is None:
             context = {}
 
-        for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
+        for inv in self.read(cr, uid, ids, ['move_ids', 'location_id'], context=context):
+            states = ['confirmed', 'closed', 'cancel']
+            pi_loc_error_msg = self.get_non_finished_pi_for_loc_msg(cr, uid, [inv['id']], inv['location_id'][0], states, context=context)
+            if pi_loc_error_msg:
+                raise osv.except_osv(_('Error'), pi_loc_error_msg)
+
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
 
         for inv in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
@@ -1413,6 +1440,29 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             self.infolog(cr, uid, _("The Physical inventory id:%s (%s) has been cancelled") % (inv.id, inv.name))
         return {}
+
+    def get_non_finished_pi_for_loc_msg(self, cr, uid, ids, loc_id, states, context=None):
+        '''
+        Return the error message if there is at least one other non-finished PI for the given location
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(states, str):
+            states = [states]
+        pi_domain = [('location_id', '=', loc_id), ('state', 'not in', states)]
+        if ids:
+            if isinstance(ids, int):
+                ids = [ids]
+            pi_domain.append(('id', 'not in', ids))
+
+        non_finished_pi_ids = self.search(cr, uid, pi_domain, context=context)
+        if non_finished_pi_ids:
+            non_finished_pi = self.read(cr, uid, non_finished_pi_ids, ['ref'], context=context)
+            pi_refs = [pi['ref'] for pi in non_finished_pi]
+            return _('Only one Physical Inventory can be open per location at the same time. Please finalize or cancel Physical Inventory [%s] before creating a new one for this location') % (', '.join(pi_refs),)
+
+        return False
 
 PhysicalInventory()
 
