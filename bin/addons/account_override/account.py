@@ -1512,16 +1512,17 @@ class account_move(osv.osv):
 
     def get_valid_but_unbalanced(self, cr, uid, context=None):
         cr.execute("""select l.move_id, sum(l.debit-l.credit) from account_move_line l,
-            account_move m,
-            account_journal j
+            account_journal j, account_period p
             where
-                l.move_id = m.id and
+                l.period_id = p.id and
+                p.state != 'done' and
                 l.state='valid' and
-                m.journal_id = j.id and
+                l.journal_id = j.id and
                 j.type != 'system'
             group by l.move_id
             having abs(sum(l.debit-l.credit)) > 0.00001
         """)
+
         return [x[0] for x in cr.fetchall()]
 
 
