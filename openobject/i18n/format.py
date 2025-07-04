@@ -294,6 +294,8 @@ def format_decimal(value, digits=2, **kwargs):
     locale = get_locale()
     # fix issue where "%.2f"%a != '%s'%round(a, 2) exple a=51.345 depends on python version / win / linux
     value = round(value, digits)
+    if not value:
+        value = 0
     v = ("%%.%df" % digits) % value
     if not digits:
         return numbers.format_number(int(round(value)), locale=locale)
