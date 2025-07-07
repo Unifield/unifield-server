@@ -59,7 +59,7 @@
             </td>
         </tr>
     </table>
-    <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.fancybox-1.3.1.js?v=14.0"></script>
+    <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.fancybox-1.3.4.js"></script>
     <script type="text/javascript">
         jQuery('form').submit(function () {
             jQuery('.save_close:eq(0) button').attr('disabled', true);
