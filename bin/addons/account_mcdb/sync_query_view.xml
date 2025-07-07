@@ -63,7 +63,7 @@
             <field name="name">Finance Queries</field>
             <field name="res_model">finance.sync.query</field>
             <field name="view_type">form</field>
-            <field name="domain" eval="'[(\'user_id\', \'!=\', '+str(ref('base.user_sync'))+ ')]'" />
+            <field name="domain" eval="'[\'|\', (\'user_id\', \'!=\', '+str(ref('base.user_sync'))+ '), (\'user_id\', \'=\', False)]'" />
             <field name="view_mode">tree,form</field>
         </record>
 

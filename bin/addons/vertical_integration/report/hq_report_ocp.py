@@ -350,8 +350,7 @@ account_balances_per_currency_with_euro_sql = """
     ) AS req
     INNER JOIN account_account acc ON req.account_id = acc.id
     INNER JOIN res_currency c ON req.currency_id = c.id
-    INNER JOIN msf_instance i ON req.instance_id = i.id
-    WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
+    INNER JOIN msf_instance i ON req.instance_id = i.id;
     """
 
 
@@ -759,7 +758,7 @@ class hq_report_ocp_workday(hq_report_ocp):
 
         cr.execute('delete from hq_report_no_decimal where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
         cr.execute('delete from hq_report_func_adj where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
-        # round AJI for match JI funct amount
+        # round AJI to match JI funct amount (not EUR)
         cr.execute("""
             select
                 aml.id, round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2)), array_agg(al.id)
@@ -789,6 +788,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     AND j.type not in %(j_type)s
                     AND al.instance_id in %(instance_ids)s
                     AND aml.is_addendum_line = 'f'
+                    AND c.name != 'EUR'
             group by
                 aml.id
             having
@@ -816,6 +816,39 @@ class hq_report_ocp_workday(hq_report_ocp):
                         id in %s
                     order by abs(amount) desc, id limit 1
             ''', (bal[1], bal[0], period_id, tuple(bal[2])))
+
+        # round AJI to match JI funct amount (EUR)
+        aj_type = excluded_journal_types + ['cur_adj']
+        cr.execute("""
+            select
+                al.id, al.amount_currency, al.instance_id
+            from
+                account_analytic_line AS al,
+                res_currency AS c,
+                account_analytic_journal AS j
+            where
+                    c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+                    AND c.name = 'EUR'
+                    AND abs(al.amount_currency - al.amount) >= 0.01
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(aj_type),
+        })
+        for bal in cr.fetchall():
+            cr.execute('''
+                insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
+                    values (%s, round(%s, 2), %s, %s)
+            ''', (bal[0], bal[1], period_id, bal[2]))
 
         # pure AD
         cr.execute("""
@@ -998,7 +1031,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type, -- 4
                     CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 5
                     CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 6
-                    c.name AS booking_currency, -- 7
+                    CASE WHEN aml.is_addendum_line = 'f' THEN c.name ELSE move_c.name END AS booking_currency, -- 7
                     CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) < 0 THEN ABS(ROUND(coalesce(func_rounded.rounded_func_amount,al.amount), 2)) ELSE 0.0 END AS func_debit, -- 8
                     CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) > 0 THEN ROUND(coalesce(func_rounded.rounded_func_amount, al.amount), 2) ELSE 0.0 END AS func_credit, -- 9
                     al.name as description, -- 10
@@ -1023,6 +1056,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     account_analytic_account AS dest,
                     account_analytic_account AS cost_center,
                     res_currency AS c,
+                    res_currency AS move_c,
                     account_analytic_journal AS j,
                     account_move_line aml
                         left outer join hr_employee hr on hr.id = aml.employee_id,
@@ -1038,6 +1072,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     AND j.id = al.journal_id
                     AND aml.id = al.move_id
                     AND am.id = aml.move_id
+                    AND move_c.id = aml.currency_id
                     AND p.id = am.period_id
                     AND p.number not in (0, 16)
                     AND (

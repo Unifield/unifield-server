@@ -130,6 +130,7 @@ class BackupConfig(osv.osv):
             args=(cr, uid, ids, context)
         )
         new_thread.start()
+        new_thread.join(5)
         return True
 
     def generate_basebackup_bg(self, old_cr, uid, ids, context=None, new_cr=True):

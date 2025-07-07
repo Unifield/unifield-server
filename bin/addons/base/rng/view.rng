@@ -82,6 +82,7 @@
             <rng:optional><rng:attribute name="hide_edit_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_save_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_cancel_button"/></rng:optional>
+            <rng:optional><rng:attribute name="edit_level"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
             <rng:optional><rng:attribute name="force_string"/></rng:optional>
             <rng:ref name="container"/>
@@ -152,6 +153,7 @@
             <rng:optional><rng:attribute name="hide_new_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_delete_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_edit_button"/></rng:optional>
+            <rng:optional><rng:attribute name="edit_level"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
             <rng:optional><rng:attribute name="button_attrs"/></rng:optional>
             <rng:zeroOrMore>
@@ -461,6 +463,7 @@
             <rng:optional><rng:attribute name="password"/></rng:optional>
             <rng:optional><rng:attribute name="comparator"/></rng:optional>
             <rng:optional><rng:attribute name="sum"/></rng:optional>
+            <rng:optional><rng:attribute name="sum_field"/></rng:optional>
             <rng:optional><rng:attribute name="sum_selected"/></rng:optional>
             <rng:optional><rng:attribute name="real_sum"/></rng:optional>
             <rng:optional><rng:attribute name="bold"/></rng:optional>
