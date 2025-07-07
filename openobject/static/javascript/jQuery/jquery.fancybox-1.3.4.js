@@ -595,6 +595,11 @@
 				close.show();
 			}
 
+            close.unbind('click');
+            if ($.isFunction(currentOpts.onClickClosed)) {
+                close.click(currentOpts.onClickClosed);
+            }
+            close.click($.fancybox.close);
 			_set_navigation();
 	
 			if (currentOpts.hideOnContentClick)	{
@@ -1057,7 +1062,6 @@
 			nav_right = $('<a href="javascript:;" id="fancybox-right"><span class="fancy-ico" id="fancybox-right-ico"></span></a>')
 		);
 
-		close.click($.fancybox.close);
 		loading.click($.fancybox.cancel);
 
 		nav_left.click(function(e) {
@@ -1146,6 +1150,7 @@
 		onComplete : function(){},
 		onCleanup : function(){},
 		onClosed : function(){},
+        onClickClosed: null,
 		onError : function(){}
 	};
 
