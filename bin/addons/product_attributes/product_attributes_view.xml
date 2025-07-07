@@ -66,7 +66,7 @@
                    <group colspan="4" col="6">
                         <group colspan="1" col="2">
                             <separator string="Codes" colspan="2"/>
-                            <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code)" attrs="{'readonly':[('duplicate_ok','=',False)]}" />
+                            <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code, nomen_manda_2, context)" attrs="{'readonly':[('duplicate_ok','=',False)]}" />
                             <field name="new_code"/>
                             <field name="duplicate_ok" invisible="1"/>
                         </group>

@@ -1295,6 +1295,7 @@ class product_attributes(osv.osv):
     _defaults = {
         'closed_article': 'no',
         'duplicate_ok': True,
+        'international_status': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1],
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': 'False',
@@ -1699,6 +1700,10 @@ class product_attributes(osv.osv):
                     raise osv.except_osv(
                         _('Error'),
                         _('White spaces are not allowed in product code'),
+                    )
+                if len(vals['default_code']) < 11:
+                    raise osv.except_osv(
+                        _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
                     )
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
@@ -2659,13 +2664,10 @@ class product_attributes(osv.osv):
             if to_reset not in default:
                 default[to_reset] = False
 
-        temp_status = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
-
         copy_pattern = _("%s (copy)")
         copydef = dict(name=(copy_pattern % product2copy['name']),
                        default_code="XXX",
-                       # we set international_status to "temp" so that it won't be synchronized with this status
-                       international_status=temp_status,
+                       international_status=False,
                        # we do not duplicate the o2m objects
                        asset_ids=False,
                        prodlot_ids=False,
@@ -2682,16 +2684,27 @@ class product_attributes(osv.osv):
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
 
-    def onchange_code(self, cr, uid, ids, default_code):
+    def onchange_code(self, cr, uid, ids, default_code, nomen_manda_2, context=None):
         '''
-        Check if the code already exists
+        Check if the code already exists, its number of characters and compare it to the nomenclature family
         '''
+        if context is None:
+            context = {}
+
         res = {}
         if default_code:
             cr.execute("SELECT * FROM product_product pp where pp.default_code = %s", (default_code,))
             duplicate = cr.fetchall()
             if duplicate:
-                res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
+                res.update({'warning': {'title': 'Warning', 'message': _('The Code already exists')}})
+            elif not ids and nomen_manda_2:  # During manual creation
+                nomen_msfid = self.pool.get('product.nomenclature').read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
+                if not default_code.startswith(nomen_msfid.split('-')[-1]):
+                    res.update({'warning': {
+                        'title': 'Warning',
+                        'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')}
+                    })
+
         return res
 
     def on_change_type(self, cr, uid, ids, type, context=None):

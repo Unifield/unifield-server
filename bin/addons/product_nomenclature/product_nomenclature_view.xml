@@ -16,19 +16,19 @@
 							<field name="nomen_manda_0_s"
 								domain="[('parent_id', '=', -1)]"
 								 widget="selection"
-								on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+								on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, False, context)" />
 							<field name="nomen_manda_1_s"
 								domain="[('parent_id', '=', -1)]"
 								 widget="selection"
-								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, False, context)" />
 							<field name="nomen_manda_2_s"
 								domain="[('parent_id', '=', -1), ('category_id', '!=', False)]"
 								 widget="selection"
-								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, False, context)" />
 							<field name="nomen_manda_3_s"
 								domain="[('parent_id', '=', -1)]"
 								 widget="selection"
-								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, False, context)" />
 						</group>
 						<newline />
 						<group expand="0" string="Optional Nomenclature Filters...">
@@ -66,23 +66,23 @@
 									<field name="nomen_manda_0"
 										domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
 										widget="selection"
-										on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+										on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, default_code, context)" />
 									<field name="nomen_manda_1"
 										domain="[('level', '=', '1'), ('type', '=', 'mandatory')]"
 										widget="selection"
                                         get_selection="get_nomen"
-										on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)">
+										on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, default_code, context)">
 									</field>
 									<field name="nomen_manda_2"
 										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
 										widget="selection"
                                         get_selection="get_nomen"
-										on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+										on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, default_code, context)" />
 									<field name="nomen_manda_3"
 										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"										
 										widget="selection"
                                         get_selection="get_nomen"
-										on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+										on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, default_code, context)" />
 								</group>
 								<!--  uf-1544
 								<separator string="Library" colspan="10" />

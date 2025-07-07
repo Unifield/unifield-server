@@ -616,7 +616,7 @@ class product_history_consumption(osv.osv):
 # NB: the difference with the other same kind of product filters (with nomenclature and sublist) is that here we are dealing with osv_memory
 ##############################################################################################################################
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
-        res = self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+        res = self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, False, context={'withnum': 1})
         return res
 
     def get_nomen(self, cr, uid, id, field):

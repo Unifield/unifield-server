@@ -945,7 +945,7 @@ class product_product(osv.osv):
                                    {}, context=context)
         return res
 
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, prod_code=False, context=None):
         '''
         the nomenclature selection search changes
         '''
@@ -999,18 +999,27 @@ class product_product(osv.osv):
             if position == 1:
                 nomenids = nomenObj.search(cr, uid, [('category_id', '!=', False), ('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             else:
+                # During manual creation
+                if not id and position == 2 and prod_code:
+                    nomen_msfid = nomenObj.read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
+                    if not prod_code.startswith(nomen_msfid.split('-')[-1]):
+                        result['warning'] = {
+                            'title': 'Warning',
+                            'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')
+                        }
+
                 nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             if nomenids:
                 for n in nomenObj.read(cr, uid, nomenids, ['name'] + (shownum and ['number_of_products'] or []), context=context):
                     # get the name and product number
-                    id = n['id']
+                    n_id = n['id']
                     name = n['name']
                     if shownum:
                         number = n['number_of_products']
-                        values[mandaName % (position + 1)].append((id, name + ' (%s)' % number))
+                        values[mandaName % (position + 1)].append((n_id, name + ' (%s)' % number))
                     else:
-                        values[mandaName % (position + 1)].append((id, name))
-        elif not id and position == 3 and nomen_manda_3 and\
+                        values[mandaName % (position + 1)].append((n_id, name))
+        elif not id and not num and position == 3 and nomen_manda_3 and\
                 nomenObj.read(cr, uid, nomen_manda_3, ['status'], context=context)['status'] != 'valid':
             return {
                 'value': {'nomen_manda_3': False},
@@ -1029,14 +1038,14 @@ class product_product(osv.osv):
         if optionalList:
             for n in nomenObj.read(cr, uid, optionalList, ['name', 'sub_level'] + (num and ['number_of_products'] or []), context=context):
                 # get the name and product number
-                id = n['id']
+                n_id = n['id']
                 name = n['name']
                 sublevel = n['sub_level']
                 if num:
                     number = n['number_of_products']
-                    values[optName % (sublevel)].append((id, name + ' (%s)' % number))
+                    values[optName % (sublevel)].append((n_id, name + ' (%s)' % number))
                 else:
-                    values[optName % (sublevel)].append((id, name))
+                    values[optName % (sublevel)].append((n_id, name))
         if num:
             newval = {}
             for x in values:

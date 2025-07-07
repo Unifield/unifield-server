@@ -86,6 +86,7 @@ class physical_inventory_select_products(osv.osv_memory):
                                         nomen_manda_2,
                                         nomen_manda_3,
                                         num=num,
+                                        prod_code=False,
                                         context=context)
 
     def get_nomen(self, cr, uid, id, field):

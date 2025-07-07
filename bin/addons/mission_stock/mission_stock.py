@@ -1609,7 +1609,7 @@ class stock_mission_report_line(osv.osv):
         return self.pool.get('product.template').PRODUCT_SUBTYPE
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
-        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, prod_code=False, context=context)
 
     def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
         value = {}
