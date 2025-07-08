@@ -126,14 +126,10 @@
 					type = 'ajax';
 				}
 			}
-
 			if (!type) {
-				_error();
-				return;
-			}
-
-			if (type == 'inline') {
-				obj	= href.substr(href.indexOf("#"));
+				type = 'inline';
+			} else if (type == 'inline') {
+				obj = href.substr(href.indexOf("#"));
 				type = $(obj).length > 0 ? 'inline' : 'ajax';
 			}
 
