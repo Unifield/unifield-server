@@ -658,6 +658,11 @@ table.fields td {
     min-width: 90px;
 }
 
+/* US-14426 */
+.item input#user_email {
+    min-width: 150px;
+}
+
 .item .fields {
     width: 100%;
 }
