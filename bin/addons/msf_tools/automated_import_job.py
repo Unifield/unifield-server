@@ -136,6 +136,7 @@ class automated_import_job(osv.osv):
             selection=[
                 ('draft', 'Draft'),
                 ('in_progress', 'In progress'),
+                ('partial', 'Partially processed'),
                 ('done', 'Done'),
                 ('error', 'Exception'),
             ],
@@ -300,7 +301,10 @@ class automated_import_job(osv.osv):
                     if not error:
                         if no_file:
                             if not prev_job_id:
-                                error = _('No file to import in %s !') % import_data.src_path
+                                if job.import_id.function_id.startswith:
+                                    error = _('No files to import that start with prefix "%s" found in location "%s" !') % (job.import_id.function_id.startswith, import_data.src_path)
+                                else:
+                                    error = _('No files to import found in location "%s" !') % import_data.src_path
                             else:
                                 # files already processed in previous loop: delete the in_progress job
                                 self.unlink(cr, 1, [job_id], context=context)
@@ -411,6 +415,9 @@ class automated_import_job(osv.osv):
                         is_success = True
                         if processed:
                             nb_processed += self.generate_file_report(cr, uid, job, processed, headers, remote=remote)
+                            if context.get('nb_rejected_po_vi_lines') or context.get('nb_rejected_in_vi_lines'):
+                                nb_rejected += (context.get('nb_rejected_po_vi_lines', 0) + context.get('nb_rejected_in_vi_lines', 0))
+                                nb_processed -= (context.get('nb_rejected_po_vi_lines', 0) + context.get('nb_rejected_in_vi_lines', 0))
 
                             if import_data.function_id.model_id.model == 'supplier.catalogue' and \
                                     context.get('auto_import_catalogue_default_rank'):
@@ -435,13 +442,18 @@ class automated_import_job(osv.osv):
                                 tools.cache.clean_caches_for_db(cr.dbname)
                                 tools.read_cache.clean_caches_for_db(cr.dbname)
 
-                            if import_data.function_id.model_id.model == 'supplier.catalogue' and \
-                                    context.get('auto_import_catalogue_overlap'):
-                                error_message.insert(0, _('No data will be imported until all the duplicates have been removed'))
-                                context.pop('auto_import_catalogue_overlap')
+                            if import_data.function_id.model_id.model == 'supplier.catalogue':
+                                if context.get('auto_import_catalogue_overlap'):
+                                    error_message.insert(0, _('No data will be imported until all the duplicates have been removed'))
+                                    context.pop('auto_import_catalogue_overlap')
+                                elif nb_processed and nb_rejected:
+                                    state = 'partial'
 
                         if context.get('rejected_confirmation'):
-                            nb_rejected += context.get('rejected_confirmation')
+                            nb_rejected += context['rejected_confirmation']
+                            nb_processed -= context['rejected_confirmation']
+
+                        if nb_processed == 0 and nb_rejected:
                             state = 'error'
 
                     self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, nb_processed, nb_rejected))
@@ -460,6 +472,9 @@ class automated_import_job(osv.osv):
                                 msg += _('%s out of %s lines have been rejected') % (nb_rejected, nb_total_pol)
                             if nb_processed or nb_rejected:
                                 self.pool.get('purchase.order').log(cr, uid, po_id, msg)
+
+                    if nb_processed and nb_rejected and state != 'error':
+                        state = 'partial'
 
                     if context.get('job_comment'):
                         for msg_dict in context['job_comment']:
