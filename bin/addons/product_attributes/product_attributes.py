@@ -2742,8 +2742,9 @@ class product_attributes(osv.osv):
         '''
         if international_status and international_status == self.pool.get('ir.model.data').\
                 get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]:
+            current_istatus = ids and self.read(cr, uid, ids[0], ['international_status'])['international_status'][0] or False
             return {
-                'value': {'international_status': False},
+                'value': {'international_status': current_istatus},
                 'warning': {'title': _('Warning'), 'message': _('You can not select this Product Creator manually')}
             }
         return {}
