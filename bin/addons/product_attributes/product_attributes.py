@@ -1701,12 +1701,12 @@ class product_attributes(osv.osv):
                         _('Error'),
                         _('White spaces are not allowed in product code'),
                     )
-                if len(vals['default_code']) < 11:
+                if any(char.islower() for char in vals['default_code']):
+                    vals['default_code'] = vals['default_code'].upper()
+                if vals['default_code'] != 'XXX' and len(vals['default_code']) < 11:
                     raise osv.except_osv(
                         _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
                     )
-                if any(char.islower() for char in vals['default_code']):
-                    vals['default_code'] = vals['default_code'].upper()
                 if intstat_code and intstat_code == 'local' and 'Z' not in vals['default_code']:
                     raise osv.except_osv(
                         _('Error'),
@@ -1953,16 +1953,18 @@ class product_attributes(osv.osv):
             if not context.get('sync_update_execution'):
                 vals['default_code'] = vals['default_code'].strip()
                 if ' ' in vals['default_code']:
-                    # Check if the old code was 'XXX'
-                    # in case there is, it mean it is a duplicate and spaces
+                    # Check if the old code was 'XXX'  in case there is, it means it is a duplicate and spaces
                     # are not allowed.
                     if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
                         raise osv.except_osv(
-                            _('Error'),
-                            _('White spaces are not allowed in product code'),
+                            _('Error'), _('White spaces are not allowed in product code')
                         )
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
+                if vals['default_code'] != 'XXX' and len(vals['default_code']) < 11:
+                    raise osv.except_osv(
+                        _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
+                    )
                 # Look at current international status if none is given
                 prod_instat_code = intstat_code
                 if not prod_instat_code:
@@ -2733,6 +2735,18 @@ class product_attributes(osv.osv):
         if type in ('consu', 'service', 'service_recep'):
             res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
         return res
+
+    def onchange_international_status(self, cr, uid, ids, international_status, context=None):
+        '''
+        Prevent users to select the "Temporary" Product Creator
+        '''
+        if international_status and international_status == self.pool.get('ir.model.data').\
+                get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]:
+            return {
+                'value': {'international_status': False},
+                'warning': {'title': _('Warning'), 'message': _('You can not select this Product Creator manually')}
+            }
+        return {}
 
     fake_ed = '2999-12-31'
     fake_bn = 'TO-BE-REPLACED'

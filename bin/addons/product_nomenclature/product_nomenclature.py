@@ -1019,7 +1019,7 @@ class product_product(osv.osv):
                         values[mandaName % (position + 1)].append((n_id, name + ' (%s)' % number))
                     else:
                         values[mandaName % (position + 1)].append((n_id, name))
-        elif not id and not num and position == 3 and nomen_manda_3 and\
+        elif not id and not num and not context.get('withnum') and position == 3 and nomen_manda_3 and\
                 nomenObj.read(cr, uid, nomen_manda_3, ['status'], context=context)['status'] != 'valid':
             return {
                 'value': {'nomen_manda_3': False},
