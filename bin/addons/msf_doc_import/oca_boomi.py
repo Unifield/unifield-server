@@ -117,7 +117,8 @@ create or replace view actuals as ( select
             rate.currency_id = cur.id and
             cur.currency_table_id = cur_table.id and
             cur_table.state = 'valid' and
-            cur_table.code like 'WEFIN%'
+            cur_table.code like 'WEFIN%' and
+            cur_table.is_for_reval = 'f'
             order by rate.name desc, cur_table.id desc
         limit 1
     ) cur_table on true
@@ -191,7 +192,8 @@ create or replace view actuals_eng as ( select
             rate.currency_id = cur.id and
             cur.currency_table_id = cur_table.id and
             cur_table.state = 'valid' and
-            cur_table.code like 'WEFIN%'
+            cur_table.code like 'WEFIN%' and
+            cur_table.is_for_reval = 'f'
             order by rate.name desc, cur_table.id desc
         limit 1
     ) cur_table on true
