@@ -47,6 +47,27 @@ class supplier_catalogue(osv.osv):
     _order = 'period_from, period_to'
     _trace = True
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+        overwrite to allow search on product
+        '''
+        new_dom = []
+        product_id = False
+        for x in domain:
+            if x[0] == 'product_id':
+                product_id = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(supplier_catalogue, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if product_id and isinstance(product_id, int):
+            ret.tables.append('"supplier_catalogue_line"')
+            ret.joins.setdefault('"supplier_catalogue"', [])
+            ret.joins['"supplier_catalogue"'] += [('"supplier_catalogue_line"', 'id', 'catalogue_id', 'LEFT JOIN')]
+            ret.where_clause.append(''' "supplier_catalogue_line"."product_id" = %s  ''')
+            ret.where_clause_params.append(product_id)
+        return ret
+
     def copy(self, cr, uid, catalogue_id, default=None, context=None):
         '''
         Disallow the possibility to duplicate a catalogue.
@@ -488,6 +509,19 @@ class supplier_catalogue(osv.osv):
                 res[cat['id']] = True
         return res
 
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        '''
+        Fake method for 'product_id' field
+        '''
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, int):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True, domain=[('supplier', '=', True)], select=1, join=True),
@@ -517,6 +551,7 @@ class supplier_catalogue(osv.osv):
                                      (5, '5th choice'), (6, '6th choice'), (7, '7th choice'), (8, '8th choice'),
                                      (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice')], string='Supplier Ranking'),
         'ranking_on_all_lines': fields.function(_get_ranking_on_all_lines, string='All lines have ranking', type='boolean', method=True),
+        'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
     }
 
     _defaults = {
