@@ -21,7 +21,7 @@
                         on_change="on_change_reval(revaluation_method, fiscalyear_id, period_id, 'period_id')" />
                     <newline/>
                     <field name="currency_table_id"
-                           domain="[('is_for_reval','=',True), ('active', '=', True)]"
+                           domain="[('is_for_reval','=',True), ('state', '=', 'valid')]"
                            attrs="{'invisible': [('revaluation_method', '=', 'liquidity_month')],
                                 'required': [('revaluation_method', 'in', ['liquidity_year', 'other_bs'])]}"/>
                     <newline/>
