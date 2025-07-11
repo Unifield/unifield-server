@@ -17,7 +17,7 @@ class field_balance_spec_report(osv.osv_memory):
 
 
     def _get_has_multi_table(self, cr, uid, ids, name, arg=None, context=None):
-        nb = self.pool.get('res.currency.table').search(cr, uid, [('sate', '=', 'valid')], count=True)
+        nb = self.pool.get('res.currency.table').search(cr, uid, [('state', '=', 'valid')], count=True)
         ret = {}
         for _id in ids:
             ret[_id] = nb > 1
