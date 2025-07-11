@@ -613,6 +613,7 @@ class field_balance_spec_parser(XlsxReportParser):
                 where
                     cur.currency_table_id = t.id
                     and t.state = 'valid'
+                    and t.is_for_reval = 't'
                     and cur.name in %s
             ''', (tuple(list_curr), ))
             for x in self.cr.fetchall():
