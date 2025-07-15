@@ -255,7 +255,7 @@ class product_history_consumption(osv.osv):
                     'value': {'date_to': False},
                     'warning': {
                         'title': _('Error'),
-                        'message': _('With the AMC or RR-AMC consumption types, the \'To Date\' can not be greater than the last day of the current month')
+                        'message': _('With the AMC or RR-AMC consumption types, \'To Date\' can not be greater than the last day of the current month')
                     }
                 }
             res['value'].update({'date_to': date_to})
@@ -267,7 +267,7 @@ class product_history_consumption(osv.osv):
             if current_date > (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)):
                 return {
                     'value': {'date_to': False},
-                    'warning': {'title': _('Error'), 'message':  _('The \'To Date\' should be greater than \'From Date\'')}
+                    'warning': {'title': _('Error'), 'message':  _('\'To Date\' should be greater than \'From Date\'')}
                 }
             # For all months in the period
             while current_date <= (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)):
@@ -318,7 +318,7 @@ class product_history_consumption(osv.osv):
                     'value': {'date_to': False},
                     'warning': {
                         'title': _('Error'),
-                        'message': _('With the AMC or RR-AMC consumption types, the \'To Date\' can not be greater than the last day of the current month')
+                        'message': _('With the AMC or RR-AMC consumption types, \'To Date\' can not be greater than the last day of the current month')
                     }
                 }
         return res
