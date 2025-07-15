@@ -780,8 +780,8 @@ stock moves will be posted in this account. If not set on the product, the one f
 
         from_import_menu = context.get('from_import_menu', False)
 
+        nomen_obj = self.pool.get('product.nomenclature')
         if from_import_menu:
-            nomen_obj = self.pool.get('product.nomenclature')
             if not hasattr(nomen_obj, '_cache'):
                 nomen_obj._cache = {}
 
@@ -794,7 +794,7 @@ stock moves will be posted in this account. If not set on the product, the one f
             if from_import_menu and nomen_obj._cache.get(cr.dbname, {}).get(vals['nomen_manda_2'], False):
                 vals['categ_id'] = nomen_obj._cache.get(cr.dbname, {}).get(vals['nomen_manda_2'], False)
             else:
-                categ_ids = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id']
+                categ_ids = nomen_obj.read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id']
                 if categ_ids and len(categ_ids) > 0:
                     vals['categ_id'] = categ_ids[0]
                     if from_import_menu:
@@ -803,9 +803,10 @@ stock moves will be posted in this account. If not set on the product, the one f
                     raise osv.except_osv(_('Error'), _('No Product Category found for %s. Please contact an accounting member to create a new one for this family.')
                                          % vals['nomenclature_description'])
 
-        if vals.get('nomen_manda_3') and self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_3'], fields_to_fetch=['status']).status != 'valid' and \
-                not (context.get('sync_update_creation') or context.get('sync_update_execution')):
-            raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
+        if vals.get('nomen_manda_3') and not (context.get('sync_update_creation') or context.get('sync_update_execution')):
+            nomen_3 = nomen_obj.read(cr, uid, vals['nomen_manda_3'], ['status', 'msfid'], context=context)
+            if nomen_3['status'] != 'valid' and nomen_3['msfid'].split('-')[-1] != 'MISC':
+                raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
 
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
@@ -1019,12 +1020,13 @@ class product_product(osv.osv):
                         values[mandaName % (position + 1)].append((n_id, name + ' (%s)' % number))
                     else:
                         values[mandaName % (position + 1)].append((n_id, name))
-        elif not id and not num and not context.get('withnum') and position == 3 and nomen_manda_3 and\
-                nomenObj.read(cr, uid, nomen_manda_3, ['status'], context=context)['status'] != 'valid':
-            return {
-                'value': {'nomen_manda_3': False},
-                'warning': {'title': _('Warning'), 'message': _('You can not create a product with an archived Root Nomenclature.')}
-            }
+        elif not id and not num and not context.get('withnum') and position == 3 and nomen_manda_3:
+            nomen_3 = nomenObj.read(cr, uid, nomen_manda_3, ['status', 'msfid'], context=context)
+            if nomen_3['status'] != 'valid' and nomen_3['msfid'].split('-')[-1] != 'MISC':
+                return {
+                    'value': {'nomen_manda_3': False},
+                    'warning': {'title': _('Warning'), 'message': _('You can not create a product with an archived Root Nomenclature.')}
+                }
 
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
         optionalList = []
