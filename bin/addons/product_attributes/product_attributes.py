@@ -2701,7 +2701,7 @@ class product_attributes(osv.osv):
                 res.update({'warning': {'title': 'Warning', 'message': _('The Code already exists')}})
             elif not ids and nomen_manda_2:  # During manual creation
                 nomen_msfid = self.pool.get('product.nomenclature').read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
-                if not default_code.startswith(nomen_msfid.split('-')[-1]):
+                if not default_code.upper().startswith(nomen_msfid.split('-')[-1]):
                     res.update({'warning': {
                         'title': 'Warning',
                         'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')}

@@ -1003,7 +1003,7 @@ class product_product(osv.osv):
                 # During manual creation
                 if not id and position == 2 and prod_code:
                     nomen_msfid = nomenObj.read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
-                    if not prod_code.startswith(nomen_msfid.split('-')[-1]):
+                    if not prod_code.upper().startswith(nomen_msfid.split('-')[-1]):
                         result['warning'] = {
                             'title': 'Warning',
                             'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')
