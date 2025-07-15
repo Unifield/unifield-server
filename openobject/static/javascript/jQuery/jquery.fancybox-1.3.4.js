@@ -819,7 +819,7 @@
 
 				_start();
 
-				return;
+				return false;
 			});
 
 		return this;
