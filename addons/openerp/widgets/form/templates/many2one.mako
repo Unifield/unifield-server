@@ -1,12 +1,12 @@
 <%def name="display_open_resource(name)">
 <img id="${name}_open" alt="${_('Open')}" title="${_('Open a resource')}"
         src="/openerp/static/images/iconset-d-drop.gif" class="m2o_open"/>
-</%def>
+</%def>\
 <%def name="m2o_container()">
     <div class="m2o_container${editable_style and readonly_before_state and '_nowrap' or ''}">
         ${caller.body()}
     </div>
-</%def>
+</%def>\
 % if editable:
     <%self:m2o_container>
         <span class="m2o">
@@ -35,14 +35,13 @@
     </%self:m2o_container>
 % elif link:
     % if link == '0':
-        <span id="${name}" ${py.attrs(kind=kind, value=value, relation=relation, link=link)}>${text}</span>
+<span id="${name}" ${py.attrs(kind=kind, value=value, relation=relation, link=link)}>${text}</span>
     % else:
-        <span id="${name}" name="${name}" ${py.attrs(kind=kind, value=value, relation=relation, context=ctx, domain=domain, link=link)}>
-            <a style="color:#9A0404;" href="javascript: void(0)" onclick="new ManyToOne('${name}').open_record('${value}')">${text}</a>
-        </span>
+<span id="${name}" name="${name}" ${py.attrs(kind=kind, value=value, relation=relation, context=ctx, domain=domain, link=link)}>\
+<a style="color:#9A0404;" href="javascript: void(0)" onclick="new ManyToOne('${name}').open_record('${value}')">${text}</a>\
+</span>\
     % endif
 % endif
-
 % if default_focus:
 	<script type="text/javascript">
 	    jQuery('#${name}_text').focus()

@@ -31,12 +31,9 @@
         % endif
     </span>
 % endif
-
 % if not editable and not password:
-    <span kind="${kind}" id="${name}" value="${value}">${value}</span>
+<span kind="${kind}" id="${name}" value="${value}">${value}</span>\
 % endif
-
 % if not editable and password and value:
     <span>${'*' * len(value)}</span>
 % endif
-

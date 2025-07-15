@@ -6,8 +6,8 @@
     % for row in table:
     <tr>
         % for attrs, widget  in row:
-        <td ${py.attrs(attrs)}>
             % if isinstance(widget, str):
+              <td ${py.attrs(attrs)}>
                 <% widget_item = attrs['widget_item'][1] %>
                 % if attrs.get('is_search'):
                     <% filters = attrs.get('widget_item')[1].filters %>
@@ -39,10 +39,10 @@
                 % else:
                     ${widget_item.label.display()}
                 % endif
+            </td>
             % elif widget.visible:
-                ${display_member(widget)}
+                <td ${py.attrs(attrs)}>${display_member(widget)}</td>
             % endif
-        </td>
         % endfor
     </tr>
     % endfor
