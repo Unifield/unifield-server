@@ -2655,7 +2655,7 @@ class product_attributes(osv.osv):
         return True
 
     def copy(self, cr, uid, id, default=None, context=None):
-        product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
+        product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX'), ('active', 'in', ['t', 'f'])])
         if product_xxx:
             raise osv.except_osv(_('Warning'), _('A product with a code "XXX" already exists please edit this product to change its Code.'))
         product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
