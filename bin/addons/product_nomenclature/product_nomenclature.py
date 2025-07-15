@@ -1020,12 +1020,12 @@ class product_product(osv.osv):
                         values[mandaName % (position + 1)].append((n_id, name + ' (%s)' % number))
                     else:
                         values[mandaName % (position + 1)].append((n_id, name))
-        elif not id and not num and not context.get('withnum') and position == 3 and nomen_manda_3:
+        elif not num and not context.get('withnum') and position == 3 and nomen_manda_3:
             nomen_3 = nomenObj.read(cr, uid, nomen_manda_3, ['status', 'msfid'], context=context)
             if nomen_3['status'] != 'valid' and nomen_3['msfid'].split('-')[-1] != 'MISC':
                 return {
                     'value': {'nomen_manda_3': False},
-                    'warning': {'title': _('Warning'), 'message': _('You can not create a product with an archived Root Nomenclature.')}
+                    'warning': {'title': _('Warning'), 'message': _('You can not select an archived Root Nomenclature.')}
                 }
 
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
