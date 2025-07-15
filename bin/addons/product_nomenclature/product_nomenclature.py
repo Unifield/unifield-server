@@ -803,11 +803,6 @@ stock moves will be posted in this account. If not set on the product, the one f
                     raise osv.except_osv(_('Error'), _('No Product Category found for %s. Please contact an accounting member to create a new one for this family.')
                                          % vals['nomenclature_description'])
 
-        if vals.get('nomen_manda_3') and not (context.get('sync_update_creation') or context.get('sync_update_execution')):
-            nomen_3 = nomen_obj.read(cr, uid, vals['nomen_manda_3'], ['status', 'msfid'], context=context)
-            if nomen_3['status'] != 'valid' and nomen_3['msfid'].split('-')[-1] != 'MISC':
-                raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
-
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
 
@@ -899,6 +894,13 @@ class product_product(osv.osv):
 
         sale._setNomenclatureInfo(cr, uid, vals, context)
 
+        # Non-synced product creation with archived nomenclature is not authorized. Local products can use the archived MISC roots
+        if vals.get('nomen_manda_3') and vals.get('international_status') and not (context.get('sync_update_creation') or context.get('sync_update_execution')):
+            nomen_3 = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_3'], ['status', 'msfid'], context=context)
+            status_local_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            if nomen_3['status'] != 'valid' and (vals['international_status'] != status_local_id or
+                    (vals['international_status'] == status_local_id and nomen_3['msfid'].split('-')[-1] != 'MISC')):
+                raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 
@@ -946,7 +948,7 @@ class product_product(osv.osv):
                                    {}, context=context)
         return res
 
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, prod_code=False, context=None):
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, prod_code=False, international_status=False, context=None):
         '''
         the nomenclature selection search changes
         '''
@@ -1020,9 +1022,12 @@ class product_product(osv.osv):
                         values[mandaName % (position + 1)].append((n_id, name + ' (%s)' % number))
                     else:
                         values[mandaName % (position + 1)].append((n_id, name))
-        elif not num and not context.get('withnum') and position == 3 and nomen_manda_3:
+        elif not num and not context.get('withnum') and position == 3 and nomen_manda_3 and international_status:
+            # Archived nomenclature is not authorized. Local products can use the archived MISC roots
             nomen_3 = nomenObj.read(cr, uid, nomen_manda_3, ['status', 'msfid'], context=context)
-            if nomen_3['status'] != 'valid' and nomen_3['msfid'].split('-')[-1] != 'MISC':
+            status_local_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            if nomen_3['status'] != 'valid' and (international_status != status_local_id or
+                    (international_status == status_local_id and nomen_3['msfid'].split('-')[-1] != 'MISC')):
                 return {
                     'value': {'nomen_manda_3': False},
                     'warning': {'title': _('Warning'), 'message': _('You can not select an archived Root Nomenclature.')}
