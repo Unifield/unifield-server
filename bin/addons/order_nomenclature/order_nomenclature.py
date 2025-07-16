@@ -670,7 +670,7 @@ class sale_order_line(osv.osv):
         return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=False, instance_sync_order_ref=False, context=None):
-        ret = self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, prod_code=False, international_status=False, context=context)
+        ret = self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
         newval = {}
         if isinstance(position, int) and position == 0 and nomen_manda_0 and instance_sync_order_ref:
             nomen_srv_domain = [('name', '=', 'SRV'), ('type', '=', 'mandatory'), ('level', '=', 0)]

@@ -812,7 +812,7 @@ class composition_kit(osv.osv):
 
     def onChangeSearchNomenclature(self, cr, uid, ids, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         prod_obj = self.pool.get('product.product')
-        return prod_obj.onChangeSearchNomenclature(cr, uid, ids, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, prod_code=False, international_status=False, context=context)
+        return prod_obj.onChangeSearchNomenclature(cr, uid, ids, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
 
     def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
         prod_obj = self.pool.get('product.template')

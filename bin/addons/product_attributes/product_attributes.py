@@ -1695,23 +1695,7 @@ class product_attributes(osv.osv):
                                                                                 fields_to_fetch=['code'], context=context).code
         if 'default_code' in vals:
             if not context.get('sync_update_execution'):
-                vals['default_code'] = vals['default_code'].strip()
-                if ' ' in vals['default_code']:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('White spaces are not allowed in product code'),
-                    )
-                if any(char.islower() for char in vals['default_code']):
-                    vals['default_code'] = vals['default_code'].upper()
-                if vals['default_code'] != 'XXX' and len(vals['default_code']) < 11:
-                    raise osv.except_osv(
-                        _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
-                    )
-                if intstat_code and intstat_code == 'local' and 'Z' not in vals['default_code']:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
-                    )
+                vals['default_code'] = self._check_default_code(cr, uid, None, vals['default_code'], intstat_code, context=context)
 
         if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
@@ -1886,6 +1870,29 @@ class product_attributes(osv.osv):
         ud_unable_to_inactive = ud_unable_to_inactive.union([x[0] for x in cr.fetchall()])
         return ud_unable_to_inactive
 
+    def _check_default_code(self, cr, uid, ids, default_code, prod_creator, context=None):
+        default_code = default_code.strip()
+        if ' ' in default_code:
+            if not ids or any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
+                # not id: create, else write
+                raise osv.except_osv(
+                    _('Error'),
+                    _('White spaces are not allowed in product code'),
+                )
+        if any(char.islower() for char in default_code):
+            default_code = default_code.upper()
+
+        if default_code != 'XXX' and len(default_code) < 11:
+            raise osv.except_osv(
+                _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
+            )
+        if prod_creator and prod_creator == 'local' and 'Z' not in default_code:
+            raise osv.except_osv(
+                _('Error'),
+                _("Product Code %s must include a 'Z' character") % (default_code,),
+            )
+        return default_code
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -1951,29 +1958,11 @@ class product_attributes(osv.osv):
             else:
                 vals['duplicate_ok'] = False
             if not context.get('sync_update_execution'):
-                vals['default_code'] = vals['default_code'].strip()
-                if ' ' in vals['default_code']:
-                    # Check if the old code was 'XXX'  in case there is, it means it is a duplicate and spaces
-                    # are not allowed.
-                    if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
-                        raise osv.except_osv(
-                            _('Error'), _('White spaces are not allowed in product code')
-                        )
-                if any(char.islower() for char in vals['default_code']):
-                    vals['default_code'] = vals['default_code'].upper()
-                if vals['default_code'] != 'XXX' and len(vals['default_code']) < 11:
-                    raise osv.except_osv(
-                        _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
-                    )
-                # Look at current international status if none is given
                 prod_instat_code = intstat_code
                 if not prod_instat_code:
                     prod_instat_code = self.browse(cr, uid, ids[0], fields_to_fetch=['international_status'], context=context).international_status.code
-                if prod_instat_code and prod_instat_code == 'local' and 'Z' not in vals['default_code']:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
-                    )
+
+                vals['default_code'] = self._check_default_code(cr, uid, ids, vals['default_code'], prod_instat_code, context=context)
 
         if context.get('sync_update_execution') and vals.get('local_from_hq'):
             if vals.get('active'):
@@ -2699,14 +2688,10 @@ class product_attributes(osv.osv):
             duplicate = cr.fetchall()
             if duplicate:
                 res.update({'warning': {'title': 'Warning', 'message': _('The Code already exists')}})
-            elif not ids and nomen_manda_2:  # During manual creation
-                nomen_msfid = self.pool.get('product.nomenclature').read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
-                if not default_code.upper().startswith(nomen_msfid.split('-')[-1]):
-                    res.update({'warning': {
-                        'title': 'Warning',
-                        'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')}
-                    })
-
+            else:
+                warning = self._checkCodeFamily(cr, uid, ids, nomen_manda_2, default_code, context=context)
+                if warning:
+                    res.update({'warning': warning})
         return res
 
     def on_change_type(self, cr, uid, ids, type, context=None):
@@ -2749,18 +2734,15 @@ class product_attributes(osv.osv):
                 'value': {'international_status': current_istatus},
                 'warning': {'title': _('Warning'), 'message': _('You can not select this Product Creator manually')}
             }
-        if international_status and nomen_manda_3:
-            nomen_3 = self.pool.get('product.nomenclature').read(cr, uid, nomen_manda_3, ['status', 'msfid'], context=context)
-            status_local_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-            if nomen_3['status'] != 'valid' and (international_status != status_local_id or
-                    (international_status == status_local_id and nomen_3['msfid'].split('-')[-1] != 'MISC')):
-                return {
-                    'value': {'international_status': False},
-                    'warning': {
-                        'title': _('Warning'),
-                        'message': _('Please select a non-archived Root Nomenclature if you want to modify the Product Creator')
-                    }
+        warning = self._checkRootError(cr, uid, nomen_manda_3, international_status, context=context)
+        if warning:
+            return {
+                'value': {'international_status': False},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('Please select a non-archived Root Nomenclature if you want to modify the Product Creator')
                 }
+            }
         return {}
 
     fake_ed = '2999-12-31'

@@ -408,7 +408,7 @@ class stock_inventory(osv.osv):
     ]
 
     def onChangeSearchNomenclature(self, cr, uid, ids, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
-        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, False, False, context={'withnum': 1})
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
 
     def fill_lines(self, cr, uid, ids, context=None):
         '''

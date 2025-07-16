@@ -895,12 +895,10 @@ class product_product(osv.osv):
         sale._setNomenclatureInfo(cr, uid, vals, context)
 
         # Non-synced product creation with archived nomenclature is not authorized. Local products can use the archived MISC roots
-        if vals.get('nomen_manda_3') and vals.get('international_status') and not (context.get('sync_update_creation') or context.get('sync_update_execution')):
-            nomen_3 = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_3'], ['status', 'msfid'], context=context)
-            status_local_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-            if nomen_3['status'] != 'valid' and (vals['international_status'] != status_local_id or
-                    (vals['international_status'] == status_local_id and nomen_3['msfid'].split('-')[-1] != 'MISC')):
-                raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
+        if not context.get('sync_update_creation') and not context.get('sync_update_execution'):
+            msg = self._checkRootError(cr, uid, vals.get('nomen_manda_3'), vals.get('international_status'), context=context)
+            if msg:
+                raise osv.except_osv(_('Error'), msg)
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 
@@ -948,7 +946,45 @@ class product_product(osv.osv):
                                    {}, context=context)
         return res
 
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, prod_code=False, international_status=False, context=None):
+    def _checkCodeFamily(self, cr, uid, id, nomen_manda_2, prod_code, context=None):
+        if not id and nomen_manda_2 and prod_code:
+            nomenObj = self.pool.get('product.nomenclature')
+            nomen_msfid = nomenObj.read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
+            if not prod_code.upper().startswith(nomen_msfid.split('-')[-1]):
+                return {
+                    'title': 'Warning',
+                    'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')
+                }
+        return {}
+
+    def onChangeFamily(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, prod_code, context=None):
+        # During manual creation
+        warning = self._checkCodeFamily(cr, uid, id, nomen_manda_2, prod_code, context=context)
+        res = self.onChangeSearchNomenclature(cr, uid, id, 2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=False, context=context)
+        if warning:
+            res['warning'] = warning
+        return res
+
+    def _checkRootError(self, cr, uid, nomen_manda_3, international_status, context=None):
+        if nomen_manda_3 and international_status:
+            nomenObj = self.pool.get('product.nomenclature')
+            nomen_3 = nomenObj.read(cr, uid, nomen_manda_3, ['status', 'msfid'], context=context)
+            status_local_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            if nomen_3['status'] != 'valid' and (international_status != status_local_id or
+                                                 (international_status == status_local_id and nomen_3['msfid'].split('-')[-1] != 'MISC')):
+                return _('You can not select an archived Root Nomenclature.')
+        return False
+
+    def onChangeRoot(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, international_status, context=None):
+        error = self._checkRootError(cr, uid, nomen_manda_3, international_status, context=context)
+        if error:
+            return {
+                'value': {'nomen_manda_3': False},
+                'warning': {'title': _('Warning'), 'message': error}
+            }
+        return self.onChangeSearchNomenclature(cr, uid, id, 3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=False, context=context)
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''
         the nomenclature selection search changes
         '''
@@ -1002,15 +1038,6 @@ class product_product(osv.osv):
             if position == 1:
                 nomenids = nomenObj.search(cr, uid, [('category_id', '!=', False), ('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             else:
-                # During manual creation
-                if not id and position == 2 and prod_code:
-                    nomen_msfid = nomenObj.read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
-                    if not prod_code.upper().startswith(nomen_msfid.split('-')[-1]):
-                        result['warning'] = {
-                            'title': 'Warning',
-                            'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')
-                        }
-
                 nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             if nomenids:
                 for n in nomenObj.read(cr, uid, nomenids, ['name'] + (shownum and ['number_of_products'] or []), context=context):
@@ -1022,16 +1049,6 @@ class product_product(osv.osv):
                         values[mandaName % (position + 1)].append((n_id, name + ' (%s)' % number))
                     else:
                         values[mandaName % (position + 1)].append((n_id, name))
-        elif not num and not context.get('withnum') and position == 3 and nomen_manda_3 and international_status:
-            # Archived nomenclature is not authorized. Local products can use the archived MISC roots
-            nomen_3 = nomenObj.read(cr, uid, nomen_manda_3, ['status', 'msfid'], context=context)
-            status_local_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-            if nomen_3['status'] != 'valid' and (international_status != status_local_id or
-                    (international_status == status_local_id and nomen_3['msfid'].split('-')[-1] != 'MISC')):
-                return {
-                    'value': {'nomen_manda_3': False},
-                    'warning': {'title': _('Warning'), 'message': _('You can not select an archived Root Nomenclature.')}
-                }
 
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
         optionalList = []
