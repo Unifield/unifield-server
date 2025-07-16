@@ -114,7 +114,7 @@
                             <group colspan="2" col="3" name="status">
                                 <separator string="Status" colspan="3"/>
                                 <field name="categ_id" readonly="1" colspan="3"/>
-                                <field name="international_status" required="1" widget="selection" colspan="3" on_change="onchange_international_status(international_status)"/>
+                                <field name="international_status" required="1" widget="selection" colspan="3" on_change="onchange_international_status(international_status, nomen_manda_3)"/>
                                 <field name="int_status_code" invisible="1" />
                                 <field name="standard_ok" colspan="3" />
                                 <field name="state" colspan="3" widget="selection" />

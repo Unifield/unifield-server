@@ -2736,18 +2736,31 @@ class product_attributes(osv.osv):
             res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
         return res
 
-    def onchange_international_status(self, cr, uid, ids, international_status, context=None):
+    def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, context=None):
         '''
         Prevent users to select the "Temporary" Product Creator
+        Archived MISC nomenclatures are only available to "Local" Product Creator
         '''
-        if international_status and international_status == self.pool.get('ir.model.data').\
-                get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]:
+        data_obj = self.pool.get('ir.model.data')
+        if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]:
             prod_istatus = ids and self.read(cr, uid, ids[0], ['international_status']) or False
             current_istatus = prod_istatus and prod_istatus['international_status'] and prod_istatus['international_status'][0] or False
             return {
                 'value': {'international_status': current_istatus},
                 'warning': {'title': _('Warning'), 'message': _('You can not select this Product Creator manually')}
             }
+        if international_status and nomen_manda_3:
+            nomen_3 = self.pool.get('product.nomenclature').read(cr, uid, nomen_manda_3, ['status', 'msfid'], context=context)
+            status_local_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            if nomen_3['status'] != 'valid' and (international_status != status_local_id or
+                    (international_status == status_local_id and nomen_3['msfid'].split('-')[-1] != 'MISC')):
+                return {
+                    'value': {'international_status': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('Please select a non-archived Root Nomenclature if you want to modify the Product Creator')
+                    }
+                }
         return {}
 
     fake_ed = '2999-12-31'
