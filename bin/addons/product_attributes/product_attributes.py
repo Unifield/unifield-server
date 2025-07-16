@@ -1295,6 +1295,7 @@ class product_attributes(osv.osv):
     _defaults = {
         'closed_article': 'no',
         'duplicate_ok': True,
+        'international_status': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1],
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': 'False',
@@ -1694,19 +1695,7 @@ class product_attributes(osv.osv):
                                                                                 fields_to_fetch=['code'], context=context).code
         if 'default_code' in vals:
             if not context.get('sync_update_execution'):
-                vals['default_code'] = vals['default_code'].strip()
-                if ' ' in vals['default_code']:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('White spaces are not allowed in product code'),
-                    )
-                if any(char.islower() for char in vals['default_code']):
-                    vals['default_code'] = vals['default_code'].upper()
-                if intstat_code and intstat_code == 'local' and 'Z' not in vals['default_code']:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
-                    )
+                vals['default_code'] = self._check_default_code(cr, uid, None, vals['default_code'], intstat_code, context=context)
 
         if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
@@ -1881,6 +1870,29 @@ class product_attributes(osv.osv):
         ud_unable_to_inactive = ud_unable_to_inactive.union([x[0] for x in cr.fetchall()])
         return ud_unable_to_inactive
 
+    def _check_default_code(self, cr, uid, ids, default_code, prod_creator, context=None):
+        default_code = default_code.strip()
+        if ' ' in default_code:
+            if not ids or any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
+                # not id: create, else write
+                raise osv.except_osv(
+                    _('Error'),
+                    _('White spaces are not allowed in product code'),
+                )
+        if any(char.islower() for char in default_code):
+            default_code = default_code.upper()
+
+        if default_code != 'XXX' and len(default_code) < 11:
+            raise osv.except_osv(
+                _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
+            )
+        if prod_creator and prod_creator == 'local' and 'Z' not in default_code:
+            raise osv.except_osv(
+                _('Error'),
+                _("Product Code %s must include a 'Z' character") % (default_code,),
+            )
+        return default_code
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -1946,27 +1958,11 @@ class product_attributes(osv.osv):
             else:
                 vals['duplicate_ok'] = False
             if not context.get('sync_update_execution'):
-                vals['default_code'] = vals['default_code'].strip()
-                if ' ' in vals['default_code']:
-                    # Check if the old code was 'XXX'
-                    # in case there is, it mean it is a duplicate and spaces
-                    # are not allowed.
-                    if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
-                        raise osv.except_osv(
-                            _('Error'),
-                            _('White spaces are not allowed in product code'),
-                        )
-                if any(char.islower() for char in vals['default_code']):
-                    vals['default_code'] = vals['default_code'].upper()
-                # Look at current international status if none is given
                 prod_instat_code = intstat_code
                 if not prod_instat_code:
                     prod_instat_code = self.browse(cr, uid, ids[0], fields_to_fetch=['international_status'], context=context).international_status.code
-                if prod_instat_code and prod_instat_code == 'local' and 'Z' not in vals['default_code']:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
-                    )
+
+                vals['default_code'] = self._check_default_code(cr, uid, ids, vals['default_code'], prod_instat_code, context=context)
 
         if context.get('sync_update_execution') and vals.get('local_from_hq'):
             if vals.get('active'):
@@ -2648,7 +2644,7 @@ class product_attributes(osv.osv):
         return True
 
     def copy(self, cr, uid, id, default=None, context=None):
-        product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
+        product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX'), ('active', 'in', ['t', 'f'])])
         if product_xxx:
             raise osv.except_osv(_('Warning'), _('A product with a code "XXX" already exists please edit this product to change its Code.'))
         product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
@@ -2659,13 +2655,10 @@ class product_attributes(osv.osv):
             if to_reset not in default:
                 default[to_reset] = False
 
-        temp_status = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
-
         copy_pattern = _("%s (copy)")
         copydef = dict(name=(copy_pattern % product2copy['name']),
                        default_code="XXX",
-                       # we set international_status to "temp" so that it won't be synchronized with this status
-                       international_status=temp_status,
+                       international_status=False,
                        # we do not duplicate the o2m objects
                        asset_ids=False,
                        prodlot_ids=False,
@@ -2682,16 +2675,23 @@ class product_attributes(osv.osv):
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
 
-    def onchange_code(self, cr, uid, ids, default_code):
+    def onchange_code(self, cr, uid, ids, default_code, nomen_manda_2, context=None):
         '''
-        Check if the code already exists
+        Check if the code already exists, its number of characters and compare it to the nomenclature family
         '''
+        if context is None:
+            context = {}
+
         res = {}
         if default_code:
             cr.execute("SELECT * FROM product_product pp where pp.default_code = %s", (default_code,))
             duplicate = cr.fetchall()
             if duplicate:
-                res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
+                res.update({'warning': {'title': 'Warning', 'message': _('The Code already exists')}})
+            else:
+                warning = self._checkCodeFamily(cr, uid, ids, nomen_manda_2, default_code, context=context)
+                if warning:
+                    res.update({'warning': warning})
         return res
 
     def on_change_type(self, cr, uid, ids, type, context=None):
@@ -2720,6 +2720,30 @@ class product_attributes(osv.osv):
         if type in ('consu', 'service', 'service_recep'):
             res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
         return res
+
+    def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, context=None):
+        '''
+        Prevent users to select the "Temporary" Product Creator
+        Archived MISC nomenclatures are only available to "Local" Product Creator
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]:
+            prod_istatus = ids and self.read(cr, uid, ids[0], ['international_status']) or False
+            current_istatus = prod_istatus and prod_istatus['international_status'] and prod_istatus['international_status'][0] or False
+            return {
+                'value': {'international_status': current_istatus},
+                'warning': {'title': _('Warning'), 'message': _('You can not select this Product Creator manually')}
+            }
+        warning = self._checkRootError(cr, uid, nomen_manda_3, international_status, context=context)
+        if warning:
+            return {
+                'value': {'international_status': False},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('Please select a non-archived Root Nomenclature if you want to modify the Product Creator')
+                }
+            }
+        return {}
 
     fake_ed = '2999-12-31'
     fake_bn = 'TO-BE-REPLACED'

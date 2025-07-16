@@ -66,7 +66,7 @@
                    <group colspan="4" col="6">
                         <group colspan="1" col="2">
                             <separator string="Codes" colspan="2"/>
-                            <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code)" attrs="{'readonly':[('duplicate_ok','=',False)]}" />
+                            <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code, nomen_manda_2, context)" attrs="{'readonly':[('duplicate_ok','=',False)]}" />
                             <field name="new_code"/>
                             <field name="duplicate_ok" invisible="1"/>
                         </group>
@@ -114,7 +114,7 @@
                             <group colspan="2" col="3" name="status">
                                 <separator string="Status" colspan="3"/>
                                 <field name="categ_id" readonly="1" colspan="3"/>
-                                <field name="international_status" required="1" widget="selection" colspan="3"/>
+                                <field name="international_status" required="1" widget="selection" colspan="3" on_change="onchange_international_status(international_status, nomen_manda_3)"/>
                                 <field name="int_status_code" invisible="1" />
                                 <field name="standard_ok" colspan="3" />
                                 <field name="state" colspan="3" widget="selection" />

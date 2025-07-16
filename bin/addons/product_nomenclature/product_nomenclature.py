@@ -780,8 +780,8 @@ stock moves will be posted in this account. If not set on the product, the one f
 
         from_import_menu = context.get('from_import_menu', False)
 
+        nomen_obj = self.pool.get('product.nomenclature')
         if from_import_menu:
-            nomen_obj = self.pool.get('product.nomenclature')
             if not hasattr(nomen_obj, '_cache'):
                 nomen_obj._cache = {}
 
@@ -794,7 +794,7 @@ stock moves will be posted in this account. If not set on the product, the one f
             if from_import_menu and nomen_obj._cache.get(cr.dbname, {}).get(vals['nomen_manda_2'], False):
                 vals['categ_id'] = nomen_obj._cache.get(cr.dbname, {}).get(vals['nomen_manda_2'], False)
             else:
-                categ_ids = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id']
+                categ_ids = nomen_obj.read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id']
                 if categ_ids and len(categ_ids) > 0:
                     vals['categ_id'] = categ_ids[0]
                     if from_import_menu:
@@ -802,10 +802,6 @@ stock moves will be posted in this account. If not set on the product, the one f
                 else:
                     raise osv.except_osv(_('Error'), _('No Product Category found for %s. Please contact an accounting member to create a new one for this family.')
                                          % vals['nomenclature_description'])
-
-        if vals.get('nomen_manda_3') and self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_3'], fields_to_fetch=['status']).status != 'valid' and \
-                not (context.get('sync_update_creation') or context.get('sync_update_execution')):
-            raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
 
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
@@ -898,6 +894,11 @@ class product_product(osv.osv):
 
         sale._setNomenclatureInfo(cr, uid, vals, context)
 
+        # Non-synced product creation with archived nomenclature is not authorized. Local products can use the archived MISC roots
+        if not context.get('sync_update_creation') and not context.get('sync_update_execution'):
+            msg = self._checkRootError(cr, uid, vals.get('nomen_manda_3'), vals.get('international_status'), context=context)
+            if msg:
+                raise osv.except_osv(_('Error'), msg)
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 
@@ -944,6 +945,44 @@ class product_product(osv.osv):
                 msf_line_obj.write(cr, 1, all_msf_lines_to_upgrade,
                                    {}, context=context)
         return res
+
+    def _checkCodeFamily(self, cr, uid, id, nomen_manda_2, prod_code, context=None):
+        if not id and nomen_manda_2 and prod_code:
+            nomenObj = self.pool.get('product.nomenclature')
+            nomen_msfid = nomenObj.read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
+            if not prod_code.upper().startswith(nomen_msfid.split('-')[-1]):
+                return {
+                    'title': 'Warning',
+                    'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')
+                }
+        return {}
+
+    def onChangeFamily(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, prod_code, context=None):
+        # During manual creation
+        warning = self._checkCodeFamily(cr, uid, id, nomen_manda_2, prod_code, context=context)
+        res = self.onChangeSearchNomenclature(cr, uid, id, 2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=False, context=context)
+        if warning:
+            res['warning'] = warning
+        return res
+
+    def _checkRootError(self, cr, uid, nomen_manda_3, international_status, context=None):
+        if nomen_manda_3 and international_status:
+            nomenObj = self.pool.get('product.nomenclature')
+            nomen_3 = nomenObj.read(cr, uid, nomen_manda_3, ['status', 'msfid'], context=context)
+            status_local_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            if nomen_3['status'] != 'valid' and (international_status != status_local_id or
+                                                 (international_status == status_local_id and nomen_3['msfid'].split('-')[-1] != 'MISC')):
+                return _('You can not select an archived Root Nomenclature.')
+        return False
+
+    def onChangeRoot(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, international_status, context=None):
+        error = self._checkRootError(cr, uid, nomen_manda_3, international_status, context=context)
+        if error:
+            return {
+                'value': {'nomen_manda_3': False},
+                'warning': {'title': _('Warning'), 'message': error}
+            }
+        return self.onChangeSearchNomenclature(cr, uid, id, 3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=False, context=context)
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''
@@ -1003,13 +1042,13 @@ class product_product(osv.osv):
             if nomenids:
                 for n in nomenObj.read(cr, uid, nomenids, ['name'] + (shownum and ['number_of_products'] or []), context=context):
                     # get the name and product number
-                    id = n['id']
+                    n_id = n['id']
                     name = n['name']
                     if shownum:
                         number = n['number_of_products']
-                        values[mandaName % (position + 1)].append((id, name + ' (%s)' % number))
+                        values[mandaName % (position + 1)].append((n_id, name + ' (%s)' % number))
                     else:
-                        values[mandaName % (position + 1)].append((id, name))
+                        values[mandaName % (position + 1)].append((n_id, name))
 
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
         optionalList = []
@@ -1023,14 +1062,14 @@ class product_product(osv.osv):
         if optionalList:
             for n in nomenObj.read(cr, uid, optionalList, ['name', 'sub_level'] + (num and ['number_of_products'] or []), context=context):
                 # get the name and product number
-                id = n['id']
+                n_id = n['id']
                 name = n['name']
                 sublevel = n['sub_level']
                 if num:
                     number = n['number_of_products']
-                    values[optName % (sublevel)].append((id, name + ' (%s)' % number))
+                    values[optName % (sublevel)].append((n_id, name + ' (%s)' % number))
                 else:
-                    values[optName % (sublevel)].append((id, name))
+                    values[optName % (sublevel)].append((n_id, name))
         if num:
             newval = {}
             for x in values:
