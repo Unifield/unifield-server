@@ -341,6 +341,13 @@ class users(osv.osv):
         # the email, even without any direct read access on the res_partner_address object.
         return dict([(user.id, user.address_id.email) for user in self.browse(cr, 1, ids)]) # no context to avoid potential security issues as superuser
 
+    def _search_email(self, cr, uid, obj, name, args, context=None):
+        res = []
+        for arg in args:
+            if len(arg) > 2 and arg[0] == 'user_email':
+                res.append(('address_id.email', arg[1], arg[2]))
+        return res
+
     def _email_set(self, cr, uid, ids, name, value, arg, context=None):
         if not isinstance(ids,list):
             ids = [ids]
@@ -532,7 +539,7 @@ class users(osv.osv):
                                         string='Change password', help="Only specify a value if you want to change the user password. "
                                         "This user will have to logout and login again!"),
         'signature': fields.text('Signature', size=64),
-        'address_id': fields.many2one('res.partner.address', 'Address'),
+        'address_id': fields.many2one('res.partner.address', 'Address', join='LEFT'),
 
         'signature_enabled': fields.boolean('Enable Signature'),
         'esignature_id': fields.many2one('signature.image', 'Current Signature'),
@@ -569,7 +576,7 @@ class users(osv.osv):
                                        "between the server and the client."),
         'view': fields.selection([('simple','Simplified'),('extended','Extended')],
                                  string='Interface', help="Choose between the simplified interface and the extended one"),
-        'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
+        'user_email': fields.function(_email_get, method=True, fnct_search=_search_email, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'last_authentication': fields.function(_get_last_authentication, method=1, type='datetime', string='Last Authentication'),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
