@@ -77,7 +77,7 @@
 										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
 										widget="selection"
                                         get_selection="get_nomen"
-										on_change="onChangeFamily(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, default_code, context)" />
+										on_change="onChangeFamily(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, default_code, international_status, context)" />
 									<field name="nomen_manda_3"
 										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"
 										widget="selection"

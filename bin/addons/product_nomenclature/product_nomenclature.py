@@ -946,20 +946,21 @@ class product_product(osv.osv):
                                    {}, context=context)
         return res
 
-    def _checkCodeFamily(self, cr, uid, id, nomen_manda_2, prod_code, context=None):
-        if not id and nomen_manda_2 and prod_code:
-            nomenObj = self.pool.get('product.nomenclature')
-            nomen_msfid = nomenObj.read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
-            if not prod_code.upper().startswith(nomen_msfid.split('-')[-1]):
-                return {
-                    'title': 'Warning',
-                    'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')
-                }
+    def _checkCodeFamily(self, cr, uid, id, nomen_manda_2, prod_code, international_status, context=None):
+        if not id and nomen_manda_2 and prod_code and international_status:
+            if self.pool.get('product.international.status').search_exists(cr, uid, [('id', '=', international_status), ('code', '=', 'local')], context=context):
+                nomenObj = self.pool.get('product.nomenclature')
+                nomen_msfid = nomenObj.read(cr, uid, nomen_manda_2, ['msfid'], context=context)['msfid']
+                if not prod_code.upper().startswith(nomen_msfid.split('-')[-1]):
+                    return {
+                        'title': 'Warning',
+                        'message': _('You are about to create a product with a Code which does not correspond to the nomenclature\'s Family, do you wish to proceed ?')
+                    }
         return {}
 
-    def onChangeFamily(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, prod_code, context=None):
+    def onChangeFamily(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, prod_code, international_status, context=None):
         # During manual creation
-        warning = self._checkCodeFamily(cr, uid, id, nomen_manda_2, prod_code, context=context)
+        warning = self._checkCodeFamily(cr, uid, id, nomen_manda_2, prod_code, international_status, context=context)
         res = self.onChangeSearchNomenclature(cr, uid, id, 2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=False, context=context)
         if warning:
             res['warning'] = warning

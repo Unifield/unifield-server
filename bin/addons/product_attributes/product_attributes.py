@@ -1292,10 +1292,16 @@ class product_attributes(osv.osv):
 
         return res
 
+    def _get_default_international_status(self, cr, uid, context=None):
+        try:
+            return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+        except ValueError:
+            return False
+
     _defaults = {
         'closed_article': 'no',
         'duplicate_ok': True,
-        'international_status': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1],
+        'international_status': _get_default_international_status,
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': 'False',
@@ -1882,15 +1888,16 @@ class product_attributes(osv.osv):
         if any(char.islower() for char in default_code):
             default_code = default_code.upper()
 
-        if default_code != 'XXX' and len(default_code) < 11:
-            raise osv.except_osv(
-                _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
-            )
-        if prod_creator and prod_creator == 'local' and 'Z' not in default_code:
-            raise osv.except_osv(
-                _('Error'),
-                _("Product Code %s must include a 'Z' character") % (default_code,),
-            )
+        if prod_creator == 'local':
+            if default_code == 'XXX' and len(default_code) < 11:
+                raise osv.except_osv(
+                    _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
+                )
+            if 'Z' not in default_code:
+                raise osv.except_osv(
+                    _('Error'),
+                    _("Product Code %s must include a 'Z' character") % (default_code,),
+                )
         return default_code
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -2675,7 +2682,7 @@ class product_attributes(osv.osv):
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
 
-    def onchange_code(self, cr, uid, ids, default_code, nomen_manda_2, context=None):
+    def onchange_code(self, cr, uid, ids, default_code, nomen_manda_2, international_status, context=None):
         '''
         Check if the code already exists, its number of characters and compare it to the nomenclature family
         '''
@@ -2689,7 +2696,7 @@ class product_attributes(osv.osv):
             if duplicate:
                 res.update({'warning': {'title': 'Warning', 'message': _('The Code already exists')}})
             else:
-                warning = self._checkCodeFamily(cr, uid, ids, nomen_manda_2, default_code, context=context)
+                warning = self._checkCodeFamily(cr, uid, ids, nomen_manda_2, default_code, international_status, context=context)
                 if warning:
                     res.update({'warning': warning})
         return res
