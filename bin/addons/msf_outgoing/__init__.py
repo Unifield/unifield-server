@@ -64,6 +64,7 @@ INTEGRITY_STATUS_SELECTION = [
 ] + PACK_INTEGRITY_STATUS_SELECTION
 
 from . import msf_outgoing
+from . import sde_import
 from . import wizard
 from . import report
 

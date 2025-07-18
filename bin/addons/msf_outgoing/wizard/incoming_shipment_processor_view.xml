@@ -78,6 +78,7 @@
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree" context="{'display_process_to_ship_button': display_process_to_ship_button}"
                         colspan="4" nolabel="1" />
+                    <field name="sde_updated" readonly="1" attrs="{'invisible': [('sde_updated', '=', False)]}"/>
                     <group colspan="4" col="4" name="claim">
                         <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
                         <notebook colspan="4">
@@ -167,6 +168,7 @@
             <field name="arch" type="xml">
                 <tree string="Moves"
                     editable="top"
+                    noteditable="sde_updated_line==True"
                     hide_delete_button="1"
                     hide_new_button="1"
                     colors="red:integrity_status!='empty' or expiry_date &lt; current_date"
@@ -180,6 +182,7 @@
                     <field name="asset_check" invisible="1" />
                     <field name="location_id" invisible="1" />
                     <field name="ssl_check" invisible="1" widget="null_boolean" />
+                    <field name="sde_updated_line" invisible="1" />
                     <!-- Visible fields -->
                     <field name="line_number" string="Line" />
                     <field name="product_id" string="Product" />
@@ -189,7 +192,7 @@
                         type="object"
                         icon="gtk-convert"
                         string="Change Product"
-                        attrs="{'invisible': [('fields_as_ro', '=', True)]}"
+                        attrs="{'invisible': ['|', ('fields_as_ro', '=', True), ('sde_updated_line', '=', True)]}"
                         />
                     <field name="asset_id"
                         domain="[('product_id', '=', product_id)]"
@@ -217,7 +220,7 @@
                         type="object"
                         icon="terp-stock_effects-object-colorize"
                         string="Split"
-                        attrs="{'invisible': [('fields_as_ro', '=', True)]}"
+                        attrs="{'invisible': ['|', ('fields_as_ro', '=', True), ('sde_updated_line', '=', True)]}"
                         />
                     <field name="prodlot_id"
                         domain="[('product_id', '=', product_id), ('check_type', '=', True)]"

@@ -129,6 +129,7 @@
                     <field name="order_category" />
                     <field name="details" truncate="15" />
                     <field name="shipment_ref" />
+                    <field name="sde_updated" />
                     <field name="reason_type_id" domain="[('incoming_ok', '=', True)]" />
                     <field name="date" string="Creation Date" />
                     <field name="date_done" string="Actual Receipt Date" />

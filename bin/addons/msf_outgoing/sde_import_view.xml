@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="sde_import_form_view" model="ir.ui.view">
+            <field name="name">sde.import.form.view</field>
+            <field name="model">sde.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="SDE Import" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1" hide_cancel_button="1">
+                    <group colspan="4">
+                        <field name="file" filename="filename" />
+                        <field name="filename" invisible="1" />
+                    </group>
+                    <field name="message" readonly="1" colspan="4" />
+                    <separator colspan="4" string="Actions" />
+                    <button name="sde_file_import" string="Import file" icon="gtk-print" type="object" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <menuitem name="Single Data Entry" parent="object_query.menu_preferences" id="sde_import_main_menu" sequence="20" />
+
+        <record id="action_sde_import" model="ir.actions.act_window">
+            <field name="name">SDE Import</field>
+            <field name="res_model">sde.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+        </record>
+        <menuitem name="SDE Import" action="action_sde_import" id="sde_import_menu" parent="sde_import_main_menu" />
+
+        <record id="sde_update_log_search_view" model="ir.ui.view">
+            <field name="name">sde.update.log.search.view</field>
+            <field name="model">sde.update.log</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="SDE Update Logs">
+                    <field name="date" />
+                    <field name="doc_type" select="1" />
+                    <field name="doc_ref" />
+              	</search>
+            </field>
+        </record>
+
+        <record id="sde_update_log_tree_view" model="ir.ui.view">
+            <field name="name">sde.update.log.tree.view</field>
+            <field name="model">sde.update.log</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="SDE Update Logs" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                    <field name="date"/>
+                    <field name="doc_type"/>
+                    <field name="doc_ref"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_sde_update_log" model="ir.actions.act_window">
+            <field name="name">SDE Update Logs</field>
+            <field name="res_model">sde.update.log</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <menuitem
+            id="menu_sde_update_log"
+            action="action_sde_update_log"
+            parent="stock.next_id_61"
+            sequence="110"
+            />
+    </data>
+</openerp>

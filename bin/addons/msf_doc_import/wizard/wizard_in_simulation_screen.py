@@ -1197,6 +1197,8 @@ Nothing has been imported because of %s. See below:
             to_write['physical_reception_date'] = simu_id.physical_reception_date
         if not partner or partner.partner_type in ['external', 'esc']:
             to_write['imp_shipment_ref'] = simu_id.imp_freight_number or ''
+        if context.get('sde_flow'):
+            to_write.update({'draft': True, 'sde_updated': True})
         to_write['imp_filename'] = simu_id.filename or ''  # To put in last_imported_filename
         partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, to_write, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('ign', 'error', 'new')), ('type_change', '=', False)], context=context)

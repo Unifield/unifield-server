@@ -225,6 +225,7 @@ class stock_incoming_processor(osv.osv):
         'physical_reception_date': fields.datetime('Physical Reception Date'),
         'imp_shipment_ref': fields.char(string='Ship Reference from the IN VI import', size=256, readonly=True),
         'imp_filename': fields.char(size=128, string='Filename', readonly=True),
+        'sde_updated': fields.boolean('Updated by SDE'),
     }
 
     _defaults = {
@@ -588,7 +589,7 @@ class stock_incoming_processor(osv.osv):
         res_id = []
         for incoming in incoming_ids:
             res_id = incoming['picking_id']['id']
-        incoming_obj.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False}, context=context)
+        incoming_obj.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False, 'sde_updated': False}, context=context)
         return stock_p_obj.action_process(cr, uid, res_id, context=context)
 
     def do_save_draft(self, cr, uid, ids, context=None):
@@ -1255,6 +1256,7 @@ class stock_move_in_processor(osv.osv):
         'split_move_ok': fields.boolean(string='Is split move ?'),
         'filter_pack': fields.function(_get_pack_info, method=True, type='char', string='Pack', fnct_search=_search_pack_info),
         'cost_as_ro': fields.boolean('Set Cost Price as RO', internal=1),
+        'sde_updated_line': fields.boolean('Line updated by SDE'),
     }
 
 
@@ -1292,6 +1294,10 @@ class stock_move_in_processor(osv.osv):
                 vals['cost'] = price
             if not vals.get('currency', False):
                 vals['currency'] = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+
+        if context.get('sde_flow') and vals.get('ordered_quantity'):
+            vals['sde_updated_line'] = True
+
         return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
 
 
