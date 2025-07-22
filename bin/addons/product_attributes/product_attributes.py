@@ -1889,7 +1889,7 @@ class product_attributes(osv.osv):
             default_code = default_code.upper()
 
         if prod_creator == 'local':
-            if default_code == 'XXX' and len(default_code) < 11:
+            if default_code != 'XXX' and len(default_code) < 11:
                 raise osv.except_osv(
                     _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
                 )
