@@ -18,7 +18,7 @@
                 <form string="Delete old ESC catalogues" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     <separator colspan="4" string="General configuration" />
                     <field name="name" readonly="1" />
-                    <field name="partner_id" />
+                    <field name="partner_id" required="1" />
                     <field name="active" />
                     <newline />
                     <button name="manual_run_catalogue_mass_deletion" string="Run task manually" colspan="4" type="object" icon="gtk-execute" />
