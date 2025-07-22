@@ -289,7 +289,7 @@ class product_attributes_template(osv.osv):
 
 
     _columns = {
-        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable Product')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
         'state': fields.many2one('product.status', 'UniField Status', help="Tells the user if he can use the product or not.", required=1),
     }
 
