@@ -228,18 +228,15 @@ class stock_card_wizard(osv.osv_memory):
 
 
         # Create one line per stock move
-        move_ids = move_obj.search(cr, uid, domain,order='date asc',
-                                   context=context)
+        move_ids = move_obj.search(cr, uid, domain, order='date asc', context=context)
 
         for move in move_obj.browse(cr, uid, move_ids, context=context):
             # If the move is from the same location as destination
-            if move.location_dest_id.id in location_ids and \
-               move.location_id.id in location_ids:
+            if move.location_dest_id.id in location_ids and move.location_id.id in location_ids:
                 continue
 
             # If the move doesn't pass through stock
-            if move.location_dest_id.usage in location_usage and \
-                    move.location_id.usage in location_usage:
+            if move.location_dest_id.usage in location_usage and move.location_id.usage in location_usage:
                 continue
 
             if move.product_qty == 0.00:
@@ -262,9 +259,7 @@ class stock_card_wizard(osv.osv_memory):
             to_unit = False
             if move.product_uom.id != move.product_id.uom_id.id:
                 to_unit = move.product_id.uom_id.id
-            qty = uom_obj._compute_qty(cr, uid, move.product_uom.id,
-                                       move.product_qty,
-                                       to_unit)
+            qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, to_unit)
 
             if location_ids:
                 if move.location_dest_id.id in location_ids:
@@ -318,7 +313,7 @@ class stock_card_wizard(osv.osv_memory):
                 'qty_out': out_qty,
                 'balance': initial_stock,
                 'src_dest': move_location,
-                'notes': move.picking_id and move.picking_id.note  or '',
+                'notes': move.picking_id and move.picking_id.note or not move.picking_id and move.comment or '',
             }
 
             line_obj.create(cr, uid, line_values, context=context)
@@ -375,10 +370,10 @@ stock_card_wizard()
 class stock_card_wizard_line(osv.osv_memory):
     _name = 'stock.card.wizard.line'
     _description = 'Stock card line'
+    _order = 'date_done desc'  # To calculate the balance from older to newer, then display newer first
 
     _columns = {
-        'card_id': fields.many2one('stock.card.wizard', string='Card',
-                                   required=True),
+        'card_id': fields.many2one('stock.card.wizard', string='Card', required=True),
         'date_done': fields.datetime(string='Date'),
         'doc_ref': fields.char(size=64, string='Doc. Ref.'),
         'origin': fields.char(size=512, string='Origin'),
