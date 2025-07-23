@@ -41,7 +41,7 @@ class field_balance_spec_report(osv.osv_memory):
         return False
 
     def _get_has_currency_table(self, cr, uid, *a, **b):
-        return self.pool.get('res.currency.table').search_exists(cr, uid, [('state', '=', 'valid')])
+        return self.pool.get('res.currency.table').search_exists(cr, uid, [('state', '=', 'valid'), ('is_for_reval', '=', True)])
 
     _defaults = {
         'selection': lambda *a: 'details',
