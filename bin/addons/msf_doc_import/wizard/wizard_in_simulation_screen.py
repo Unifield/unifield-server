@@ -608,6 +608,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
                                                    'state': 'draft'}, context=context)
                     continue
 
+                move_qty_per_line = {}  # Helps comparing Ordered Qty and imported qty during SDE import lines matching
                 for line in wiz.line_ids:
                     # Put data in cache
                     if line.move_product_id:
@@ -648,6 +649,8 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     if l_ext_ref and l_num:
                         LN_BY_EXT_REF[wiz.id].setdefault(l_ext_ref, [])
                         LN_BY_EXT_REF[wiz.id][l_ext_ref].append(l_num)
+
+                    move_qty_per_line[line.id] = line.move_product_qty
 
                 # Variables
                 values_header_errors = []
@@ -924,7 +927,8 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            if context.get('sde_flow'):  # For SDE import, partial reception split the line
+                            # For SDE import, partial reception split the line. Receiving more is a match
+                            if context.get('sde_flow') and move_qty_per_line[l] > fl[3]:
                                 file_in_lines[l] = [(x, 'split')]
                             else:
                                 file_in_lines[l] = [(x, 'match')]
@@ -946,7 +950,8 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            if context.get('sde_flow'):  # For SDE import, partial reception split the line
+                            # For SDE import, partial reception split the line. Receiving more is a match
+                            if context.get('sde_flow') and move_qty_per_line[l] > fl[3]:
                                 file_in_lines[l] = [(x, 'split')]
                             else:
                                 file_in_lines[l] = [(x, 'match')]
@@ -968,7 +973,8 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            if context.get('sde_flow'):  # For SDE import, partial reception split the line
+                            # For SDE import, partial reception split the line. Receiving more is a match
+                            if context.get('sde_flow') and move_qty_per_line[l] > fl[3]:
                                 file_in_lines[l] = [(x, 'split')]
                             else:
                                 file_in_lines[l] = [(x, 'match')]
@@ -1973,7 +1979,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         mem_move_obj = self.pool.get('stock.move.in.processor')
 
-        # TODO: New lines with external refs
         # Search by Move, Product, UoM and Quantity
         mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
                       ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id')),

@@ -1790,7 +1790,7 @@ class shipment(osv.osv):
 
     def generate_dispatched_packing_list_report(self, cr, uid, context=None):
         '''
-        Generate a Dispatched Packing List (XLS) report for Dispatched sub-Ships having an Internal, Intermission,
+        Generate a Dispatched Packing List report for Dispatched sub-Ships having an Internal, Intermission,
         Inter-section or External Customer
         '''
         if context is None:
@@ -1798,6 +1798,8 @@ class shipment(osv.osv):
 
         ship_domain = [('parent_id', '!=', False), ('state', '=', 'done'), ('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])]
         ship_ids = self.search(cr, uid, ship_domain, context=context)
+        if not ship_ids:  # TODO: Return this message for the API ?
+            raise osv.except_osv(_('Error'), _('There is no Dispatched Shipment(s) having an Internal, Intermission, Inter-section or External Customer'))
         datas = {'ids': ship_ids}
         # rp_spool = report_spool()
         # result = rp_spool.exp_report(cr.dbname, uid, 'dispatched.packing.list.xls', ship_ids, datas, context=context)
