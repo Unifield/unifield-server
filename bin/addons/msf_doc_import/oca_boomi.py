@@ -134,6 +134,7 @@ create or replace view actuals as ( select
     p.number not in (0, 16)
     and j.type not in ('cur_adj', 'revaluation')
     and i.level in ('coordo', 'project')
+    and  LEFT(dest.code, 4) not in ('ISAL', 'IIKD')
     order by
     al.id
 )
@@ -208,6 +209,8 @@ create or replace view actuals_eng as ( select
     left join msf_instance target_instance on target_instance.id = target_cc.instance_id
     left join msf_instance parent on i.level = 'project' and parent.id = i.parent_id or i.level = 'section' and target_instance.level = 'project' and parent.id = target_instance.parent_id
     left join country_export_mapping country on country.instance_id = case when i.level = 'section' then coalesce(parent.id, target_instance.id) else coalesce(parent.id, i.id) end
+ where
+    LEFT(dest.code, 4) not in ('ISAL', 'IIKD')
  order by
      al.id
 )
