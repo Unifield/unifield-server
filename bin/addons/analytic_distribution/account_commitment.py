@@ -81,16 +81,20 @@ class account_commitment(osv.osv):
         if ids:
             cr.execute('''
                 select
-                    commit_id, sum(amount)
+                    acl.commit_id, sum(acl.amount), rcr.rate
                 from
-                    account_commitment_line
+                    account_commitment_line acl, account_commitment cv, res_currency_rate rcr, account_period per
                 where
-                    commit_id in %s
+                    acl.commit_id in %s and
+                    acl.commit_id = cv.id and
+                    cv.currency_id = rcr.currency_id and
+                    cv.period_id = per.id and
+                    rcr.name between per.date_start and per.date_stop
                 group by
-                    commit_id
+                    acl.commit_id, rcr.rate
             ''', (tuple(ids),))
             for x in cr.fetchall():
-                res[x[0]] = round(x[1], 2)
+                res[x[0]] = {'total': round(x[1], 2), 'func_total': round((x[1]/ x[2]), 2)}
 
         return res
 
@@ -166,10 +170,12 @@ class account_commitment(osv.osv):
         'is_draft': fields.boolean('Is draft', help='used to sort CVs (draft on top)', readonly=1, select=1),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
-        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total",
+        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total", multi='totals',
                                  store={
                                  'account.commitment.line': (_get_cv, ['amount'],10),
                                  }),
+        'func_total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Func. Total", multi='totals'),
+        'func_currency': fields.char(string="Func. Currency", size=64, readonly=True, required=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'type': fields.selection(get_cv_type, string="Type", readonly=True),
         'notes': fields.text(string="Comment"),
@@ -191,7 +197,8 @@ class account_commitment(osv.osv):
         'type': lambda *a: 'manual',
         'version': get_current_cv_version,
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
-                                                                                                    ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0]
+                                                                                                    ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0],
+        'func_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.name,
     }
 
     def create(self, cr, uid, vals, context=None):
