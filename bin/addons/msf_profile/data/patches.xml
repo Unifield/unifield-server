@@ -1216,5 +1216,14 @@
         <record id="us_14379_period_states_closed_by_sync" model="patch.scripts">
             <field name="method">update_us_435_2</field>
         </record>
+
+        <record id="us_14450_sign_roles_in" model="patch.scripts">
+            <field name="method">us_14450_sign_roles_in</field>
+        </record>
+
+        <!-- UF38.0 -->
+        <record id="us_14507_fix_ct30_mix_cold_chain" model="patch.scripts">
+            <field name="method">us_14507_fix_ct30_mix_cold_chain</field>
+        </record>
     </data>
 </openerp>

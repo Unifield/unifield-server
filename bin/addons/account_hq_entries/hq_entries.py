@@ -25,6 +25,8 @@ from osv import fields
 from tools.translate import _
 from tools.analytic import get_analytic_state
 from lxml import etree
+import decimal_precision as dp
+
 
 class hq_entries(osv.osv):
     _name = 'hq.entries'
@@ -123,7 +125,7 @@ class hq_entries(osv.osv):
         'ref': fields.char('Reference', size=255, select=1),
         'document_date': fields.date("Document Date", readonly=True, select=1),
         'currency_id': fields.many2one('res.currency', "Book. Currency", required=True, readonly=True),
-        'amount': fields.float('Amount', readonly=True, select=1),
+        'amount': fields.float('Amount', readonly=True, select=1, digits_compute=dp.get_precision('Account')),
         'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),
         'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=False, readonly=False),
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", readonly=True),

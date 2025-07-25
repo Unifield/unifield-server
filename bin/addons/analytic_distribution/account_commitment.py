@@ -437,9 +437,20 @@ class account_commitment(osv.osv):
             ids = [ids]
         # Prepare some values
         commit_obj = self.pool.get(self._name + '.line')
+        al_obj = self.pool.get('account.analytic.line')
         # Search commitment lines
         to_reset = commit_obj.search(cr, uid, [('commit_id', 'in', ids)])
-        commit_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        if to_reset:
+            commit_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+            commitments = self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context)
+            for cv in commitments:
+                # If commitment was already validated and thus AJIs created, re-create the AJIs from scratch
+                # instead of just updating AD of AJIs to handle the case where the header AD is changed to a split AD
+                if cv.state == 'open':
+                    ji_ids = al_obj.search(cr, uid, [('entry_sequence', '=', cv.name)])
+                    if ji_ids:
+                        al_obj.unlink(cr, uid, ji_ids, context=context)
+                        self.create_analytic_lines(cr, uid, ids, context=context)
         return True
 
     def button_compute(self, cr, uid, ids, context=None):

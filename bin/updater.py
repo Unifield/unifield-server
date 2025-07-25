@@ -224,6 +224,8 @@ def process_deletes(update_dir, unifield_root):
                     line = os.path.join('unifield-server', line[7:])
                 else:
                     continue
+            if not line:
+                continue
             src = os.path.join(unifield_root, line)
             dest = os.path.join(unifield_root, 'backup', line)
 
@@ -257,7 +259,7 @@ def do_update():
         files = []
         deleted_files = []
         unifield_root = '..'
-        main_py_version = sys.version_info.major
+        webupdated = False
         try:
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
@@ -271,7 +273,6 @@ def do_update():
             else:
                 rmtree(backup_dir)
 
-            webupdated = False
             ## Update Files
             warn("Updating...")
             files = find(update_dir)
@@ -345,26 +346,7 @@ def do_update():
             ## The reason is, when pool is populated, it will starts by upgrading modules first
             #Restart web server
             warn('Is new python', new_python, os.path.join(real_root, 'nssm'))
-            ret = 1
-            if webupdated and os.name == "nt":
-                try:
-                    if main_py_version == 2:
-                        ret = subprocess.call('net stop openerp-web-6.0')
-                    else:
-                        ret = subprocess.call(r'net stop openerp-web-py3')
-                except OSError as e:
-                    warn("Exception in Web server restart :")
-                    warn(str(e))
 
-                if ret == 0 and new_python and main_py_version == 2:
-                    subprocess.call('sc delete openerp-web-6.0')
-                    subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-web-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Web\openerp-web.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
-                    subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-web-py3 AppDirectory "%(INSTDIR)s\Web"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
-
-                if new_python:
-                    subprocess.call(r'net start openerp-web-py3')
-                else:
-                    subprocess.call('net start openerp-web-6.0')
 
         except BaseException as e:
             warn("Update failure!")
@@ -373,33 +355,41 @@ def do_update():
             except:
                 warn("Unknown error")
             ## Restore backup and purge .update
-            ## TODO
             if files or deleted_files:
                 warn("Restoring... ")
                 for f in reversed(files + deleted_files):
-                    target = os.path.join('backup', f)
+                    target = os.path.join(backup_dir, f)
+                    dest = os.path.join(unifield_root, f)
+                    warn('To restore: %s, backup exists: %s' % (target, os.path.isfile(target)))
                     if os.path.isfile(target) or os.path.islink(target):
-                        warn("`%s' -> `%s'" % (target, f))
-                        if os.path.isfile(f):
-                            os.remove(f)
-                        dest_dir = os.path.dirname(f)
+                        warn("`%s' -> `%s' %s" % (target, dest, os.path.isfile(dest)))
+                        if os.path.isfile(dest):
+                            os.remove(dest)
+                        dest_dir = os.path.dirname(dest)
                         if dest_dir and not os.path.isdir(dest_dir):
                             os.makedirs(dest_dir)
-                        os.rename(target, f)
+                        os.rename(target, dest)
+                    elif os.path.isfile(dest):
+                        warn("Delete new file %s" % (dest, ))
+                        os.remove(dest)
+                    elif os.path.isdir(dest) and not os.listdir(dest):
+                        warn("Delete new dir %s" % (dest, ))
+                        os.rmdir(dest)
+
                 warn("Purging...")
                 Try(lambda:rmtree(update_dir))
 
         if os.name == 'nt':
-            warn("Exiting OpenERP Server with code 1 to tell service to restart")
-            ret = 1
+            if webupdated:
+                try:
+                    subprocess.call(r'net stop openerp-web-py3')
+                except OSError as e:
+                    warn("Exception in Web server restart :")
+                    warn(str(e))
 
-            if new_python and main_py_version == 2:
-                ret = subprocess.call('sc delete openerp-server-6.0', stdout=log, stderr=log)
-                if ret == 0:
-                    warn(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8  """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root})
-                    subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
-                    subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-server-py3 AppDirectory "%(INSTDIR)s\Server"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
-                    subprocess.call(r'net start openerp-server-py3')
+                subprocess.call(r'net start openerp-web-py3')
+
+            warn("Exiting OpenERP Server with code 1 to tell service to restart")
             sys.exit(1) # require service to restart
         else:
             warn(("Restart OpenERP in %s:" % exec_path), \
@@ -686,10 +676,10 @@ def _find_pg_patch():
             except:
                 warn("Unable to compute md5 on ../pgsql/bin/psql.exe")
                 return None, None, None
-    if len(pfiles) != 1:
-        warn("Too many PostgreSQL patch files: %s" % pfiles)
-        warn("PostgreSQL will not be updated.")
-        return None, None, None
+    #if len(pfiles) != 1:
+    #    warn("Too many PostgreSQL patch files: %s" % pfiles)
+    #    warn("PostgreSQL will not be updated.")
+    #    return None, None, None
 
     (oldVer, newVer) = pfiles[0].split('-')[1:3]
 

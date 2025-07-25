@@ -12,8 +12,8 @@
                 <group colspan="2" col="2">
                     <separator colspan="2" string="Period parameters" />
                     <field name="hidden_date_from" invisible="1" />
-                    <field name="date_from" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" depends="hidden_date_from"/>
-                        <field name="date_to" on_change="date_change(date_from, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="date_from" on_change="date_change(date_from, date_to, consumption_type)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" depends="hidden_date_from"/>
+                        <field name="date_to" on_change="date_change(date_from, date_to, consumption_type)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                         <field name="month_ids" nolabel="1" colspan="2" attrs="{'readonly': [('status', '!=', 'draft')]}">
                         <tree string="Months" hide_new_button="1" noteditable="True" editable="top">
                             <field name="name" />
@@ -23,7 +23,7 @@
 
                 <group colspan="2" col="2">
                     <separator colspan="2" string="Consumption parameters" />
-                    <field name="consumption_type" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="consumption_type" on_change="onchange_consumption_type(consumption_type, date_to)" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                     <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                     <group colspan="2" col="4">
@@ -44,6 +44,11 @@
                                 <field name="name" />
                             </tree>
                         </field>
+                    </group>
+                    <group colspan="2" col="2" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')]}">
+                        <html colspan="2">
+                            <i><translate>The RR-AMC (Average Monthly Consumption) lets you choose one or more internal source locations, and one or more destination locations so you can view consumption based on specific locations, ECUs or External Partners.</translate></i>
+                        </html>
                     </group>
                     <field name="disable_adjusted_rr_amc" invisible="1" />
                     <field name="adjusted_rr_amc"  attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': ['|', ('disable_adjusted_rr_amc', '=', True), ('status', '!=', 'draft')]}" />
