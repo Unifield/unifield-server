@@ -571,7 +571,6 @@
                             <field name="shipment_ref" />
                             <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                             <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
-                            <field name="sde_updated" readonly="1" attrs="{'invisible': [('sde_updated', '=', False)]}"/>
                         </group>
                     </group>
                    <field name="is_esc" invisible="1" />
@@ -787,6 +786,7 @@
                                 <field name="type" invisible="1" />
                                 <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                                 <field name="claim" readonly="1"/>
+                                <field name="sde_updated" readonly="1" attrs="{'invisible': [('sde_updated', '=', False)]}"/>
                                 <field name="company_id" widget="selection" invisible="1"/>
                                 <field name="physical_reception_date" readonly="1" attrs="{'invisible': [('state', '!=', 'done')]}"/>
                             </group>

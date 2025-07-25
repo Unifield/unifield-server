@@ -326,7 +326,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
             self.populate(cr, uid, wiz.id, wiz.picking_id.id, context=context)
             cr.commit()
-            if context.get('do_not_import_with_thread'):
+            if context.get('do_not_import_with_thread') or context.get('sde_flow'):
                 self.simulate(cr.dbname, uid, ids, context=context)
             else:
                 new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
@@ -924,7 +924,10 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            file_in_lines[l] = [(x, 'match')]
+                            if context.get('sde_flow'):  # For SDE import, partial reception split the line
+                                file_in_lines[l] = [(x, 'split')]
+                            else:
+                                file_in_lines[l] = [(x, 'match')]
                             to_del.append(x)
                             no_match = False
                             break
@@ -943,7 +946,10 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            file_in_lines[l] = [(x, 'match')]
+                            if context.get('sde_flow'):  # For SDE import, partial reception split the line
+                                file_in_lines[l] = [(x, 'split')]
+                            else:
+                                file_in_lines[l] = [(x, 'match')]
                             to_del.append(x)
                             no_match = False
                             break
@@ -962,7 +968,10 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            file_in_lines[l] = [(x, 'match')]
+                            if context.get('sde_flow'):  # For SDE import, partial reception split the line
+                                file_in_lines[l] = [(x, 'split')]
+                            else:
+                                file_in_lines[l] = [(x, 'match')]
                             to_del.append(x)
                             no_match = False
                             break
@@ -1175,9 +1184,10 @@ Nothing has been imported because of %s. See below:
 
     def _import(self, cr, uid, ids, context=None, with_ppl=False):
         '''
-        Create memeory moves and return to the standard incoming processing wizard
+        Create memory moves and return to the standard incoming processing wizard
         '''
         line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+        inc_proc_obj = self.pool.get('stock.incoming.processor')
         mem_move_obj = self.pool.get('stock.move.in.processor')
 
         if context is None:
@@ -1189,18 +1199,25 @@ Nothing has been imported because of %s. See below:
         simu_id = self.browse(cr, uid, ids[0], context=context)
         partner = simu_id.picking_id.partner_id
 
-        context['active_id'] = simu_id.picking_id.id
-        context['active_ids'] = [simu_id.picking_id.id]
+        pick_id = simu_id.picking_id.id
+        context['active_id'] = pick_id
+        context['active_ids'] = [pick_id]
         fields_as_ro = partner.partner_type == 'esc' and simu_id.picking_id.state == 'updated'
-        to_write = {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}
+        to_write = {'picking_id': pick_id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}
         if simu_id.physical_reception_date:
             to_write['physical_reception_date'] = simu_id.physical_reception_date
         if not partner or partner.partner_type in ['external', 'esc']:
             to_write['imp_shipment_ref'] = simu_id.imp_freight_number or ''
-        if context.get('sde_flow'):
-            to_write.update({'draft': True, 'sde_updated': True})
         to_write['imp_filename'] = simu_id.filename or ''  # To put in last_imported_filename
-        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, to_write, context=context)
+
+        in_sde_partial_ids = inc_proc_obj.search(cr, uid, [('picking_id', '=', pick_id), ('draft', '=', True), ('sde_updated', '=', True)], context=context)
+        if in_sde_partial_ids:
+            partial_id = in_sde_partial_ids[0]
+            inc_proc_obj.write(cr, uid, partial_id, to_write, context=context)
+        else:
+            if context.get('sde_flow'):
+                to_write.update({'draft': True, 'sde_updated': True})
+            partial_id = inc_proc_obj.create(cr, uid, to_write, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('ign', 'error', 'new')), ('type_change', '=', False)], context=context)
 
         mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, fields_as_ro=fields_as_ro, context=context)
@@ -1209,7 +1226,7 @@ Nothing has been imported because of %s. See below:
         del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
-        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'note': simu_id.imp_notes}, context=context)
+        self.pool.get('stock.picking').write(cr, uid, [pick_id], {'note': simu_id.imp_notes}, context=context)
 
         context['from_simu_screen'] = True
 
@@ -1780,7 +1797,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
-                pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid,  values['pack_info_id'], ['parcel_from', 'parcel_to', 'packing_list'])
+                pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid, values['pack_info_id'], ['parcel_from', 'parcel_to', 'packing_list'])
                 if not pack_info_data['packing_list']:
                     pack_info_data['packing_list'] = ''
                 write_vals['imp_packing_list'] = '%(packing_list)s %(parcel_from)d-%(parcel_to)d' % pack_info_data
@@ -1924,8 +1941,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'initial_move_id': move.id,
                     'split_move_ok': line.type_change == 'split',
                     'prodlot_id': batch_id,
-                    'product_id': line.imp_product_id.id,
-                    'uom_id': line.imp_uom_id.id,
+                    'product_id': line.imp_product_id and line.imp_product_id.id or line.move_product_id.id,
+                    'uom_id': line.imp_uom_id and line.imp_uom_id.id or line.move_uom_id.id,
                     'ordered_quantity': move.product_qty,
                     'quantity': line.imp_product_qty,
                     'wizard_id': partial_id,
@@ -1933,11 +1950,53 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'cost_as_ro': fields_as_ro,
                     }
 
-            mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
+            matching_mem_move_id = False
+            if context.get('sde_flow'):
+                matching_mem_move_id = self._get_matching_sde_updated_mem_move_id(cr, uid, vals, mem_move_ids, context=context)
+            if matching_mem_move_id:
+                mem_move_ids.append(matching_mem_move_id)
+            else:
+                mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
             if move:
                 move_ids.append(move.id)
 
         return mem_move_ids, move_ids
+
+    def _get_matching_sde_updated_mem_move_id(self, cr, uid, vals, used_mem_move_ids, context=None):
+        '''
+        Search a matching IN processor move using the imported data
+        '''
+        if context is None:
+            context = {}
+        if not vals:
+            return False
+
+        mem_move_obj = self.pool.get('stock.move.in.processor')
+
+        # TODO: New lines with external refs
+        # Search by Move, Product, UoM and Quantity
+        mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
+                      ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id')),
+                      ('uom_id', '=', vals.get('uom_id')), ('quantity', '=', vals.get('quantity'))]
+        mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
+        if not mem_move_ids:
+            # Search by Move, Product and UoM
+            mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
+                          ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id')),
+                          ('uom_id', '=', vals.get('uom_id'))]
+            mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
+        if not mem_move_ids:
+            # Search by Move and Product
+            mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
+                          ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id'))]
+            mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
+        if not mem_move_ids:
+            # Search by Move
+            mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True),
+                          ('sde_updated_line', '=', True), ('move_id', '=', vals.get('move_id'))]
+            mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
+
+        return mem_move_ids and mem_move_ids[0] or False
 
 
 wizard_import_in_line_simulation_screen()

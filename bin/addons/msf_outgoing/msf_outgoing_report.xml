@@ -67,6 +67,17 @@
                 string="Packing List (xls)"
                 sequence="7" />
 
+        <report
+            id="report_dispatched_packing_list_xls"
+            model="shipment"
+            name="dispatched.packing.list.xls"
+            file="msf_outgoing/report/dispatched_packing_list_xls.mako"
+            report_type="webkit"
+            header="False"
+            menu="False"
+            auto="False"
+            string="Dispatched Packing List (xls)" />
+
         <!-- The rest is in addons/stock/wizard/loan_certificate_wizard.xml -->
         <act_window id="action_ship_loan_certificate_wizard"
             name="Loan Certificate Export"
