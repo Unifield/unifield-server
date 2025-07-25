@@ -681,8 +681,6 @@ SELECT res_id, touched
         audit_rule_ids = self.check_audit(cr, uid, 'unlink')
         if audit_rule_ids:
             self.pool.get('audittrail.rule').audit_log(cr, uid, audit_rule_ids, self, ids, 'unlink', context=context)
-        if context.get('sync_message_execution'):
-            return original_unlink(self, cr, uid, ids, context=context)
 
         if self._name == 'ir.model.data' \
            and context.get('avoid_sdref_deletion'):
@@ -691,6 +689,14 @@ SELECT res_id, touched
                                     in self.browse(cr, uid, (ids if isinstance(ids, list) else [ids]), context=context)
                                        if not rec.module == 'sd'],
                                    context=context)
+
+        # condtion <self._name not in ('account.analytic.line')> added to fix US-13993
+        # I think this block could be removed, to not remove the ir.model.data record
+        # when a record is deleted in a sync_message_execution
+        # as this code is here since 2013 (SP-129: added in commit to fix another use case),
+        # I keep it to prevent regressions
+        if context.get('sync_message_execution') and self._name not in ('account.analytic.line'):
+            return original_unlink(self, cr, uid, ids, context=context)
 
         # In an update creation context, references are deleted normally
         # In an update execution context, references are kept, but no
