@@ -35,11 +35,11 @@
     <!-- Line header -->
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
-        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8"/>
+        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="9"/>
     </Style>
     <Style ss:ID="header_blue">
         <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
-        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8" ss:Color="#0000FF"/>
+        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="9" ss:Color="#0000FF"/>
     </Style>
     <Style ss:ID="NoPack">
        <Alignment ss:Vertical="Center"/>
@@ -53,7 +53,7 @@
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8"/>
+        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="9"/>
         <Interior ss:Color="#BFBFBF" ss:Pattern="Solid"/>
     </Style>
     <Style ss:ID="line_header_italic">
@@ -64,7 +64,7 @@
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:FontName="Arial" x:Family="Swiss" ss:Italic="1" ss:Size="6"/>
+        <Font ss:FontName="Arial" x:Family="Swiss" ss:Italic="1" ss:Size="8"/>
     </Style>
 
     <!-- Lines -->
@@ -76,11 +76,21 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="6" ss:Color="#0000FF"/>
+        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8" ss:Color="#0000FF"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
+    <Style ss:ID="line_left_no_digit">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8" ss:Color="#0000FF"/>
+    </Style>
     <Style ss:ID="line_left_date">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -88,25 +98,25 @@
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
         <NumberFormat ss:Format="Short Date"/>
-        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="6" ss:Color="#0000FF"/>
+        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8" ss:Color="#0000FF"/>
     </Style>
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Left" ss:Vertical="Bottom" ss:WrapText="1"/>
         <NumberFormat ss:Format="Short Date" />
-        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8" ss:Color="#0000FF"/>
+        <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="9" ss:Color="#0000FF"/>
     </Style>
  </Styles>
 
 % for ship in objects:
 <Worksheet ss:Name="${ship.name.replace('/', '_')|x}">
   <Table x:FullColumns="1" x:FullRows="1" ss:DefaultRowHeight="15">
-    <Column ss:AutoFitWidth="0" ss:Width="27"/>
-    <Column ss:AutoFitWidth="0" ss:Width="59.25"/>
-    <Column ss:AutoFitWidth="0" ss:Width="170"/>
-    <Column ss:AutoFitWidth="0" ss:Width="99"/>
-    <Column ss:Index="6" ss:AutoFitWidth="0" ss:Width="111.75"/>
-    <Column ss:AutoFitWidth="0" ss:Width="130.75"/>
-    <Column ss:AutoFitWidth="0" ss:Width="50.00"/>
+    <Column ss:AutoFitWidth="0" ss:Width="30"/>
+    <Column ss:AutoFitWidth="0" ss:Width="75"/>
+    <Column ss:AutoFitWidth="0" ss:Width="190"/>
+    <Column ss:AutoFitWidth="0" ss:Width="105"/>
+    <Column ss:Index="6" ss:AutoFitWidth="0" ss:Width="116.75"/>
+    <Column ss:AutoFitWidth="0" ss:Width="140.75"/>
+    <Column ss:AutoFitWidth="0" ss:Width="75"/>
     <Column ss:AutoFitWidth="0" ss:Width="89.25"/>
     <Column ss:AutoFitWidth="0" ss:Width="30"/>
     <Column ss:AutoFitWidth="0" ss:Width="30"/>
@@ -114,13 +124,13 @@
 
     % for p in getPackingList(ship):
        <Row ss:Height="16.5">
-         <Cell ss:StyleID="title"><Data ss:Type="String">${_('PACKING LIST')|x}</Data></Cell>
+         <Cell ss:StyleID="title"><Data ss:Type="String">${_('%s: PACKING LIST') % (ship.name)|x}</Data></Cell>
        </Row>
        <Row>
-         <Cell>< ss:StyleID="header" Data ss:Type="String">${(p['ppl'].name)|x}</Data></Cell>
+         <Cell ss:StyleID="header"><Data ss:Type="String">${(p['ppl'].name)|x}</Data></Cell>
          <Cell ss:Index="10"><Data ss:Type="String"></Data></Cell>
        </Row>
-       <Row></Row>
+       <Row><Cell ss:MergeAcross="1"/></Row>
        <Row ss:AutoFitHeight="0">
          <Cell ss:MergeAcross="1" ss:StyleID="header"><Data ss:Type="String">${_('Your Ref.:')|x}</Data></Cell>
          <Cell ss:StyleID="header_blue"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-')|x}</Data></Cell>
@@ -185,15 +195,15 @@
        </Row>
        <Row ss:AutoFitHeight="0" ss:Height="12">
          <Cell ss:MergeAcross="1" ss:StyleID="header"><Data ss:Type="String">${_('Transport mode:')|x}</Data></Cell>
-         <Cell ss:StyleID="header_blue"><Data ss:Type="String">${(getSel(ship, 'transport_type'))|x}</Data></Cell>
+         <Cell ss:StyleID="header_blue"><Data ss:Type="String">${(getSel(ship, 'transport_type') or '-')|x}</Data></Cell>
          <Cell ss:StyleID="header"/>
          <Cell ss:StyleID="header"/>
          <Cell ss:StyleID="header_blue"><Data ss:Type="String">${(ship.consignee_other or '')|x}</Data></Cell>
          <Cell ss:StyleID="header_blue"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.zip or '')|x} ${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.city or '')|x}</Data></Cell>
        </Row>
        <Row ss:AutoFitHeight="0" ss:Height="12">
-         <Cell ss:MergeAcross="1" ss:StyleID="header"><Data ss:Type="String">${_('Transport mode')|x}:</Data></Cell>
-         <Cell ss:StyleID="header_blue"><Data ss:Type="String">${(getSel(ship, 'transport_type'))|x}</Data></Cell>
+         <Cell ss:MergeAcross="1" ss:StyleID="header"/>
+         <Cell ss:StyleID="header"/>
          <Cell ss:StyleID="header_blue"><Data ss:Type="String">${(ship.shipper_other or '')|x}</Data></Cell>
          <Cell ss:StyleID="header"/>
          <Cell ss:StyleID="header"/>
@@ -220,7 +230,7 @@
              <Cell ss:StyleID="line_header" ss:MergeAcross="3"><Data ss:Type="String">${_('Total weight')|x} ${(formatLang(pf.total_weight or 0.00))|x} kg     -     ${_('Total volume')|x} ${(formatLang(pf.total_volume or 0.00))|x} dm³</Data></Cell>
              <Cell ss:StyleID="line_header"/>
              <Cell ss:StyleID="line_header"/>
-             <Cell ss:StyleID="line_header" ss:MergeAcross="2"><ss:Data ss:Type="String">${_('Containing:')|x}</Font></ss:Data></Cell>
+             <Cell ss:StyleID="line_header" ss:MergeAcross="2"><Data ss:Type="String">${_('Containing:')|x}</Data></Cell>
            </Row>
            <Row ss:AutoFitHeight="0" ss:Height="17.25">
              <Cell ss:StyleID="line_header_italic"><Data ss:Type="String">${_('Item')|x}</Data></Cell>
@@ -236,7 +246,7 @@
            </Row>
            % for m in pf.move_lines:
                <Row ss:AutoFitHeight="0" ss:Height="11.0625">
-                   <Cell ss:StyleID="line_left"><Data ss:Type="Number">${(m.line_number)|x}</Data></Cell>
+                   <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number">${(m.line_number)|x}</Data></Cell>
                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.product_id.default_code)|x}</Data></Cell>
                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.product_id.name)|x}</Data></Cell>
                    <Cell ss:StyleID="line_left" ss:MergeAcross="2"><Data ss:Type="String">${(m.comment or '')|x}</Data></Cell>

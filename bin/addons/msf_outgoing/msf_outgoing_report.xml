@@ -76,7 +76,7 @@
             header="False"
             menu="False"
             auto="False"
-            string="Dispatched Packing List (xls)" />
+            string="Dispatched Packing List" />
 
         <!-- The rest is in addons/stock/wizard/loan_certificate_wizard.xml -->
         <act_window id="action_ship_loan_certificate_wizard"
