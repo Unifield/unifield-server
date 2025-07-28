@@ -83,13 +83,11 @@ class account_commitment(osv.osv):
                 select
                     acl.commit_id, sum(acl.amount), rcr.rate
                 from
-                    account_commitment_line acl, account_commitment cv, res_currency_rate rcr, account_period per
+                    account_commitment_line acl, account_commitment cv, res_currency_rate rcr
                 where
                     acl.commit_id in %s and
-                    acl.commit_id = cv.id and
-                    cv.currency_id = rcr.currency_id and
-                    cv.period_id = per.id and
-                    rcr.name between per.date_start and per.date_stop
+                    cv.id = acl.commit_id and
+                    rcr.id = (select id from res_currency_rate where currency_id = cv.currency_id and name <= cv.date order by name desc limit 1)
                 group by
                     acl.commit_id, rcr.rate
             ''', (tuple(ids),))
