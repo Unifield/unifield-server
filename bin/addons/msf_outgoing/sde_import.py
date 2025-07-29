@@ -22,7 +22,6 @@
 from osv import osv, fields
 from tools.translate import _
 
-import os
 import base64
 import time
 from datetime import datetime
@@ -30,73 +29,21 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 import re
 
-import sys
-import xmlrpc.client
-
 
 class sde_import(osv.osv_memory):
     _name = 'sde.import'
     _description = 'SDE import'
 
     _columns = {
-        'xmlrpc_url': fields.char(string='XMLRPC server address', size=256),
-        'xmlrpc_db': fields.char(string='XMLRPC database', size=64),
-        'xmlrpc_pass': fields.char(string='XMLRPC password', size=64),
-        'file': fields.binary(string='File', filters='*.xml, *.xls', required=True),
-        'filename': fields.char(string='Imported filename', size=256),
         'message': fields.text(string='Message'),
     }
 
-    def fetch_sde_data(self, cr, uid, ids, context=None):
-        """
-        Simulacrum of XMLRPC script for the API
-        """
+    def sde_file_import(self, cr, uid, file_path, file, context=None):
+        '''
+        Method used by the SDE script to import a file
+        '''
         if context is None:
             context = {}
-        if not ids:
-            return True
-
-        sde_import = self.browse(cr, uid, ids[0], context=context)
-
-        # Config data
-        # host = args.runbot
-        # if args.database:
-        #     dbname = args.database
-        host = sde_import.xmlrpc_url
-        if sde_import.xmlrpc_db:
-            dbname = sde_import.xmlrpc_db
-        else:
-            raise Exception('Please use the "-db" option to set the database you want to use')
-        user = 'admin'
-        # password = args.password
-        password = sde_import.xmlrpc_pass
-        # if args.runbot and args.runbot != '127.0.0.1':
-        if sde_import.xmlrpc_url and sde_import.xmlrpc_url != '127.0.0.1':
-            xmlrpcport = 80
-        else:
-            xmlrpcport = 8069
-
-        # Login
-        sock = xmlrpc.client.ServerProxy('http://%s:%s/xmlrpc/common' % (host, xmlrpcport))
-        uid = sock.login(dbname, user, password)
-        if not uid:
-            print('Wrong %s password on %s:%s db: %s' % (user, host, xmlrpcport, dbname))
-            sys.exit(1)
-        sock = xmlrpc.client.ServerProxy('http://%s:%s/xmlrpc/object' % (host, xmlrpcport))
-
-        if not sde_import.file:
-            raise osv.except_osv(_('Warning'), _('No file to import'))
-        msg = sock.execute(dbname, uid, password, 'sde.import', 'sde_file_import', sde_import.file, sde_import.filename)
-        sock.execute(dbname, uid, password, 'sde.import', 'write', sde_import.id, {'message': msg})
-
-        return True
-
-    # def sde_file_import(self, cr, uid, file, filename, context=None):
-    def sde_file_import(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        # if not ids:
-        #     return True
 
         pick_obj = self.pool.get('stock.picking')
         in_proc_obj = self.pool.get('stock.incoming.processor')
@@ -105,25 +52,10 @@ class sde_import(osv.osv_memory):
         context['sde_flow'] = True
         msg = False
         try:
-            sde_import = self.read(cr, uid, ids[0], ['file', 'filename'], context=context)
-            if not sde_import['file']:
-                raise osv.except_osv(_('Warning'), _('No file to import'))
-            file = sde_import['file']
-            filename = sde_import['filename']
-
-            # TODO: Temporary solution ?
-            # clean_filename = sde_import['filename'] and sde_import['filename'].replace('C:\\fakepath\\', '/tmp/')
-            clean_filename = filename and filename.replace('C:\\fakepath\\', '/tmp/')
-            file_path = os.path.join(clean_filename)
-            file_desc = open(file_path, 'wb+')
-            # file_desc.write(base64.b64decode(sde_import['file']))
-            file_desc.write(base64.b64decode(file))
-            file_desc.close()
             filetype = pick_obj.get_import_filetype(cr, uid, file_path, context=context)
-            file_content = pick_obj.get_file_content(cr, uid, file_path, context=context)
 
             # get the IN with the Ship Ref or the Origin
-            in_id = self.get_incoming_id_from_file(cr, uid, file_path, filetype, context=context)
+            in_id = self.get_incoming_id_from_file(cr, uid, file.data, filetype, context=context)
 
             in_proc_ids = in_proc_obj.search(cr, uid, [('picking_id', '=', in_id), ('draft', '=', True)], context=context)
             if in_proc_ids:
@@ -142,9 +74,9 @@ class sde_import(osv.osv_memory):
 
             # create simulation screen to get the simulation report:
             in_simu_obj.write(cr, uid, [simu_id], {
-                'filename': filename,
+                'filename': file_path,
                 'filetype': filetype,
-                'file_to_import': base64.b64encode(bytes(file_content, 'utf8')),
+                'file_to_import': base64.b64encode(file.data),
             }, context=context)
 
             in_simu_obj.launch_simulate(cr, uid, [simu_id], context=context)
@@ -155,6 +87,9 @@ class sde_import(osv.osv_memory):
             # Only import when all the data is correct
             if not simu_data['import_error_ok']:
                 in_simu_obj.launch_import(cr, uid, [simu_id], context=context)
+                # Log the update
+                in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
+                self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
 
             # attach the simulation report to the IN
             # TODO: Point 4.3.19 ?
@@ -166,25 +101,19 @@ class sde_import(osv.osv_memory):
                 'res_id': in_id,
                 'datas': file_res.get('result'),
             })
-
-            # Log the update
-            in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
-            self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
         except Exception as e:
             # Rejection message to send back
             if isinstance(e, osv.except_osv):
                 msg = e.value
             else:
-                msg = e
+                msg = e.args and '. '.join(e.args) or e
         finally:
             if 'sde_flow' in context:
                 context.pop('sde_flow')
-            self.write(cr, uid, ids, {'message': msg}, context=context)
 
-        # return msg
-        return True
+        return msg
 
-    def get_incoming_id_from_file(self, cr, uid, file_path, filetype, context=None):
+    def get_incoming_id_from_file(self, cr, uid, file_data, filetype, context=None):
         '''
         The Origin field is required in the file, but not the Ship Reference. If the Ship Reference is filled, only
         Available Shipped INs will be searched, Available otherwise
@@ -192,12 +121,10 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        xmlstring = open(file_path).read()
-
         # Search the file
         po_name, ship_ref = False, False
         if filetype == 'excel':
-            file_obj = SpreadsheetXML(xmlstring=xmlstring)
+            file_obj = SpreadsheetXML(xmlstring=file_data)
             ship_ref_found = False
             for index, row in enumerate(file_obj.getRows()):
                 line_header = (row.cells[0].data or '').lower()
@@ -217,7 +144,7 @@ class sde_import(osv.osv_memory):
             if not po_name:
                 raise osv.except_osv(_('Error'), _('Header field "Origin" not found in the given XLS file'))
         elif filetype == 'xml':
-            root = ET.fromstring(xmlstring)
+            root = ET.fromstring(file_data)
             orig = root.findall('.//field[@name="origin"]')
             if orig:
                 po_name = orig[0].text or ''
@@ -239,6 +166,7 @@ class sde_import(osv.osv_memory):
                     break
 
         # Search the IN
+        pick_obj = self.pool.get('stock.picking')
         po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=ilike', po_name)], context=context)
         if not po_id:
             raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
@@ -247,9 +175,12 @@ class sde_import(osv.osv_memory):
         if ship_ref:
             in_domain.extend([('shipment_ref', '=ilike', ship_ref), ('state', '=', 'shipped')])
             error_msg = _('No available shipped IN found for the given PO %s and the given Ship Reference %s') % (po_name, ship_ref)
+            in_id = pick_obj.search(cr, uid, in_domain, context=context)
         else:
-            in_domain.append(('state', 'in', ['assigned', 'shipped']))
-        in_id = self.pool.get('stock.picking').search(cr, uid, in_domain, context=context)
+            in_domain.append(('state', '=', 'assigned'))
+            in_id = pick_obj.search(cr, uid, in_domain + [('state', '=', 'assigned')], context=context)
+            if not in_id:
+                in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), error_msg)
 
