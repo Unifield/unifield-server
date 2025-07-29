@@ -31,6 +31,7 @@ from msf_partner import PARTNER_TYPE
 from dateutil.relativedelta import relativedelta
 import tools
 import time
+import base64
 from lxml import etree
 from tools.sql import drop_view_if_exists
 from service.web_services import report_spool
@@ -1790,6 +1791,7 @@ class shipment(osv.osv):
 
     def generate_dispatched_packing_list_report(self, cr, uid, context=None):
         '''
+        Method used by the SDE script to export the file
         Generate a Dispatched Packing List report for Dispatched sub-Ships having an Internal, Intermission,
         Inter-section or External Customer
         '''
@@ -1801,22 +1803,14 @@ class shipment(osv.osv):
         if not ship_ids:  # TODO: Return this message for the API ?
             raise osv.except_osv(_('Error'), _('There is no Dispatched Shipment(s) having an Internal, Intermission, Inter-section or External Customer'))
         datas = {'ids': ship_ids}
-        # rp_spool = report_spool()
-        # result = rp_spool.exp_report(cr.dbname, uid, 'dispatched.packing.list.xls', ship_ids, datas, context=context)
-        # file_res = {'state': False}
-        # while not file_res.get('state'):
-        #     file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
-        #     time.sleep(0.5)
-        #
-        # return file_res
+        rp_spool = report_spool()
+        result = rp_spool.exp_report(cr.dbname, uid, 'dispatched.packing.list.xls', ship_ids, datas, context=context)
+        file_res = {'state': False}
+        while not file_res.get('state'):
+            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+            time.sleep(0.5)
 
-        # TODO: Only return the file data (file_res)
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'dispatched.packing.list.xls',
-            'datas': datas,
-            'context': context,
-        }
+        return file_res.get('result') and base64.b64decode(file_res['result']).decode('utf-8') or False
 
 
 shipment()

@@ -1,39 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <record id="sde_import_form_view" model="ir.ui.view">
-            <field name="name">sde.import.form.view</field>
-            <field name="model">sde.import</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="SDE Import Placeholder" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1" hide_cancel_button="1">
-                    <separator colspan="4" string="Configuration" />
-                    <field name="xmlrpc_url" colspan="2" />
-                    <field name="xmlrpc_db" colspan="2" />
-                    <field name="xmlrpc_pass" password="True" colspan="2" />
-                    <group colspan="4">
-                        <field name="file" filename="filename" />
-                        <field name="filename" invisible="1" />
-                    </group>
-                    <field name="message" readonly="1" colspan="4" />
-                    <separator colspan="4" string="Actions" />
-                    <button name="sde_file_import" string="Import file" icon="gtk-print" type="object" colspan="2" />
-                    <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="2" />
-<!--                    <button name="fetch_sde_data" string="Fetch SDE data" icon="gtk-print" type="object" colspan="4" />-->
-                </form>
-            </field>
-        </record>
-
-        <menuitem name="Single Data Entry" parent="object_query.menu_preferences" id="sde_import_main_menu" sequence="20" />
-
-        <record id="action_sde_import" model="ir.actions.act_window">
-            <field name="name">SDE Import</field>
-            <field name="res_model">sde.import</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-        </record>
-        <menuitem name="SDE Import" action="action_sde_import" id="sde_import_menu" parent="sde_import_main_menu" />
-
         <record id="sde_update_log_search_view" model="ir.ui.view">
             <field name="name">sde.update.log.search.view</field>
             <field name="model">sde.update.log</field>

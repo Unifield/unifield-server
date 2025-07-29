@@ -186,13 +186,6 @@ class sde_import(osv.osv_memory):
 
         return in_id[0]
 
-    # TODO: Remove once the shipment method is called from the API
-    def generate_sde_dispatched_packing_list_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        return self.pool.get('shipment').generate_dispatched_packing_list_report(cr, uid, context=context)
-
 
 sde_import()
 
