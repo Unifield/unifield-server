@@ -1291,9 +1291,6 @@ class stock_move_in_processor(osv.osv):
             if not vals.get('currency', False):
                 vals['currency'] = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
 
-        if context.get('sde_flow') and vals.get('ordered_quantity'):
-            vals['sde_updated_line'] = True
-
         return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
 
 

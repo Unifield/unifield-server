@@ -111,7 +111,7 @@
 <Worksheet ss:Name="${ship.name.replace('/', '_')|x}">
   <Table x:FullColumns="1" x:FullRows="1" ss:DefaultRowHeight="15">
     <Column ss:AutoFitWidth="0" ss:Width="30"/>
-    <Column ss:AutoFitWidth="0" ss:Width="75"/>
+    <Column ss:AutoFitWidth="0" ss:Width="85"/>
     <Column ss:AutoFitWidth="0" ss:Width="190"/>
     <Column ss:AutoFitWidth="0" ss:Width="105"/>
     <Column ss:Index="6" ss:AutoFitWidth="0" ss:Width="116.75"/>

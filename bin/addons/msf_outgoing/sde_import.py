@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from reportlab.lib.utils import fileName2FSEnc
 from tools.translate import _
 
 import base64
@@ -28,6 +29,7 @@ from datetime import datetime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 import re
+from tempfile import NamedTemporaryFile
 
 
 class sde_import(osv.osv_memory):
@@ -35,8 +37,35 @@ class sde_import(osv.osv_memory):
     _description = 'SDE import'
 
     _columns = {
+        'file': fields.binary(string='File', filters='*.xml, *.xls', required=True),
+        'filename': fields.char(string='Imported filename', size=256),
         'message': fields.text(string='Message'),
     }
+
+    def wizard_sde_file_import(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the XMLRPC script
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        sde_imp = self.read(cr, uid, ids[0], ['file', 'filename'], context=context)
+        if not sde_imp['file']:
+            raise osv.except_osv(_('Warning'), _('No file to import'))
+        file = base64.b64decode(sde_imp['file'])
+        msg = self.sde_file_import(cr, uid, sde_imp['filename'], file, context=context)
+
+        return self.write(cr, uid, ids, {'message': msg}, context=context)
+
+    def generate_sde_dispatched_packing_list_report(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the XMLRPC script
+        '''
+        if context is None:
+            context = {}
+        return self.pool.get('shipment').generate_dispatched_packing_list_report(cr, uid, context=context)
 
     def sde_file_import(self, cr, uid, file_path, file, context=None):
         '''
@@ -52,10 +81,14 @@ class sde_import(osv.osv_memory):
         context['sde_flow'] = True
         msg = False
         try:
+            if isinstance(file, bytes):
+                file_data = file
+            else:
+                file_data = file.data
             filetype = pick_obj.get_import_filetype(cr, uid, file_path, context=context)
 
             # get the IN with the Ship Ref or the Origin
-            in_id = self.get_incoming_id_from_file(cr, uid, file.data, filetype, context=context)
+            in_id = self.get_incoming_id_from_file(cr, uid, file_data, filetype, context=context)
 
             in_proc_ids = in_proc_obj.search(cr, uid, [('picking_id', '=', in_id), ('draft', '=', True)], context=context)
             if in_proc_ids:
@@ -76,7 +109,7 @@ class sde_import(osv.osv_memory):
             in_simu_obj.write(cr, uid, [simu_id], {
                 'filename': file_path,
                 'filetype': filetype,
-                'file_to_import': base64.b64encode(file.data),
+                'file_to_import': base64.b64encode(file_data),
             }, context=context)
 
             in_simu_obj.launch_simulate(cr, uid, [simu_id], context=context)
@@ -92,10 +125,9 @@ class sde_import(osv.osv_memory):
                 self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
 
             # attach the simulation report to the IN
-            # TODO: Point 4.3.19 ?
             self.pool.get('ir.attachment').create(cr, uid, {
-                'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-                'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'name': 'sde_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'datas_fname': 'sde_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
                 'description': 'IN simulation screen',
                 'res_model': 'stock.picking',
                 'res_id': in_id,

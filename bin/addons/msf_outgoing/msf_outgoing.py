@@ -1800,17 +1800,27 @@ class shipment(osv.osv):
 
         ship_domain = [('parent_id', '!=', False), ('state', '=', 'done'), ('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])]
         ship_ids = self.search(cr, uid, ship_domain, context=context)
-        if not ship_ids:  # TODO: Return this message for the API ?
-            raise osv.except_osv(_('Error'), _('There is no Dispatched Shipment(s) having an Internal, Intermission, Inter-section or External Customer'))
+        if not ship_ids:
+            raise osv.except_osv(_('Error'), _('There is no Dispatched Shipment having an Internal, Intermission, Inter-section or External Customer'))
         datas = {'ids': ship_ids}
-        rp_spool = report_spool()
-        result = rp_spool.exp_report(cr.dbname, uid, 'dispatched.packing.list.xls', ship_ids, datas, context=context)
-        file_res = {'state': False}
-        while not file_res.get('state'):
-            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
-            time.sleep(0.5)
+        if not context.get('from_sde_wizard'):
+            rp_spool = report_spool()
+            result = rp_spool.exp_report(cr.dbname, uid, 'dispatched.packing.list.xls', ship_ids, datas, context=context)
+            file_res = {'state': False}
+            while not file_res.get('state'):
+                file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+                time.sleep(0.5)
 
-        return file_res.get('result') and base64.b64decode(file_res['result']).decode('utf-8') or False
+            return file_res.get('result') and base64.b64decode(file_res['result']).decode('utf-8') or False
+        else:
+            # When the report is generated with a button
+            datas['target_filename'] = 'dispatched_packing_list_%s' % (time.strftime('%Y_%m_%d_%H_%M'),)
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'dispatched.packing.list.xls',
+                'datas': datas,
+                'context': context,
+            }
 
 
 shipment()
