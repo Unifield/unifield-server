@@ -1235,7 +1235,11 @@ Nothing has been imported because of %s. See below:
         del_lines = mem_move_obj.search(cr, uid, mem_move_domain, context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
-        self.pool.get('stock.picking').write(cr, uid, [pick_id], {'note': simu_id.imp_notes}, context=context)
+        to_write_in = {'note': simu_id.imp_notes}
+        if context.get('sde_flow'):
+            # Add the SDE flag
+            to_write_in['sde_updated'] = True
+        self.pool.get('stock.picking').write(cr, uid, [pick_id], to_write_in, context=context)
 
         context['from_simu_screen'] = True
 

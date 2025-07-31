@@ -120,8 +120,6 @@ class sde_import(osv.osv_memory):
             # Only import when all the data is correct
             if not simu_data['import_error_ok']:
                 in_simu_obj.launch_import(cr, uid, [simu_id], context=context)
-                # Add the SDE flag
-                pick_obj.write(cr, uid, [in_id], {'sde_updated': True}, context=context)
                 # Log the update
                 in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
                 self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
