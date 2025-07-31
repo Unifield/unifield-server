@@ -59,14 +59,18 @@ class patch_scripts(osv.osv):
     }
 
     # UF38.0
-    def us_12985_partner_state(self, cr, uid, *a, **b):
+    def us_12985_partner_state_ppl_pack_from_wkf(self, cr, uid, *a, **b):
         '''
         Set the partners' Status to Active for Active partners and Inactive for deactivated partners
+        Set "from_wkf" to True to all PPLs and PACKs
         '''
         cr.execute("""UPDATE res_partner SET state = 'active' WHERE active = 't'""")
         self.log_info(cr, uid, "US-12985: %s active partners had their set Status set to Active" % (cr.rowcount,))
         cr.execute("""UPDATE res_partner SET state = 'inactive' WHERE active = 'f'""")
         self.log_info(cr, uid, "US-12985: %s deactivated partners had their set Status set to Inactive" % (cr.rowcount,))
+
+        cr.execute("""UPDATE stock_picking SET from_wkf = 't' WHERE type = 'out' AND subtype IN ('ppl', 'packing') AND from_wkf = 'f'""")
+        self.log_info(cr, uid, "US-12985: %s PPLs and PACKs are now considered from workflow" % (cr.rowcount,))
 
         return True
 

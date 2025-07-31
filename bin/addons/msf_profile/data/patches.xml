@@ -1222,8 +1222,8 @@
         </record>
 
         <!-- UF38.0 -->
-        <record id="us_12985_partner_state" model="patch.scripts">
-            <field name="method">us_12985_partner_state</field>
+        <record id="us_12985_partner_state_ppl_pack_from_wkf" model="patch.scripts">
+            <field name="method">us_12985_partner_state_ppl_pack_from_wkf</field>
         </record>
     </data>
 </openerp>
