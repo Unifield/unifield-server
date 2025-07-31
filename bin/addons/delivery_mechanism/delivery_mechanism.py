@@ -1314,8 +1314,6 @@ class stock_picking(osv.osv):
                     to_write.update({'shipment_ref': imp_shipment_ref})
                 if wizard.imp_filename:
                     to_write.update({'last_imported_filename': wizard.imp_filename})
-                if wizard.sde_updated:
-                    to_write.update({'sde_updated': wizard.sde_updated})
                 if to_write:
                     self.write(cr, uid, picking_id, to_write, context=context)
 
