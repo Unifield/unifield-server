@@ -234,9 +234,7 @@ class po_follow_up(osv.osv_memory):
 
     def get_qty_backordered(self, cr, uid, pol_id, qty_ordered, qty_received, first_line):
         pol = self.pool.get('purchase.order.line').browse(cr, uid, pol_id)
-        if pol.state.startswith('cancel'):
-            return 0.0
-        if not qty_ordered:
+        if not qty_ordered or pol.state.startswith('cancel') or (pol.order_id.order_type == 'direct' and pol.state == 'done'):
             return 0.0
         try:
             qty_ordered = float(qty_ordered)

@@ -137,6 +137,67 @@ class patch_scripts(osv.osv):
                 m.id=ANY(old.move_lines)
             '''
                    )
+
+        return True
+
+    def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
+        '''
+        Update the Code and Name of the product.cold_chain CT3+
+        On HQ_OCA, set the cold_chain of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 to Mix/Check
+        '''
+        cr.execute("""
+            UPDATE product_cold_chain SET code = 'CT3+', name = 'CT3+ - Temperature Monitoring 2-40°C' 
+                WHERE id IN (SELECT res_id FROM ir_model_data WHERE name = 'product_attributes_cold_20')
+        """)
+
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance == 'HQ_OCA':
+            mixcheck_cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'cold_21')[1]
+            cr.execute("""
+                UPDATE product_product SET cold_chain = %s WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205')
+            """, (mixcheck_cc_id,))
+            cr.execute("""
+                UPDATE ir_model_data SET last_modification = NOW(), touched = '["cold_chain"]' 
+                    WHERE model = 'product.product' AND res_id IN (SELECT id FROM product_product WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205'))
+            """)
+            self.log_info(cr, uid, "US-14507: The Thermosensitivity of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 was set to Mix/Check")
+
+        return True
+
+    # UF37.0
+    def us_14450_sign_roles_in(self, cr, uid, *a, **b):
+        '''
+        To create "Approved by" signature lines on existing INs
+        '''
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+        return True
+
+    def us_14373_empty_fo_ir_location_id(self, cr, uid, *a, **b):
+        '''
+        Remove the location_id from Draft FO/IR lines with the Procurement Method From Stock
+        '''
+        cr.execute("""
+            UPDATE sale_order_line SET location_id = NULL 
+            WHERE type = 'make_to_stock' AND state = 'draft' AND location_id IS NOT NULL
+        """)
+        self.log_info(cr, uid, "US-14373: The Location was removed from %s Draft FO and/or IR lines From Stock" % (cr.rowcount))
+
+        return True
+
+    def us_14341_hide_prod_status_inconsistencies(self, cr, uid, *a, **b):
+        '''
+        Hide the Product Status Inconsistencies menu if it's still active at project
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance or instance.level != 'project':
+            return True
+        menu_obj = self.pool.get('ir.ui.menu')
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
+        if menu_obj.read(cr, uid, report_prod_inconsistencies_menu_id, ['active'], context={})['active']:
+            menu_obj.write(cr, uid, report_prod_inconsistencies_menu_id, {'active': False}, context={})
+
         return True
 
     def us_14039_store_cash_migration(self, cr, uid, *a, **b):

@@ -1221,9 +1221,13 @@
             <field name="method">us_14450_sign_roles_in</field>
         </record>
 
+        <!-- UF38.0 -->
+        <record id="us_14507_fix_ct30_mix_cold_chain" model="patch.scripts">
+            <field name="method">us_14507_fix_ct30_mix_cold_chain</field>
+        </record>
+
         <record id="us_9592_pack_family_to_table" model="patch.scripts">
             <field name="method">us_9592_pack_family_to_table</field>
         </record>
-
     </data>
 </openerp>

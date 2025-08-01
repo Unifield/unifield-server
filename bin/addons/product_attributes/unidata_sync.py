@@ -318,6 +318,8 @@ class ud_sync():
         self.context = context
         self.logger = logger
         self.oc = self.pool.get('sync.client.entity').get_entity(self.cr, self.uid, context).oc
+        if self.oc == 'waca':
+            self.oc = 'ocp'
 
         sync_id = self.pool.get('ir.model.data').get_object_reference(self.cr, self.uid, 'product_attributes', 'unidata_sync_config')[1]
         config = self.pool.get('unidata.sync').read(self.cr, self.uid, sync_id, context=self.context)
