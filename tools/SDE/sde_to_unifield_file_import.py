@@ -3,6 +3,11 @@
 import xmlrpc.client
 import sys
 import os
+import signal  # Only for Unix/Ubuntu ?
+
+def signal_handler(signum, frame):
+    print('The import took too long to complete!')
+    sys.exit(1)
 
 dbname = 'my_db'
 user = 'my_user'
@@ -29,11 +34,19 @@ if not user_id:
 # to query the server: http://<host>:<xmlrpcport>/xmlrpc/object
 sock = xmlrpc.client.ServerProxy(url + 'object', allow_none=True)
 
-# the content of the file is read
-file_content = open(filepath, 'rb').read()
+msg = ''
+try:
+    # For a timeout of 5 min
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(300)
 
-# import
-msg = sock.execute(dbname, user_id, password, 'sde.import', 'sde_file_import', filepath, file_content, lang_context)
+    # the content of the file is read
+    file_content = open(filepath, 'rb').read()
 
-# display the result message
-print('End message: %s' % msg)
+    # import
+    msg = sock.execute(dbname, user_id, password, 'sde.import', 'sde_file_import', filepath, file_content, lang_context)
+except Exception as e:
+    msg = e
+finally:
+    # display the result message
+    print('End message: %s' % msg)
