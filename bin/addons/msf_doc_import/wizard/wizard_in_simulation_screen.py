@@ -742,6 +742,7 @@ Nothing has been imported because of %s. See below:
                 pack_sequences = {}
                 pack_id = False
                 pack_found = False
+                nb_rejected = 0
                 while x < len(values) + 1:
                     not_ok = False
                     file_line_error = []
@@ -991,6 +992,8 @@ Nothing has been imported because of %s. See below:
                         vals = values.get(file_line[0], [])
                         if file_line[1] == 'match':
                             err_msg = wl_obj.import_line(cr, uid, in_line, vals, prodlot_cache, wiz.with_pack, context=context)
+                            if err_msg:
+                                nb_rejected += 1
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [in_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         elif file_line[1] == 'split':
@@ -1008,6 +1011,8 @@ Nothing has been imported because of %s. See below:
                                                      'parent_line_id': in_line,
                                                      'move_id': False}, context=context)
                             err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, wiz.with_pack, context=context)
+                            if err_msg:
+                                nb_rejected += 1
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         # Commit modifications
@@ -1055,6 +1060,8 @@ Nothing has been imported because of %s. See below:
                                                         'line_number': vals.get('line_number') and int(vals.get('line_number', 0)) or False,
                                                         'simu_id': wiz.id}, context=context)
                     err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, wiz.with_pack, context=context)
+                    if err_msg:
+                        nb_rejected += 1
                     if in_line in not_ok_file_lines:
                         wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[in_line]}, context=context)
 
@@ -1093,6 +1100,10 @@ Nothing has been imported because of %s. See below:
                         message += '%s\n' % err
                     if wiz.with_pack:
                         can_be_imported = False
+
+                # For auto-import
+                if nb_rejected:
+                    context['nb_rejected_in_vi_lines'] = nb_rejected
 
                 header_values['message'] = message
                 header_values['state'] = can_be_imported and 'simu_done' or 'error'
@@ -1546,6 +1557,14 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                             'error_msg': errors[-1],
                             'type_change': 'error',
                         })
+                        job_comment = context.get('job_comment', [])
+                        for msg in errors:
+                            job_comment.append({
+                                'res_model': 'stock.picking',
+                                'res_id': line.simu_id.picking_id.id,
+                                'msg': _('%s Line %s: %s') % (line.simu_id.picking_id.name, line.line_number, msg)
+                            })
+                        context['job_comment'] = job_comment
                         self.write(cr, uid, [line.id], write_vals, context=context)
                         continue
                     else:
@@ -1743,6 +1762,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             write_vals['error_msg'] = error_msg
             job_comment = context.get('job_comment', [])
+            for msg in errors:
+                job_comment.append({
+                    'res_model': 'stock.picking',
+                    'res_id': line.simu_id.picking_id.id,
+                    'msg': _('%s Line %s: %s') % (line.simu_id.picking_id.name, line.line_number, msg)
+                })
             for msg in warnings:
                 job_comment.append({
                     'res_model': 'stock.picking',

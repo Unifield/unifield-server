@@ -25,14 +25,21 @@ class field_balance_spec_report(osv.osv_memory):
 
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True, domain=[('level', '=', 'coordo'), ('state', '=', 'active'), ('instance_to_display_ids','=',True)]),
+        'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True, domain=[('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]),
         'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', 'in', ['draft', 'field-closed', 'mission-closed']), ('number', 'not in', [0, 16])]),
+        # domain changed in fields_get for HQ
         'selection': fields.selection([('total', 'Total of entries reconciled in later period'),
                                        ('details', 'Details of entries reconciled in later period')],
                                       string="Select", required=True),
         'eoy': fields.boolean('End of Year', help='Field is disabled if no valid currency table'),
         'has_one_table': fields.boolean('Has a single valid currency table', readonly=1),
     }
+
+    def fields_get(self, cr, uid, allfields=None, context=None, write_access=True, with_uom_rounding=False):
+        fg = super(field_balance_spec_report, self).fields_get(cr, uid, allfields=allfields, context=context, write_access=write_access, with_uom_rounding=with_uom_rounding)
+        if fg.get('period_id') and self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+            fg['period_id']['domain'] = [('state', '!=', 'created'), ('number', 'not in', [0, 16])]
+        return fg
 
     def _get_instance(self, cr, uid, *a, **b):
         instance = self.pool.get('res.company')._get_instance_record(cr, uid)
