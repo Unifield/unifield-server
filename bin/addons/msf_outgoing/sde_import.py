@@ -163,14 +163,14 @@ class sde_import(osv.osv_memory):
                 if line_header == 'origin':
                     po_name = row.cells[1].data or ''
                     if isinstance(po_name, str):
-                        po_name = po_name.strip().lower()
+                        po_name = po_name.strip().upper()
                     if not po_name:
                         raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
                 elif line_header == 'freight':
                     ship_ref_found = True
                     ship_ref = row.cells[1].data or ''
                     if isinstance(ship_ref, str):
-                        ship_ref = ship_ref.strip().lower()
+                        ship_ref = ship_ref.strip().upper()
                 if po_name and ship_ref_found:
                     break
             if not po_name:
@@ -180,7 +180,7 @@ class sde_import(osv.osv_memory):
             orig = root.findall('.//field[@name="origin"]')
             if orig:
                 po_name = orig[0].text or ''
-                po_name = po_name.strip().lower()
+                po_name = po_name.strip().upper()
                 if not po_name:
                     raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
             else:
@@ -188,7 +188,7 @@ class sde_import(osv.osv_memory):
             ship_ref_field = root.findall('.//field[@name="freight"]')
             if ship_ref_field:
                 ship_ref = ship_ref_field[0].text or ''
-                ship_ref = ship_ref.strip().lower()
+                ship_ref = ship_ref.strip().upper()
 
         if po_name.find(':') != -1:
             for part in po_name.split(':'):
@@ -209,7 +209,6 @@ class sde_import(osv.osv_memory):
             error_msg = _('No available shipped IN found for the given PO %s and the given Ship Reference %s') % (po_name, ship_ref)
             in_id = pick_obj.search(cr, uid, in_domain, context=context)
         else:
-            in_domain.append(('state', '=', 'assigned'))
             in_id = pick_obj.search(cr, uid, in_domain + [('state', '=', 'assigned')], context=context)
             if not in_id:
                 in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
