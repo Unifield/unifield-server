@@ -84,7 +84,7 @@ class transport_order(osv.osv):
         'original_cargo_ref': fields.char('Original Cargo ref', size=256, select=True),
         'shipment_type': fields.selection([('in', 'Inbound'), ('out', 'Outbound')], 'Shipment Type', required=True, readonly=True),
         'shipment_flow': fields.selection([('single', 'Direct'), ('multi', 'Multileg')], 'Shipment Flow'),
-        'zone_type': fields.selection([('int', 'International'), ('regional', 'Regional'),('local', 'Local')], 'Zone Type', required=True, add_empty=True),
+        'zone_type': fields.selection([('int', 'International'), ('regional', 'Domestic')], 'Zone Type', required=True, add_empty=True),
         'cargo_category': fields.selection([('medical', 'Medical'), ('log', 'Logistic'), ('service', 'Service'), ('mixed', 'Mixed')], 'Cargo Type', required=True, add_empty=True),
         'creation_date': fields.date('Creation Date'),
         'ship_ref': fields.char('Ship Reference', size=256, select=True),

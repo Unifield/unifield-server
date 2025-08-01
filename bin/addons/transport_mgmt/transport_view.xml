@@ -225,7 +225,7 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                         </page>
 
-                        <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
+                        <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'dom'])]}">
                             <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
                             <newline />
                             <field name="transport_fees_ids" nolabel="1" colspan="4"
@@ -480,7 +480,7 @@
                         </page>
 
                         <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [['state', '!=', 'planned'], ('zone_type', 'in', ['int', 'regional'])]}"/>
                             <newline />
                             <field name="transport_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
