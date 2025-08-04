@@ -1968,7 +1968,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 matching_mem_move_id = self._get_matching_sde_updated_mem_move_id(cr, uid, vals, mem_move_ids, context=context)
             if matching_mem_move_id:
                 # In case the original line kept at 0 used for the splits is fully imported
-                if not move_obj.read(cr, uid, matching_mem_move_id, ['sde_updated_line'], context=context)['sde_updated_line']:
+                if vals.get('quantity') and not move_obj.read(cr, uid, matching_mem_move_id, ['sde_updated_line'],
+                                                              context=context)['sde_updated_line']:
                     vals['sde_updated_line'] = True
                     move_obj.write(cr, uid, matching_mem_move_id, vals, context=context)
                 mem_move_ids.append(matching_mem_move_id)

@@ -34,7 +34,7 @@ from tempfile import NamedTemporaryFile
 
 class sde_import(osv.osv_memory):
     _name = 'sde.import'
-    _description = 'SDE import'
+    _description = 'SDE Tools'
 
     _columns = {
         'file': fields.binary(string='File', filters='*.xml, *.xls', required=True),
