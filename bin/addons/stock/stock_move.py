@@ -1421,6 +1421,9 @@ class stock_move(osv.osv):
                 raise osv.except_osv(_('Error'), _('You can not process an IN with neither Partner or Ext. C.U.'))
             if context.get('picking_type') == 'delivery_order' and not move.picking_id.partner_id:
                 raise osv.except_osv(_('Error'), _('You can not process an OUT without a Partner'))
+            if context.get('from_button') and not move.picking_id.from_wkf and \
+                    move.picking_id.partner_id and move.picking_id.partner_id.state == 'phase_out':
+                raise osv.except_osv(_('Error'), _('The selected Partner is Phase Out, please select another Partner'))
             l_vals = vals
             l_vals.update({'state': 'confirmed', 'already_confirmed': True})
             if move.picking_id.type == 'in' and not move.picking_id.purchase_id and move.product_qty and \

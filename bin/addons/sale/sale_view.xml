@@ -289,7 +289,7 @@
                                     <field name="instance_sync_order_ref_needed" invisible="True"/>
                                     <field name="no_prod_nr_id" invisible="True"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', '!=', 'validated')]}"/>
-                                    <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': ['|', ('fake_state', '!=', 'draft'), ('no_prod_nr_id', '!=', False)]}" header="True"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': ['|', ('fake_state', '!=', 'draft'), ('no_prod_nr_id', '!=', False)]}" header="True" context="{'from_button': True}"/>
                                     <button string="Cancel" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
                                     <field name="mml_status" />
                                     <field name="msl_status" />
@@ -375,7 +375,7 @@
                         <button name="ask_resource_lines" states="draft,draft_p,validated,validated_p" string="Cancel document" type="object" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
                         <button name="order_confirm" states="validated" string="Confirm document" icon="gtk-apply" invisible="True" help="all the lines will be Confirmed where this status change is feasible" />
                         <button name="do_order_confirm_method" type="object" states="validated" string="Confirm document" help="all the lines will be Confirmed where this status change is feasible" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" attrs="{'readonly': [('no_line', '=', True)]}"/>
-                        <button name="validate_lines" type="object" string="Validate document" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}" help="all the lines will be Validated where this status change is feasible" />
+                        <button name="validate_lines" type="object" string="Validate document" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}" help="all the lines will be Validated where this status change is feasible" context="{'from_button': True}" />
                     </group>
                 </form>
             </field>

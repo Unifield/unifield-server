@@ -662,6 +662,7 @@ class shipment(osv.osv):
                 'keepLineNumber': True,
                 'allow_copy': True,
                 'non_stock_noupdate': True,
+                'wkf_copy': True,
             })
 
             new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
@@ -680,6 +681,7 @@ class shipment(osv.osv):
             'keepLineNumber': True,
             'allow_copy': True,
             'non_stock_noupdate': True,
+            'wkf_copy': True,
         })
         shadow_pack_id = picking_obj.copy(cr, uid, picking.id, shadow_pack_data, context=new_ctx)
         ###
@@ -768,6 +770,7 @@ class shipment(osv.osv):
             'allow_copy': False,
             'non_stock_noupdate': False,
             'draft_packing_id': False,
+            'wkf_copy': False,
         })
         picking_obj.write(cr, uid, [shadow_pack_id], {'state': 'done'}, context=context)
         # confirm the new packing
@@ -3811,6 +3814,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': True,
                 'allow_copy': True,
                 'keepLineNumber': True,
+                'wkf_copy': True,
             })
 
             new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
@@ -3822,6 +3826,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': False,
                 'allow_copy': False,
                 'keepLineNumber': False,
+                'wkf_copy': False,
             })
 
             # For each processed lines, save the processed quantity to update the draft picking ticket
@@ -4174,6 +4179,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': True,
                 'keepLineNumber': True,
                 'allow_copy': True,
+                'wkf_copy': True,
             })
             context['offline_synchronization'] = False
             # Create the packing with pack_values and the updated context
@@ -4186,6 +4192,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': False,
                 'keepLineNumber': False,
                 'allow_copy': False,
+                'wkf_copy': False,
             })
 
             # Set default values for packing move creation
