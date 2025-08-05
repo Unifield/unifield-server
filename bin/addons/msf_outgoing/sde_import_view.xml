@@ -13,7 +13,7 @@
                         <field name="filename" invisible="1" />
                     </group>
                     <field name="message" readonly="1" colspan="4" />
-                    <button name="wizard_sde_file_import" string="Import file" icon="gtk-print" type="object" colspan="4" />
+                    <button name="wizard_sde_file_import" string="Import file" icon="gtk-execute" type="object" colspan="4" />
                     <separator colspan="4" string="Report Actions" />
                     <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="4" context="{'from_sde_wizard': True}" />
                 </form>

@@ -608,7 +608,6 @@ the date has a wrong format: %s') % (index+1, str(e)))
                                                    'state': 'draft'}, context=context)
                     continue
 
-                move_qty_per_line = {}  # Helps comparing Ordered Qty and imported qty during SDE import lines matching
                 for line in wiz.line_ids:
                     # Put data in cache
                     if line.move_product_id:
@@ -649,8 +648,6 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     if l_ext_ref and l_num:
                         LN_BY_EXT_REF[wiz.id].setdefault(l_ext_ref, [])
                         LN_BY_EXT_REF[wiz.id][l_ext_ref].append(l_num)
-
-                    move_qty_per_line[line.id] = line.move_product_qty
 
                 # Variables
                 values_header_errors = []
@@ -927,11 +924,7 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            # For SDE import, partial reception split the line. Receiving more is a match
-                            if context.get('sde_flow') and move_qty_per_line[l] > fl[3]:
-                                file_in_lines[l] = [(x, 'split')]
-                            else:
-                                file_in_lines[l] = [(x, 'match')]
+                            file_in_lines[l] = [(x, 'match')]
                             to_del.append(x)
                             no_match = False
                             break
@@ -950,11 +943,7 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            # For SDE import, partial reception split the line. Receiving more is a match
-                            if context.get('sde_flow') and move_qty_per_line[l] > fl[3]:
-                                file_in_lines[l] = [(x, 'split')]
-                            else:
-                                file_in_lines[l] = [(x, 'match')]
+                            file_in_lines[l] = [(x, 'match')]
                             to_del.append(x)
                             no_match = False
                             break
@@ -973,11 +962,7 @@ Nothing has been imported because of %s. See below:
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_in_lines:
-                            # For SDE import, partial reception split the line. Receiving more is a match
-                            if context.get('sde_flow') and move_qty_per_line[l] > fl[3]:
-                                file_in_lines[l] = [(x, 'split')]
-                            else:
-                                file_in_lines[l] = [(x, 'match')]
+                            file_in_lines[l] = [(x, 'match')]
                             to_del.append(x)
                             no_match = False
                             break
@@ -1967,11 +1952,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if context.get('sde_flow'):
                 matching_mem_move_id = self._get_matching_sde_updated_mem_move_id(cr, uid, vals, mem_move_ids, context=context)
             if matching_mem_move_id:
-                # In case the original line kept at 0 used for the splits is fully imported
-                if vals.get('quantity') and not move_obj.read(cr, uid, matching_mem_move_id, ['sde_updated_line'],
-                                                              context=context)['sde_updated_line']:
-                    vals['sde_updated_line'] = True
-                    move_obj.write(cr, uid, matching_mem_move_id, vals, context=context)
                 mem_move_ids.append(matching_mem_move_id)
             else:
                 if context.get('sde_flow') and vals.get('quantity'):
@@ -1994,42 +1974,28 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         mem_move_obj = self.pool.get('stock.move.in.processor')
 
         mem_move_ids = []
-        if vals.get('quantity') == 0:
-            # Search by Move, Product, UoM and Quantity to process at 0
-            mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', False),
-                          ('split_move_ok', '=', False), ('move_id', '=', vals.get('move_id')),
-                          ('product_id', '=', vals.get('product_id')), ('uom_id', '=', vals.get('uom_id')), ('quantity', '=', 0)]
+        if not mem_move_ids:
+            # Search by Move, Product, UoM and Quantity
+            mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
+                          ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id')),
+                          ('uom_id', '=', vals.get('uom_id')), ('quantity', '=', vals.get('quantity'))]
             mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
-        else:
-            if not vals.get('split_move_ok'):  # In case the original line is fully processed
-                # Search by Move, Product, UoM and Quantity of original line
-                mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', False),
-                              ('split_move_ok', '=', False), ('move_id', '=', vals.get('move_id')),
-                              ('product_id', '=', vals.get('product_id')), ('uom_id', '=', vals.get('uom_id')),
-                              ('ordered_quantity', '=', vals.get('quantity')), ('quantity', '=', 0)]
-                mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
-            if not mem_move_ids:
-                # Search by Move, Product, UoM and Quantity
-                mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
-                              ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id')),
-                              ('uom_id', '=', vals.get('uom_id')), ('quantity', '=', vals.get('quantity'))]
-                mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
-            if not mem_move_ids:
-                # Search by Move, Product and UoM
-                mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
-                              ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id')),
-                              ('uom_id', '=', vals.get('uom_id'))]
-                mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
-            if not mem_move_ids:
-                # Search by Move and Product
-                mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
-                              ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id'))]
-                mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
-            if not mem_move_ids:
-                # Search by Move
-                mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True),
-                              ('sde_updated_line', '=', True), ('move_id', '=', vals.get('move_id'))]
-                mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
+        if not mem_move_ids:
+            # Search by Move, Product and UoM
+            mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
+                          ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id')),
+                          ('uom_id', '=', vals.get('uom_id'))]
+            mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
+        if not mem_move_ids:
+            # Search by Move and Product
+            mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True), ('sde_updated_line', '=', True),
+                          ('move_id', '=', vals.get('move_id')), ('product_id', '=', vals.get('product_id'))]
+            mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
+        if not mem_move_ids:
+            # Search by Move
+            mem_domain = [('id', 'not in', used_mem_move_ids), ('wizard_id.draft', '=', True),
+                          ('sde_updated_line', '=', True), ('move_id', '=', vals.get('move_id'))]
+            mem_move_ids = mem_move_obj.search(cr, uid, mem_domain, context=context)
 
         return mem_move_ids and mem_move_ids[0] or False
 
