@@ -1174,7 +1174,11 @@ class ud_sync():
                         if not x.get('ocSubscriptions').get(self.oc):
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
                                 if x.get('state') != 'Golden' or is_full:
-                                    prod_obj.write(self.cr, self.uid, [prod_ids[0]], {'ud_seen': True, 'golden_status': x.get('state')})
+                                    to_write = {'ud_seen': True, 'golden_status': x.get('state')}
+                                    if x.get('mergeToCode'):
+                                        to_write['new_code'] = x.get('mergeToCode')
+                                        self.log('Write New code %s on product id: %s' % (to_write['new_code'], prod_ids[0]))
+                                    prod_obj.write(self.cr, self.uid, [prod_ids[0]], to_write)
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
