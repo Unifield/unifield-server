@@ -83,7 +83,7 @@ class sde_import(osv.osv_memory):
         try:
             if isinstance(file, bytes):
                 file_data = file
-            else:
+            else:  # Binary expected
                 file_data = file.data
             filetype = pick_obj.get_import_filetype(cr, uid, file_path, context=context)
 
