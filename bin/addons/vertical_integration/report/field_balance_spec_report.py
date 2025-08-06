@@ -17,7 +17,7 @@ class field_balance_spec_report(osv.osv_memory):
 
 
     def _get_has_multi_table(self, cr, uid, ids, name, arg=None, context=None):
-        nb = self.pool.get('res.currency.table').search(cr, uid, [('sate', '=', 'valid')], count=True)
+        nb = self.pool.get('res.currency.table').search(cr, uid, [('state', '=', 'valid')], count=True)
         ret = {}
         for _id in ids:
             ret[_id] = nb > 1
@@ -48,7 +48,7 @@ class field_balance_spec_report(osv.osv_memory):
         return False
 
     def _get_has_currency_table(self, cr, uid, *a, **b):
-        return self.pool.get('res.currency.table').search_exists(cr, uid, [('state', '=', 'valid')])
+        return self.pool.get('res.currency.table').search_exists(cr, uid, [('state', 'in', ['closed', 'valid']), ('is_for_reval', '=', True)])
 
     _defaults = {
         'selection': lambda *a: 'details',
@@ -607,20 +607,17 @@ class field_balance_spec_parser(XlsxReportParser):
         ct_fx_rates_by_id = {}
         if self.report.eoy:
             self.cr.execute('''
-                select cur.name,
-                    (select rate.rate
-                        from res_currency_rate rate
-                        where rate.currency_id = cur.id
-                        order by
-                        rate.name desc
-                        limit 1
-                    ) as fx_rate,
-                    cur.reference_currency_id
-                from res_currency cur, res_currency_table t
+                select
+                    distinct on (cur.name) cur.name, rate.rate, cur.reference_currency_id
+                from
+                    res_currency cur, res_currency_table t, res_currency_rate rate
                 where
                     cur.currency_table_id = t.id
-                    and t.state = 'valid'
+                    and t.state in ('closed', 'valid')
+                    and t.is_for_reval = 't'
+                    and rate.currency_id = cur.id
                     and cur.name in %s
+                order by cur.name, rate.name desc, t.id desc
             ''', (tuple(list_curr), ))
             for x in self.cr.fetchall():
                 ct_fx_rates[x[0]] = x[1]

@@ -11,6 +11,7 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="state"/>
+                    <field name="is_for_reval"/>
                 </tree>
             </field>
         </record>
@@ -23,6 +24,7 @@
                 <form string="Currency Table">
                     <field name="name" attrs="{'readonly':[('state','=','closed')]}"/>
                     <field name="code" attrs="{'readonly':[('state','=','closed')]}"/>
+                    <field name="is_for_reval" attrs="{'readonly':[('state', '=', 'closed')]}"/>
                     <field colspan="4" name="currency_ids" nolabel="1" attrs="{'readonly':[('state','=','closed')]}">
 	                    <tree string="Currencies" colors="red:rate==0.0" hide_new_button="1">
 	                        <field name="name"/>
