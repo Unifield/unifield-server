@@ -123,7 +123,7 @@ class RemoteOneDrive(RemoteInterface):
     def push(self, local_name, remote_name):
         f = open(local_name, 'r')
         retries = 0
-        max_retries = 6
+        max_retries = 3
         logged = True
         while True:
             try:
@@ -136,7 +136,7 @@ class RemoteOneDrive(RemoteInterface):
                     f.close()
                     raise Exception(error)
                 retries += 1
-                time.sleep(10)
+                time.sleep(2)
                 if not logged or 'timed out' in error or '2130575252' in error:
                     logged = False
                     self.connect()
@@ -146,7 +146,7 @@ class RemoteOneDrive(RemoteInterface):
                     f.close()
                     raise
                 retries += 1
-                time.sleep(10)
+                time.sleep(2)
 
         f.close()
 
