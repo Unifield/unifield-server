@@ -94,6 +94,12 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, "US-12985: %s PPLs and PACKs are now considered from workflow" % (cr.rowcount,))
         return True
 
+    def us_13980_update_new_code_on_merged(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'UD_GETALL_MERGED', '1')
+        return True
+
     # UF37.0
     def us_14450_sign_roles_in(self, cr, uid, *a, **b):
         '''
