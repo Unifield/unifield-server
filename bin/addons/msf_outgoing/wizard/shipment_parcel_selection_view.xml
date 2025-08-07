@@ -108,8 +108,9 @@
                                 if (!s) {
                                     $('#parcelids li').show();
                                 } else {
+                                    var lower_s = s.toLowerCase()
                                     $('#parcelids li').each(function () {
-                                        $(this).toggle($(this).children("input").attr('value').includes(s));
+                                        $(this).toggle($(this).children("input").attr('value').toLowerCase().includes(lower_s));
                                 });
                                 }
                             }

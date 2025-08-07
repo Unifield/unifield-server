@@ -414,7 +414,7 @@ class shipment(osv.osv):
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
         }),
         'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals', fnct_search=_search_backshipment_id),
-        'parent_id': fields.many2one('shipment', string='Parent shipment'),
+        'parent_id': fields.many2one('shipment', string='Parent shipment', select=1),
         # TODO check if really deprecated ?
         'invoice_id': fields.many2one('account.invoice', string='Related invoice (deprecated)'),
         'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
@@ -1845,7 +1845,7 @@ class shipment(osv.osv):
             self.infolog(cr, uid, "The Shipment id:%s (%s) has been dispatched." % (
                 shipment.id, shipment.name,
             ))
-            self.pool.get('pack.family.memory').write(cr, uid, [x.id for x in shipment.pack_family_memory_ids], {'state': 'done'}, context=context)
+            self.pool.get('pack.family.memory').write(cr, uid, [x.id for x in shipment.pack_family_memory_ids if x.state == 'assigned'], {'state': 'done'}, context=context)
 
         self.complete_finished(cr, uid, ids, context=context)
         return True

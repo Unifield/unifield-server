@@ -525,7 +525,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
                 if process_parcel_id and pack_index:
                     if row.cells[0] and row.cells[0].type == 'int' and len(row.cells) > 1:
-                        parcel_id = row.cells[1].data and row.cells[1].data.strip() or ''
+                        parcel_id = row.cells[1].data and str(row.cells[1].data).strip() or ''
                         if parcel_id and ',' in parcel_id:
                             error.append(_('Line %s:  comma (,) is not allowed in parcel_id') % (index,))
                             break
