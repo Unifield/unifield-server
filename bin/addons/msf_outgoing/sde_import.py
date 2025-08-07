@@ -40,7 +40,7 @@ class sde_import(osv.osv_memory):
         'message': fields.text(string='Message'),
     }
 
-    def wizard_sde_file_import(self, cr, uid, ids, attach_to_in=False, context=None):
+    def wizard_sde_file_import(self, cr, uid, ids, context=None):
         '''
         Method to use instead of the XMLRPC script
         '''
@@ -54,8 +54,9 @@ class sde_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('No file to import'))
         file = base64.b64decode(sde_imp['file'])
 
-        if attach_to_in:
+        if context.get('attach_to_in'):
             msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, context=context)
+            context.pop('attach_to_in')
         else:
             msg = self.sde_file_import(cr, uid, sde_imp['filename'], file, context=context)
 
@@ -67,7 +68,8 @@ class sde_import(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        return self.wizard_sde_file_import(cr, uid, ids, attach_to_in=True, context=context)
+        context['attach_to_in'] = True
+        return self.wizard_sde_file_import(cr, uid, ids, context=context)
 
     def generate_sde_dispatched_packing_list_report(self, cr, uid, ids, context=None):
         '''
