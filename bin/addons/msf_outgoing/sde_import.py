@@ -127,7 +127,7 @@ class sde_import(osv.osv_memory):
             # attach the simulation report to the IN
             self.pool.get('ir.attachment').create(cr, uid, {
                 'name': 'sde_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-                'datas_fname': 'sde_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'datas_fname': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
                 'description': 'IN simulation screen',
                 'res_model': 'stock.picking',
                 'res_id': in_id,
