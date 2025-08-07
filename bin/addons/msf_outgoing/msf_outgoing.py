@@ -651,7 +651,7 @@ class shipment(osv.osv):
                 sub_ship_parcels = family.parcel_ids
 
             if len(sub_ship_parcels.split(',')) != selected_number:
-                raise osv.except_osv(_('Warning'), _('You must select %d parcel ids, selected: %d') % (selected_number, len(sub_ship_parcels)))
+                raise osv.except_osv(_('Warning'), _('You must select %d Parcel IDs') % (selected_number, ))
 
 
 

@@ -483,6 +483,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         pack_index = False
         # Get values per line
         index = 0
+        parcel_ids_seen = set()
         for row in rows:
             index += 1
             values.setdefault(index, [])
@@ -527,9 +528,13 @@ class wizard_import_in_simulation_screen(osv.osv):
                     if row.cells[0] and row.cells[0].type == 'int' and len(row.cells) > 1:
                         parcel_id = row.cells[1].data and str(row.cells[1].data).strip() or ''
                         if parcel_id and ',' in parcel_id:
-                            error.append(_('Line %s:  comma (,) is not allowed in parcel_id') % (index,))
+                            error.append(_('Line %s:  comma (,) is not allowed in Parcel ID') % (index,))
                             break
-
+                        if parcel_id:
+                            if parcel_id in parcel_ids_seen:
+                                error.append(_('Line %s:  Parcel ID must be unique, %s already used') % (index, parcel_id))
+                                break
+                            parcel_ids_seen.add(parcel_id)
                         values[pack_index].setdefault('parcel_ids', {}).update({row.cells[0].data: row.cells[1].data and parcel_id})
                         continue
                     else:
