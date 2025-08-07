@@ -2570,10 +2570,12 @@ class product_attributes(osv.osv):
 
         product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable', 'default_code'], context=context)
 
-        product_merged_obj = self.pool.get('product.merged')
-        merged_ids = product_merged_obj.search(cr, 1, ['|', ('new_product_id', '=', ids[0]), ('old_product_id', '=', ids[0])], context=context)
-        if merged_ids and \
-                product_merged_obj.need_to_push(cr, 1, merged_ids, context=context):
+        cr.execute("""
+            SELECT pm.id FROM product_merged pm LEFT JOIN product_product op ON pm.old_product_id = op.id 
+            WHERE (pm.new_product_id = %s OR pm.old_product_id = %s) AND op.unidata_merged = 't'
+        """, (ids[0], ids[0]))
+        merged_ids = [x[0] for x in cr.fetchall()]
+        if merged_ids and self.pool.get('product.merged').need_to_push(cr, 1, merged_ids, context=context):
             raise osv.except_osv(_('Error'), _('There is a UD merge products in the pipe, BN/ED attributes cannot be changed. Please try again after the following synchronization.'))
 
 
@@ -3077,31 +3079,26 @@ class product_attributes(osv.osv):
         nb += self.switch_bn_to_no(cr, uid, ids, context)
         return nb
 
-    def check_same_value(self, cr, uid, new_prod_id, old_prod_id, level, blocker=True, local=False, context=None):
+    def check_same_value(self, cr, uid, new_prod_id, old_prod_id, level, blocker=True, context=None):
 
-        if local:
-            fields_to_check = [
-                'type', 'subtype', 'perishable', 'batch_management', 'uom_id'
-            ]
-        else:
-            if level == 'coordo':
-                if blocker:
-                    fields_to_check = [
-                        'type', 'subtype', 'perishable', 'batch_management', 'uom_id', 'nomen_manda_0'
-                    ]
-                else:
-                    fields_to_check = [
-                        'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods'
-                    ]
+        if level == 'coordo':
+            if blocker:
+                fields_to_check = [
+                    'type', 'subtype', 'perishable', 'batch_management', 'uom_id', 'nomen_manda_0'
+                ]
             else:
-                if blocker:
-                    fields_to_check = [
-                        'type', 'subtype', 'perishable', 'batch_management', 'uom_id', 'nomen_manda_0'
-                    ]
-                else:
-                    fields_to_check = [
-                        'nomen_manda_1', 'nomen_manda_2', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods'
-                    ]
+                fields_to_check = [
+                    'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods'
+                ]
+        else:
+            if blocker:
+                fields_to_check = [
+                    'type', 'subtype', 'perishable', 'batch_management', 'uom_id', 'nomen_manda_0'
+                ]
+            else:
+                fields_to_check = [
+                    'nomen_manda_1', 'nomen_manda_2', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods'
+                ]
 
         ftf = fields_to_check.copy()
         ftf.append('default_code')
@@ -3257,7 +3254,7 @@ class product_attributes(osv.osv):
 
 
         if instance_level != 'project':
-            block_msg = self.check_same_value( cr, uid,  kept_id, old_prod_id, level=merge_type, blocker=True, local=local, context=context)
+            block_msg = self.check_same_value( cr, uid,  kept_id, old_prod_id, level=merge_type, blocker=True, context=context)
             if block_msg:
                 prod_data = self.read(cr, uid, [kept_id, old_prod_id], ['default_code'], context=context)
                 errors.append(_('%s\nProducts: %s and %s') % (block_msg, prod_data[0]['default_code'], prod_data[1]['default_code']))
@@ -3592,7 +3589,7 @@ class product_merged(osv.osv):
     """
 
     _name = 'product.merged'
-    _description = 'Products merged (NSL from Coo / UD from HQ)'
+    _description = 'Products merged (NSL from Coo / UD from HQ / Local from Coo)'
     _rec_name = 'new_product_id'
 
     _columns = {

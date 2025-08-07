@@ -36,14 +36,14 @@ class product_merged_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('Merge products is limited to 2 merge actions, %s can not be merged') % wiz.new_product_id.default_code)
 
         block_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, level=wiz.level,
-                                              blocker=True, local=wiz.local, context=context)
+                                              blocker=True, context=context)
         if block_msg:
             raise osv.except_osv(_('Warning'), block_msg)
 
         if not wiz.warning_checked:
             warn_msg = []
             warn_value = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, level=wiz.level,
-                                                   blocker=False, local=wiz.local, context=context)
+                                                   blocker=False, context=context)
             if warn_value:
                 warn_msg.append(warn_value)
             if wiz.level != 'coordo':

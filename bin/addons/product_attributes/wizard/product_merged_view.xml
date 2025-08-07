@@ -31,7 +31,7 @@
             <field name="arch" type="xml">
                 <form string="Merge Local Product">
                     <field name="old_product_id" colspan="4" string="Non-kept Local Product"/>
-                    <field name="new_product_id" colspan="4" required="1" on_change="change_warning(new_product_id)" domain="[('id', '!=', old_product_id), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False), ('active', 'in', ['t', 'f'])]" context="{'display_active_filter': 0, 'display_old_code': 1}" string="Kept Local Product"/>
+                    <field name="new_product_id" colspan="4" required="1" on_change="change_warning(new_product_id)" domain="[('id', '!=', old_product_id), ('international_status', '=', 'Local'), ('nomen_manda_0', '!=', 'MED'), ('replaced_by_product_id', '=', False), ('active', 'in', ['t', 'f'])]" context="{'display_active_filter': 0, 'display_old_code': 1}" string="Kept Local Product"/>
                     <field name="ud_old_code" string="Local Product 'Old Code'"/>
                     <field name="warning_checked" invisible="1" />
                     <group colspan="4" attrs="{'invisible': [('warning_msg', '=', False)]}">

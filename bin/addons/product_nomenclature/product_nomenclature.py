@@ -666,6 +666,24 @@ class product_template(osv.osv):
                 dom = ['&', ('nomen_manda_2.status', '!=', 'archived'), ('nomen_manda_3.status', '!=', 'archived')]
 
         return dom
+
+    def _get_root_nomen_msfid(self, cr, uid, ids, fields, *a, **b):
+        '''
+        Get the MSFID of the root nomenclature
+        '''
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        cr.execute("""
+            SELECT p.id, n.msfid FROM product_template p LEFT JOIN product_nomenclature n ON p.nomen_manda_0 = n.id
+            WHERE p.id IN %s
+        """, (tuple(ids),))
+        for prod in cr.fetchall():
+            res[prod[0]] = prod[1] or ''
+
+        return res
+
     # ## EXACT COPY-PASTE TO order_nomenclature
     _columns = {
         # mandatory nomenclature levels
@@ -695,6 +713,7 @@ class product_template(osv.osv):
         'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
 
         'archived_nomenclature': fields.function(_get_archived_nomenclature, method=True, type='boolean', string='Archived Nomenclature', fnct_search=_search_archived_nomenclature),
+        'root_nomen_msfid': fields.function(_get_root_nomen_msfid, method=True, type='char', size=32, string='Root Nomenclature'),
         # concatenation of nomenclature in a visible way
         'nomenclature_description': fields.char('Nomenclature', size=1024),
         'property_account_income': fields.many2one('account.account',
