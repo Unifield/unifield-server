@@ -3408,7 +3408,7 @@ class product_attributes(osv.osv):
         else:
             old_prod_new_data = {'active': False, 'replaced_by_product_id': kept_id}
             if local:
-                old_prod_new_data['local_product_merged'] = True
+                old_prod_new_data.update({'local_product_merged': True, 'new_code': kept_data['default_code']})
         self.write(cr, uid, old_prod_id, old_prod_new_data, context=context)
 
         # US-11877: To have those translations in the audittrail without putting mandatory lang at the creation
