@@ -362,6 +362,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
 
 
+        parcel_ids_seen = set()
         for node in rec.findall('field'):
             if node.attrib['name'] != 'move_lines':
                 index += 1
@@ -415,6 +416,11 @@ class wizard_import_in_simulation_screen(osv.osv):
                                         if parcel_nr in values[index]['parcel_ids']:
                                             error.append(_('parcel_ids node %s, parcel_nr %s already used') % (nb_pack, parcel_nr))
                                             break
+                                        if parcel_id in parcel_ids_seen:
+                                            error.append(_('parcel_ids node %s, parcel_id must be unique, %s already used') % (nb_pack, parcel_id))
+                                            break
+                                        parcel_ids_seen.add(parcel_id)
+
                                         values[index]['parcel_ids'][parcel_nr] = parcel_id
                             else:
                                 values[index][node_name]= pack_data_node.text and pack_data_node.text.strip() or False
