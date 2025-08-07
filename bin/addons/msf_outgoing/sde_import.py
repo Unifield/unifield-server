@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv, fields
-from reportlab.lib.utils import fileName2FSEnc
 from tools.translate import _
 
 import base64
@@ -29,7 +28,6 @@ from datetime import datetime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 import re
-from tempfile import NamedTemporaryFile
 
 
 class sde_import(osv.osv_memory):
@@ -42,7 +40,7 @@ class sde_import(osv.osv_memory):
         'message': fields.text(string='Message'),
     }
 
-    def wizard_sde_file_import(self, cr, uid, ids, context=None):
+    def wizard_sde_file_import(self, cr, uid, ids, attach_to_in=False, context=None):
         '''
         Method to use instead of the XMLRPC script
         '''
@@ -55,9 +53,21 @@ class sde_import(osv.osv_memory):
         if not sde_imp['file']:
             raise osv.except_osv(_('Warning'), _('No file to import'))
         file = base64.b64decode(sde_imp['file'])
-        msg = self.sde_file_import(cr, uid, sde_imp['filename'], file, context=context)
+
+        if attach_to_in:
+            msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, context=context)
+        else:
+            msg = self.sde_file_import(cr, uid, sde_imp['filename'], file, context=context)
 
         return self.write(cr, uid, ids, {'message': msg}, context=context)
+
+    def wizard_sde_file_to_in(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the XMLRPC script
+        '''
+        if context is None:
+            context = {}
+        return self.wizard_sde_file_import(cr, uid, ids, attach_to_in=True, context=context)
 
     def generate_sde_dispatched_packing_list_report(self, cr, uid, ids, context=None):
         '''
@@ -126,7 +136,7 @@ class sde_import(osv.osv_memory):
 
             # attach the simulation report to the IN
             self.pool.get('ir.attachment').create(cr, uid, {
-                'name': 'sde_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'name': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
                 'datas_fname': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
                 'description': 'IN simulation screen',
                 'res_model': 'stock.picking',
@@ -142,6 +152,47 @@ class sde_import(osv.osv_memory):
         finally:
             if 'sde_flow' in context:
                 context.pop('sde_flow')
+
+        return msg
+
+    def sde_file_to_in(self, cr, uid, file_path, file, context=None):
+        '''
+        Method used by the SDE script to attach a file to an IN
+        '''
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+
+        msg = False
+        try:
+            if isinstance(file, bytes):
+                file_data = file
+            else:  # Binary expected
+                file_data = file.data
+            filetype = pick_obj.get_import_filetype(cr, uid, file_path, context=context)
+
+            # get the IN with the Ship Ref or the Origin
+            in_id = self.get_incoming_id_from_file(cr, uid, file_data, filetype, context=context)
+            in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
+
+            # attach the simulation report to the IN
+            filename = 'SDE_incoming_shipment_%s_%s.%s' % (filetype, time.strftime('%Y_%m_%d_%H_%M'), file_path.split('.')[-1])
+            self.pool.get('ir.attachment').create(cr, uid, {
+                'name': filename,
+                'datas_fname': filename,
+                'description': 'SDE file for IN',
+                'res_model': 'stock.picking',
+                'res_id': in_id,
+                'datas': base64.b64encode(file_data).decode('utf8'),
+            })
+            msg = _('%s has been attached to %s') % (filename, in_name)
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                msg = e.value
+            else:
+                msg = e.args and '. '.join(e.args) or e
 
         return msg
 
