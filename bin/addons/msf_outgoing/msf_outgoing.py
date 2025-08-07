@@ -800,7 +800,7 @@ class shipment(osv.osv):
                 'select_parcel_ids': False,
             }, context=context)
             if family.parcel_ids and len(remaining_parcels_array) != initial_to_pack - initial_from_pack + 1:
-                raise osv.except_osv(_('Warning'), _('Number of kept parcel ids %d does not patch number of packs %d') % (len(remaining_parcels_array), initial_to_pack - initial_from_pack + 1))
+                raise osv.except_osv(_('Warning'), _('Number of kept Parcel IDs %d does not match number of packs %d') % (len(remaining_parcels_array), initial_to_pack - initial_from_pack + 1))
         else:
             self.pool.get('pack.family.memory').unlink(cr, uid, family.id, context=context)
 
