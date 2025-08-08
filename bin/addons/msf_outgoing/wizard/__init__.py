@@ -33,3 +33,4 @@ from . import shipment_processor
 from . import split_memory_move
 from . import check_ppl_integrity
 from . import ppl_set_pack_on_lines
+from . import shipment_parcel_selection
