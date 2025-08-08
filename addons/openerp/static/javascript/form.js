@@ -468,7 +468,13 @@ function buttonClicked(name, btype, model, id, sure, target, context, set_ids, i
     s_ids = [];
     s_dom = [];
     if (set_ids) {
-        if (jQuery('[id="' + set_ids + '"]').length > 0) {
+        if (set_ids.indexOf(',') > -1 ) {
+            s_ids = ''
+            forEach(set_ids.split(','), function(field) {
+                s_ids += "'"+ field +"': [" + ListView(field).getSelectedRecords().join(',') + "],"
+            })
+            s_ids = '{' + s_ids + '}'
+        } else if (jQuery('[id="' + set_ids + '"]').length > 0) {
             if ($('#'+set_ids+'_check_all').length) {
                 // lines can be ticked
                 s_ids = ListView(set_ids).getSelectedRecords();

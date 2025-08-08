@@ -563,7 +563,7 @@ function form_setReadonly(container, fieldName, readonly) {
     }
 
     if (kind == 'boolean') {
-        if ( field_id == '_terp_listfields/is_asset') {
+        if (['_terp_listfields/is_asset', '_terp_listfields/line_ids/kc', '_terp_listfields/line_ids/dg', '_terp_listfields/line_ids/cs'].includes(field_id)) {
             var boolean_field = jQuery(idSelector(field_id+'_checkbox_'));
         } else {
             var boolean_field = jQuery('input#'+field_id+'_checkbox_');
