@@ -4312,6 +4312,8 @@ class patch_scripts(osv.osv):
         return True
 
     def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        return True
+        # patch script disabled
         cr.execute('''
             update stock_move
                 set selected_number=to_pack-from_pack+1
