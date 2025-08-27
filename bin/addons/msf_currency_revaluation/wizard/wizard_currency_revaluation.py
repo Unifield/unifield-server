@@ -47,7 +47,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             domain="[('number', '<=', 12), ('state', '=', 'draft')]"),
         'currency_table_id': fields.many2one(
             'res.currency.table', string=_("Currency table"),
-            domain=[('state', '=', 'valid')]),
+            domain=[('state', '=', 'valid'), ('is_for_reval','=', True)]),
         'journal_id': fields.many2one(
             'account.journal', string=_("Entry journal"),
             help=_("Journal used for revaluation entries."),

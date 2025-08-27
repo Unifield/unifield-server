@@ -35,10 +35,12 @@ class res_currency_table(osv.osv):
         'state': fields.selection([('draft','Draft'),
                                    ('valid','Valid'),
                                    ('closed', 'Closed')], 'State', required=True),
+        'is_for_reval': fields.boolean('Is for Revaluation'),
     }
 
     _defaults = {
         'state': 'draft',
+        'is_for_reval': False,
     }
 
     def copy(self, cr, uid, _id, default=None, context=None):

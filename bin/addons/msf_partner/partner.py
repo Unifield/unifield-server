@@ -836,6 +836,7 @@ class res_partner(osv.osv):
                     del vals[field]
         # [utp-315] avoid deactivating partner that have still open document linked to them
         if 'active' in vals and vals.get('active') == False:
+            vals['state'] = 'inactive'
             # UTP-1214: only show error message if it is really a "deactivate partner" action, if not, just ignore
             oldValue = self.read(cr, uid, ids[0], ['active'], context=context)['active']
             if oldValue == True: # from active to inactive ---> check if any ref to it
@@ -849,9 +850,11 @@ class res_partner(osv.osv):
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
-        if vals.get('active') and vals.get('partner_type') == 'intermission' and vals.get('name') \
-                and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
-            raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated") % (vals['name'],))
+        if vals.get('active'):
+            vals['state'] = 'active'
+            if vals.get('partner_type') == 'intermission' and vals.get('name') \
+                    and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
+                raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated") % (vals['name'],))
 
         ret = super(res_partner, self).write(cr, uid, ids, vals, context=context)
         self.check_same_pricelist(cr, uid, ids, context=context)
@@ -968,7 +971,7 @@ class res_partner(osv.osv):
         if context is None:
             context = {}
         # reset the second value, otherwise the content of the field triggers the creation of a new company
-        fields_to_reset = ['ref_companies', 'instance_creator', 'property_product_pricelist_purchase',
+        fields_to_reset = ['ref_companies', 'state', 'instance_creator', 'property_product_pricelist_purchase',
                            'property_product_pricelist', 'property_account_payable', 'property_account_receivable']
         to_del = []
         for ftr in fields_to_reset:
@@ -1014,37 +1017,20 @@ class res_partner(osv.osv):
                     }
                 }
             # US-49 check that activated partner is not using a not active CCY
-            check_pricelist_ids = []
-            fields_pricelist = [
-                'property_product_pricelist_purchase',
-                'property_product_pricelist'
-            ]
-            check_ccy_ids = []
-            for r in self.read(cr, uid, ids, fields_pricelist,
-                               context=context):
-                for f in fields_pricelist:
-                    if r[f] and r[f][0] not in check_pricelist_ids:
-                        check_pricelist_ids.append(r[f][0])
-            if check_pricelist_ids:
-                for cpl_r in self.pool.get('product.pricelist').read(cr,
-                                                                     uid, check_pricelist_ids, ['currency_id'],
-                                                                     context=context):
-                    if cpl_r['currency_id'] and \
-                            cpl_r['currency_id'][0] not in check_ccy_ids:
-                        check_ccy_ids.append(cpl_r['currency_id'][0])
-                if check_ccy_ids:
-                    count = self.pool.get('res.currency').search(cr, uid, [
-                        ('active', '!=', True),
-                        ('id', 'in', check_ccy_ids),
-                    ], count=True, context=context)
-                    if count:
-                        return {
-                            'value': {'active': False},
-                            'warning': {
-                                'title': _('Error'),
-                                'message': _('PO or FO currency is not active'),
-                            }
-                        }
+            cr.execute("""
+                SELECT COUNT(DISTINCT(c.id)) FROM res_partner p 
+                    LEFT JOIN product_pricelist pp ON p.property_product_pricelist = pp.id 
+                    LEFT JOIN product_pricelist ppp ON p.property_product_pricelist_purchase = ppp.id 
+                    LEFT JOIN res_currency c ON pp.currency_id = c.id OR ppp.currency_id = c.id 
+                WHERE c.active = 'f' AND p.id IN %s
+            """, (tuple(ids),))
+            count = cr.fetchone()
+            if count and count[0]:
+                return {
+                    'value': {'active': False},
+                    'warning': {'title': _('Error'), 'message': _('PO or FO currency is not active')}
+                }
+
         return {}
 
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
@@ -1199,6 +1185,60 @@ class res_partner(osv.osv):
                 view['arch'] = etree.tostring(tree, encoding='unicode')
         return view
 
+    def deactivate_partner(self, cr, uid, ids, context=None):
+        '''
+        Try to deactivate the partner. If it's still used by a document, set its state to Phase Out instead
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context=context)
+        if objects_linked_to_partner:
+            self.write(cr, uid, ids, {'state': 'phase_out'}, context=context)
+
+            wiz_id = self.pool.get('partner.deactivation.wizard').create(cr, uid, {'objects_linked_to_partner': objects_linked_to_partner}, context=context)
+
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_partner', 'partner_deactivation_wizard_form_view')[1]
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'partner.deactivation.wizard',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'target': 'new',
+                'context': context,
+                'height': '400px',
+                'width': '720px',
+            }
+        else:
+            return self.write(cr, uid, ids, {'active': False, 'state': 'inactive'}, context=context)
+
+    def reactivate_partner(self, cr, uid, ids, context=None):
+        '''
+        Try to reactivate the partner. Prevent it if the partner is intermission with an existing internal partner with
+        the same name or if either of its currencies is inactive
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        ftf = ['name', 'partner_type', 'property_product_pricelist_purchase', 'property_product_pricelist']
+        for partner in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            partner_domain = [('id', '!=', partner['id']), ('name', '=ilike', partner['name']), ('partner_type', '=', 'internal')]
+            if partner['partner_type'] == 'intermission' and self.search(cr, uid, partner_domain, context=context):
+                raise osv.except_osv(_('Warning'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be activated") % (partner['name'],))
+
+            if (partner.property_product_pricelist_purchase and not partner.property_product_pricelist_purchase.currency_id.active) \
+                    or (partner.property_product_pricelist and not partner.property_product_pricelist.currency_id.active):
+                raise osv.except_osv(_('Error'), _('PO or FO currency is not active'))
+
+        return self.write(cr, uid, ids, {'active': True, 'state': 'active'}, context=context)
+
+
 res_partner()
 
 
@@ -1259,6 +1299,23 @@ class res_partner_address(osv.osv):
         return super(res_partner_address, self).create(cr, uid, vals, context=context)
 
 res_partner_address()
+
+
+class partner_deactivation_wizard(osv.osv_memory):
+    _name = 'partner.deactivation.wizard'
+
+    _columns = {
+        'objects_linked_to_partner': fields.text('Objects linked to the Partner', readonly=1),
+    }
+
+    def button_close(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        return {'type' : 'ir.actions.act_window_close'}
+
+
+partner_deactivation_wizard()
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

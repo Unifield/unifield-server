@@ -91,6 +91,19 @@
    <NumberFormat/>
    <Protection/>
   </Style>
+  <Style ss:ID="s64p">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior ss:Color="#FFE699" ss:Pattern="Solid"/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
 </Styles>
 ## ==================================== we loop over the incoming_shipment "objects" == incoming_shipment  ====================================================
 % for o in objects:
@@ -161,7 +174,11 @@
     <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
    </Row>
+   <Row>
+    <Cell ss:StyleID="s64p"><Data ss:Type="String">${_('Parcel No.')}</Data></Cell>
+    <Cell ss:StyleID="s64p"><Data ss:Type="String">${_('Parcel ID')}</Data></Cell>
 
+   </Row>
 
     
     <Row>

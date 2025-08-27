@@ -946,7 +946,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 ('customer', '=', True),
                 ('check_partner_so', '=', {'order_type': order_type, 'partner_id': part}),
             ]
-            if not p_obj.search(cr, uid, p_domain, limit=1, order='NO_ORDER'):
+            part_id = p_obj.search(cr, uid, p_domain, limit=1, order='NO_ORDER')
+            if not part_id:
                 res.setdefault('value', {})
                 res['value'].update({
                     'partner_id': False,
@@ -960,6 +961,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     'title': _('Bad partner'),
                     'message': _('You cannot select this partner because it\'s not a customer or have a partner type not compatible with order type'),
                 }
+            elif p_obj.read(cr, uid, part,['state'])['state'] == 'phase_out' and \
+                    order_type not in ['donation_prog', 'donation_exp', 'donation_st', 'loan', 'loan_return']:
+                return {
+                    'value': {'partner_id': False},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _('The selected Customer is Phase Out, please select another Customer')}
+                }
 
             res2 = self.onchange_order_type(cr, uid, ids, order_type, part)
             if res2.get('value'):
@@ -968,7 +977,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 else:
                     res.update({'value': res2['value']})
 
-            # Check the restrction of product in lines
+            # Check the restriction of product in lines
             if ids:
                 product_obj = self.pool.get('product.product')
                 for order in self.browse(cr, uid, ids):

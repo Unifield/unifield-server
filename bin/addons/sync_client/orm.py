@@ -217,6 +217,24 @@ SELECT res_id, touched
             identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
             for res_id in missing_ids:
                 name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))
+                if self._name == 'account.journal':
+                    # if sdref exists and is linked to another journal => deny
+                    cr.execute('''
+                        select
+                            j.code
+                        from
+                            account_journal j, ir_model_data d
+                        where
+                            d.model = 'account.journal' and
+                            d.module = 'sd' and
+                            d.res_id = j.id and
+                            d.name = %s and
+                            j.id != %s
+                    ''', (name, res_id))
+                    if cr.rowcount:
+                        j_code = [x[0] for x in cr.fetchall()]
+                        raise osv.except_osv(_('Error !'), _('Journal sdref is already used by %s, please change the name or the code') % (', '.join(j_code), ))
+
                 new_data_id = model_data_obj.create(cr, uid, {
                     'noupdate' : False, # don't set to True otherwise import won't work
                     'module' : 'sd',

@@ -23,6 +23,27 @@
             </field>
         </record>
 
+        <record id="local_product_merged_wizard_form_view" model="ir.ui.view">
+            <field name="name">local.product.merged.wizard.form.view</field>
+            <field name="model">product.merged.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">60</field>
+            <field name="arch" type="xml">
+                <form string="Merge Local Product">
+                    <field name="old_product_id" colspan="4" string="Non-kept Local Product"/>
+                    <field name="new_product_id" colspan="4" required="1" on_change="change_warning(new_product_id)" domain="[('id', '!=', old_product_id), ('international_status', '=', 'Local'), ('nomen_manda_0', '!=', 'MED'), ('replaced_by_product_id', '=', False), ('active', 'in', ['t', 'f'])]" context="{'display_active_filter': 0, 'display_old_code': 1}" string="Kept Local Product"/>
+                    <field name="ud_old_code" string="Local Product 'Old Code'"/>
+                    <field name="warning_checked" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': [('warning_msg', '=', False)]}">
+                        <separator colspan="4" string="Warning" />
+                        <field name="warning_msg" colspan="4" nolabel="1" />
+                    </group>
+                    <button name="do_merge_local_product" string="Merge Product" type="object"  icon="gtk-ok" colspan="2" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
         <record id="hq_product_merged_wizard_form_view" model="ir.ui.view">
             <field name="name">hq.product.merged.wizard.form.view</field>
             <field name="model">product.merged.wizard</field>

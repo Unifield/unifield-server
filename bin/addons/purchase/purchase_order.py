@@ -2301,7 +2301,7 @@ class purchase_order(osv.osv):
         # file msf_custom_settings/view/purchase_view.xml: domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', order_type),  ('check_partner_rfq', '=', tender_id)]"
         w = {}
         local_market = None
-        partner = partner_id and partner_obj.read(cr, uid, partner_id, ['partner_type']) or False
+        partner = partner_id and partner_obj.read(cr, uid, partner_id, ['partner_type', 'state']) or False
 
         if ids:
             order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
@@ -2355,6 +2355,12 @@ class purchase_order(osv.osv):
                 }
         if order_type == 'loan_return':
             return {'value': {'order_type': False}, 'warning': {'title': _('Error'), 'message': _('You can not select this Order Type manually')}}
+
+        if order_type not in ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp'] and partner and partner['state'] == 'phase_out':
+            return {
+                'value': {'partner_id': False},
+                'warning': {'title': _('Error'), 'message': _('The selected Supplier is Phase Out, please select another Supplier')},
+            }
 
         # Search the local market partner id
         data_obj = self.pool.get('ir.model.data')
@@ -2463,7 +2469,7 @@ class purchase_order(osv.osv):
 
         return {'value': v, 'warning': w}
 
-    def onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=False, context=None, *a, **b):
+    def onchange_partner_id(self, cr, uid, ids, partner_id=False, date_order=False, transport_lt=False, order_type=False, context=None, *a, **b):
         '''
         Fills the Requested and Confirmed delivery dates
         '''
@@ -2472,31 +2478,39 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if not part:
+        if not partner_id:
             return {'value': {'partner_address_id': False, 'fiscal_position': False, 'catalogue_exists_text': '', 'catalogue_display_tab': False}}
-
-        addr = self.pool.get('res.partner').address_get(cr, uid, [part], ['default'])
-        part = self.pool.get('res.partner').browse(cr, uid, part)
-        pricelist = part.property_product_pricelist_purchase.id
-        fiscal_position = part.property_account_position and part.property_account_position.id or False
-        res = {'value': {'partner_address_id': addr['default'], 'pricelist_id': pricelist, 'fiscal_position': fiscal_position}}
 
         partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
-        partner = partner_obj.read(cr, uid, part.id, ['partner_type'])
+
+        partner = partner_obj.browse(cr, uid, partner_id)
+        if order_type not in ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp'] and partner.state == 'phase_out':
+            return {
+                'value': {'partner_id': False},
+                'warning': {
+                    'title': _('Error'),
+                    'message': _('The selected Supplier is Phase Out, please select another Supplier')}
+            }
+
+        addr = partner_obj.address_get(cr, uid, [partner_id], ['default'])
+        pricelist = partner.property_product_pricelist_purchase.id
+        fiscal_position = partner.property_account_position and partner.property_account_position.id or False
+        res = {'value': {'partner_address_id': addr['default'], 'pricelist_id': pricelist, 'fiscal_position': fiscal_position}}
+
         if ids:
             # Check the restriction of product in lines
             for order in self.browse(cr, uid, ids):
                 for line in order.order_line:
                     if line.product_id:
-                        res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part})
+                        res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': partner_id})
                         if test:
                             res.setdefault('value', {}).update({'partner_address_id': False})
                             return res
-        if partner['partner_type'] in ('internal', 'esc'):
+        if partner.partner_type in ('internal', 'esc'):
             res['value']['invoice_method'] = 'manual'
 
-        res = common_onchange_partner_id(self, cr, uid, ids, part=part.id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        res = common_onchange_partner_id(self, cr, uid, ids, part=partner_id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         # reset confirmed date
         res.setdefault('value', {}).update({'delivery_confirmed_date': False, 'catalogue_exists_text': '', 'catalogue_display_tab': False})
 

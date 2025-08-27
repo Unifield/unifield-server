@@ -18,4 +18,15 @@ class signature_export_report(report_sxw.rml_parse):
         return sorted(sorted(img_obj.browse(self.cr, self.uid, ids, context=self.localcontext), key=lambda x: x.user_id.login or ''), key=lambda z: z.to_date or '')
 
 report_sxw.report_sxw('report.signature.export.report', 'signature.export.wizard', 'addons/base/res/report_module/signature.rml', header=False, parser=signature_export_report)
+
+
+class signature_import_template_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(signature_import_template_report, self).__init__(cr, uid, name,  context=context)
+
+        self.localcontext.update({
+        })
+
+report_sxw.report_sxw('report.signature.import.template.report', 'signature.set_user',
+                      'addons/base/res/report_module/signature_import_template.rml', header=False, parser=signature_import_template_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

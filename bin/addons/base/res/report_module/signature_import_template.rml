@@ -1,0 +1,203 @@
+<?xml version="1.0" ?>
+<document filename="signature_import_template.pdf">
+
+    <template pageSize="(595.0,842.0)" title="Field Order" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="0.0" y1="0.0" width="590" height="805" />
+
+            <pageGraphics>
+                <setFont name="Helvetica" size="8"/>
+                <fill color="black"/>
+            </pageGraphics>
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="SignBlock">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="1,-3" thickness="2.5" />
+        </blockTableStyle>
+        <blockTableStyle id="NonSignBlock">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+        </blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <!-- Font styles -->
+        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="CENTER" leading="10.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="9.0" spaceAfter="10.0"/>
+        <paraStyle name="StandardPoint" fontName="Helvetica" fontSize="9.0" spaceAfter="10.0" leftIndent="10.0"/>
+    </stylesheet>
+
+    <story>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="565.0" style="NonSignBlock">
+            <tr>
+                <td>
+                    <para style="TextInformation">Please sign inside the box without going beyond the frame. Then scan this paper and save the scan in your computer in portrait mode, and follow the instructions below:</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="160.0,245.0,160.0" style="SignBlock">
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+            <tr>
+                <td><para></para></td>
+                <td><para></para></td>
+                <td><para></para></td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="500.0" style="NonSignBlock">
+            <tr>
+                <td>
+                    <para style="Standard">Instructions to use this template:</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">1. Log in to Unifield</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">2. Click on the menu Administration > Users > Signature > My Signature</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">3. Click on "Replace Signature"</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">4. Fill out "Legal Name"</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">5. Select "Importing" for the Type of Signature Creation</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">6. Click on "add attachment"</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">7. Find and select the file you scanned. Only *.png, *.jpg, *.jpeg and *.pdf files will be accepted</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">8. Click on "Preview"</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">9. If the result in "New Signature" are satisfying, click "Save"</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardPoint">10. Destroy this paper (shredder, etc...)</para>
+                </td>
+            </tr>
+        </blockTable>
+    </story>
+</document>

@@ -43,6 +43,9 @@
                     <field name="weight" readonly="1" />
                     <field name="return_from" />
                     <field name="return_to" />
+                    <field name="parcel_ids_error" invisible="1" />
+                    <field name="has_parcels_info" invisible="1" />
+                    <button name="select_parcel_ids" string="Select Parcel Ids" icon="terp-accessories-archiver-minus" type="object" attrs="{'invisible': ['|', '|', ('return_from', '=', 0), ('return_to', '=', 0), ('has_parcels_info', '=', False)]}" />
                     <field name="selected_weight" string="Weight to Return [kg]" readonly="1" />
                     <field name="integrity_status" />
                 </tree>

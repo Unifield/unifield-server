@@ -1085,7 +1085,7 @@ class users(osv.osv):
         data_id = dataobj._get_id(cr, 1, 'base', 'action_res_users_my')
         return dataobj.browse(cr, uid, data_id, context=context).res_id
 
-    def get_user_database_password_from_uid(self, cr, uid):
+    def _get_user_database_password_from_uid(self, cr, uid):
         '''
         return encrypted password from the database using uid
         '''
@@ -1198,14 +1198,14 @@ class users(osv.osv):
     def check(self, db, uid, passwd):
         """Verifies that the given (uid, password) pair is authorized for the database ``db`` and
            raise an exception if it is not."""
-        if not passwd:
+        if not passwd or not uid:
             # empty passwords disallowed for obvious security reasons
             raise security.ExceptionNoTb('AccessDenied')
         if self._uid_cache.get(db, {}).get(uid) == passwd:
             return
         cr = pooler.get_db(db).cursor()
         try:
-            database_password = self.get_user_database_password_from_uid(cr, uid)
+            database_password = self._get_user_database_password_from_uid(cr, uid)
             # check the password is a bcrypt encrypted one
             database_password = tools.ustr(database_password)
             passwd = tools.ustr(passwd)
