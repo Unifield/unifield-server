@@ -261,6 +261,27 @@ class res_partner(osv.osv):
 
         return [('id', operator, self.search(cr, uid, [('is_instance', '=', True)], context=context))]
 
+    def _get_local_market_id(self, cr, uid, context=None):
+        local_market_id = 0
+        try:
+            local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
+        except:
+            pass
+        return local_market_id
+
+    def _get_phaseout_allowed(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        res = {}
+
+        for _id in ids:
+            res[_id] = True
+
+        local_market_id = self._get_local_market_id(cr, uid, context)
+        for _ids in self.search(cr, uid, ['&', ('id', 'in', ids), '|', '|', ('partner_type', '!=', 'external'), ('active', '=', False), ('id', '=', local_market_id)]):
+            res[_id] = False
+        return res
+
     def _get_allow_external_edition(self, cr, uid, ids, field_name, args, context=None):
         if not ids:
             return {}
@@ -374,6 +395,7 @@ class res_partner(osv.osv):
         'locally_created': fields.boolean('Locally Created', help='Partner Created on this instance', readonly=1),
         'allow_external_edition': fields.function(_get_allow_external_edition, type='boolean', method=True, fnct_search=_search_allow_external_edition, string="Editable ext. partner"),
         'instance_creator': fields.char('Instance Creator', size=64, readonly=1, select=1),
+        'phaseout_allowed': fields.function(_get_phaseout_allowed, type='boolean', method=True, string='Phaseout Allowed'),
     }
 
     _defaults = {
@@ -840,6 +862,8 @@ class res_partner(osv.osv):
             # UTP-1214: only show error message if it is really a "deactivate partner" action, if not, just ignore
             oldValue = self.read(cr, uid, ids[0], ['active'], context=context)['active']
             if oldValue == True: # from active to inactive ---> check if any ref to it
+                if ids[0] == self._get_local_market_id(cr, uid, context):
+                    raise osv.except_osv(_('Warning'), _('''Local Market Parner cannot be deactivated'''))
                 objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
                 if objects_linked_to_partner:
                     raise osv.except_osv(_('Warning'),
@@ -1194,8 +1218,12 @@ class res_partner(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        if len(ids) > 1:
+            raise osv.except_osv(_('Error'), _('Deactivation can be done only one 1 partner.'))
+
         objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context=context)
-        if objects_linked_to_partner:
+        phaseout_allowed = self.read(cr, uid, ids[0], ['phaseout_allowed'])['phaseout_allowed']
+        if objects_linked_to_partner and phaseout_allowed:
             self.write(cr, uid, ids, {'state': 'phase_out'}, context=context)
 
             wiz_id = self.pool.get('partner.deactivation.wizard').create(cr, uid, {'objects_linked_to_partner': objects_linked_to_partner}, context=context)
