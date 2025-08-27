@@ -34,6 +34,13 @@
                         }
 
                         $(document).ready(function() {
+                            $('#signature_import_template').removeAttr('onclick');
+                            ctx = $('#_terp_context').val()
+                            object_ids = $('#_terp_ids').val()
+                            console.log(ctx)
+                            $('#signature_import_template').click(function() {
+                                open('/openerp/report?report_name=signature.import.template.report&amp;ids='+object_ids+'&amp;context='+ctx)
+                            });
                             $('#view_form').submit(function(e){
                                 if ($('#sig_new_signature').signature('isEmpty') &amp;&amp; !$('#new_signature_import').val()
                                         &amp;&amp; !$('#new_signature_import_binary_buttons input').val()) {
