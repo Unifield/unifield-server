@@ -3,11 +3,7 @@
 import xmlrpc.client
 import sys
 import os
-import signal  # Only for Unix/Ubuntu ?
-
-def signal_handler(signum, frame):
-    print('The import took too long to complete!')
-    sys.exit(1)
+import urllib
 
 dbname = 'my_db'
 user = 'my_user'
@@ -15,7 +11,11 @@ password = 'my_password'
 host = 'my_host'
 port = 8069  # xml-rpc port, 8069 on prod instance
 
-filepath = 'C:\\path\\to\\your\\file.xls'
+if len(sys.argv) < 2:
+    print(r'Call the script with the file to import: i.e "%s C:\path_to_file"' % (sys.argv[0]))
+    sys.exit(1)
+
+filepath = sys.argv[1]
 if not os.path.exists(filepath):
     print('The file "%s" does not exist' % (filepath))
     sys.exit(1)
@@ -34,12 +34,14 @@ if not user_id:
 # to query the server: http://<host>:<xmlrpcport>/xmlrpc/object
 sock = xmlrpc.client.ServerProxy(url + 'object', allow_none=True)
 
+# set connection timeout (240s)
+transport = xmlrpc.client.Transport()
+u = urllib.parse.urlparse(url)
+connection = transport.make_connection(u.hostname)
+connection.timeout = 240
+
 msg = ''
 try:
-    # For a timeout of 5 min
-    signal.signal(signal.SIGALRM, signal_handler)
-    signal.alarm(300)
-
     # the content of the file is read
     file_content = open(filepath, 'rb').read()
 

@@ -14,8 +14,8 @@ port = 8069  # xml-rpc port, 8069 on prod instance
 
 path = 'C:\\path\\to\\your\\directory'
 if not os.path.exists(path):
-    print('The given path "%s" does not exist' % (path,))
-    sys.exit(1)
+    os.mkdir(path)
+    print('Folder "%s" created' % (path,))
 
 lang_context = {'lang': 'en_MF'}  # or fr_MF
 

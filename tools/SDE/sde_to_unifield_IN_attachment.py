@@ -10,7 +10,11 @@ password = 'my_password'
 host = 'my_host'
 port = 8069  # xml-rpc port, 8069 on prod instance
 
-filepath = 'C:\\path\\to\\your\\file.xls'
+if len(sys.argv) < 3:
+    print(r'Call the script with the file to import and at least the PO reference: i.e "%s C:\path_to_file PO_Reference Ship_or_OUT_Reference"' % (sys.argv[0]))
+    sys.exit(1)
+
+filepath = sys.argv[1]
 if not os.path.exists(filepath):
     print('The file "%s" does not exist' % (filepath))
     sys.exit(1)
@@ -33,7 +37,11 @@ sock = xmlrpc.client.ServerProxy(url + 'object', allow_none=True)
 file_content = open(filepath, 'rb').read()
 
 # attachment message
-msg = sock.execute(dbname, user_id, password, 'sde.import', 'sde_file_to_in', filepath, file_content, lang_context)
+po_ref = sys.argv[2]
+pack_ref = ''
+if len(sys.argv) > 3:
+    pack_ref = sys.argv[3]
+msg = sock.execute(dbname, user_id, password, 'sde.import', 'sde_file_to_in', filepath, file_content, po_ref, pack_ref, lang_context)
 
 # display the result message
 print('End message: %s' % msg)

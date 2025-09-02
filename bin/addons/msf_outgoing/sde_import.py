@@ -38,6 +38,8 @@ class sde_import(osv.osv_memory):
         'file': fields.binary(string='File', filters='*.xml, *.xls', required=True),
         'filename': fields.char(string='Imported filename', size=256),
         'message': fields.text(string='Message'),
+        'po_ref_for_in': fields.char(string='PO reference to find the IN', size=128),
+        'pack_ref_for_in': fields.char(string='Ship/OUT reference to find the IN', size=128),
     }
 
     def wizard_sde_file_import(self, cr, uid, ids, context=None):
@@ -49,13 +51,15 @@ class sde_import(osv.osv_memory):
         if not ids:
             return True
 
-        sde_imp = self.read(cr, uid, ids[0], ['file', 'filename'], context=context)
+        sde_imp = self.read(cr, uid, ids[0], ['file', 'filename', 'po_ref_for_in', 'pack_ref_for_in'], context=context)
         if not sde_imp['file']:
             raise osv.except_osv(_('Warning'), _('No file to import'))
         file = base64.b64decode(sde_imp['file'])
 
         if context.get('attach_to_in'):
-            msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, context=context)
+            if not sde_imp['po_ref_for_in']:
+                raise osv.except_osv(_('Warning'), _('Please add at least the PO reference to find the IN'))
+            msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, sde_imp['po_ref_for_in'], sde_imp['pack_ref_for_in'], context=context)
             context.pop('attach_to_in')
         else:
             msg = self.sde_file_import(cr, uid, sde_imp['filename'], file, context=context)
@@ -157,7 +161,7 @@ class sde_import(osv.osv_memory):
 
         return msg
 
-    def sde_file_to_in(self, cr, uid, file_path, file, context=None):
+    def sde_file_to_in(self, cr, uid, file_path, file, po_ref, pack_ref, context=None):
         '''
         Method used by the SDE script to attach a file to an IN
         '''
@@ -172,14 +176,13 @@ class sde_import(osv.osv_memory):
                 file_data = file
             else:  # Binary expected
                 file_data = file.data
-            filetype = pick_obj.get_import_filetype(cr, uid, file_path, context=context)
 
-            # get the IN with the Ship Ref or the Origin
-            in_id = self.get_incoming_id_from_file(cr, uid, file_data, filetype, context=context)
+            # Get the IN with the references given
+            in_id = self.get_incoming_id_from_refs(cr, uid, po_ref, pack_ref, context=context)
             in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
 
-            # attach the simulation report to the IN
-            filename = 'SDE_incoming_shipment_%s_%s.%s' % (filetype, time.strftime('%Y_%m_%d_%H_%M'), file_path.split('.')[-1])
+            # attach the simulation file to the IN
+            filename = 'SDE_incoming_shipment_simulation_file_%s.%s' % (time.strftime('%Y_%m_%d_%H_%M'), file_path.split('.')[-1])
             self.pool.get('ir.attachment').create(cr, uid, {
                 'name': filename,
                 'datas_fname': filename,
@@ -242,6 +245,16 @@ class sde_import(osv.osv_memory):
             if ship_ref_field:
                 ship_ref = ship_ref_field[0].text or ''
                 ship_ref = ship_ref.strip().upper()
+
+        # Search the IN
+        return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, context=context)
+
+    def get_incoming_id_from_refs(self, cr, uid, po_name, ship_ref, context=None):
+        if context is None:
+            context = {}
+
+        if not po_name:
+            raise osv.except_osv(_('Error'), _('The PO Reference must not be empty'))
 
         if po_name.find(':') != -1:
             for part in po_name.split(':'):
