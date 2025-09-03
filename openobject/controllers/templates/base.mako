@@ -6,7 +6,7 @@
     <link rel="shortcut icon" href="/openobject/static/images/favicon.ico">
     
     <link type="text/css" rel="stylesheet" href="/openobject/static/css/jquery-ui/smoothness/jquery-ui-1.8.6.custom.css"/>
-    <link type="text/css" rel="stylesheet" href="/openobject/static/css/jquery.fancybox-1.3.1.css"/>
+    <link type="text/css" rel="stylesheet" href="/openobject/static/css/jquery.fancybox-1.3.4.css"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/jquery.signature.css"/>
 
 % for css in widget_css:
@@ -20,7 +20,7 @@
     <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery-ui-1.8.6.custom.min.js"></script>
     <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.form.js"></script>
     <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.ba-hashchange.js"></script>
-    <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.fancybox-1.3.1.js?v=14.0"></script>
+    <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.fancybox-1.3.4.js?v=14.0"></script>
     <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.dialogextend.js"></script>
     <script type="text/javascript" src="/openerp/static/javascript/jquery.signature.js"></script>
 

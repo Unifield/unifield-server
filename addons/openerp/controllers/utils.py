@@ -53,7 +53,7 @@ def get_db_list():
     dbfilter = cherrypy.request.app.config['openerp-web'].get('dblist.filter')
     if dbfilter:
         headers = cherrypy.request.headers
-        host = headers.get('X-Forwarded-Host', headers.get('Host'))
+        host = headers.get('Host', headers.get('X-Forwarded-Host'))
 
         base = re.split(r'\.|:|/', host)[0]
 
@@ -62,7 +62,7 @@ def get_db_list():
                 db = base
                 dblist = [db]
             else:
-                dblist = [d for d in dblist if d == base]
+                dblist = [d for d in dblist if d.lower() == base.lower()]
 
         elif dbfilter == 'UNDERSCORE':
             base = base + '_'

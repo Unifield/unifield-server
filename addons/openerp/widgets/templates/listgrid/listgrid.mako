@@ -161,13 +161,13 @@ if (auto_field && auto_field.val()){
         % elif field_attrs.get('displayon') != 'editable':
             <td class="grid-cell ${field_attrs.get('type', 'char')}"
                 style="${(data[field].color or None) and 'color: ' + data[field].color};"
-                sortable_value="${data[field].get_sortable_text()}">
+                sortable_value="${data[field].get_sortable_text()}">\
                 % if impex:
-                	<a href="javascript: void(0)" onclick="do_select('${data['id']}')">${data[field].display()}</a>
+                    <a href="javascript: void(0)" onclick="do_select('${data['id']}')">${data[field].display()}</a>\
                 % elif (edit_inline == -1 or not edit_inline or field_attrs.get('displayon') != 'notedition'):
-                	<span>${data[field].display()}</span>
+<span>${data[field].display()}</span>\
                 % endif
-            </td>
+</td>
         % endif
     % endfor
     % if editable and not hide_delete_button:
@@ -543,6 +543,9 @@ if (auto_field && auto_field.val()){
                                      || !$this.attr('record')
                                      || $this.attr('notselectable') ) {
                                         return;
+                                    }
+                                     if (event.ctrlKey) {
+                                         return;
                                     }
                                     do_select($this.attr('record'), '${name}');
                                 });
