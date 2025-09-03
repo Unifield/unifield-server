@@ -339,8 +339,8 @@ class return_shipment_family_processor(osv.osv):
             readonly=True,
             multi='pack_info',
         ),
-        'selected_parcel_ids': fields.text('Selected Parcel Ids'),
-        'parcel_ids': fields.related('shipment_line_id', 'parcel_ids', type='text', string='Parcel Ids'),
+        'selected_parcel_ids': fields.text('Selected Parcel IDs'),
+        'parcel_ids': fields.related('shipment_line_id', 'parcel_ids', type='text', string='Parcel IDs'),
         'parcel_ids_error': fields.function(_get_pack_info, method=True, type='boolean', string='Parcel Error', multi='pack_info'),
         'has_parcels_info': fields.function(_get_pack_info, method=True, type='boolean', string='Has Parcel', multi='pack_info'),
         'selected_weight': fields.function(
@@ -362,7 +362,7 @@ class return_shipment_family_processor(osv.osv):
                                                 ('ok', 'Ok'),
                                                 ('return_qty_too_much', 'Too much quantity selected'),
                                                 ('negative', 'Negative Value'),
-                                                ('parcels', 'Selected parcel ids'),
+                                                ('parcels', 'Selected Parcel IDs'),
                                             ],
                                             multi='pack_info'
                                             ),

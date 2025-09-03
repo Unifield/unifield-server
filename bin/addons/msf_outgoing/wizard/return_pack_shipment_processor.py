@@ -265,7 +265,7 @@ class return_pack_shipment_family_processor(osv.osv):
                                                 ('ok', 'Ok'),
                                                 ('to_smaller_than_from', 'To value must be greater or equal to From value'),
                                                 ('seq_out_of_range', 'Selected Sequence is out of range'),
-                                                ('parcels', 'Selected parcel ids'),
+                                                ('parcels', 'Selected Parcel IDs'),
                                             ],
                                             multi='pack_info',
                                             ),

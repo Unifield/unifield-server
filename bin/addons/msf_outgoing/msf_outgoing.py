@@ -653,7 +653,7 @@ class shipment(osv.osv):
                 sub_ship_parcels = family.parcel_ids
 
             if len(sub_ship_parcels.split(',')) != selected_number:
-                raise osv.except_osv(_('Warning'), _('You must select %d parcel ids, selected: %d') % (selected_number, len(sub_ship_parcels)))
+                raise osv.except_osv(_('Warning'), _('You must select %d Parcel IDs') % (selected_number, ))
 
 
 
@@ -691,6 +691,7 @@ class shipment(osv.osv):
                 'keepLineNumber': True,
                 'allow_copy': True,
                 'non_stock_noupdate': True,
+                'wkf_copy': True,
             })
 
             new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
@@ -709,6 +710,7 @@ class shipment(osv.osv):
             'keepLineNumber': True,
             'allow_copy': True,
             'non_stock_noupdate': True,
+            'wkf_copy': True,
         })
         shadow_pack_id = picking_obj.copy(cr, uid, picking.id, shadow_pack_data, context=new_ctx)
         ###
@@ -802,7 +804,7 @@ class shipment(osv.osv):
                 'select_parcel_ids': False,
             }, context=context)
             if family.parcel_ids and len(remaining_parcels_array) != initial_to_pack - initial_from_pack + 1:
-                raise osv.except_osv(_('Warning'), _('Number of kept parcel ids %d does not patch number of packs %d') % (len(remaining_parcels_array), initial_to_pack - initial_from_pack + 1))
+                raise osv.except_osv(_('Warning'), _('Number of kept Parcel IDs %d does not match number of packs %d') % (len(remaining_parcels_array), initial_to_pack - initial_from_pack + 1))
         else:
             self.pool.get('pack.family.memory').unlink(cr, uid, family.id, context=context)
 
@@ -813,6 +815,7 @@ class shipment(osv.osv):
             'allow_copy': False,
             'non_stock_noupdate': False,
             'draft_packing_id': False,
+            'wkf_copy': False,
         })
         picking_obj.write(cr, uid, [shadow_pack_id], {'state': 'done'}, context=context)
         # confirm the new packing
@@ -1018,7 +1021,7 @@ class shipment(osv.osv):
                     selected_parcel_ids = family.parcel_ids
 
                 if family.parcel_ids and len(selected_parcel_ids.split(',')) != family.selected_number:
-                    raise osv.except_osv(_('Error'), _('Number of parcels %d does not match returned number %d') % (len(selected_parcel_ids.split(',')), family.selected_number))
+                    raise osv.except_osv(_('Error'), _('Number of Parcel IDs %d does not match returned number %d') % (len(selected_parcel_ids.split(',')), family.selected_number))
 
                 back_ship_line_id = self.pool.get('pack.family.memory').copy(cr, uid, ship_line.id, {
                     'from_pack': family.to_pack - family.selected_number + 1,
@@ -1086,7 +1089,7 @@ class shipment(osv.osv):
                         remaining_pack_ids_array = [x for x in ship_line.parcel_ids.split(',') if x not in selected_parcel_ids.split(',')]
                         remaining_pack_ids = ','.join(remaining_pack_ids_array)
                         if len(remaining_pack_ids_array) != initial_to_pack - initial_from_pack + 1:
-                            raise osv.except_osv(_('Error'), _('Number of kept parcels %d does not match returned number %d') % (len(remaining_pack_ids_array), initial_to_pack - initial_from_pack + 1))
+                            raise osv.except_osv(_('Error'), _('Number of kept Parcel IDs %d does not match returned number %d') % (len(remaining_pack_ids_array), initial_to_pack - initial_from_pack + 1))
 
                     self.pool.get('pack.family.memory').write(cr, uid, ship_line.id, {
                         'from_pack': initial_from_pack,
@@ -1249,7 +1252,7 @@ class shipment(osv.osv):
                     stay_parcel_ids = [x for x in family.parcel_ids.split(',') if x not in returned_parcel_ids]
 
                     if len(returned_parcel_ids) != family.return_to - family.return_from + 1:
-                        raise osv.except_osv( _('Error'), _('Number of returned parcels %d does not match selected parcels %d') % (family.return_to - family.return_from + 1, len(returned_parcel_ids)))
+                        raise osv.except_osv( _('Error'), _('Number of returned Parcel IDs %d does not match selected parcels %d') % (family.return_to - family.return_from + 1, len(returned_parcel_ids)))
 
                 for seq in stay:
                     seq.append(self.pool.get('pack.family.memory').copy(cr, uid, ship_line.id, {
@@ -1264,7 +1267,7 @@ class shipment(osv.osv):
                     number_stay_pack +=  seq[1] - seq[0] + 1
 
                 if family.parcel_ids and number_stay_pack != len(stay_parcel_ids):
-                    raise osv.except_osv( _('Error'), _('Number of kept parcels %d does not match selected parcels %d') % (number_stay_pack, len(stay_parcel_ids)))
+                    raise osv.except_osv( _('Error'), _('Number of kept Parcel IDs %d does not match selected parcels %d') % (number_stay_pack, len(stay_parcel_ids)))
 
                 return_pck_nb += number_stay_pack
                 # back move
@@ -1848,6 +1851,7 @@ class shipment(osv.osv):
                 shipment.id, shipment.name,
             ))
             self.pool.get('pack.family.memory').write(cr, uid, [x.id for x in shipment.pack_family_memory_ids if x.state == 'assigned'], {'state': 'done'}, context=context)
+
         self.complete_finished(cr, uid, ids, context=context)
         return True
 
@@ -3923,6 +3927,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': True,
                 'allow_copy': True,
                 'keepLineNumber': True,
+                'wkf_copy': True,
             })
 
             new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
@@ -3934,6 +3939,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': False,
                 'allow_copy': False,
                 'keepLineNumber': False,
+                'wkf_copy': False,
             })
 
             # For each processed lines, save the processed quantity to update the draft picking ticket
@@ -4298,6 +4304,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': True,
                 'keepLineNumber': True,
                 'allow_copy': True,
+                'wkf_copy': True,
             })
             context['offline_synchronization'] = False
             # Create the packing with pack_values and the updated context
@@ -4317,6 +4324,7 @@ class stock_picking(osv.osv):
                 'keep_prodlot': False,
                 'keepLineNumber': False,
                 'allow_copy': False,
+                'wkf_copy': False,
             })
 
             # Set default values for packing move creation
@@ -4340,7 +4348,7 @@ class stock_picking(osv.osv):
                         if len(parcel_ids_array) != family.to_pack - family.from_pack + 1:
                             raise osv.except_osv(
                                 _('Error'),
-                                _('%s: from pack: %d, to pack %d: number of parcels %d does not match number of packs %d, click on the box icon to edit parcel ids') % (picking.name, family.from_pack, family.to_pack, len(parcel_ids_array), family.to_pack - family.from_pack + 1)
+                                _('%s: from pack: %d, to pack %d: number of Parcel IDs %d does not match number of packs %d, click on the box icon to edit Parcel IDs') % (picking.name, family.from_pack, family.to_pack, len(parcel_ids_array), family.to_pack - family.from_pack + 1)
                             )
 
                     ship_line_id = self.pool.get('pack.family.memory').create(cr, uid,
@@ -4974,14 +4982,14 @@ class pack_family_memory(osv.osv):
 
     _columns = {
         'name': fields.char(string='Reference', size=1024),
-        'shipment_id': fields.many2one('shipment', string='Shipment', select=1, join='LEFT'),
+        'shipment_id': fields.many2one('shipment', string='Shipment', select=1),
         'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
         'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
         'parcel_ids': fields.text('Parcel Ids'),
-        'selected_parcel_ids': fields.text('Selected Parcel Ids'),
+        'selected_parcel_ids': fields.text('Selected Parcel IDs'),
         'parcel_comment': fields.char(string='Parcel Comment', size=256),
         'pack_type': fields.many2one('pack.type', string='Pack Type'),
         'length': fields.float(digits=(16, 2), string='Length [cm]'),

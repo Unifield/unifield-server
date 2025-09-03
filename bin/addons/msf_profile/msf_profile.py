@@ -59,6 +59,47 @@ class patch_scripts(osv.osv):
     }
 
     # UF38.0
+    def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
+        '''
+        Update the Code and Name of the product.cold_chain CT3+
+        On HQ_OCA, set the cold_chain of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 to Mix/Check
+        '''
+        cr.execute("""
+            UPDATE product_cold_chain SET code = 'CT3+', name = 'CT3+ - Temperature Monitoring 2-40°C' 
+                WHERE id IN (SELECT res_id FROM ir_model_data WHERE name = 'product_attributes_cold_20')
+        """)
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance == 'HQ_OCA':
+            mixcheck_cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'cold_21')[1]
+            cr.execute("""
+                UPDATE product_product SET cold_chain = %s WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205')
+            """, (mixcheck_cc_id,))
+            cr.execute("""
+                UPDATE ir_model_data SET last_modification = NOW(), touched = '["cold_chain"]' 
+                    WHERE model = 'product.product' AND res_id IN (SELECT id FROM product_product WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205'))
+            """)
+            self.log_info(cr, uid, "US-14507: The Thermosensitivity of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 was set to Mix/Check")
+        return True
+
+    def us_12985_partner_state_ppl_pack_from_wkf(self, cr, uid, *a, **b):
+        '''
+        Set the partners' Status to Active for Active partners and Inactive for deactivated partners
+        Set "from_wkf" to True to all PPLs and PACKs
+        '''
+        cr.execute("""UPDATE res_partner SET state = 'active' WHERE active = 't'""")
+        self.log_info(cr, uid, "US-12985: %s active partners had their set Status set to Active" % (cr.rowcount,))
+        cr.execute("""UPDATE res_partner SET state = 'inactive' WHERE active = 'f'""")
+        self.log_info(cr, uid, "US-12985: %s deactivated partners had their set Status set to Inactive" % (cr.rowcount,))
+        cr.execute("""UPDATE stock_picking SET from_wkf = 't' WHERE type = 'out' AND subtype IN ('ppl', 'packing') AND from_wkf = 'f'""")
+        self.log_info(cr, uid, "US-12985: %s PPLs and PACKs are now considered from workflow" % (cr.rowcount,))
+        return True
+
+    def us_13980_update_new_code_on_merged(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'UD_GETALL_MERGED', '1')
+        return True
+
     def us_9592_pack_family_to_table(self, cr, uid, *a, **b):
         cr.execute('''
             insert into pack_family_memory (
@@ -137,30 +178,6 @@ class patch_scripts(osv.osv):
                 m.id=ANY(old.move_lines)
             '''
                    )
-
-        return True
-
-    def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
-        '''
-        Update the Code and Name of the product.cold_chain CT3+
-        On HQ_OCA, set the cold_chain of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 to Mix/Check
-        '''
-        cr.execute("""
-            UPDATE product_cold_chain SET code = 'CT3+', name = 'CT3+ - Temperature Monitoring 2-40°C' 
-                WHERE id IN (SELECT res_id FROM ir_model_data WHERE name = 'product_attributes_cold_20')
-        """)
-
-        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if current_instance and current_instance.instance == 'HQ_OCA':
-            mixcheck_cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'cold_21')[1]
-            cr.execute("""
-                UPDATE product_product SET cold_chain = %s WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205')
-            """, (mixcheck_cc_id,))
-            cr.execute("""
-                UPDATE ir_model_data SET last_modification = NOW(), touched = '["cold_chain"]' 
-                    WHERE model = 'product.product' AND res_id IN (SELECT id FROM product_product WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205'))
-            """)
-            self.log_info(cr, uid, "US-14507: The Thermosensitivity of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 was set to Mix/Check")
 
         return True
 
@@ -4340,8 +4357,7 @@ class patch_scripts(osv.osv):
 
     def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
         return True
-        """
-        old patch script disabled
+        # patch script disabled
         cr.execute('''
             update stock_move
                 set selected_number=to_pack-from_pack+1
@@ -4351,7 +4367,6 @@ class patch_scripts(osv.osv):
         ''')
         self._logger.warn('Set qty to process on %d stock.move' % cr.rowcount)
         return True
-        """
 
     # UF14.0
     def us_6342_cancel_ir(self, cr, uid, *a, **b):

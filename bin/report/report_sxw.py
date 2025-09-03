@@ -75,7 +75,9 @@ def isDate(date, date_format=False):
         date_format = '%Y-%m-%d'
     try:
         r = datetime.strptime(date, date_format)
-        return date == r.strftime(date_format) # do not match 2025-1-1 as date
+        if '.%f' not in date_format: #ignore comparison when Millisecond in format
+            # i.e:  2025-06-09 11:10:07.32655 != 2025-06-09 11:10:07.326550
+            return date == r.strftime(date_format) # do not match 2025-1-1 as date
     except ValueError:
         return False
     return True

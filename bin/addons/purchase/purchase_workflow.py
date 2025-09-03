@@ -91,7 +91,11 @@ class purchase_order_line(osv.osv):
             }
 
         # Also check the Product Creators if the Partner is Intermision or Inter-section
-        partner_type = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id.partner_type
+        po = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id
+        po_order_types = ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp']
+        if context.get('from_button') and po.order_type not in po_order_types and po.partner_id.state == 'phase_out':
+            raise osv.except_osv(_('Error'), _('The selected Supplier is Phase Out, please select another Supplier'))
+        partner_type = po.partner_type
         if partner_type in ['intermission', 'section']:
             data_obj = self.pool.get('ir.model.data')
             if partner_type == 'section':  # Non-UD products

@@ -40,7 +40,7 @@ class shipment_add_pack_processor(osv.osv):
         nb_processed = 0
         for pack_fam in wiz.family_ids:
             if pack_fam.parcel_ids_error:
-                raise osv.except_osv(_('Error !'), _('Please select pack on red line by clicking on the box icon.'))
+                raise osv.except_osv(_('Error !'), _('Please select Parcel IDs on red line by clicking on the box icon.'))
             nb_processed = ship_obj.attach_draft_pick_to_ship(cr, uid, shipment_id, pack_fam.shipment_line_id, selected_number=pack_fam.selected_number, selected_parcel_ids=pack_fam.selected_parcel_ids, context=context, job_id=job_id, nb_processed=nb_processed)
 
         return True
@@ -64,7 +64,7 @@ class shipment_add_pack_processor_line(osv.osv):
     def select_parcel_ids(self, cr, uid, ids, context=None):
         ship_line = self.read(cr, uid, ids[0], ['parcel_ids', 'selected_parcel_ids', 'selected_number'], context=context)
         if not ship_line['parcel_ids']:
-            raise osv.except_osv(_('Error !'), _('Parcel list is not defined.'))
+            raise osv.except_osv(_('Error !'), _('Parcel ID is not defined.'))
         wiz = self.pool.get('shipment.parcel.selection').create(cr, uid, {
             'add_pack_line_id': ids[0],
             'parcel_number': ship_line['selected_number'],

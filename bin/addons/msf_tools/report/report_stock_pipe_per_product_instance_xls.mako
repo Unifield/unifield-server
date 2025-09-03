@@ -42,8 +42,18 @@
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
     </Borders>
   </Style>
-  <Style ss:ID="tab_content">
+  <Style ss:ID="tab_content0">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+    </Borders>
+  </Style>
+  <Style ss:ID="tab_content1">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
     <Borders>
       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -76,9 +86,17 @@
     <Column ss:AutoFitWidth="1" ss:Width="90" />
     # Standardization Level
     <Column ss:AutoFitWidth="1" ss:Width="90" />
-    # Unifield Status
+    # UniData Status
     <Column ss:AutoFitWidth="1" ss:Width="90" />
-    # Unidata Status
+    # HQ UniField Status
+    <Column ss:AutoFitWidth="1" ss:Width="90" />
+    # Instance/Mission
+    <Column ss:AutoFitWidth="1" ss:Width="200" />
+    # Instance UniField Status
+    <Column ss:AutoFitWidth="1" ss:Width="90" />
+    # Instance stock
+    <Column ss:AutoFitWidth="1" ss:Width="90" />
+    # Pipeline Qty
     <Column ss:AutoFitWidth="1" ss:Width="90" />
 
     ##### Table with all products #####
@@ -90,47 +108,41 @@
     <% products = get_products() %>
     % if not products:
         <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_content" ss:MergeAcross="1"><Data ss:Type="String">${_('There are no products to report')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content0" ss:MergeAcross="1"><Data ss:Type="String">${_('There are no products to report')|x}</Data></Cell>
         </Row>
     % endif
 
+    <Row ss:AutoFitHeight="1">
+      <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Product Creator')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Standardization Level')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('UniData Status')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('HQ UniField Status')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Instance/Mission')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Instance UniField Status')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Instance stock')|x}</Data></Cell>
+      <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Pipeline Qty')|x}</Data></Cell>
+    </Row>
+
+    <% i = 1 %>
     % for prod in products:
-        <% prod_info = get_prod_info(prod[0]) %>
-        <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Product Creator')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Standardization Level')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Unifield Status')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Unidata Status')|x}</Data></Cell>
-        </Row>
-
-        <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod[1]|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod[2]|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod[3] or ''|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${getSel(prod_info, 'standard_ok') or ''|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${getSel(prod_info.state, 'name') or ''|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${getSel(prod_info, 'state_ud') or ''|x}</Data></Cell>
-        </Row>
-
-        <% smrl_list = get_stock_mission_report_lines(r, prod, prod_info) %>
-        <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Instance/Mission')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Unifield Status')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Instance stock')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Pipeline Qty')|x}</Data></Cell>
-        </Row>
+        <% i = 1 - i %>
+        <% smrl_list = get_stock_mission_report_lines(r, prod) %>
         % for smrl in smrl_list:
             <Row ss:AutoFitHeight="1">
-              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl[1]|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${get_inst_product_state(smrl[6])|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${smrl[4]|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${smrl[5]|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="String">${prod[1]|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="String">${prod[2]|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="String">${prod[3] or ''|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="String">${getSelValue('product.product', 'standard_ok', smrl[7]) or ''|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="String">${getSelValue('product.product', 'state_ud', smrl[8]) or ''|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="String">${get_product_state(smrl[9])|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="String">${smrl[1]|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="String">${get_product_state(smrl[6])|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="Number">${smrl[4]|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content${i}"><Data ss:Type="Number">${smrl[5]|x}</Data></Cell>
             </Row>
         % endfor
-        <Row></Row>
-        <Row></Row>
     % endfor
 
   </Table>

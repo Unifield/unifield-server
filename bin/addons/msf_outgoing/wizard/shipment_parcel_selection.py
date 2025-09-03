@@ -28,7 +28,7 @@ class shipment_parcel_ppl_selection(osv.osv):
             nb_selected = len(lines_ok)
 
         if nb_selected != sel.parcel_number:
-            raise osv.except_osv(_('Error !'), _('%d Parcels expected, %d selected.') % (sel.parcel_number, nb_selected))
+            raise osv.except_osv(_('Error !'), _('%d Parcel IDs expected.') % (sel.parcel_number, ))
 
 
         self.pool.get('ppl.family.processor').write(cr, uid, sel.ppl_line_id.id, {'parcel_ids': ','.join(lines_ok)}, context=context)
@@ -46,11 +46,11 @@ class shipment_parcel_selection(osv.osv):
 
     _columns = {
         'shipment_line_id': fields.many2one('pack.family.memory', string='Shipment Line', readonly=True, ondelete='cascade'),
-        'return_line_id': fields.many2one('return.shipment.family.processor', string='Return to stock line', readonly=True, ondelete='cascade'),
+        'return_line_id': fields.many2one('return.shipment.family.processor', string='Line to return to stock ', readonly=True, ondelete='cascade'),
         'return_shipment_line_id': fields.many2one('return.pack.shipment.family.processor', string='Return from Sub Ship to draft Ship line', readonly=True, ondelete='cascade'),
         'add_pack_line_id': fields.many2one('shipment.add.pack.processor.line', string='Sub ship, add pack from draft pick', readonly=True, ondelete='cascade'),
         'parcel_number': fields.integer('Nb parcel to select', readonly=True),
-        'selected_item_ids': fields.text('Selected Parcels'),
+        'selected_item_ids': fields.text('Selected Parcel IDs'),
         'available_items_ids': fields.text('Available Parcels'),
     }
 
@@ -70,7 +70,7 @@ class shipment_parcel_selection(osv.osv):
         if sel.selected_item_ids:
             nb_selected = len(sel.selected_item_ids.split(','))
         if nb_selected != sel.parcel_number:
-            raise osv.except_osv(_('Error !'), _('%d Parcels expected, %d selected.') % (sel.parcel_number, nb_selected))
+            raise osv.except_osv(_('Error !'), _('%d Parcel IDs expected.') % (sel.parcel_number, ))
 
         if sel.shipment_line_id:
             # from draft ship form view

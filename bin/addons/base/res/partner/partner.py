@@ -130,6 +130,7 @@ class res_partner(osv.osv):
         'credit_limit': fields.float(string='Credit Limit'),
         'ean13': fields.char('EAN13', size=13),
         'active': fields.boolean('Active'),
+        'state': fields.selection([('active', 'Active'), ('phase_out', 'Phase Out'), ('inactive', 'Inactive')], 'Partner Status', readonly=1),
         'customer': fields.boolean('Customer', help="Check this box if the partner is a customer."),
         'supplier': fields.boolean('Supplier', help="Check this box if the partner is a supplier. If it's not checked, purchase people will not see it when encoding a purchase order."),
         'city': fields.related('address', 'city', type='char', string='City', write_relate=True),
@@ -174,6 +175,7 @@ class res_partner(osv.osv):
 
     _defaults = {
         'active': lambda *a: 1,
+        'state': 'active',
         'customer': _default_customer,
         'supplier': _default_supplier,
         'category_id': _default_category,

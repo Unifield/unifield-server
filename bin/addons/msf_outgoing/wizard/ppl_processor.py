@@ -224,12 +224,12 @@ class ppl_processor(osv.osv):
                 if family.parcel_ids:
                     nb_p = len(family.parcel_ids.split(','))
                     if nb_p != family.to_pack - family.from_pack + 1:
-                        parcel_ids_error.append(_('%s - %s, %d parcel IDs found') % (family.from_pack, family.to_pack, nb_p))
+                        parcel_ids_error.append(_('%s - %s, %d Parcel IDs found') % (family.from_pack, family.to_pack, nb_p))
 
             if parcel_ids_error:
                 raise osv.except_osv(
                     _('Processing Error'),
-                    _('Inconsitent parcel IDs, click on icon box to edit parcel IDs: %s') % ('\n'.join(parcel_ids_error),)
+                    _('Inconsitent Parcel IDs, click on icon box to edit Parcel IDs: %s') % ('\n'.join(parcel_ids_error),)
                 )
 
             nb_pick_moves = move_obj.search(cr, uid, [
@@ -287,8 +287,8 @@ class ppl_family_processor(osv.osv):
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
         'parcel_ids': fields.text('Parcel Ids'),
-        'has_parcel': fields.function(_get_has_parcel, type='boolean', method=True, string='Has pack IDs', multi='get_all'),
-        'has_parcel_ids_error': fields.function(_get_has_parcel, type='boolean', method=True, string='Has pack error IDs', multi='get_all'),
+        'has_parcel': fields.function(_get_has_parcel, type='boolean', method=True, string='Has Parcel IDs', multi='get_all'),
+        'has_parcel_ids_error': fields.function(_get_has_parcel, type='boolean', method=True, string='Has Parcel IDs error', multi='get_all'),
         'pack_type': fields.many2one(
             'pack.type',
             string='Pack Type',
@@ -338,7 +338,7 @@ class ppl_family_processor(osv.osv):
         }, context=context)
 
         return {
-            'name': _("List PPL Parcel Ids"),
+            'name': _("List PPL Parcel IDs"),
             'type': 'ir.actions.act_window',
             'res_model': 'shipment.parcel.ppl.selection',
             'view_mode': 'form',

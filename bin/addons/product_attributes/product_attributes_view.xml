@@ -129,14 +129,17 @@
                                 <group colspan="2" col="4">
                                     <field name="active" readonly="1"/>
                                     <field name="nsl_merged" attrs="{'invisible': [('int_status_code', '!=', 'local')]}" />
+                                    <field name="local_product_merged" attrs="{'invisible': [('local_product_merged', '=', False)]}" />
                                     <field name="unidata_merged" attrs="{'invisible': [('unidata_merged', '=', False)]}" />
                                 </group>
                                 <field name="instance_level" invisible="1" />
                                 <group colspan="1" col="1">
                                    <field name="can_be_hq_merged" invisible="1"/>
+                                   <field name="root_nomen_msfid" invisible="1"/>
                                    <button name="deactivate_product" icon="gtk-execute" string="De-activate product" type="object" attrs="{'invisible': [('active', '=', False)]}" />
-                                   <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': ['|', '|', ('active', '=', True), ('nsl_merged', '=', True), ('unidata_merged', '=', True)]}" />
-                                   <button name="open_merge_product_wizard" icon="gtk-convert" string="Merge product" type="object"  attrs="{'invisible': ['|', '|', '|', ('int_status_code', '!=', 'local'), ('nsl_merged', '=', True), ('active', '=', False), ('instance_level', '!=', 'coordo')]}"/>
+                                   <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': ['|', '|', '|', ('active', '=', True), ('nsl_merged', '=', True), ('local_product_merged', '=', True), ('unidata_merged', '=', True)]}" />
+                                   <button name="open_merge_product_wizard" icon="gtk-convert" string="Merge product" type="object"  attrs="{'invisible': ['|', '|', '|', '|', ('int_status_code', '!=', 'local'), ('nsl_merged', '=', True), ('local_product_merged', '=', True), ('active', '=', False), ('instance_level', '!=', 'coordo')]}"/>
+                                   <button name="open_merge_local_product_wizard" icon="gtk-convert" string="Merge local product" type="object"  attrs="{'invisible': ['|', '|', '|', '|', '|', ('int_status_code', '!=', 'local'), ('root_nomen_msfid', '=', 'MED'), ('nsl_merged', '=', True), ('local_product_merged', '=', True), ('active', '=', False), ('instance_level', '!=', 'coordo')]}"/>
                                    <button name="open_merge_hq_product_wizard" icon="gtk-convert" string="HQ Merge product" type="object"  attrs="{'invisible': [('can_be_hq_merged', '!=', 'True')]}"/>
                                    <button name="pull_ud" icon="unidata.png" string="Pull UD Product" type="object"  attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('instance_level', '!=', 'section')]}" />
                                    <button name="debug_ud" icon="debug.png" string="Display MML API result" type="object"  attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('instance_level', '!=', 'section')]}" invisible="1"/>

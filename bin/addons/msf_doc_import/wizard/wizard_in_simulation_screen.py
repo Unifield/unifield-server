@@ -362,6 +362,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
 
 
+        parcel_ids_seen = set()
         for node in rec.findall('field'):
             if node.attrib['name'] != 'move_lines':
                 index += 1
@@ -415,6 +416,11 @@ class wizard_import_in_simulation_screen(osv.osv):
                                         if parcel_nr in values[index]['parcel_ids']:
                                             error.append(_('parcel_ids node %s, parcel_nr %s already used') % (nb_pack, parcel_nr))
                                             break
+                                        if parcel_id in parcel_ids_seen:
+                                            error.append(_('parcel_ids node %s, parcel_id must be unique, %s already used') % (nb_pack, parcel_id))
+                                            break
+                                        parcel_ids_seen.add(parcel_id)
+
                                         values[index]['parcel_ids'][parcel_nr] = parcel_id
                             else:
                                 values[index][node_name]= pack_data_node.text and pack_data_node.text.strip() or False
@@ -483,6 +489,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         pack_index = False
         # Get values per line
         index = 0
+        parcel_ids_seen = set()
         for row in rows:
             index += 1
             values.setdefault(index, [])
@@ -527,9 +534,14 @@ class wizard_import_in_simulation_screen(osv.osv):
                     if row.cells[0] and row.cells[0].type == 'int' and len(row.cells) > 1:
                         parcel_id = row.cells[1].data and str(row.cells[1].data).strip() or ''
                         if parcel_id and ',' in parcel_id:
-                            error.append(_('Line %s:  comma (,) is not allowed in parcel_id') % (index,))
+                            error.append(_('Line %s:  comma (,) is not allowed in Parcel ID') % (index,))
                             break
 
+                        if parcel_id:
+                            if parcel_id in parcel_ids_seen:
+                                error.append(_('Line %s:  Parcel ID must be unique, %s already used') % (index, parcel_id))
+                                break
+                            parcel_ids_seen.add(parcel_id)
                         values[pack_index].setdefault('parcel_ids', {}).update({row.cells[0].data: row.cells[1].data and parcel_id})
                         continue
                     else:
@@ -815,7 +827,7 @@ Nothing has been imported because of %s. See below:
                             p_to = int(pack_info.get('parcel_to', 0))
                             if pack_info.get('parcel_ids'):
                                 if p_from <= p_to and len(pack_info.get('parcel_ids')) != p_to - p_from + 1:
-                                    values_line_errors.append(_('Packing List %s, number of packs %s does not match the number of parcel ID %s') % (pack_info.get('packing_list'), p_to - p_from + 1, len(pack_info.get('parcel_ids'))))
+                                    values_line_errors.append(_('Packing List %s, number of packs %s does not match the number of Parcel IDs %s') % (pack_info.get('packing_list'), p_to - p_from + 1, len(pack_info.get('parcel_ids'))))
                                 elif p_from <= p_to:
                                     init_pack = p_from
                                     while init_pack <= p_to:
