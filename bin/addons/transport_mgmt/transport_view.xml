@@ -225,7 +225,7 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                         </page>
 
-                        <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'dom'])]}">
+                        <page string="Custom Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'dom'])]}">
                             <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
                             <newline />
                             <field name="transport_fees_ids" nolabel="1" colspan="4"
@@ -235,6 +235,41 @@
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
                                     <field name="name" />
+                                    <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_details" readonly="1" />
+                                    <field name="purchase_currency_id" readonly="1" />
+                                    <field name="value" />
+                                    <field name="currency_id" />
+                                    <field name="details" />
+                                    <field name="validated" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Transport Fees">
+                            <field name="transport_transport_fees_ids" nolabel="1" colspan="4"
+                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
+                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    o2m_selectable="2"
+                                >
+                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                    <html>
+                                        <script language="javascript">
+                                            jQuery(document).ready(function () {
+                                                var name_val = $('span[name="name"']).val();
+                                                jQuery('#dummy').hover(function () {
+                                                    console.log('hover');
+                                                });
+                                            });
+                                        </script>
+                                    </html>
+                                    <button name="dummy" string="Help" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}" />
+                                    <field name="name" />
+                                    <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_details" readonly="1" />
+                                    <field name="purchase_currency_id" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
@@ -479,7 +514,7 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
                         </page>
 
-                        <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
+                        <page string="Custom Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
                             <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [['state', '!=', 'planned'], ('zone_type', 'in', ['int', 'regional'])]}"/>
                             <newline />
                             <field name="transport_fees_ids" nolabel="1" colspan="4"
@@ -489,6 +524,30 @@
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
                                     <field name="name" />
+                                    <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_details" readonly="1" />
+                                    <field name="purchase_currency_id" readonly="1" />
+                                    <field name="value" />
+                                    <field name="currency_id" />
+                                    <field name="details" />
+                                    <field name="validated" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Transport Fees">
+                            <field name="transport_transport_fees_ids" nolabel="1" colspan="4"
+                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
+                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    o2m_selectable="2"
+                                >
+                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                    <field name="name" />
+                                    <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_details" readonly="1" />
+                                    <field name="purchase_currency_id" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
@@ -633,7 +692,7 @@ action = self.open_ito_from_po(cr, uid, ids, context=context)
             </field>
         </record>
 
-       <record id="open_ito_from_po" model="ir.values">
+        <record id="open_ito_from_po" model="ir.values">
             <field name="key2">client_action_relate</field>
             <field name="model">purchase.order</field>
             <field name="name">Linked ITOs</field>
