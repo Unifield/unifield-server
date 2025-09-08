@@ -705,14 +705,22 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                if origin and wiz.purchase_id.name.lower() not in origin.lower():
-                    message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
-                        % (origin, wiz.picking_id.name, wiz.origin)
-                    self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
-                    res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                    cr.commit()
-                    cr.close(True)
-                    return res
+                if origin:
+                    if not wiz.purchase_id:
+                        message = _("Import aborted, the Origin should not be filled in an Incoming Shipment from scratch.")
+                        self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
+                        res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                        cr.commit()
+                        cr.close(True)
+                        return res
+                    elif wiz.purchase_id.name.lower() not in origin.lower():
+                        message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
+                            % (origin, wiz.picking_id.name, wiz.origin)
+                        self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
+                        res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                        cr.commit()
+                        cr.close(True)
+                        return res
                 header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
