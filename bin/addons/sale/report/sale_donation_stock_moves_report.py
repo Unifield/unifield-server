@@ -21,6 +21,7 @@
 
 
 import time
+from tools.translate import _
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
@@ -38,6 +39,7 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
             'getQty': self._get_qty,
             'computeCurrency': self._compute_currency,
             'userCompany': self.user_company,
+            'getRtTranslation': self.get_rt_translation,
         })
 
     def _get_moves(self, report):
@@ -112,6 +114,20 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
             return round(price, 2)
 
         return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, price, round=False, context=context), 2)
+
+    def get_rt_translation(self, rt_name, rt_code):
+        if not rt_code:
+            return rt_name
+
+        donation_rts = {
+            9: _('Donation (standard)'),
+            10: _('Donation to prevent losses'),
+            11: _('In-Kind Donation'),
+            22: _('Programmatic Donation')
+        }
+
+        return donation_rts.get(rt_code, rt_name)
+
 
 
 class sale_donation_stock_moves_report_xls(SpreadsheetReport):

@@ -175,7 +175,7 @@
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.picking_id.name|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.reason_type_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getRtTranslation(o.reason_type_id.name, o.reason_type_id.code)|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.sale_line_id and o.sale_line_id.order_id.name or ''|x}</Data></Cell>
                 % else:
