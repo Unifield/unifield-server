@@ -195,7 +195,7 @@
                                 <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
                                 <p id="view_purchase_order_locked_for_signature" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                     <translate>
-                                        WARNING: This PO uses e-signatures. To edit it, e-signatures must be removed.
+                                        WARNING: This Purchase Order is locked for e-signature. To edit it, click the "Remove signatures to unlock PO" button.
                                     </translate>
                                     <br/>
                                 </p>
