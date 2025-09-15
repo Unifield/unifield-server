@@ -1237,5 +1237,10 @@
         <record id="us_9592_pack_family_to_table" model="patch.scripts">
             <field name="method">us_9592_pack_family_to_table</field>
         </record>
+
+        <!-- UF39.0 -->
+        <record id="us_14605_remove_new_code_old_merge" model="patch.scripts">
+            <field name="method">us_14605_remove_new_code_old_merge</field>
+        </record>
     </data>
 </openerp>
