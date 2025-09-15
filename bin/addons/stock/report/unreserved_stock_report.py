@@ -43,7 +43,7 @@ class unreserved_stock_report(report_sxw.rml_parse):
                     AND m2.state IN ('done') 
                 GROUP BY product_id, prodlot_id
             )
-            x GROUP BY product_id, prodlot_id HAVING SUM(qty) != 0
+            x GROUP BY product_id, prodlot_id HAVING SUM(qty) > 0
             ORDER BY product_id, prodlot_id
         """, (cross_docking_id, cross_docking_id, cross_docking_id, cross_docking_id,))
 
