@@ -687,26 +687,19 @@ class sale_order_line(osv.osv):
             raise osv.except_osv(_('Error'), _('The selected Customer is Phase Out, please select another Customer'))
         if not so.procurement_request and so.partner_type in ['intermission', 'section']:
             data_obj = self.pool.get('ir.model.data')
-            if so.partner_type == 'section':  # Non-UD products
-                creator_check = ' pp.international_status != %s AND' % data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
-            else:  # Local products
-                creator_check = ' pp.international_status = %s AND' % data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            # Local products
             cr.execute("""
                 SELECT sl.line_number, pp.default_code FROM sale_order_line sl 
                     LEFT JOIN product_product pp ON sl.product_id = pp.id
-                WHERE""" + creator_check + """ sl.id IN %s AND sl.state = 'draft'
-                ORDER BY sl.line_number""", (tuple(ids),)) # not_a_user_entry
+                WHERE pp.international_status = %s AND sl.id IN %s AND sl.state = 'draft'
+                ORDER BY sl.line_number
+            """, (data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1], tuple(ids))) # not_a_user_entry
             lines_pb = []
             for x in cr.fetchall():
                 lines_pb.append(_('line #') + str(x[0]) + _(' product ') + x[1])
 
             if lines_pb:
-                if so.partner_type == 'section':
-                    msg = _('''%s are Local/ITC/ESC product(s). These cannot be on order to an Intersectional partner. 
-Please exchange for UniData type product(s) or if none exists, add a product by nomenclature or contact your help-desk for further support''') \
-                        % (', '.join(lines_pb),)
-                else:
-                    msg = _('''%s are Local product(s) (which may not synchronise). 
+                msg = _('''%s are Local product(s) (which may not synchronise). 
 Please check if these can be switched for UniData type product(s) instead, or contact your help-desk for further support''') \
                         % (', '.join(lines_pb),)
                 wiz_data = {'source': 'sale', 'partner_type': so.partner_type, 'sol_ids': [(6, 0, ids)], 'message': msg}
