@@ -798,6 +798,8 @@ The starting balance will be proposed automatically and the closing balance is t
         # The update of xml_id must be done when opening the register
         # --> set the value of xml_id based on the period as period is no more editable
         self.update_xml_id_register(cr, uid, reg_id, context)
+        self.pool.get('account.journal').write(cr, uid, [reg.journal_id.id],
+                                               {'last_period_with_open_register_id': reg.period_id.id}, context=context)
         return True
 
     def button_open_cash_register(self, cr, uid, ids, context=None):

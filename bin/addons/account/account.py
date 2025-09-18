@@ -708,12 +708,14 @@ class account_journal(osv.osv):
                                       store=True, help="Journals created by default in new instances"),
         'current_id': fields.function(_get_current_id, method=True, type='integer', string="DB Id (used by the UI)",
                                       store=False, internal=True),
+        'last_period_with_open_register_id': fields.many2one('account.period', 'Last Period With Open Register', readonly=True),
     }
 
     _defaults = {
         'user_id': lambda self, cr, uid, context: uid,
         'company_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
         'is_active': True,
+        'last_period_with_open_register_id': lambda *a: False,
     }
 
     _order = 'code, id'

@@ -191,16 +191,15 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                             )
                         UNION
                             (
-                            -- hq: export cheque register if at least 1 line exists
-                                SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, 0.00 as col2, 0.00 as col3
-                                FROM account_move_line AS aml, account_journal j 
+                            -- hq: list cheque journal if a register has been created for the period selected
+                                SELECT j.id AS journal_id, j.default_debit_account_id AS account_id, 0.00 as col1, 0.00 as col2, 0.00 as col3
+                                FROM account_journal j, account_period p
                                 WHERE
-                                aml.journal_id = j.id
-                                AND j.type = 'cheque'
-                                AND aml.date >= %s
-                                AND aml.date <= %s
-                                AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
-                                GROUP BY aml.journal_id, aml.account_id
+                                    j.type = 'cheque' AND
+                                    j.last_period_with_open_register_id = p.id AND
+                                    cast(date_trunc('month', j.create_date) as date) <= %s AND
+                                    p.date_stop <= %s
+                                GROUP BY j.id, j.default_debit_account_id
                             )
                         UNION
                             (
