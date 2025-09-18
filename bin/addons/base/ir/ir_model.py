@@ -743,8 +743,8 @@ class ir_model_data(osv.osv):
     def _auto_init(self, cr, context=None):
         super(ir_model_data, self)._auto_init(cr, context)
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'ir_model_data_module_name_index\'')
-        if not cr.fetchone():
-            cr.execute('CREATE INDEX ir_model_data_module_name_index ON ir_model_data (module, name)')
+        if cr.fetchone():
+            cr.execute('DROP INDEX ir_model_data_module_name_index')
 
     @tools.cache()
     def _get_id(self, cr, uid, module, xml_id):

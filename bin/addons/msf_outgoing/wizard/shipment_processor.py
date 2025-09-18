@@ -39,7 +39,9 @@ class shipment_add_pack_processor(osv.osv):
 
         nb_processed = 0
         for pack_fam in wiz.family_ids:
-            nb_processed = ship_obj.attach_draft_pick_to_ship(cr, uid, shipment_id, pack_fam, context=context, job_id=job_id, nb_processed=nb_processed)
+            if pack_fam.parcel_ids_error:
+                raise osv.except_osv(_('Error !'), _('Please select Parcel IDs on red line by clicking on the box icon.'))
+            nb_processed = ship_obj.attach_draft_pick_to_ship(cr, uid, shipment_id, pack_fam.shipment_line_id, selected_number=pack_fam.selected_number, selected_parcel_ids=pack_fam.selected_parcel_ids, context=context, job_id=job_id, nb_processed=nb_processed)
 
         return True
 
@@ -53,11 +55,34 @@ class shipment_add_pack_processor_line(osv.osv):
     _description = 'Pack to add'
 
     _columns = {
-        'wizard_id': fields.many2one('shipment.add.pack.processor', 'Processor'),
+        'wizard_id': fields.many2one('shipment.add.pack.processor', 'Processor', select=1),
         'num_of_packs': fields.integer('Nb. Parcels'),
         'volume': fields.float(digits=(16, 2), string='Volume[dm³]'),
         'weight': fields.float(digits=(16, 2), string='Weight P.P [Kg]'),
     }
+
+    def select_parcel_ids(self, cr, uid, ids, context=None):
+        ship_line = self.read(cr, uid, ids[0], ['parcel_ids', 'selected_parcel_ids', 'selected_number'], context=context)
+        if not ship_line['parcel_ids']:
+            raise osv.except_osv(_('Error !'), _('Parcel ID is not defined.'))
+        wiz = self.pool.get('shipment.parcel.selection').create(cr, uid, {
+            'add_pack_line_id': ids[0],
+            'parcel_number': ship_line['selected_number'],
+            'selected_item_ids': ship_line['selected_parcel_ids'],
+            'available_items_ids': ship_line['parcel_ids'],
+        }, context=context)
+
+        return {
+            'name': _("Select Parcel Ids to add"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipment.parcel.selection',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': wiz,
+            'target': 'new',
+            'keep_open': True,
+            'context': context,
+        }
 
 
 shipment_add_pack_processor_line()

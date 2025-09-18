@@ -682,6 +682,9 @@ class sale_order_line(osv.osv):
 
         # Check the Product Creators if the Partner is Intermission or Inter-section
         so = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id
+        so_order_types = ['donation_prog', 'donation_exp', 'donation_st', 'loan', 'loan_return']
+        if context.get('from_button') and so.order_type not in so_order_types and so.partner_id.state == 'phase_out':
+            raise osv.except_osv(_('Error'), _('The selected Customer is Phase Out, please select another Customer'))
         if not so.procurement_request and so.partner_type in ['intermission', 'section']:
             data_obj = self.pool.get('ir.model.data')
             if so.partner_type == 'section':  # Non-UD products
@@ -977,7 +980,8 @@ class sale_order(osv.osv):
 
         sol_obj = self.pool.get('sale.order.line')
 
-        ftf = ['name', 'procurement_request', 'location_requestor_id', 'delivery_requested_date', 'order_line']
+        ftf = ['name', 'procurement_request', 'location_requestor_id', 'delivery_requested_date', 'order_line',
+               'order_type', 'partner_id']
         for so in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             if so.procurement_request and not so.location_requestor_id:
                 raise osv.except_osv(_('Warning !'),
@@ -985,6 +989,10 @@ class sale_order(osv.osv):
             if not so.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate \'%s\' without a Requested Delivery date.') % (so.name))
+            so_order_types = ['donation_prog', 'donation_exp', 'donation_st', 'loan', 'loan_return']
+            if context.get('from_button') and so.order_type not in so_order_types and so.partner_id.state == 'phase_out':
+                raise osv.except_osv(_('Error'),
+                                     _('The selected Customer is Phase Out, please select another Customer'))
 
             # Prevent lines without products created by a NR during synch to be validated
             sol_ids, draft_sol_ids = [], []

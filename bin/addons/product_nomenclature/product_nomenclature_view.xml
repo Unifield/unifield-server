@@ -66,23 +66,23 @@
 									<field name="nomen_manda_0"
 										domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
 										widget="selection"
-										on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+										on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context)" />
 									<field name="nomen_manda_1"
 										domain="[('level', '=', '1'), ('type', '=', 'mandatory')]"
 										widget="selection"
                                         get_selection="get_nomen"
-										on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)">
+										on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context)">
 									</field>
 									<field name="nomen_manda_2"
 										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
 										widget="selection"
                                         get_selection="get_nomen"
-										on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+										on_change="onChangeFamily(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, default_code, international_status, context)" />
 									<field name="nomen_manda_3"
-										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"										
+										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"
 										widget="selection"
                                         get_selection="get_nomen"
-										on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+										on_change="onChangeRoot(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, international_status, context)" />
 								</group>
 								<!--  uf-1544
 								<separator string="Library" colspan="10" />

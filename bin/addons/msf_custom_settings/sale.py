@@ -55,6 +55,15 @@ class sale_order(osv.osv):
                     current_type = id and self.browse(cr, uid, id[0], fields_to_fetch=['order_type'], context=context).order_type or False
                     return {'value': {'order_type': current_type}, 'warning': {'title': _('Error'), 'message': msg}}
 
+                if partner.state == 'phase_out' and order_type not in ['donation_prog', 'donation_exp', 'donation_st', 'loan', 'loan_return']:
+                    return {
+                        'value': {'partner_id': False},
+                        'warning': {
+                            'title': _('Error'),
+                            'message': _('The selected Customer is Phase Out, please select another Customer')
+                        }
+                    }
+
             if order_type == 'donation_prog':
                 res.update({'warning': {'title': _('Error'), 'message':
                                         _('Any products which leave the instance in Pick/OUT linked to this document will be included in Consumption calculation')}})

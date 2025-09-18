@@ -376,20 +376,30 @@ class tender(osv.osv):
             # check some supplier have been selected
             if not tender.supplier_ids:
                 raise osv.except_osv(_('Warning !'), _('You must select at least one supplier!'))
+
             # utp-315: check that the suppliers are not inactive (I use a SQL request because the inactive partner are ignored with the browse)
             sql = """
             select tsr.supplier_id, rp.name, rp.active
             from tender_supplier_rel tsr
-            left join res_partner rp
-            on tsr.supplier_id = rp.id
-            where tsr.tender_id=%s
-            and rp.active=False
+            left join res_partner rp on tsr.supplier_id = rp.id
+            where tsr.tender_id=%s and rp.active=False
             """
             cr.execute(sql, (ids[0],))
             inactive_supplier_ids = cr.dictfetchall()
             if any(inactive_supplier_ids):
                 raise osv.except_osv(_('Warning !'), _("You can't have inactive supplier! Please remove: %s"
-                                                       ) % ' ,'.join([partner['name'] for partner in inactive_supplier_ids]))
+                                                       ) % ', '.join([partner['name'] for partner in inactive_supplier_ids]))
+
+            # Phase Out partners are not allowed
+            cr.execute("""
+                SELECT tsr.supplier_id, p.name FROM tender_supplier_rel tsr LEFT JOIN res_partner p on tsr.supplier_id = p.id
+                WHERE tsr.tender_id = %s AND p.state = 'phase_out'
+            """, (ids[0],))
+            phase_out_supplier_ids = cr.dictfetchall()
+            if any(phase_out_supplier_ids):
+                raise osv.except_osv(_('Error'), _("At least one of the selected Supplier is Phase Out, please remove %s and select another")
+                                     % ', '.join([partner['name'] for partner in phase_out_supplier_ids]))
+
             # check some products have been selected
             tender_line_ids = self.pool.get('tender.line').search(cr, uid, [('tender_id', '=', tender.id), ('line_state', '!=', 'cancel')], context=context)
             if not tender_line_ids:
@@ -1472,6 +1482,8 @@ class purchase_order(osv.osv):
 
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
         for rfq in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
+            if rfq.order_type not in ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp'] and rfq.partner_id.state == 'phase_out':
+                raise osv.except_osv(_('Error'), _('The selected Supplier is Phase Out, please select another Supplier'))
             non_cancel_rfq_line_ids = pol_obj.search(cr, uid, [('order_id', '=', rfq.id), ('state', 'not in', ['cancel', 'cancel_r']),
                                                                ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])], context=context)
             pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'sent'}, context=context)

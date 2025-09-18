@@ -562,24 +562,40 @@ class stock_picking(osv.osv):
             v.update({'address_id': addr})
 
         if partner_id:
-            if not ids and type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
-                return {
-                    'value': {'partner_id2': False, 'partner_id': False,},
-                    'warning': {
-                        'title': _('Error'),
-                        'message': _("You are not allowed to choose this type of partner in this document from scratch."),
-                    },
-                }
-            elif ids:
-                picking = self.browse(cr, uid, ids[0], context=context)
-                if not picking.from_wkf and type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
+            if not ids:
+                if type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
                     return {
-                        'value': {'partner_id2': False, 'partner_id': False,},
+                        'value': {'partner_id2': False, 'partner_id': False},
                         'warning': {
                             'title': _('Error'),
                             'message': _("You are not allowed to choose this type of partner in this document from scratch."),
                         },
                     }
+                if partner and partner.state == 'phase_out':
+                    return {
+                        'value': {'partner_id2': False, 'partner_id': False},
+                        'warning': {
+                            'title': _('Error'),
+                            'message': _('The selected Partner is Phase Out, please select another Partner')},
+                    }
+            elif ids:
+                picking = self.browse(cr, uid, ids[0], context=context)
+                if not picking.from_wkf:
+                    if type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
+                        return {
+                            'value': {'partner_id2': False, 'partner_id': False},
+                            'warning': {
+                                'title': _('Error'),
+                                'message': _("You are not allowed to choose this type of partner in this document from scratch."),
+                            },
+                        }
+                    if partner and partner.state == 'phase_out':
+                        return {
+                            'value': {'partner_id2': False, 'partner_id': False},
+                            'warning': {
+                                'title': _('Error'),
+                                'message': _('The selected Partner is Phase Out, please select another Partner')},
+                        }
                 default_loc = partner.property_stock_supplier.id
                 move_ids = move_obj.search(cr, uid, [('picking_id', '=', ids[0]), ('location_id', '!=', default_loc)], context=context)
                 if not picking.from_wkf and move_ids and picking.type == 'in':
@@ -855,11 +871,14 @@ class stock_picking(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        for pick in self.read(cr, uid, ids, ['partner_id', 'ext_cu'], context=context):
-            if context.get('picking_type') == 'incoming_shipment' and not pick['partner_id'] and not pick['ext_cu']:
+        ftf = ['partner_id', 'ext_cu', 'sale_id', 'purchase_id']
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            if context.get('picking_type') == 'incoming_shipment' and not pick.partner_id and not pick.ext_cu:
                 raise osv.except_osv(_('Error'), _('You can not process an IN with neither Partner or Ext. C.U.'))
-            if context.get('picking_type') == 'delivery_order' and not pick['partner_id']:
+            if context.get('picking_type') == 'delivery_order' and not pick.partner_id:
                 raise osv.except_osv(_('Error'), _('You can not process an OUT without a Partner'))
+            if context.get('from_button') and not pick.from_wkf and pick.partner_id and pick.partner_id.state == 'phase_out':
+                raise osv.except_osv(_('Error'), _('The selected Partner is Phase Out, please select another Partner'))
         res = super(stock_picking, self).draft_force_assign(cr, uid, ids)
 
         move_obj = self.pool.get('stock.move')
@@ -1737,10 +1756,14 @@ class stock_move(osv.osv):
 
     def in_action_confirm(self, cr, uid, ids, context=None):
         """
-            Incoming: draft or confirmed: validate and assign
+        Incoming: draft or confirmed: validate and assign
         """
         if isinstance(ids, int):
             ids = [ids]
+
+        pick = self.pool.get('stock.move').browse(cr, uid, ids[0], fields_to_fetch=['picking_id'], context=context).picking_id
+        if context.get('from_button') and not pick.from_wkf and pick.partner_id and pick.partner_id.state == 'phase_out':
+            raise osv.except_osv(_('Error'), _('The selected Partner is Phase Out, please select another Partner'))
 
         self.action_confirm(cr, uid, ids, context)
         self.action_assign(cr, uid, ids, context=context)

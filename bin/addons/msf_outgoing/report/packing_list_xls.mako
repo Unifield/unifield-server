@@ -211,6 +211,29 @@
    <Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8" ss:Color="#000000"/>
    <Interior ss:Color="#BFBFBF" ss:Pattern="Solid"/>
   </Style>
+<Style ss:ID="parcel">
+<Alignment ss:Vertical="Top"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8" ss:Color="#000000"/>
+<Interior ss:Color="#F2F2F2" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="parceln">
+<Alignment ss:Horizontal="Center" ss:Vertical="Top"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font ss:FontName="Arial" x:Family="Swiss" ss:Size="8" ss:Color="#000000"/>
+<Interior ss:Color="#F2F2F2" ss:Pattern="Solid"/>
+</Style>
+
   <Style ss:ID="s131">
    <Alignment ss:Horizontal="Left" ss:Vertical="Top"/>
    <Borders>
@@ -435,6 +458,20 @@
     <Cell ss:StyleID="s130" ss:MergeAcross="2"><ss:Data ss:Type="String"
       xmlns="http://www.w3.org/TR/REC-html40"><Font html:Color="#000000">${_('Containing:')|x}</Font></ss:Data></Cell>
    </Row>
+   % if pf.parcel_ids:
+       <Row>
+            <Cell ss:StyleID="parcel" ss:MergeAcross="1"><Data ss:Type="String">${_('Parcel No')}</Data></Cell>
+            <Cell ss:StyleID="parcel"><Data ss:Type="String">${_('Parcel ID')}</Data></Cell>
+       </Row>
+       <% start_p = int(pf.from_pack) %>
+       % for pack_id in pf.parcel_ids.split(','):
+           <Row>
+                <Cell ss:StyleID="parceln" ss:MergeAcross="1"><Data ss:Type="Number">${start_p}</Data></Cell>
+                <Cell ss:StyleID="parcel"><Data ss:Type="String">${pack_id}</Data></Cell>
+           </Row>
+           <% start_p += 1 %>
+       % endfor
+   % endif
    <Row ss:AutoFitHeight="0" ss:Height="17.25">
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Item')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Code')|x}</Data></Cell>

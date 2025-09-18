@@ -394,7 +394,7 @@
                     <filter name="show_not_synchronized" string="Show not synchronized" icon="gtk-cancel" domain="[('synchronize', '=', False)]"/>
                     <field name="name" />
                     <field name="login" />
-                    <field name="address_id" string="Address" />
+                    <field name="user_email" /> <!-- US-14426: Its size is changed web-side -->
                     <field name="context_department_id" widget="selection" string="Department"/>
                 </search>
             </field>
