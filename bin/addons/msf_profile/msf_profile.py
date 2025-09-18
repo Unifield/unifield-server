@@ -58,6 +58,39 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_14182_last_period_with_open_register(self, cr, uid, *a, **b):
+        cr.execute("""
+            WITH TEMP AS (SELECT j.id as journal_id, st.period_id as period_id
+                  FROM account_journal j
+                           JOIN account_bank_statement st ON st.journal_id = j.id
+                           JOIN account_period p ON st.period_id = p.id
+                  WHERE
+                      p.date_start = (
+                          SELECT MAX(p2.date_start)
+                          FROM account_bank_statement st2
+                               JOIN account_period p2 ON st2.period_id = p2.id
+                          WHERE st2.journal_id = j.id
+                      ) 
+                  ORDER BY j.id)
+            UPDATE account_journal aj
+            SET
+                last_period_with_open_register_id = TEMP.period_id
+            FROM TEMP
+            WHERE
+                aj.id = TEMP.journal_id
+        """)
+        self.log_info(cr, uid, "US-14182: New field last_period_with_open_register_id was filled. %s journals updated" % (
+            cr.rowcount,))
+        cr.execute("""
+                   --Trigger SYNC	
+                    UPDATE ir_model_data
+                    SET
+	                    last_modification=NOW(), touched = '["last_period_with_open_register_id"]'
+                    WHERE
+	                    module = 'sd' AND
+                        model = 'account.journal'
+                   """)
+        return True
     # UF38.0
     def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
         '''

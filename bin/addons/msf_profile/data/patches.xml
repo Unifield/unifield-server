@@ -1237,5 +1237,9 @@
         <record id="us_9592_pack_family_to_table" model="patch.scripts">
             <field name="method">us_9592_pack_family_to_table</field>
         </record>
+
+        <record id="us_14182_last_period_with_open_register" model="patch.scripts">
+            <field name="method">us_14182_last_period_with_open_register</field>
+        </record>
     </data>
 </openerp>
