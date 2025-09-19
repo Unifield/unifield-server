@@ -61,7 +61,11 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         for reg in reg_data:
             j_info = journal_obj.read(self.cr, self.uid, reg['id'], ['is_active', 'inactivation_date'])
             if j_info['is_active'] or (j_info['inactivation_date'] and j_info['inactivation_date'] > date_to) or reg['opening'] or reg['calculated'] or reg['closing']:
-                reg['journal_status'] = j_info['is_active'] and _('Active') or _('Inactive')
+                # US-14182 Display the value of the status of the journal at the selected period
+                if j_info['inactivation_date'] and j_info['inactivation_date'] > date_to:
+                    reg['journal_status'] = _('Active')
+                else:
+                    reg['journal_status'] = j_info['is_active'] and _('Active') or _('Inactive')
                 new_reg_data.append(reg)
         return new_reg_data
 
