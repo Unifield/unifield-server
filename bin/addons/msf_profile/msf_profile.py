@@ -61,10 +61,12 @@ class patch_scripts(osv.osv):
     def us_14182_last_period_with_open_register(self, cr, uid, *a, **b):
         cr.execute("""
             WITH TEMP AS (SELECT j.id as journal_id, st.period_id as period_id
-                  FROM account_journal j
-                           JOIN account_bank_statement st ON st.journal_id = j.id
-                           JOIN account_period p ON st.period_id = p.id
+                  FROM account_journal j, account_bank_statement st, account_period p
                   WHERE
+                      j.type IN ('cash', 'cheque', 'bank') AND
+                      j.is_current_instance = 't' AND
+                      j.id = st.journal_id AND
+                      st.period_id = p.id AND
                       p.date_start = (
                           SELECT MAX(p2.date_start)
                           FROM account_bank_statement st2
@@ -77,18 +79,19 @@ class patch_scripts(osv.osv):
                 last_period_with_open_register_id = TEMP.period_id
             FROM TEMP
             WHERE
-                aj.id = TEMP.journal_id
+                aj.id = TEMP.journal_id;
         """)
         self.log_info(cr, uid, "US-14182: New field last_period_with_open_register_id was filled. %s journals updated" % (
             cr.rowcount,))
-        cr.execute("""
-                   --Trigger SYNC	
+        # Trigger SYNC
+        cr.execute("""	
                     UPDATE ir_model_data
                     SET
 	                    last_modification=NOW(), touched = '["last_period_with_open_register_id"]'
                     WHERE
-	                    module = 'sd' AND
-                        model = 'account.journal'
+                        module = 'sd' AND
+                        model = 'account.journal' AND
+                        res_id IN (SELECT id FROM account_journal WHERE type IN ('cash', 'cheque', 'bank') AND is_current_instance='t')
                    """)
         return True
     # UF38.0
