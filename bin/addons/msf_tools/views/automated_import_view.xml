@@ -83,9 +83,12 @@
                         <field name="ftp_ok" on_change="onchange_ftp_ok(ftp_ok)" />
                         <field name="ftp_protocol" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
                         <field name="ftp_url" attrs="{'readonly': [('ftp_ok', '=', False)], 'required': [('ftp_ok', '!=', False)]}"/>
-                        <field name="ftp_login" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
-                        <field name="ftp_port" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
-                        <field name="ftp_password" password="True" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
+                        <field name="ftp_login" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '=', 'onedrive')]}"/>
+                        <field name="ftp_port" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '=', 'onedrive')]}"/>
+                        <field name="ftp_password" password="True" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '=', 'onedrive')]}"/>
+                        <field name="sharepoint_tenant_id" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '!=', 'onedrive')]}" />
+                        <field name="sharepoint_app_id" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '!=', 'onedrive')]}" />
+                        <field name="sharepoint_cert" colspan="4" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '!=', 'onedrive')]}" />
                         <button name="ftp_test_connection" string="Test connection" colspan="2" type="object" icon="terp-stock_zoom" attrs="{'readonly': [('ftp_ok', '=', False)]}" /> 
                     </group>
                     <separator colspan="4" string="Paths configuration" />
