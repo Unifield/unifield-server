@@ -123,7 +123,7 @@ class Client(object):
             log = True
 
         report_method = None
-        def report_progress(uploaded):
+        def report_progress(uploaded, **a):
             percent_txt = ''
             if size:
                 percent = round(uploaded*100/size)
@@ -132,7 +132,7 @@ class Client(object):
                     progress_obj.write({'name': percent})
 
             if logger:
-                logger.info('OneDrive: %d bytes sent on %s bytes %s' % (self.session_offset, size or 'unknown', percent_txt))
+                logger.info('OneDrive: %d bytes sent on %s bytes %s' % (uploaded, size or 'unknown', percent_txt))
 
         if log:
             logger = logging.getLogger('cloud.backup')
@@ -142,7 +142,6 @@ class Client(object):
                 size = None
             report_method = report_progress
 
-        report_method = None
         target_folder = self.request.web.get_folder_by_server_relative_url(path)
         return target_folder.files.create_upload_session(
             fileobj, buffer_size, chunk_uploaded=report_method, file_name=new_file
