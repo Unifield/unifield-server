@@ -50,20 +50,31 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             'get_general_total': self._get_general_total,
         })
 
-    def _filter_journal_status(self, reg_data, date_to):
+    def _filter_journal_status(self, reg_data, date_from):
         """
         Applies the following changes to the reg_data:
         - adds the journal status
         - removes the lines for which the journal is inactive only if the Starting Balance, the Movements, and the Closing Balance are all 0.00
         """
         journal_obj = self.pool.get('account.journal')
+        period_obj = self.pool.get('account.period')
+        last_open_reg_period_id = []
         new_reg_data = []
         for reg in reg_data:
-            j_info = journal_obj.read(self.cr, self.uid, reg['id'], ['is_active', 'inactivation_date'])
-            if j_info['is_active'] or (j_info['inactivation_date'] and j_info['inactivation_date'] > date_to) or reg['opening'] or reg['calculated'] or reg['closing']:
+            j_info = journal_obj.read(self.cr, self.uid, reg['id'], ['is_active', 'inactivation_date',
+                                                                     'last_period_with_open_register_id'])
+            if j_info and j_info['last_period_with_open_register_id']:
+                last_open_reg_period_id.append(j_info['last_period_with_open_register_id'][0])
+            last_open_reg_period = period_obj.browse(self.cr, self.uid, last_open_reg_period_id[0],
+                                                 fields_to_fetch=['date_start', 'date_stop'], context=self.context)
+            if (last_open_reg_period and last_open_reg_period.date_stop and last_open_reg_period.date_stop >= date_from) and \
+                    (j_info['is_active'] or (j_info and j_info['inactivation_date'] and j_info['inactivation_date'] >= date_from) or\
+                    reg['opening'] or reg['calculated'] or reg['closing']):
                 # US-14182 Display the value of the status of the journal at the selected period
-                if j_info['inactivation_date'] and j_info['inactivation_date'] > date_to:
+                if j_info['inactivation_date'] and j_info['inactivation_date'] > date_from:
                     reg['journal_status'] = _('Active')
+                elif j_info['inactivation_date'] and j_info['inactivation_date'] < date_from:
+                    reg['journal_status'] = _('Inactive')
                 else:
                     reg['journal_status'] = j_info['is_active'] and _('Active') or _('Inactive')
                 new_reg_data.append(reg)
@@ -139,7 +150,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         }
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
-        cash_bank_res = self._filter_journal_status(cash_bank_res, date_to)
+        cash_bank_res = self._filter_journal_status(cash_bank_res, date_from)
         cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, context=self.context)
         res.extend(cash_bank_res)
         # Cheque registers
@@ -234,7 +245,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         cheque_params = (period_title, date_from, date_to, date_from, date_to, tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
-        cheque_res = self._filter_journal_status(cheque_res, date_to)
+        cheque_res = self._filter_journal_status(cheque_res, date_from)
         cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, context=self.context)
         res.extend(cheque_res)
         # sort result by instance code and by journal code
