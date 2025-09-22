@@ -128,6 +128,16 @@ class supplier_catalogue(osv.osv):
             self._logger.warning(msg)
             self.pool.get('res.log').create(cr, uid, {'name': '%s' % msg, 'read': True, 'res_model': 'supplier.catalogue'}, context=context)
 
+            # remove line sdref to prevent sync updates generation
+            cr.execute("""DELETE FROM ir_model_data
+                WHERE
+                    model='supplier.catalogue.line' AND
+                    module='sd' AND
+                    res_id in (
+                        select id from supplier_catalogue_line WHERE catalogue_id in %s
+                    )
+            """, (tuple(to_unlink),))
+
             cr.execute("""DELETE FROM supplier_catalogue WHERE id IN %s""", (tuple(to_unlink),))
             # To sync the deletion
             cr.execute("""

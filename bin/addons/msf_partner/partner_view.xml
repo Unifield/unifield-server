@@ -46,12 +46,12 @@
             <field name="inherit_id" ref="partner_modification.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form/group/group/field[@name='title']" position="replace">
-                        <field name="partner_type" 
+                    <xpath expr="/form/group/group[2]/field[@name='state']" position="before">
+                        <field name="partner_type"
                             on_change="on_change_partner_type(partner_type, property_product_pricelist, property_product_pricelist_purchase)" />
                         <field name="allow_external_edition" invisible="1" />
                     </xpath>
-                    <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
+                    <xpath expr="/form/group/group[3]/field[@name='supplier']" position="after">
                         <field name="manufacturer" />
                         <field name="transporter" on_change="transporter_ticked(transporter)" />
                     </xpath>
@@ -84,6 +84,7 @@
                             <filter string="Intermission" name="intermission" icon="gtk-ok" domain="[('partner_type','=','intermission')]" help="Intermission Partners"/>
                             <separator orientation="vertical" />
                             <filter icon="terp-personal+" name="active" string="Show Active" domain="[('active', '=', True)]" default="1" />
+                            <filter icon="gtk-go-forward" name="phase_out" string="Show Phase Out" domain="[('state', '=', 'phase_out')]" />
                             <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="['&amp;', ('name', '!=', 'To be defined'), ('active', '=', False)]" separator="1" />
                             <newline />
                             <field name="name" select="1"/>
@@ -193,8 +194,14 @@
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form/group/group/field[@name='zone']" position="after">
-                        <field name="active" on_change="on_change_active(active, name, partner_type)"/>
+                    <xpath expr="/form/group/group[2]/field[@name='state']" position="after">
+                        <group colspan="2" col="2">
+                            <group colspan="1">
+                                <field name="active" on_change="on_change_active(active, name, partner_type)" attrs="{'readonly': [('partner_type', '=', 'external')]}"/>
+                                <button name="deactivate_partner" icon="gtk-execute" string="Deactivate partner" type="object" attrs="{'invisible': ['|', ('partner_type', '!=', 'external'), ('active', '=', False)]}" />
+                                <button name="reactivate_partner" icon="gtk-execute" string="Re-activate partner" type="object" attrs="{'invisible': ['|', ('partner_type', '!=', 'external'), '&amp;', ('active', '=', True), ('state', '!=', 'phase_out')]}" />
+                            </group>
+                        </group>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='General']" position="replace">
                         <page string="General">
@@ -279,6 +286,20 @@
             <field name="search_view_id" ref="msf_view_res_partner_filter"/>
         </record>
 
+        <record id="partner_deactivation_wizard_form_view" model="ir.ui.view">
+            <field name="name">partner.deactivation.wizard.form.view</field>
+            <field name="model">partner.deactivation.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <form string="Partner Deactivation">
+                    <label string="Some documents linked to this partner need to be closed or cancelled before deactivating the partner:" colspan="6" />
+                    <field name="objects_linked_to_partner" nolabel="1"/>
+                    <separator colspan="4"/>
+                    <button name="button_close" string="OK" type="object" icon="gtk-ok"/>
+                </form>
+            </field>
+        </record>
     </data>
 </openerp>
 

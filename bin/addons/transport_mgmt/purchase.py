@@ -128,19 +128,19 @@ class purchase_order(osv.osv):
 
         return True
 
-    def onchange_partner_id(self, cr, uid, ids, part=False, *a, **b):
+    def onchange_partner_id(self, cr, uid, ids, partner_id=False, *a, **b):
         '''
         Display or not the line of international transport costs
         '''
-        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part, *a, **b)
+        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, partner_id, *a, **b)
         func_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         currency_id = False
 
         if not 'domain' in res:
             res.update({'domain': {}})
 
-        if part:
-            partner = self.pool.get('res.partner').browse(cr, uid, part)
+        if partner_id:
+            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
             # Update the currency of the PO
             currency_id = partner.property_product_pricelist_purchase.currency_id.id
             if partner.partner_type == 'esc' or partner.zone == 'international':
@@ -160,13 +160,13 @@ class purchase_order(osv.osv):
         else:
             res['domain'].update({'transport_currency_id': [('id', 'in', [])]})
 
-        if res.get('value', {}).get('pricelist_id') and part:
+        if res.get('value', {}).get('pricelist_id') and partner_id:
             if ids:
                 if isinstance(ids, int):
                     ids = [ids]
 
                 order = self.pool.get('purchase.order').browse(cr, uid, ids[0])
-                partner = self.pool.get('res.partner').browse(cr, uid, part)
+                partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
                 pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('in_search', '=', partner.partner_type)])
                 if order.pricelist_id.id not in pricelist_ids:
                     res['value'].pop('pricelist_id')

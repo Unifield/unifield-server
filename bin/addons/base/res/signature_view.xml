@@ -34,9 +34,17 @@
                         }
 
                         $(document).ready(function() {
+                            $('#signature_import_template').removeAttr('onclick');
+                            ctx = $('#_terp_context').val()
+                            object_ids = $('#_terp_ids').val()
+                            console.log(ctx)
+                            $('#signature_import_template').click(function() {
+                                open('/openerp/report?report_name=signature.import.template.report&amp;ids='+object_ids+'&amp;context='+ctx)
+                            });
                             $('#view_form').submit(function(e){
-                                if ($('#sig_new_signature').signature('isEmpty')) {
-                                    return confirm('New signature is empty ! It will not be saved.');
+                                if ($('#sig_new_signature').signature('isEmpty') &amp;&amp; !$('#new_signature_import').val()
+                                        &amp;&amp; !$('#new_signature_import_binary_buttons input').val()) {
+                                    return confirm('New signature is empty ! It will not be saved. Please either draw the signature or import one');
                                 }
                             $('#json_signature').val($('#sig_new_signature').signature('toJSON'));
 
@@ -48,9 +56,15 @@
 
                     <field name="user_name"/>
                     <field name="json_signature" invisible="1" />
+                    <field name="pdf_import" invisible="1" />
                     <newline />
-                    <field name="legal_name" />
-                    <field name="new_signature" widget="signature" colspan="4"/>
+                    <field name="legal_name" colspan="4" />
+                    <field name="sign_creation_type" colspan="4" on_change="onchange_sign_creation_type(sign_creation_type)" />
+                    <field name="new_signature" widget="signature" colspan="4" attrs="{'invisible': [('sign_creation_type', '!=', 'draw')]}"/>
+                    <group colspan="4" attrs="{'invisible': [('sign_creation_type', '!=', 'import')]}">
+                        <field name="new_signature_import" on_change="onchange_signature_import(new_signature_import)" />
+                        <button string="Export Template" icon="gtk-edit" name="signature_import_template" type="object" />
+                    </group>
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
                       <button string="Preview" icon="terp-check" name="preview" type="object" />
@@ -58,6 +72,15 @@
                 </form>
             </field>
         </record>
+
+        <report id="signature_import_template_report"
+                string="Signature Import Template"
+                model="signature.set_user"
+                name="signature.import.template.report"
+                rml="base/res/report_module/signature_import_template.rml"
+                auto="False"
+                menu="False"
+                />
 
         <record id="signature_set_user_form_preview" model="ir.ui.view">
             <field name="name">signature_set_user_form_preview</field>

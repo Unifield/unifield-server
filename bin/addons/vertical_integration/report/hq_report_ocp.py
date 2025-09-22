@@ -792,7 +792,8 @@ class hq_report_ocp_workday(hq_report_ocp):
             group by
                 aml.id
             having
-                abs(round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2))) >= 0.01
+                abs(round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2))) >= 0.01 and
+                abs(round(aml.credit_currency, 2) - round(aml.debit_currency, 2) - sum(round(al.amount_currency, 2))) < 0.001
             """, {
             'instance_ids': tuple(instance_ids),
             'period_id': period_id,
@@ -872,7 +873,8 @@ class hq_report_ocp_workday(hq_report_ocp):
             group by
                 al.move_id
             having
-                abs(sum(round(al.amount, 2))) >= 0.01
+                abs(sum(round(al.amount, 2))) >= 0.01 and
+                abs(sum(al.amount_currency)) < 0.001
             """, {
             'instance_ids': tuple(instance_ids),
             'period_id': period_id,

@@ -102,7 +102,7 @@ class stock_pipe_per_product_instance(osv.osv):
 
         # export datas :
         report_name = "stock.pipe.per.product.instance.xls"
-        attachment_name = "stock_pipe_per_product_instance_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
+        attachment_name = "stock_pipe_per_product_instance_report_%s.xls" % time.strftime('%Y%m%d_%H%M')
         rp_spool = report_spool()
         res_export = rp_spool.exp_report(cr.dbname, uid, report_name, report_ids, datas, context)
         file_res = {'state': False}
@@ -166,8 +166,7 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
             'time': time,
             'parseDateXls': self._parse_date_xls,
             'get_products': self.get_products,
-            'get_inst_product_state': self.get_inst_product_state,
-            'get_prod_info': self.get_prod_info,
+            'get_product_state': self.get_product_state,
             'get_stock_mission_report_lines': self.get_stock_mission_report_lines,
         })
 
@@ -196,28 +195,23 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
 
         return self.cr.fetchall()
 
-    def get_inst_product_state(self, product_state):
+    def get_product_state(self, product_state):
         sel = {'valid': _('Valid'), 'phase_out': _('Phase Out'), 'forbidden': _('Forbidden'), 'archived': _('Archived')}
         return sel.get(product_state, '')
 
-    def get_prod_info(self, prod_id):
-        '''
-        Get the Unifield Status, Standardization Level and Unidata Status of the product
-        '''
-        ftf = ['state', 'standard_ok', 'state_ud']
-        prod_info = self.pool.get('product.product').browse(self.cr, self.uid, prod_id, fields_to_fetch=ftf, context=self.localcontext)
-
-        return prod_info
-
-    def get_stock_mission_report_lines(self, report, product, prod_info):
+    def get_stock_mission_report_lines(self, report, product):
         '''
         Return browse record list of stock_mission_report_line with given product_id
         '''
         self.cr.execute("""
-            SELECT m.instance_id, m.name, l.product_id, l.product_state, l.internal_qty, l.in_pipe_qty, l.product_state 
+            SELECT m.instance_id, m.name, l.product_id, l.product_state, l.internal_qty, l.in_pipe_qty, l.product_state, 
+                p.standard_ok, p.state_ud, ps.code
             FROM stock_mission_report_line l 
             LEFT JOIN stock_mission_report m ON l.mission_report_id = m.id 
             LEFT JOIN msf_instance i ON m.instance_id = i.id AND i.state != 'inactive' 
+            LEFT JOIN product_product p ON l.product_id = p.id
+            LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+            LEFT JOIN product_status ps ON pt.state = ps.id
             WHERE l.full_view = 'f' AND l.product_id = %s AND (l.internal_qty != 0 OR l.in_pipe_qty != 0)
         """, (product[0],))
 
@@ -231,7 +225,7 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
                     'instance_stock': prod[4],
                     'pipe_qty': prod[5],
                     'product_creator': product[3],
-                    'standard_ok': prod_info.standard_ok,
+                    'standard_ok': prod[7],
                     'inst_uf_state': prod[6],
                 }
                 self.pool.get('stock.pipe.per.product.instance.prod.lines').create(self.cr, self.uid, info, context=self.localcontext)

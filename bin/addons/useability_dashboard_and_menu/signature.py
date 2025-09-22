@@ -39,10 +39,16 @@ class signature_follow_up(osv.osv):
                     s.signature_is_closed as signature_is_closed,
                     coalesce(min(priol.prio) < min(l.prio), 'f') as wait_prio,
                     case
-                        when s.signature_res_model in ('sale.order', 'purchase.order') and
-                            (
-                                so.state not in ('draft', 'draft_p', 'validated', 'validated_p')
-                                    or po.state not in ('draft', 'draft_p', 'validated', 'validated_p')
+                        when (s.signature_res_model in ('sale.order', 'purchase.order') and
+                                (
+                                    so.state not in ('draft', 'draft_p', 'validated', 'validated_p')
+                                        or po.state not in ('draft', 'draft_p', 'validated', 'validated_p')
+                                )
+                            ) or
+                            (s.signature_res_model in ('stock.picking', 'account.invoice') and 
+                                (pick.state = 'cancel' or invoice.state = 'cancel')
+                            ) or 
+                            (s.signature_res_model = 'physical.inventory' and phys.state not in ('validated', 'confirmed')
                             ) then False
                         else True end as allowed_to_be_signed
                 from
