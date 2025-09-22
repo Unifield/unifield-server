@@ -151,7 +151,7 @@ The Order Reference in the file (%s) does not match the one in the RFQ (%s)''') 
                             line_err += _('The Unit Price must be a number. ')
                     if isinstance(price, float) or isinstance(price, int):
                         if price < 0:
-                            line_err += _('The Unit Price must be a positive. ')
+                            line_err += _('The Unit Price must be positive. ')
                         else:
                             rfql_data.update({'price_unit': price})
                 else:

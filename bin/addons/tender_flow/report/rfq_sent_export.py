@@ -28,13 +28,13 @@ class rfq_sent_export_parser(XlsxReportParser):
         sheet = self.workbook.active
 
         sheet.column_dimensions['A'].width = 20.0
-        sheet.column_dimensions['B'].width = 30.0
+        sheet.column_dimensions['B'].width = 40.0
         sheet.column_dimensions['C'].width = 65.0
         sheet.column_dimensions['D'].width = 13.0
         sheet.column_dimensions['E'].width = 7.0
         sheet.column_dimensions['F'].width = 20.0
-        sheet.column_dimensions['G'].width = 15.0
-        sheet.column_dimensions['H'].width = 15.0
+        sheet.column_dimensions['G'].width = 18.0
+        sheet.column_dimensions['H'].width = 18.0
         sheet.column_dimensions['I'].width = 10.0
         sheet.column_dimensions['J'].width = 65.0
         sheet.column_dimensions['K'].width = 13.0
@@ -50,8 +50,8 @@ class rfq_sent_export_parser(XlsxReportParser):
 
         header_lines = [
             (_('Order Reference'), 'standard', rfq.name),
-            (_('Order Type'), 'standard', rfq.order_type),
-            (_('Order Category'), 'standard', rfq.categ),
+            (_('Order Type'), 'standard', self.getSel(rfq, 'order_type')),
+            (_('Order Category'), 'standard', self.getSel(rfq, 'categ')),
             (_('Valid Till'), 'date', rfq.valid_till and datetime.strptime(rfq.valid_till, '%Y-%m-%d') or ''),
             (_('Details'), 'standard', rfq.details or ''),
             (_('Tender'), 'standard', rfq.tender_id and rfq.tender_id.name or ''),
@@ -111,7 +111,7 @@ class rfq_sent_export_parser(XlsxReportParser):
                 self.add_cell(line.product_id and line.product_id.name or '', line_style, wrap_text=True),
                 self.add_cell(line.product_qty, float_style),
                 self.add_cell(line.product_uom.name, line_style),
-                self.add_cell(line.price_unit, float_style),
+                self.add_cell(line.price_unit or 0.00, float_style),
                 self.add_cell(line.date_planned and datetime.strptime(line.date_planned, '%Y-%m-%d') or '', date_style),
                 self.add_cell(line.confirmed_delivery_date and datetime.strptime(line.confirmed_delivery_date, '%Y-%m-%d') or '', date_style),
                 self.add_cell(rfq.pricelist_id.currency_id.name, line_style),
