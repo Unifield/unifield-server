@@ -170,7 +170,8 @@ class delete_old_supplier_catalogue(osv.osv):
                 cr.rollback()
                 msg = tools.misc.get_traceback(e)
             finally:
-                self.write(cr, uid, task['id'], {'message': msg}, context=context)
+                # super is called to prevent the cron to be modified and have the message changed in the task
+                super(delete_old_supplier_catalogue, self).write(cr, uid, task['id'], {'message': msg}, context=context)
 
         return True
 
