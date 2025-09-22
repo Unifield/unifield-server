@@ -298,7 +298,7 @@ class product_likely_expire_report(osv.osv):
         '''
         res = {}
 
-        if consumption_type == 'amc':
+        if consumption_type in ['amc', 'rr-amc']:
             if consumption_from:
                 res.update({'consumption_from': (datetime.strptime(consumption_from,'%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')})
             if consumption_to:
@@ -327,7 +327,9 @@ class product_likely_expire_report(osv.osv):
 
         if consumption_type == 'fmc':
             res = product_obj.browse(cr, uid, product_id, context=new_context).reviewed_consumption
-        elif consumption_type == 'amc':
+        elif consumption_type in ['amc', 'rr-amc']:
+            if consumption_type == 'rr-amc' and new_context.get('location_id'):
+                new_context.update({'amc_location_ids': new_context['location_id']})
             res = product_obj.compute_amc(cr, uid, product_id, context=new_context)[product_id]
         else:
             res = product_obj.browse(cr, uid, product_id, context=new_context).monthly_consumption
@@ -434,10 +436,10 @@ class product_likely_expire_report(osv.osv):
             if report.date_to <= report.date_from:
                 raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
 
-            if report.consumption_type in ('amc', 'rac') and report.consumption_from > report.consumption_to:
+            if report.consumption_type in ('amc', 'rac', 'rr-amc') and report.consumption_from > report.consumption_to:
                 raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
 
-            if report.consumption_type in ('amc', 'rac'):
+            if report.consumption_type in ('amc', 'rac', 'rr-amc'):
                 context.update({'from': report.consumption_from, 'to': report.consumption_to})
             else:
                 context.update({'from': report.date_from, 'to': report.date_to})
