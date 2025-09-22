@@ -316,7 +316,7 @@
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
                             <newline/>
-                            <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', 'not in', ['sent', 'done'])]}"/>
+                            <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', '!=', 'sent')]}"/>
                             <group colspan="4" col="4" attrs="{'invisible': [('rfq_state', '!=', 'sent')]}">
                                 <button name="rfq_sent_import" string="Import RfQ" icon="gtk-execute" colspan="1" type="object" />
                                 <button name="rfq_sent_export" string="Export RfQ" icon="gtk-execute" colspan="1" type="object" />
