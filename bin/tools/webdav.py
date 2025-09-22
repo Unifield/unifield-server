@@ -70,7 +70,8 @@ class Client(object):
         self.login()
 
     def login(self):
-        self.request = ClientContext(urljoin(self.url, self.path))
+        full_path = urljoin(self.url, self.path)
+        self.request = ClientContext(full_path)
 
         self.request.with_client_certificate(
             tenant=self.tenant,
@@ -78,14 +79,13 @@ class Client(object):
             private_key=self.cert_content,
             thumbprint=self.thumbprint,
         )
-        baseurl = self.request._get_context_web_information().WebFullUrl
-        self.request._auth_context.url = baseurl
-        if not baseurl:
+        self.baseurl = self.request._get_context_web_information().WebFullUrl
+        self.request._auth_context.url = self.baseurl
+        if not self.baseurl:
             raise requests.exceptions.RequestException("Full Url not found %s" % self.path)
-        if not baseurl.endswith('/'):
-            baseurl = '%s/' % baseurl
-        parsed_base = urlparse(baseurl).path
-        self.baseurl = '%s%s' % (self.url, parsed_base)
+        if not self.baseurl.endswith('/'):
+            self.baseurl = '%s/' % self.baseurl
+        self.path = urlparse(full_path).path
 
         if not self.path.startswith('/'):
             self.path = '/%s' % self.path
