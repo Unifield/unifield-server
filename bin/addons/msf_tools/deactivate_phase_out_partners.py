@@ -181,7 +181,8 @@ class deactivate_phase_out_partners(osv.osv):
                 cr.rollback()
                 msg = tools.misc.get_traceback(e)
             finally:
-                self.write(cr, uid, task['id'], {'message': msg}, context=context)
+                # super is called to prevent the cron to be modified and have the message changed in the task
+                super(deactivate_phase_out_partners, self).write(cr, uid, task['id'], {'message': msg}, context=context)
                 log_obj.create(cr, uid, {'user_id': uid, 'date': datetime.now(), 'message': msg}, context=context)
 
         return True
