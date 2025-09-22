@@ -1233,5 +1233,9 @@
         <record id="us_13980_update_new_code_on_merged" model="patch.scripts">
             <field name="method">us_13980_update_new_code_on_merged</field>
         </record>
+
+        <record id="us_9592_pack_family_to_table" model="patch.scripts">
+            <field name="method">us_9592_pack_family_to_table</field>
+        </record>
     </data>
 </openerp>

@@ -36,14 +36,19 @@
                       editable="top"
                       hide_delete_button="1"
                       hide_new_button="1"
+                      colors="red: has_parcel_ids_error"
                       >
-                    <field name="from_pack" readonly="1" />
-                    <field name="to_pack" readonly="1" />
+                    <field name="from_pack" tooltip="parcel_ids" readonly="1" />
+                    <field name="to_pack" tooltip="parcel_ids" readonly="1" />
                     <field name="pack_type" on_change="onchange_pack_type(pack_type)" />
                     <field name="length" />
                     <field name="width" />
                     <field name="height" />
                     <field name="weight"  default_focus="1" />
+                    <field name="parcel_ids" invisible="1" />
+                    <field name="has_parcel" invisible="1" />
+                    <field name="has_parcel_ids_error" invisible="1" />
+                    <button name="select_parcel_ids" string="Select Parcel Ids" icon="terp-accessories-archiver-minus" type="object" attrs="{'invisible': [('has_parcel', '=', False)]}" />
                 </tree>
             </field>
         </record>
