@@ -213,6 +213,7 @@ CONSUMPTION_TYPE = [
     ('fmc', 'FMC -- Forecasted Monthly Consumption'),
     ('amc', 'AMC -- Average Monthly Consumption'),
     ('rac', 'RAC -- Real Average Consumption'),
+    ('rr-amc', 'RR-AMC -- RR Average Monthly Consumption'),
 ]
 class product_likely_expire_report(osv.osv):
     _name = 'product.likely.expire.report'
@@ -250,7 +251,7 @@ class product_likely_expire_report(osv.osv):
         return res
 
     _columns = {
-        'location_id': fields.many2one('stock.location', string='Location'),
+        'location_id': fields.many2one('stock.location', string='Source Location'),
         'msf_instance': fields.char(size=64, string='Location', readonly=True),
         'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
         'date_from': fields.date(string='From', required=True, readonly=True),
@@ -277,6 +278,19 @@ class product_likely_expire_report(osv.osv):
         'requestor_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'status': 'draft',
     }
+
+    def on_change_consumption_type(self, cr, uid, ids, consumption_type, context=None):
+        '''
+        Empty location-related fields if the selected consumption type is 'amc'.
+        '''
+        if context is None:
+            context = {}
+
+        res = {}
+        if consumption_type == 'amc':
+            res['value'] = {'location_id': False, 'input_output_ok': False}
+
+        return res
 
     def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
         '''
@@ -339,11 +353,9 @@ class product_likely_expire_report(osv.osv):
                     return self.open_report(cr, uid, ids, context=context)
 
         import threading
-        self.write(cr, uid, ids, {'status': 'in_progress'},
-                   context=context)
+        self.write(cr, uid, ids, {'status': 'in_progress'}, context=context)
         cr.commit()
-        new_thread = threading.Thread(target=self._process_lines,
-                                      args=(cr, uid, ids, context))
+        new_thread = threading.Thread(target=self._process_lines, args=(cr, uid, ids, context))
         new_thread.start()
         new_thread.join(10.0)
         if new_thread.is_alive():

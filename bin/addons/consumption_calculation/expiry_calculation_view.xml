@@ -154,14 +154,16 @@
                     <field name="date_to" />
                     <field name="only_non_zero" />
                     <separator colspan="4" string="Consumption parameters" />
-                    <field name="consumption_type" colspan="4" />
+                    <field name="consumption_type" colspan="4" on_change="on_change_consumption_type(consumption_type)" />
                     <field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
                     <field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
-                    <separator colspan="4" string="Location" />
-                    <field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
-                    <field name="segment_id" readonly="1" attrs="{'invisible': [('segment_id', '=', False)]}"/>
-                <newline />
-                <field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
+                    <group colspan="4" attrs="{'invisible': [('consumption_type', '=', 'amc')]}">
+                        <separator colspan="4" string="Location" />
+                        <field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+                        <field name="segment_id" readonly="1" attrs="{'invisible': [('segment_id', '=', False)]}"/>
+                        <newline />
+                        <field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
+                    </group>
                     <separator colspan="4" string="Actions" />
                     <button name="process_lines" string="View report" type="object" colspan="2" icon="gtk-execute" />
                     <label string="" /><label string="" />
