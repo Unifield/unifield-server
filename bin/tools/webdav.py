@@ -154,7 +154,7 @@ class Client(object):
             self.request.web.get_folder_by_server_relative_path(remote_path)
             .get_files()
             .expand(["TimeLastModified"])
-            .execute_query_with_incremental_retry(max_retry=self.max_retry)
+            .execute_query_retry(max_retry=self.max_retry)
         )
 
     def folder_exists(self, remote_path):
