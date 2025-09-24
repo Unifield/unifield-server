@@ -55,9 +55,12 @@ class PasswordFailed(Exception):
     pass
 
 class Client(object):
-    def __init__(self, host, tenant, client_id, cert_content, max_retry=1, path=None):
+    def __init__(self, host, tenant, client_id, cert_content=False, cert_path=False, max_retry=1, path=None):
         self.tenant = tenant
         self.client_id = client_id
+        if not cert_content and cert_path:
+            with open(cert_path, 'r') as c:
+                cert_content = c.read()
         self.cert_content = cert_content
         cert = load_pem_x509_certificate(bytes(self.cert_content, 'utf8'))
         self.thumbprint = cert.fingerprint(hashes.SHA1()).hex()
