@@ -230,6 +230,7 @@ class stock_card_wizard(osv.osv_memory):
         # Create one line per stock move
         move_ids = move_obj.search(cr, uid, domain, order='date asc', context=context)
 
+        line_number = 1
         for move in move_obj.browse(cr, uid, move_ids, context=context):
             # If the move is from the same location as destination
             if move.location_dest_id.id in location_ids and move.location_id.id in location_ids:
@@ -314,9 +315,11 @@ class stock_card_wizard(osv.osv_memory):
                 'balance': initial_stock,
                 'src_dest': move_location,
                 'notes': move.picking_id and move.picking_id.note or not move.picking_id and move.comment or '',
+                'line_number': line_number,
             }
 
             line_obj.create(cr, uid, line_values, context=context)
+            line_number += 1
 
         for inv_date in inv_line_dates:
             for new_line in inv_line_to_add[inv_date]:
@@ -328,8 +331,7 @@ class stock_card_wizard(osv.osv_memory):
                 new_line['balance'] = initial_stock
                 line_obj.create(cr, uid, new_line, context=context)
 
-        self.write(cr, uid, [ids[0]], {'real_stock': initial_stock},
-                   context=context)
+        self.write(cr, uid, [ids[0]], {'real_stock': initial_stock}, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.card.wizard',
@@ -370,7 +372,7 @@ stock_card_wizard()
 class stock_card_wizard_line(osv.osv_memory):
     _name = 'stock.card.wizard.line'
     _description = 'Stock card line'
-    _order = 'date_done desc'  # To calculate the balance from older to newer, then display newer first
+    _order = 'date_done desc, line_number desc'  # To calculate the balance from older to newer, then display newer first
 
     _columns = {
         'card_id': fields.many2one('stock.card.wizard', string='Card', required=True),
@@ -385,6 +387,7 @@ class stock_card_wizard_line(osv.osv_memory):
         'partner_id': fields.many2one('res.partner', string='Source/Destination'),
         'notes': fields.text(string='Notes'),
         'uom_id': fields.related('card_id', 'uom_id', type='many2one', relation='product.uom', readonly=1, write_relate=False, string='UoM'),
+        'line_number': fields.integer(string='Line Number', help='Helps ordering the lines of the Stock Card'),
     }
 
 stock_card_wizard_line()
