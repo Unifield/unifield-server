@@ -105,12 +105,12 @@ class RemoteOneDrive(RemoteInterface):
 
         res = []
         for filename in self.dav.list(path):
-            fn = filename['Name']
+            fn = filename.name
             if startswith and not fn.startswith(startswith):
                 continue
             posix_name = posixpath.join(path, fn)
             if posix_name not in already:
-                res.append((filename['TimeLastModified'], posixpath.join(path, fn)))
+                res.append((filename.time_last_modified, posixpath.join(path, fn)))
         return res
 
     def get_file_content(self, path):
@@ -120,30 +120,19 @@ class RemoteOneDrive(RemoteInterface):
             return fich.read()
 
     def rename(self, src_file_name, dest_file_name):
-        self.dav.move(src_file_name, dest_file_name)
+        self.dav.move_to_file(src_file_name, dest_file_name)
         return True
 
     def push(self, local_name, remote_name):
         f = open(local_name, 'r')
         retries = 0
-        max_retries = 3
-        logged = True
+        max_retries = 2
         while True:
             try:
                 f.seek(0)
                 self.connect()
-                ok, error = self.dav.upload(f, remote_name)
-                if ok:
-                    break
-                if retries > max_retries:
-                    f.close()
-                    raise Exception(error)
-                retries += 1
-                time.sleep(2)
-                if not logged or 'timed out' in error or '2130575252' in error:
-                    logged = False
-                    self.connect()
-                    logged = True
+                self.dav.upload(f, remote_name)
+                break
             except requests.exceptions.RequestException:
                 if retries > max_retries:
                     f.close()

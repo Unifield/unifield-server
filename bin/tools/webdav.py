@@ -4,8 +4,46 @@ import requests
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.client_runtime_context import ClientRuntimeContext
 from office365.runtime.client_request_exception import ClientRequestException
+from office365.sharepoint.files.file import File
+from office365.sharepoint.folders.folder import Folder
+from office365.runtime.queries.service_operation import ServiceOperationQuery
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.primitives import hashes
+
+def move_to_newname(self, destination, newname, flag):
+    """Moves the file to the specified destination url.
+
+    :param str or office365.sharepoint.folders.folder.Folder destination: Specifies the existing folder or folder
+         site relative url
+    :param str new file name
+    :param int flag: Specifies the kind of move operation.
+    """
+
+    def _moveto(destination_folder):
+        # type: (Folder) -> None
+        file_url = "/".join([str(destination_folder.serverRelativeUrl), newname])
+
+        params = {"newurl": file_url, "flags": flag}
+        qry = ServiceOperationQuery(self, "moveto", params)
+        self.context.add_query(qry)
+
+        def _update_file(return_type):
+            self.set_property("ServerRelativeUrl", file_url)
+
+        self.context.after_query_execute(_update_file)
+
+    def _source_file_resolved():
+        if isinstance(destination, Folder):
+            destination.ensure_property("ServerRelativeUrl", _moveto, destination)
+        else:
+            self.context.web.ensure_folder_path(destination).get().after_execute(
+                _moveto
+            )
+
+    self.ensure_properties(["ServerRelativeUrl", "Name"], _source_file_resolved)
+    return self
+
+File.move_to_newname = move_to_newname
 
 import logging
 import os
@@ -105,10 +143,20 @@ class Client(object):
         return self.request.web.get_file_by_server_relative_url(webUri).delete_object().execute_query_with_incremental_retry(max_retry=self.max_retry)
 
     def move(self, remote_path, dest, retry=True):
+        # Move file to folder
         webUri = '%s%s' % (self.path, remote_path)
 
         to_folder_dest = posixpath.join(self.path, dest)
         self.request.web.get_file_by_server_relative_path(webUri).moveto(to_folder_dest, 1).execute_query_with_incremental_retry(max_retry=self.max_retry)
+        return True
+
+    def move_to_file(self, remote_path, dest):
+        webUri = '%s%s' % (self.path, remote_path)
+        full_name_dest = '/'.join([self.path, dest])
+
+        dest_file_name = full_name_dest.split('/')[-1]
+        dest_folder = '/'.join(full_name_dest.split('/')[0:-1])
+        self.request.web.get_file_by_server_relative_path(webUri).move_to_newname(dest_folder, dest_file_name, 1).execute_query_with_incremental_retry(max_retry=self.max_retry)
         return True
 
     def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False, continuation=False):
