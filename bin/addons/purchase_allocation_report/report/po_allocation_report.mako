@@ -81,6 +81,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 <Style ss:ID="ssHeaderNumber">
 <Font ss:Bold="1" />
