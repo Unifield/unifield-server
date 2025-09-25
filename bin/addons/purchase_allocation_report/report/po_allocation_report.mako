@@ -81,7 +81,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
-<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 <Style ss:ID="ssHeaderNumber">
 <Font ss:Bold="1" />
@@ -178,7 +177,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeaderCell">
         <Data ss:Type="String">${ getSel(o, 'categ') or ''|x}</Data>
      </Cell>
-     <Cell ss:StyleID="ssHeaderCell">
+     <Cell ss:StyleID="ssHeaderNumberCell">
         <Data ss:Type="Number">${ get_total_amount(o) or 0.0|x}</Data>
      </Cell>
      <Cell ss:StyleID="ssHeaderCell">
