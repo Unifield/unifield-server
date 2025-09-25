@@ -58,6 +58,24 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF39.0
+    def us_14561_14593_14656_remove_approved_by_signature_lines_ins(self, cr, uid, *a, **b):
+        '''
+        Removed the signature lines 'Approved by' (fr) linked to INs
+        '''
+        cr.execute("""
+            SELECT sl.id FROM signature_line sl 
+                LEFT JOIN signature s ON sl.signature_id=s.id 
+                LEFT JOIN stock_picking p ON s.signature_res_id = p.id 
+            WHERE s.signature_res_model = 'stock.picking' AND sl.name_key = 'fr' AND p.type = 'in' AND p.subtype = 'standard'
+        """)
+        sl_ids = [x[0] for x in cr.fetchall()]
+
+        self.pool.get('signature.line').unlink(cr, uid, sl_ids)
+        self.log_info(cr, uid, "US-14561-14593-14656: %s 'Approved by' signature(s) were removed from INs" % (len(sl_ids),))
+
+        return True
+
     # UF38.0
     def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
         '''

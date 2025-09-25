@@ -1237,5 +1237,10 @@
         <record id="us_9592_pack_family_to_table" model="patch.scripts">
             <field name="method">us_9592_pack_family_to_table</field>
         </record>
+
+        <!-- UF39.0 -->
+        <record id="us_14561_14593_14656_remove_approved_by_signature_lines_ins" model="patch.scripts">
+            <field name="method">us_14561_14593_14656_remove_approved_by_signature_lines_ins</field>
+        </record>
     </data>
 </openerp>
