@@ -274,7 +274,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                         }, context=context)
                     except osv.except_osv as e:
                         errors.setdefault(e.value, [])
-                        errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))
+                        errors[e.value].append((line.id, _('%s of %s') % (line.line_number, line.order_id.name)))
 
             if errors:
                 error_msg = ''
@@ -282,9 +282,9 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     if error_msg:
                         error_msg += '\n'
                     if len(errors[e]) > 1:
-                        error_msg += 'Lines %s ' % ', '.join(str(x[1]) for x in errors[e])
+                        error_msg += _('Lines %s ') % ', '.join(str(x[1]) for x in errors[e])
                     else:
-                        error_msg += 'Line %s ' % ', '.join(str(x[1]) for x in errors[e])
+                        error_msg += _('Line %s ') % ', '.join(str(x[1]) for x in errors[e])
                     error_msg += ': %s' % e
                 raise osv.except_osv(_('Errors'), _('There are some errors on sourcing lines : %s') % error_msg)
 
@@ -304,6 +304,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         """
         # Objects
         line_obj = self.pool.get('sale.order.line')
+        prod_obj = self.pool.get('product.product')
 
         if context is None:
             context = {}
@@ -312,6 +313,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             ids = [ids]
 
         lines_to_confirm = []
+        errors = {}
         for wiz in self.browse(cr, uid, ids, context=context):
             for sol in wiz.line_ids:
                 if sol.state in ['validated', 'validated_p']:
@@ -321,6 +323,30 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
                 if wiz.type == 'make_to_order' and sol.order_id.order_type in ['loan', 'loan_return']:
                     raise osv.except_osv(_('Error'), _('Line #%s of %s You cannot cannot source a loan on order') % (sol.line_number, sol.order_id.name))
+
+                if sol.product_id:
+                    sourcing_not_donation = sol.order_id.order_type not in ['donation_prog', 'donation_exp', 'donation_st'] or False
+                    restr_vals = {
+                        'obj_type': 'sale.order',
+                        'partner_id': wiz.supplier_id.id,
+                        'sourcing_not_donation': sourcing_not_donation
+                    }
+                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [sol.product_id.id], vals=restr_vals, context=context)
+                    if p_error:
+                        errors.setdefault(p_msg, [])
+                        errors[p_msg].append((sol.id, _('%s of %s') % (sol.line_number, sol.order_id.name)))
+
+        if errors:
+            error_msg = ''
+            for e in errors:
+                if error_msg:
+                    error_msg += '\n'
+                if len(errors[e]) > 1:
+                    error_msg += _('Lines %s ') % ', '.join(str(x[1]) for x in errors[e])
+                else:
+                    error_msg += _('Line %s ') % ', '.join(str(x[1]) for x in errors[e])
+                error_msg += ': %s' % e
+            raise osv.except_osv(_('Errors'), _('There are some errors on sourcing lines : %s') % error_msg)
 
         line_obj.confirmLine(cr, uid, lines_to_confirm, context=context)
 
