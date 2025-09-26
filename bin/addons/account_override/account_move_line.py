@@ -69,7 +69,8 @@ class account_move_line(osv.osv):
                 cr.execute("select max(date_stop) from account_period where id in %s", (tuple([x[0] for x in period_ids]),))
                 period_end_date = cr.fetchone()[0]
 
-            ret.tables.append('"account_account"')
+            if '"account_account"' not in ret.tables:
+                ret.tables.append('"account_account"')
             ret.joins.setdefault('"account_move_line"', [])
             ret.joins['"account_move_line"'] += [('"account_account"', 'account_id', 'id', 'INNER JOIN')]
             ret.where_clause.append('''
