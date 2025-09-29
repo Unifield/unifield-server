@@ -255,18 +255,9 @@
                                     o2m_selectable="2"
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
-                                    <html>
-                                        <script language="javascript">
-                                            jQuery(document).ready(function () {
-                                                var name_val = $('span[name="name"']).val();
-                                                jQuery('#dummy').hover(function () {
-                                                    console.log('hover');
-                                                });
-                                            });
-                                        </script>
-                                    </html>
-                                    <button name="dummy" string="Help" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}" />
+                                    <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}" tooltip="name_help"/>
                                     <field name="name" />
+                                    <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
                                     <field name="purchase_details" readonly="1" />
                                     <field name="purchase_currency_id" readonly="1" />
@@ -544,7 +535,9 @@
                                     o2m_selectable="2"
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                    <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}" tooltip="name_help"/>
                                     <field name="name" />
+                                    <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
                                     <field name="purchase_details" readonly="1" />
                                     <field name="purchase_currency_id" readonly="1" />
