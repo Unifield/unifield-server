@@ -324,10 +324,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 if wiz.type == 'make_to_order' and sol.order_id.order_type in ['loan', 'loan_return']:
                     raise osv.except_osv(_('Error'), _('Line #%s of %s You cannot cannot source a loan on order') % (sol.line_number, sol.order_id.name))
 
-                if sol.product_id:
+                if sol.product_id and wiz.type == 'make_to_order':
                     sourcing_not_donation = sol.order_id.order_type not in ['donation_prog', 'donation_exp', 'donation_st'] or False
                     restr_vals = {
-                        'obj_type': 'sale.order',
+                        'obj_type': 'purchase.order',
                         'partner_id': wiz.supplier_id.id,
                         'sourcing_not_donation': sourcing_not_donation
                     }
