@@ -619,6 +619,34 @@ class Selection(TinyInputWidget):
 
         super(Selection, self).set_value(value)
 
+    def get_value(self):
+        """
+        Get the value of the field.
+        @return: field value
+        """
+        if self.value:
+            if isinstance(self.value, (tuple, list)):
+                self.value = self.value[0]
+            selection = self.selection
+            hidden_selection = self.hidden_selection
+            for k, v in selection + hidden_selection:
+                if k == self.value:
+                    return v
+
+        return ''
+
+    def get_display_value(self):
+        """
+        Get the display value of the field.
+        """
+        try:
+            self.value = self.validator.from_python(self.default)
+        except:
+            pass
+
+        return self.get_value()
+
+
 register_widget(Selection, ["selection"])
 
 class FullText(TinyInputWidget):

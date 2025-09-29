@@ -451,7 +451,7 @@ class List(TinyWidget):
 
         myfields = [] # check for duplicate fields
 
-        set_tooltip = {}
+        set_tooltip, set_btn_tooltip = {}, {}
         for node in root.childNodes:
             if node.nodeName == 'button':
                 if self.force_readonly:
@@ -466,6 +466,9 @@ class List(TinyWidget):
                 else:
                     buttons += [Button(**attrs)]
                     headers.append(("button", len(buttons)))
+
+                if attrs.get('name') and attrs.get('tooltip'):
+                    set_btn_tooltip[attrs['name']] = attrs['tooltip']
             elif node.nodeName == 'separator':
                 attrs = node_attributes(node)
                 if attrs.get('invisible', False):
@@ -577,6 +580,15 @@ class List(TinyWidget):
                         row[to_set].tooltip = row[set_tooltip[to_set]].widget.get_display_value()
                     else:
                         row[to_set].tooltip = row[set_tooltip[to_set]].get_display_value()
+        if set_btn_tooltip and data:
+            for btn in buttons:
+                for to_set in set_btn_tooltip:
+                    if btn.name == to_set:
+                        if isinstance(data[0].get(set_btn_tooltip[to_set]), Hidden):
+                            btn.help = data[0].get(set_btn_tooltip[to_set]).widget.get_display_value()
+                        else:
+                            btn.help = data[0].get(set_btn_tooltip[to_set]).get_text()
+
 
         return headers, hiddens, data, field_total, field_real_total, buttons
 
