@@ -272,10 +272,14 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}">
+                            <field name="macroprocess_id" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6">
                                 <tree string="Steps" editable="top">
                                     <field name="step_id" />
+                                    <field name="sub_step_id" />
                                     <field name="name" />
+                                    <field name="end_date" />
+                                    <field name="estimated_end_date" />
                                 </tree>
                             </field>
                         </page>
@@ -552,10 +556,14 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}">
+                            <field name="macroprocess_id" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6">
                                 <tree string="Steps" editable="top">
-                                    <field name="step_id" />
+                                    <field name="step_id" widget="selection" domain="[('macroprocess_ids', '=', parent.macroprocess_id)]" />
+                                    <field name="sub_step_id" />
                                     <field name="name" />
+                                    <field name="end_date" />
+                                    <field name="estimated_end_date" />
                                 </tree>
                             </field>
                         </page>
@@ -608,13 +616,73 @@
             </field>
         </record>
 
+        <record id="transport_macroprocess_search" model="ir.ui.view">
+            <field name="name">transport_macroprocess_search</field>
+            <field name="model">transport.macroprocess</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Macroprocess">
+                    <filter icon="terp-check" name="active" string="Active" domain="[('active', '=', True)]" separator="1" />
+                    <filter icon="gtk-dialog-error" name="inactive" string="Inactive" domain="[('active', '=', False)]" separator="1" />
+                    <separator orientation="vertical" />
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_macroprocess_tree" model="ir.ui.view">
+            <field name="name">transport_macroprocess_tree</field>
+            <field name="model">transport.macroprocess</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Macroprocess" hide_delete_button="1" hide_new_button="1">
+                    <field name="name" />
+                    <field name="active" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_macroprocess_form" model="ir.ui.view">
+            <field name="name">transport_macroprocess_form</field>
+            <field name="model">transport.macroprocess</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <form string="Macroprocess" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" hide_duplicate_button="1">
+                    <field name="name" readonly="1"/>
+                    <field name="active" readonly="1" />
+                    <newline />
+                    <field name="step_ids" nolabel="1" colspan="6">
+                        <tree string="Linked Steps" noteditable="1">
+                            <field name="name"/>
+                            <field name="active"/>
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
+        <record id="transport_macroprocess_action" model="ir.actions.act_window">
+            <field name="name">Macroprocess</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.macroprocess</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
         <record id="transport_step_search" model="ir.ui.view">
             <field name="name">transport_step_search</field>
             <field name="model">transport.step</field>
             <field name="type">search</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <search string="Transport Steps">
+                <search string="Steps">
+                    <filter icon="terp-check" name="active" string="Active" domain="[('active', '=', True)]" separator="1" />
+                    <filter icon="gtk-dialog-error" name="inactive" string="Inactive" domain="[('active', '=', False)]" separator="1" />
+                    <separator orientation="vertical" />
                     <field name="name" />
                 </search>
             </field>
@@ -626,14 +694,35 @@
             <field name="type">tree</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <tree string="Transport Steps" editable="top">
+                <tree string="Steps" hide_delete_button="1" hide_new_button="1">
                     <field name="name" />
+                    <field name="active" />
                 </tree>
             </field>
         </record>
 
+        <record id="transport_step_form" model="ir.ui.view">
+            <field name="name">transport_step_form</field>
+            <field name="model">transport.step</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <form string="Steps" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="name" readonly="1"/>
+                    <field name="active" />
+                    <newline />
+                    <field name="macroprocess_ids" nolabel="1" colspan="6">
+                        <tree string="Linked Macroprocesses" noteditable="1">
+                            <field name="name"/>
+                            <field name="active"/>
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
         <record id="transport_step_action" model="ir.actions.act_window">
-            <field name="name">Transport Steps</field>
+            <field name="name">Steps</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">transport.step</field>
             <field name="view_type">form</field>
@@ -641,7 +730,43 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <menuitem action="transport_step_action" id="transport_step_menu" parent="menu_transport_management" sequence="100"/>
+        <record id="transport_sub_step_search" model="ir.ui.view">
+            <field name="name">transport_sub_step_search</field>
+            <field name="model">transport.sub.step</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Sub-Steps">
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_sub_step_tree" model="ir.ui.view">
+            <field name="name">transport_sub_step_tree</field>
+            <field name="model">transport.sub.step</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Sub-Steps" editable="top">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_sub_step_action" model="ir.actions.act_window">
+            <field name="name">Sub-Steps</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.sub.step</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem name="Configuration" id="transport_configuration_menu" parent="menu_transport_management" sequence="100"/>
+        <menuitem action="transport_macroprocess_action" id="transport_macroprocess_menu" parent="transport_configuration_menu" sequence="1"/>
+        <menuitem action="transport_step_action" id="transport_step_menu" parent="transport_configuration_menu" sequence="2"/>
+        <menuitem action="transport_sub_step_action" id="transport_subs_tep_menu" parent="transport_configuration_menu" sequence="3"/>
 
         <record id="transport_order_out_line_form_split" model="ir.ui.view">
             <field name="name">transport_order_out_line_form_split</field>

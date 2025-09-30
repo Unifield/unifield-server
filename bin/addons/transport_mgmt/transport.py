@@ -200,8 +200,11 @@ class transport_order_step(osv.osv):
     _columns = {
         'name': fields.date('Date', required=1),
         'step_id': fields.many2one('transport.step', 'Step', required=1),
+        'sub_step_id': fields.many2one('transport.sub.step', 'Sub-Step'),
         'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
+        'end_date': fields.date('End Date'),
+        'estimated_end_date': fields.date('Estimated End Date'),
     }
 
 transport_order_step()
@@ -242,19 +245,19 @@ class transport_order(osv.osv):
 
 
         'transport_partner_id': fields.many2one('res.partner', 'Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
-        'transport_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Transport Mode'),
+        'transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Transport Mode'),
 
         'transit_departure_date': fields.date('Transit Location Date of Departure'),
         'transit_arrival_planned_date': fields.date('Transit Location Planned Arrival Date'),
 
         'transport2_partner_id': fields.many2one('res.partner', '2nd Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
-        'transport2_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], '2nd Transport Mode'),
+        'transport2_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], '2nd Transport Mode'),
 
         'post_transport_partner_id': fields.many2one('res.partner', 'Post Transit Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
-        'post_transport_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit Transport Mode'),
+        'post_transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit Transport Mode'),
 
         'post2_transport_partner_id': fields.many2one('res.partner', 'Post Transit 2nd Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
-        'post2_transport_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit 2nd Transport Mode'),
+        'post2_transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit 2nd Transport Mode'),
 
         'transport_po_id': fields.many2one('purchase.order', 'Transport PO', domain=[('categ', '=', 'transport')], context={'po_from_transport': True}),
 
@@ -272,6 +275,7 @@ class transport_order(osv.osv):
         'incoterm_type': fields.many2one('stock.incoterms', 'Incoterm Type', widget='selection'),
         'incoterm_location': fields.char('Incoterm Location', size=128), # TODO m2o
         'notify_partner_id': fields.many2one('res.partner', 'Notify Partner'), # TODO ondelete
+        'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', required=1, ondelete='restrict'),
 
         'customs_regime': fields.selection([
             ('import', 'Import'),
@@ -1602,16 +1606,47 @@ class shipment(osv.osv):
 shipment()
 
 
+class transport_macroprocess(osv.osv):
+    _name = 'transport.macroprocess'
+    _description = 'Macroprocess'
+    _order = 'id'
+    _columns = {
+        'name': fields.char('Name', size=128, select=1, required=1),
+        'active': fields.boolean('Active', readonly=1),
+        'transport_management': fields.selection([('in', 'Inbound'), ('out', 'Outbound'), ('both', 'Inbound and Outbound')], 'Active', required=1),
+        'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
+    }
+
+
+transport_macroprocess()
+
+
 class transport_step(osv.osv):
     _name = 'transport.step'
-    _description = 'Transport Steps'
+    _description = 'Steps'
+    _order = 'id'
+    _columns = {
+        'name': fields.char('Name', size=256, select=1, required=1),
+        'active': fields.boolean('Active'),
+        'macroprocess_ids': fields.many2many('transport.macroprocess', 'macroprocess_step_rel', 'step_ids', 'macroprocess_ids', 'Linked Macroprocesses'),
+    }
+
+
+transport_step()
+
+
+class transport_sub_step(osv.osv):
+    _name = 'transport.sub.step'
+    _description = 'Sub-Steps'
     _order = 'name, id'
     _columns = {
-        'name': fields.char('Name', size=64, select=1, required=1),
+        'name': fields.char('Name', size=128, select=1, required=1),
     }
 
     _sql_constraints = [
         ('unique_name', 'unique(name)', 'Name exists')
     ]
-transport_step()
+
+
+transport_sub_step()
 
