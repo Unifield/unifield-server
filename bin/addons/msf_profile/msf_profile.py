@@ -98,7 +98,7 @@ class patch_scripts(osv.osv):
                     WHERE
                         module = 'sd' AND
                         model = 'account.journal' AND
-                        res_id IN (SELECT id FROM account_journal WHERE type IN ('cash', 'cheque', 'bank') AND is_current_instance='t')
+                        res_id IN (SELECT id FROM account_journal WHERE type IN ('cash', 'cheque', 'bank'))
                    """)
         return True
     # UF38.0
