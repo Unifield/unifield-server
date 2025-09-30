@@ -241,7 +241,6 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         # ensure not to have empty arrays to avoid crash at query execution...
         pending_chq_starting_bal_ids = pending_chq_starting_bal_ids or [-1]
         pending_chq_closing_bal_ids = pending_chq_closing_bal_ids or [-1]
-        # cheque_params = (period_title, date_from, date_to, date_from, date_to, tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
         cheque_params = {
             'period_title': period_title,
             'date_from': date_from,

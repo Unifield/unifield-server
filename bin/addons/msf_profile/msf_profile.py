@@ -59,12 +59,19 @@ class patch_scripts(osv.osv):
     }
 
     def us_14182_last_period_with_open_register(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not current_instance:
+            return True
+        else:
+            current_instance_id = current_instance.id
+            current_instance_level = current_instance.level
         cr.execute("""
             WITH TEMP AS (SELECT j.id as journal_id, st.period_id as period_id
-                  FROM account_journal j, account_bank_statement st, account_period p
+                  FROM account_journal j, account_bank_statement st, account_period p, msf_instance inst1, msf_instance inst2
                   WHERE
                       j.type IN ('cash', 'cheque', 'bank') AND
-                      j.is_current_instance = 't' AND
+                      (j.is_current_instance = 't' OR 
+                        (j.instance_id = inst1.id AND inst1.state = 'inactive' AND inst1.parent_id = inst2.id AND inst2.id = %s AND inst2.level = %s)) AND
                       j.id = st.journal_id AND
                       st.period_id = p.id AND
                       p.date_start = (
@@ -80,7 +87,7 @@ class patch_scripts(osv.osv):
             FROM TEMP
             WHERE
                 aj.id = TEMP.journal_id;
-        """)
+        """ % (current_instance_id, current_instance_level))
         self.log_info(cr, uid, "US-14182: New field last_period_with_open_register_id was filled. %s journals updated" % (
             cr.rowcount,))
         # Trigger SYNC
