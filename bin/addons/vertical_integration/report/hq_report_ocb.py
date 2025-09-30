@@ -339,6 +339,19 @@ liquidity_sql = """
                     )
                 UNION
                     (
+                    -- export new register with no lines
+                        SELECT j.id AS journal_id, j.default_debit_account_id  AS account_id, 0 as col1, 0 as col2, 0 as col3
+                        FROM account_bank_statement st, account_journal j, account_period p
+                        WHERE
+                                st.journal_id = j.id
+                                AND st.period_id = p.id
+                                AND j.type IN %(j_type)s
+                                AND p.date_start >= %(date_from)s
+                                AND p.date_stop <= %(date_to)s
+                        GROUP BY j.id, j.default_debit_account_id
+                    )
+                UNION
+                    (
                         SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
                         FROM account_move_line AS aml 
                         LEFT JOIN account_journal j 
