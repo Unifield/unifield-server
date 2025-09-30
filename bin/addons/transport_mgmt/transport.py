@@ -191,6 +191,51 @@ class transport_order_transport_fees(osv.osv):
 transport_order_transport_fees()
 
 
+class transport_macroprocess(osv.osv):
+    _name = 'transport.macroprocess'
+    _description = 'Macroprocess'
+    _order = 'id'
+    _columns = {
+        'name': fields.char('Name', size=128, select=1, required=1),
+        'active': fields.boolean('Active', readonly=1),
+        'transport_management': fields.selection([('in', 'Inbound'), ('out', 'Outbound'), ('both', 'Inbound and Outbound')], 'Active', required=1),
+        'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
+    }
+
+
+transport_macroprocess()
+
+
+class transport_step(osv.osv):
+    _name = 'transport.step'
+    _description = 'Steps'
+    _order = 'id'
+    _columns = {
+        'name': fields.char('Name', size=256, select=1, required=1),
+        'active': fields.boolean('Active'),
+        'macroprocess_ids': fields.many2many('transport.macroprocess', 'macroprocess_step_rel', 'step_ids', 'macroprocess_ids', 'Linked Macroprocesses'),
+    }
+
+
+transport_step()
+
+
+class transport_sub_step(osv.osv):
+    _name = 'transport.sub.step'
+    _description = 'Sub-Steps'
+    _order = 'name, id'
+    _columns = {
+        'name': fields.char('Name', size=128, select=1, required=1),
+    }
+
+    _sql_constraints = [
+        ('unique_name', 'unique(name)', 'Name exists')
+    ]
+
+
+transport_sub_step()
+
+
 class transport_order_step(osv.osv):
     _name = 'transport.order.step'
     _description = 'Steps'
@@ -1604,49 +1649,3 @@ class shipment(osv.osv):
     }
 
 shipment()
-
-
-class transport_macroprocess(osv.osv):
-    _name = 'transport.macroprocess'
-    _description = 'Macroprocess'
-    _order = 'id'
-    _columns = {
-        'name': fields.char('Name', size=128, select=1, required=1),
-        'active': fields.boolean('Active', readonly=1),
-        'transport_management': fields.selection([('in', 'Inbound'), ('out', 'Outbound'), ('both', 'Inbound and Outbound')], 'Active', required=1),
-        'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
-    }
-
-
-transport_macroprocess()
-
-
-class transport_step(osv.osv):
-    _name = 'transport.step'
-    _description = 'Steps'
-    _order = 'id'
-    _columns = {
-        'name': fields.char('Name', size=256, select=1, required=1),
-        'active': fields.boolean('Active'),
-        'macroprocess_ids': fields.many2many('transport.macroprocess', 'macroprocess_step_rel', 'step_ids', 'macroprocess_ids', 'Linked Macroprocesses'),
-    }
-
-
-transport_step()
-
-
-class transport_sub_step(osv.osv):
-    _name = 'transport.sub.step'
-    _description = 'Sub-Steps'
-    _order = 'name, id'
-    _columns = {
-        'name': fields.char('Name', size=128, select=1, required=1),
-    }
-
-    _sql_constraints = [
-        ('unique_name', 'unique(name)', 'Name exists')
-    ]
-
-
-transport_sub_step()
-
