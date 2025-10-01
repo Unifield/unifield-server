@@ -36,6 +36,7 @@ class ocp_fin_sync(osv.osv):
     __logger = logging.getLogger('ocp.fin.sync')
     _name = 'ocp.fin.sync'
     _order = 'id desc'
+    limit = 200
     _columns = {
         'model': fields.char('model', size=256, required=1),
         'confirmed': fields.boolean('Confirmed'),
@@ -51,9 +52,8 @@ class ocp_fin_sync(osv.osv):
             'success': True
         }
         try:
-            models = ['res.partner', 'hr.employee', 'account.journal.cash']
-            if model not in models:
-                raise osv.except_osv('Error', 'Incorrect model name %s, must be %s' % (model, ' or '.join(models)))
+            if model not in self._objects:
+                raise osv.except_osv('Error', 'Incorrect model name %s, must be %s' % (model, ' or '.join(self._objects)))
 
             new_session = '%s'%uuid.uuid4()
             prev_id = False
@@ -85,11 +85,99 @@ class ocp_fin_sync(osv.osv):
 
         return ret
 
+    def _get_partner(self, cr, uid, session_id, page_offset):
+        sess = self.browse(cr, 1, session_id)
+        model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.partner')])[0]
+        field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', '=', 'name')])
+
+        cond = ''
+        if not sess.previous_auditrail_id:
+            # no TC entry for Local Market
+            cond = " or p.name = 'Local Market' "
+
+        cr.execute('''
+            select
+                p.id, p.name
+            from
+                res_partner p
+            left join
+                audittrail_log_line l on l.field_id in %s and l.res_id = p.id and l.object_id = %s
+            where
+                l.id > %s and
+                l.id <= %s
+                ''' + cond + '''
+            group by
+                p.id, p.name
+            order by p.id
+            offset %s
+            limit %s
+        ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*self.limit, self.limit+1)) # not_a_user_entry
+
+        return [{'id': x[0] or '', 'name': x[1] or ''} for x in cr.fetchall()]
+
+    def _get_hr_employee(self, cr, uid, session_id, page_offset):
+        sess = self.browse(cr, 1, session_id)
+        ressource_model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'resource.resource')])[0]
+        field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model', 'in', ['resource.resource', 'hr.employee']), ('name', 'in', ['name', 'homere_uuid_key', 'identification_id'])])
+
+        cr.execute('''
+            select
+                e.identification_id, e.homere_uuid_key, r.name
+            from
+                hr_employee e
+                inner join resource_resource r on r.id = e.resource_id
+                left join audittrail_log_line l on l.field_id in %s and l.res_id = r.id and l.object_id = %s
+            where
+                l.id > %s and
+                l.id <= %s and
+                e.employee_type = 'local'
+            group by
+                e.id, e.identification_id, e.homere_uuid_key, r.name
+            order by e.id
+            offset %s
+            limit %s
+        ''', (tuple(field_ids), ressource_model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*self.limit, self.limit+1))
+
+        return [{'identification_id': x[0] or '', 'uuid': x[1] or '', 'name': x[2] or ''} for x in cr.fetchall()]
+
+    def _get_journal_cash(self, cr, uid, session_id, page_offset):
+        sess = self.browse(cr, 1, session_id)
+        model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'account.journal')])[0]
+        field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', 'in', ['name', 'code', 'currency', 'is_active', 'inactivation_date', 'instance_id'])])
+
+        cond = ''
+        if not sess.previous_auditrail_id:
+            cond = ' or l.id is null '
+        cr.execute('''
+            select
+                j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
+            from
+                account_journal j
+                inner join res_currency c on c.id = j.currency
+                inner join msf_instance i on i.id = j.instance_id
+                left join audittrail_log_line l on l.field_id in %s and l.res_id = j.id and l.object_id = %s
+            where
+                j.type = 'cash' and (l.id > %s and l.id <= %s ''' + cond + ''')
+            group by
+                j.id, j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
+            order by j.code, j.id
+            offset %s
+            limit %s
+        ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*self.limit, self.limit+1)) # not_a_user_entry
+
+        return [{'code': x[0] or '', 'name': x[1] or '', 'mission': x[2] and x[2][0:3] or '', 'currency': x[3] or '', 'active': x[4], 'inactivation_date': x[5] or False} for x in cr.fetchall()]
+
+
+    _objects = {
+        'res.partner': _get_partner,
+        'hr.employee': _get_hr_employee,
+        'account.journal.cash': _get_journal_cash,
+    }
+
     def get_record(self, cr, uid, session_name, page=1):
-        limit = 200
         ret = {
             'page': page,
-            'limit': limit,
+            'limit': self.limit,
             'model': False,
             'session': session_name,
             'success': True,
@@ -103,95 +191,21 @@ class ocp_fin_sync(osv.osv):
             sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
             if not sess_ids:
                 raise osv.except_osv('Error', 'Session %s not found' % session_name)
+            session_id = sess_ids[0]
 
             sess = self.browse(cr, 1, sess_ids[0])
             ret['model'] = sess.model
-            if sess.model == 'res.partner':
-                model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.partner')])[0]
-                field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', '=', 'name')])
 
-                cond = ''
-                if not sess.previous_auditrail_id:
-                    # no TC entry for Local Market
-                    cond = " or p.name = 'Local Market' "
+            if sess.model in self._objects:
+                ret['records'] =  self._objects[sess.model](self, cr, uid, session_id, page_offset)
 
-                cr.execute('''
-                    select
-                        p.id, p.name
-                    from
-                        res_partner p
-                    left join
-                        audittrail_log_line l on l.field_id in %s and l.res_id = p.id and l.object_id = %s
-                    where
-                        l.id > %s and
-                        l.id <= %s
-                        ''' + cond + '''
-                    group by
-                        p.id, p.name
-                    order by p.id
-                    offset %s
-                    limit %s
-                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1)) # not_a_user_entry
-
-                ret['records'] = [{'id': x[0] or '', 'name': x[1] or ''} for x in cr.fetchall()]
-
-            elif sess.model == 'hr.employee':
-                ressource_model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'resource.resource')])[0]
-                field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model', 'in', ['resource.resource', 'hr.employee']), ('name', 'in', ['name', 'homere_uuid_key', 'identification_id'])])
-
-                cr.execute('''
-                    select
-                        e.identification_id, e.homere_uuid_key, r.name
-                    from
-                        hr_employee e
-                        inner join resource_resource r on r.id = e.resource_id
-                        left join audittrail_log_line l on l.field_id in %s and l.res_id = r.id and l.object_id = %s
-                    where
-                        l.id > %s and
-                        l.id <= %s and
-                        e.employee_type = 'local'
-                    group by
-                        e.id, e.identification_id, e.homere_uuid_key, r.name
-                    order by e.id
-                    offset %s
-                    limit %s
-                ''', (tuple(field_ids), ressource_model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1))
-
-                ret['records'] = [{'identification_id': x[0] or '', 'uuid': x[1] or '', 'name': x[2] or ''} for x in cr.fetchall()]
-
-            elif sess.model == 'account.journal.cash':
-                model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'account.journal')])[0]
-                field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', 'in', ['name', 'code', 'currency', 'is_active', 'inactivation_date', 'instance_id'])])
-
-                cond = ''
-                if not sess.previous_auditrail_id:
-                    cond = ' or l.id is null '
-                cr.execute('''
-                    select
-                        j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
-                    from
-                        account_journal j
-                        inner join res_currency c on c.id = j.currency
-                        inner join msf_instance i on i.id = j.instance_id
-                        left join audittrail_log_line l on l.field_id in %s and l.res_id = j.id and l.object_id = %s
-                    where
-                        j.type = 'cash' and (l.id > %s and l.id <= %s ''' + cond + ''')
-                    group by
-                        j.id, j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
-                    order by j.code, j.id
-                    offset %s
-                    limit %s
-                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1)) # not_a_user_entry
-
-                ret['records'] = [{'code': x[0] or '', 'name': x[1] or '', 'mission': x[2] and x[2][0:3] or '', 'currency': x[3] or '', 'active': x[4], 'inactivation_date': x[5] or False} for x in cr.fetchall()]
-
-            if len(ret['records']) > limit:
+            if len(ret['records']) > self.limit:
                 ret['records'].pop()
                 ret['has_next_page'] = True
             else:
                 ret['has_next_page'] = False
 
-            self.write(cr, 1, sess_ids[0], {'has_next_page': ret['has_next_page']})
+            self.write(cr, 1, session_id, {'has_next_page': ret['has_next_page']})
         except Exception as e:
             self.__logger.exception(e)
             cr.rollback()
@@ -445,3 +459,44 @@ class ocp_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
         }
 
 ocp_export_wizard()
+
+
+class waca_fin_sync(osv.osv):
+    _name = 'waca.fin.sync'
+    _inherit = 'ocp.fin.sync'
+
+    def _get_partner(self, cr, uid, session_id, page_offset):
+        sess = self.browse(cr, 1, session_id)
+        model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.partner')])[0]
+        field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', 'in', ['name', 'partner_type', 'instance_creator'])])
+
+        cond = ''
+        if not sess.previous_auditrail_id:
+            # no TC entry for Local Market
+            cond = " or p.name = 'Local Market' "
+
+        cr.execute('''
+            select
+                p.id, p.name, p.instance_creator, p.partner_type
+            from
+                res_partner p
+            left join
+                audittrail_log_line l on l.field_id in %s and l.res_id = p.id and l.object_id = %s
+            where
+                l.id > %s and
+                l.id <= %s
+                ''' + cond + '''
+            group by
+                p.id, p.name
+            order by p.id
+            offset %s
+            limit %s
+        ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*self.limit, self.limit+1)) # not_a_user_entry
+
+        return [{'id': x[0] or '', 'name': x[1] or '', 'instance_creator': x[2] or '', 'partner_type': x[3] or ''} for x in cr.fetchall()]
+
+    _objects = {
+        'res.partner': _get_partner,
+    }
+
+waca_fin_sync()
