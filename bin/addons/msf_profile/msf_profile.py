@@ -71,7 +71,7 @@ class patch_scripts(osv.osv):
                   WHERE
                       j.type IN ('cash', 'cheque', 'bank') AND
                       (j.is_current_instance = 't' OR 
-                        (j.instance_id = inst1.id AND inst1.state = 'inactive' AND inst1.parent_id = inst2.id AND inst2.id = %s AND inst2.level = %s)) AND
+                        (j.instance_id = inst1.id AND inst1.state = 'inactive' AND inst1.parent_id = inst2.id AND inst2.id = %s AND inst2.level = '%s')) AND
                       j.id = st.journal_id AND
                       st.period_id = p.id AND
                       p.date_start = (
