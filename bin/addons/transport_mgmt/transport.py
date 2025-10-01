@@ -199,7 +199,7 @@ class transport_macroprocess(osv.osv):
         'name': fields.char('Name', size=128, select=1, required=1),
         'active': fields.boolean('Active', readonly=1),
         'transport_management': fields.selection([('in', 'Inbound'), ('out', 'Outbound'), ('both', 'Inbound and Outbound')], 'Active', required=1),
-        'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
+        # 'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
     }
 
 
@@ -219,6 +219,17 @@ class transport_step(osv.osv):
 
 transport_step()
 
+
+class transport_macroprocess(osv.osv):
+    _name = 'transport.macroprocess'
+    _inherit = 'transport.macroprocess'
+    _description = 'Macroprocess'
+    _columns = {
+        'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
+    }
+
+
+transport_macroprocess()
 
 class transport_sub_step(osv.osv):
     _name = 'transport.sub.step'
