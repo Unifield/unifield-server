@@ -196,11 +196,37 @@ class transport_macroprocess(osv.osv):
     _description = 'Macroprocess'
     _order = 'id'
     _columns = {
-        'name': fields.char('Name', size=128, select=1, required=1),
+        'name': fields.char('Name', size=128, select=1, required=1, translate=1),
         'active': fields.boolean('Active', readonly=1),
         'transport_management': fields.selection([('in', 'Inbound'), ('out', 'Outbound'), ('both', 'Inbound and Outbound')], 'Active', required=1),
-        # 'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
+        # step_ids many2many added in the inherit
     }
+
+    def activate(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return self.write(cr, uid, ids, {'active': True}, context=context)
+
+    def deactivate(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        cr.execute("""
+            (
+                SELECT name FROM transport_order_in WHERE macroprocess_id IN %s AND state NOT IN ('closed', 'cancel')
+            ) UNION (
+                SELECT name FROM transport_order_out WHERE macroprocess_id IN %s AND state NOT IN ('closed', 'cancel')
+            )
+        """, (tuple(ids), tuple(ids)))
+        non_done_transport = [x[0] for x in cr.fetchall()]
+        if non_done_transport:
+            raise osv.except_osv(
+                _('Warning'), _('The Macroprocess is actively used by %s and can not be deactivated')
+                % (', '.join(non_done_transport),)
+            )
+
+        return self.write(cr, uid, ids, {'active': False}, context=context)
 
 
 transport_macroprocess()
@@ -211,19 +237,51 @@ class transport_step(osv.osv):
     _description = 'Steps'
     _order = 'id'
     _columns = {
-        'name': fields.char('Name', size=256, select=1, required=1),
-        'active': fields.boolean('Active'),
+        'name': fields.char('Name', size=256, select=1, required=1, translate=1),
+        'is_active': fields.boolean('Active'),
         'macroprocess_ids': fields.many2many('transport.macroprocess', 'macroprocess_step_rel', 'step_ids', 'macroprocess_ids', 'Linked Macroprocesses'),
     }
+
+    def onchange_is_active(self, cr, uid, ids, is_active, context=None):
+        """
+        Give a warning if the step is used on an Transport Step
+        """
+        if not context:
+            context = {}
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        if not is_active:
+            t_order_obj = self.pool.get('transport.order.step')
+            domain = [
+                ('step_id', 'in', ids), '|',
+                '&', ('transport_in_id', '!=', False), ('transport_in_id.state', 'not in', ['closed', 'cancel']),
+                '&', ('transport_out_id', '!=', False), ('transport_out_id.state', 'not in', ['closed', 'cancel']),
+            ]
+            t_order_step_ids = t_order_obj.search(cr, uid, domain, context=context)
+            if t_order_step_ids:
+                ftf = ['transport_in_id', 'transport_out_id']
+                t_order_step = t_order_obj.browse(cr, uid, t_order_step_ids, fields_to_fetch=ftf, context=context)
+                t_order_step_names = [tos.transport_in_id and tos.transport_in_id.name or tos.transport_out_id.name for tos in t_order_step]
+                res.update({
+                    'value': {'is_active': True},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The Step is actively used by %s and can not be deactivated') % (', '.join(t_order_step_names),),
+                    }
+                })
+
+        return res
 
 
 transport_step()
 
 
 class transport_macroprocess(osv.osv):
-    _name = 'transport.macroprocess'
-    _inherit = 'transport.macroprocess'
-    _description = 'Macroprocess'
+    _inherit = 'transport.macroprocess'  # Adding the inherit because the many2many calls for transport_step before it's created
     _columns = {
         'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
     }
@@ -236,7 +294,7 @@ class transport_sub_step(osv.osv):
     _description = 'Sub-Steps'
     _order = 'name, id'
     _columns = {
-        'name': fields.char('Name', size=128, select=1, required=1),
+        'name': fields.char('Name', size=128, select=1, required=1, translate=1),
     }
 
     _sql_constraints = [
@@ -253,18 +311,41 @@ class transport_order_step(osv.osv):
 
     _order = 'name desc, id'
 
+    def _get_step_name(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for order_step in self.browse(cr, uid, ids, fields_to_fetch=['step_id'], context=context):
+            res[order_step.id] = order_step.step_id and order_step.step_id.name or ''
+        return res
+
     _columns = {
-        'name': fields.date('Date', required=1),
-        'step_id': fields.many2one('transport.step', 'Step', required=1),
-        'sub_step_id': fields.many2one('transport.sub.step', 'Sub-Step'),
+        'name': fields.date('Start Date', required=1),
+        'step_id': fields.many2one('transport.step', 'Step', required=1, select=1),
+        'step_name': fields.function(_get_step_name, method=True, type='char', size=256, string='Step'),
+        'sub_step_id': fields.many2one('transport.sub.step', 'Sub-Step', select=1),
         'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
-        'end_date': fields.date('End Date'),
-        'estimated_end_date': fields.date('Estimated End Date'),
+        'comment': fields.char(size=256, string='Comment'),
+        'target_end_date': fields.date('Target End Date'),
+        'end_date': fields.date('Actual End Date'),
     }
 
-transport_order_step()
+    _sql_constraints = [
+        ('in_order_step_unique', 'unique(transport_in_id, step_id)', 'You can not select the same Step twice !'),
+        ('out_order_step_unique', 'unique(transport_out_id, step_id)', 'You can not select the same Step twice !'),
+    ]
 
+    def get_steps(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        dom = [('is_active', '=', True)]
+        if context.get('macroprocess_id'):
+            dom.append(('macroprocess_ids', '=', context['macroprocess_id']))
+
+        return self.pool.get('transport.step')._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
+
+
+transport_order_step()
 
 
 class transport_order(osv.osv):
@@ -331,7 +412,7 @@ class transport_order(osv.osv):
         'incoterm_type': fields.many2one('stock.incoterms', 'Incoterm Type', widget='selection'),
         'incoterm_location': fields.char('Incoterm Location', size=128), # TODO m2o
         'notify_partner_id': fields.many2one('res.partner', 'Notify Partner'), # TODO ondelete
-        'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', required=1, ondelete='restrict'),
+        'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', required=1, select=1, ondelete='restrict'),
 
         'customs_regime': fields.selection([
             ('import', 'Import'),

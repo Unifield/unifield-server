@@ -272,14 +272,16 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="macroprocess_id" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" />
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6">
+                            <field name="macroprocess_id" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
                                 <tree string="Steps" editable="top">
-                                    <field name="step_id" />
-                                    <field name="sub_step_id" />
+                                    <field name="step_name" displayon="noteditable" />
+                                    <field name="step_id" widget="selection" get_selection="get_steps" displayon="editable" />
+                                    <field name="sub_step_id" widget="selection" />
+                                    <field name="comment" />
                                     <field name="name" />
+                                    <field name="target_end_date" />
                                     <field name="end_date" />
-                                    <field name="estimated_end_date" />
                                 </tree>
                             </field>
                         </page>
@@ -557,13 +559,15 @@
 
                         <page string="Steps">
                             <field name="macroprocess_id" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6">
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
                                 <tree string="Steps" editable="top">
-                                    <field name="step_id" widget="selection" domain="[('macroprocess_ids', '=', parent.macroprocess_id)]" />
-                                    <field name="sub_step_id" />
+                                    <field name="step_name" displayon="noteditable" />
+                                    <field name="step_id" widget="selection" get_selection="get_steps" displayon="editable" />
+                                    <field name="sub_step_id" widget="selection" />
+                                    <field name="comment" />
                                     <field name="name" />
+                                    <field name="target_end_date" />
                                     <field name="end_date" />
-                                    <field name="estimated_end_date" />
                                 </tree>
                             </field>
                         </page>
@@ -640,6 +644,8 @@
                 <tree string="Macroprocess" hide_delete_button="1" hide_new_button="1">
                     <field name="name" />
                     <field name="active" />
+                    <button name="activate" string="Activate Macroprocess" icon="gtk-paste-v" attrs="{'invisible': [('active', '=', True)]}" type="object" />
+                    <button name="deactivate" string="Deactivate Macroprocess" icon="unsign.png" attrs="{'invisible': [('active', '=', False)]}" type="object" />
                 </tree>
             </field>
         </record>
@@ -654,12 +660,14 @@
                     <field name="name" readonly="1"/>
                     <field name="active" readonly="1" />
                     <newline />
-                    <field name="step_ids" nolabel="1" colspan="6">
+                    <field name="step_ids" nolabel="1" readonly="1" colspan="6">
                         <tree string="Linked Steps" noteditable="1">
                             <field name="name"/>
-                            <field name="active"/>
+                            <field name="is_active"/>
                         </tree>
                     </field>
+                    <button name="activate" string="Activate Macroprocess" icon="gtk-paste-v" attrs="{'invisible': [('active', '=', True)]}" type="object" />
+                    <button name="deactivate" string="Deactivate Macroprocess" icon="unsign.png" attrs="{'invisible': [('active', '=', False)]}" type="object" />
                 </form>
             </field>
         </record>
@@ -680,8 +688,8 @@
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
                 <search string="Steps">
-                    <filter icon="terp-check" name="active" string="Active" domain="[('active', '=', True)]" separator="1" />
-                    <filter icon="gtk-dialog-error" name="inactive" string="Inactive" domain="[('active', '=', False)]" separator="1" />
+                    <filter icon="terp-check" name="active" string="Active" domain="[('is_active', '=', True)]" separator="1" />
+                    <filter icon="gtk-dialog-error" name="inactive" string="Inactive" domain="[('is_active', '=', False)]" separator="1" />
                     <separator orientation="vertical" />
                     <field name="name" />
                 </search>
@@ -696,7 +704,7 @@
             <field name="arch" type="xml">
                 <tree string="Steps" hide_delete_button="1" hide_new_button="1">
                     <field name="name" />
-                    <field name="active" />
+                    <field name="is_active" />
                 </tree>
             </field>
         </record>
@@ -709,9 +717,9 @@
             <field name="arch" type="xml">
                 <form string="Steps" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="name" readonly="1"/>
-                    <field name="active" />
+                    <field name="is_active" on_change="onchange_is_active(is_active)" />
                     <newline />
-                    <field name="macroprocess_ids" nolabel="1" colspan="6">
+                    <field name="macroprocess_ids" nolabel="1" readonly="1" colspan="6">
                         <tree string="Linked Macroprocesses" noteditable="1">
                             <field name="name"/>
                             <field name="active"/>
