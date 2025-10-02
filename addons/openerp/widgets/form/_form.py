@@ -625,6 +625,8 @@ class Selection(TinyInputWidget):
         @return: field value
         """
         if self.value:
+            if self.type2:  # In case there is a widget
+                return self.value
             if isinstance(self.value, (tuple, list)):
                 self.value = self.value[0]
             selection = self.selection
