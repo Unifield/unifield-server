@@ -64,42 +64,42 @@ class patch_scripts(osv.osv):
             return True
         else:
             current_instance_id = current_instance.id
-            current_instance_level = current_instance.level
         cr.execute("""
-            WITH TEMP AS (SELECT j.id as journal_id, st.period_id as period_id
-                  FROM account_journal j, account_bank_statement st, account_period p, msf_instance inst1, msf_instance inst2
-                  WHERE
-                      j.type IN ('cash', 'cheque', 'bank') AND
-                      (j.is_current_instance = 't' OR 
-                        (j.instance_id = inst1.id AND inst1.state = 'inactive' AND inst1.parent_id = inst2.id AND inst2.id = %s AND inst2.level = '%s')) AND
-                      j.id = st.journal_id AND
-                      st.period_id = p.id AND
-                      p.date_start = (
-                          SELECT MAX(p2.date_start)
-                          FROM account_bank_statement st2
-                               JOIN account_period p2 ON st2.period_id = p2.id
-                          WHERE st2.journal_id = j.id
-                      ) 
-                  ORDER BY j.id)
-            UPDATE account_journal aj
-            SET
-                last_period_with_open_register_id = TEMP.period_id
-            FROM TEMP
+            SELECT j.id as journal_id, st.period_id as period_id
+            FROM account_journal j, account_bank_statement st, account_period p, msf_instance inst1, msf_instance inst2
             WHERE
-                aj.id = TEMP.journal_id;
-        """ % (current_instance_id, current_instance_level))
-        self.log_info(cr, uid, "US-14182: New field last_period_with_open_register_id was filled. %s journals updated" % (
-            cr.rowcount,))
+                j.type IN ('cash', 'cheque', 'bank') AND
+                (j.is_current_instance = 't' OR
+                    (j.instance_id = inst1.id AND inst1.state = 'inactive' AND inst1.parent_id = inst2.id AND inst2.id = %s AND inst2.level = 'coordo')) AND
+                j.id = st.journal_id AND
+                st.period_id = p.id AND
+                p.date_start = (
+                    SELECT MAX(p2.date_start)
+                    FROM account_bank_statement st2
+                             JOIN account_period p2 ON st2.period_id = p2.id
+                    WHERE st2.journal_id = j.id
+                )
+            ORDER BY j.id;""" % (current_instance_id,))
+        query_result = set([x for x in cr.fetchall()])
+        for x in query_result:
+            cr.execute("""
+                       UPDATE account_journal aj
+                       SET
+                           last_period_with_open_register_id = %s
+                       WHERE
+                           aj.id = %s
+                       """ % (x[1], x[0]))
         # Trigger SYNC
+        updated_journals_ids = [x[0] for x in query_result]
         cr.execute("""	
                     UPDATE ir_model_data
                     SET
-	                    last_modification=NOW(), touched = '["last_period_with_open_register_id"]'
+                        last_modification=NOW(), touched = '["last_period_with_open_register_id"]'
                     WHERE
                         module = 'sd' AND
                         model = 'account.journal' AND
-                        res_id IN (SELECT id FROM account_journal WHERE type IN ('cash', 'cheque', 'bank'))
-                   """)
+                        res_id IN %s
+                   """ % (tuple(updated_journals_ids),))
         return True
     # UF38.0
     def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
