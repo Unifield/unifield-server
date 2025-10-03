@@ -60,7 +60,7 @@ class patch_scripts(osv.osv):
 
     def us_14182_last_period_with_open_register(self, cr, uid, *a, **b):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
-        if not current_instance:
+        if not current_instance or (current_instance and current_instance.level not in ('project', 'coordo')):
             return True
         else:
             current_instance_id = current_instance.id
