@@ -461,7 +461,7 @@
                             </group>
                             <group colspan="1" col="1" attrs="{'invisible': [('categ', 'not in', ['service', 'transport'])]}">
                                 <separator string="Transport documents for Customs Fees"/>
-                                <field name="transport_fees_ids" nolabel="1" widget="many2many" readonly="1">
+                                <field name="transport_customs_fees_ids" nolabel="1" widget="many2many" readonly="1">
                                     <tree string="Inbound/Outbound Transport Orders">
                                         <field name="parent_name"/>
                                         <field name="parent_state"/>

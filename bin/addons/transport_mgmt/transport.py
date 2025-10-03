@@ -6,10 +6,10 @@ import time
 #import decimal_precision as dp
 from tools.translate import _
 from tools.misc import get_fake
-from . import TRANSPORT_FEES_HELP
+from . import TRANSPORT_FEES_HELP, CUSTOMS_FEES_HELP
 
-class transport_order_fees(osv.osv):
-    _name = 'transport.order.fees'
+class transport_order_customs_fees(osv.osv):
+    _name = 'transport.order.customs.fees'
     _description = 'Fees'
 
     _order = 'name, id'
@@ -23,15 +23,21 @@ class transport_order_fees(osv.osv):
             ids = [ids]
 
         res = {}
-        ftf = ['purchase_id', 'transport_in_id', 'transport_out_id']
+        ftf = ['purchase_id', 'transport_in_id', 'transport_out_id', 'name']
         for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             po = fees.purchase_id
             parent = fees.transport_in_id or fees.transport_out_id or False
+            name_help = fees.name or ''
+            for sel_help in CUSTOMS_FEES_HELP:
+                if sel_help[0] == name_help:
+                    name_help = sel_help[1]
+                    break
             res[fees.id] = {
                 'purchase_details': po and po.details or '',
                 'purchase_currency_id': po and po.pricelist_id and po.pricelist_id.currency_id.id or False,
                 'parent_name': parent and parent.name or '',
                 'parent_state': parent and parent.state or '',
+                'name_help': name_help,
             }
 
         return res
@@ -61,9 +67,9 @@ class transport_order_fees(osv.osv):
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
         'purchase_id': fields.many2one('purchase.order', 'Custom Fees', domain=[('categ', 'in', ['service', 'transport'])], select=1),
         'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
-                                            store={'transport.order.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
+                                            store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
         'purchase_currency_id': fields.function(_get_vals, method=True, string='PO Currency', type='many2one', relation='res.currency', multi='get_vals',
-                                                store={'transport.order.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
+                                                store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
                                         selection=[('planned', 'Planned'),
@@ -75,6 +81,7 @@ class transport_order_fees(osv.osv):
                                                    ('dispatched', 'Dispatched'),
                                                    ('closed', 'Closed'),
                                                    ('cancel', 'Cancelled')]),
+        'name_help': fields.function(_get_vals, method=True, string='Customs fees help message', type='text', multi='get_vals'),
     }
 
     _default = {
@@ -94,7 +101,10 @@ class transport_order_fees(osv.osv):
         self.write(cr, uid, ids, {'validated': True}, context=context)
         return True
 
-transport_order_fees()
+    def dummy(self, cr, uid, ids, context=None):
+        return True
+
+transport_order_customs_fees()
 
 
 class transport_order_transport_fees(osv.osv):
@@ -116,12 +126,17 @@ class transport_order_transport_fees(osv.osv):
         for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             po = fees.purchase_id
             parent = fees.transport_in_id or fees.transport_out_id or False
+            name_help = fees.name or ''
+            for sel_help in TRANSPORT_FEES_HELP:
+                if sel_help[0] == name_help:
+                    name_help = sel_help[1]
+                    break
             res[fees.id] = {
                 'purchase_details': po and po.details or '',
                 'purchase_currency_id': po and po.pricelist_id and po.pricelist_id.currency_id.id or False,
                 'parent_name': parent and parent.name or '',
                 'parent_state': parent and parent.state or '',
-                'name_help': fees.name or '',
+                'name_help': name_help,
             }
 
         return res
@@ -164,7 +179,7 @@ class transport_order_transport_fees(osv.osv):
                                                    ('dispatched', 'Dispatched'),
                                                    ('closed', 'Closed'),
                                                    ('cancel', 'Cancelled')]),
-        'name_help': fields.function(_get_vals, method=True, string='Transport fees help message', type='selection', multi='get_vals', selection=TRANSPORT_FEES_HELP),
+        'name_help': fields.function(_get_vals, method=True, string='Transport fees help message', type='text', multi='get_vals'),
     }
 
     _default = {
@@ -733,7 +748,7 @@ class transport_order_in(osv.osv):
             ('closed', 'Closed'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=1, copy=False),
-        'transport_fees_ids': fields.one2many('transport.order.fees', 'transport_in_id', 'Fees', copy=False),
+        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'transport_in_id', 'Fees', copy=False),
         'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'transport_in_id', 'Transport Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_in_id', 'Steps', copy=False),
         'parent_ito_id': fields.many2one('transport.order.in', 'Backorder of', readonly=True, copy=False),
@@ -1101,7 +1116,7 @@ class transport_order_out(osv.osv):
             ('closed', 'Closed'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=1, copy=False),
-        'transport_fees_ids': fields.one2many('transport.order.fees', 'transport_out_id', 'Fees', copy=False),
+        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'transport_out_id', 'Fees', copy=False),
         'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'transport_out_id', 'Transport Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_out_id', 'Steps', copy=False),
         'parent_oto_id': fields.many2one('transport.order.out', 'Backorder of', readonly=True, copy=False),
