@@ -91,15 +91,24 @@ class patch_scripts(osv.osv):
                        """ % (x[1], x[0]))
         # Trigger SYNC
         updated_journals_ids = [x[0] for x in query_result]
-        cr.execute("""	
-                    UPDATE ir_model_data
-                    SET
-                        last_modification=NOW(), touched = '["last_period_with_open_register_id"]'
-                    WHERE
-                        module = 'sd' AND
-                        model = 'account.journal' AND
-                        res_id IN %s
-                   """ % (tuple(updated_journals_ids),))
+        if current_instance.level == 'project':
+            cr.execute("""
+                       UPDATE ir_model_data
+                       SET last_modification=NOW(), touched = '["last_period_with_open_register_id"]'
+                       WHERE
+                           module = 'sd' AND
+                           model = 'account.journal' AND
+                           res_id IN (SELECT id FROM account_journal WHERE type IN ('cash', 'bank', 'cheque') AND is_current_instance = 't');""")
+        else:
+            cr.execute("""	
+                        UPDATE ir_model_data
+                        SET
+                            last_modification=NOW(), touched = '["last_period_with_open_register_id"]'
+                        WHERE
+                            module = 'sd' AND
+                            model = 'account.journal' AND
+                            res_id IN %s
+                       """ % (tuple(updated_journals_ids),))
         return True
     # UF38.0
     def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
