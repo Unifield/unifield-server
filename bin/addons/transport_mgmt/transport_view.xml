@@ -305,7 +305,7 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="macroprocess_id" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
                             <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
                                 <tree string="Steps" editable="top">
                                     <field name="step_name" displayon="noteditable" />
@@ -593,7 +593,7 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="macroprocess_id" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
                             <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
                                 <tree string="Steps" editable="top">
                                     <field name="step_name" displayon="noteditable" />

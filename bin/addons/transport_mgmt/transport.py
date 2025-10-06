@@ -463,6 +463,31 @@ class transport_order(osv.osv):
         del d['id']
         return {'value': d}
 
+    def onchange_macroprocess(self, cr, uid, ids, macroprocess_id, shipment_type):
+        '''
+        Check if any of the existing selected steps are not available in the newly selected macroprocess
+        '''
+        res = {}
+        if not ids:
+            return res
+
+        if macroprocess_id and shipment_type:
+            new_mcrproc_step = self.pool.get('transport.macroprocess').browse(cr, uid, macroprocess_id).step_ids
+            cr.execute("SELECT step_id FROM transport_order_step WHERE transport_" + shipment_type + "_id IN %s", (tuple(ids),))
+            non_conform_step_ids = set([x[0] for x in cr.fetchall()]) - set([step.id for step in new_mcrproc_step])
+            if non_conform_step_ids:
+                non_conform_step_names = self.pool.get('transport.step').read(cr, uid, non_conform_step_ids, ['name'])
+                res.update({
+                    'value': {'macroprocess_id': self.read(cr, uid, ids[0], ['macroprocess_id'])['macroprocess_id'][0]},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The selected Macroprocess is not linked to the steps %s. Please change those steps if you want to select it')
+                                   % (', '.join([step['name'] for step in non_conform_step_names]),),
+                    }
+                })
+
+        return res
+
     def _check_addresses(self, cr, uid, ids):
         if ids:
             cr.execute('''
