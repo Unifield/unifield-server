@@ -465,6 +465,31 @@ class waca_fin_sync(osv.osv):
     _name = 'waca.fin.sync'
     _inherit = 'ocp.fin.sync'
 
+    def _get_hr_employee(self, cr, uid, session_id, page_offset):
+        sess = self.browse(cr, 1, session_id)
+        ressource_model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'resource.resource')])[0]
+        field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model', 'in', ['resource.resource', 'hr.employee']), ('name', 'in', ['name', 'identification_id', 'employee_type', 'instance_creator'])])
+
+        cr.execute('''
+            select
+                e.identification_id, r.name, e.employee_type, e.instance_creator, e.id
+            from
+                hr_employee e
+                inner join resource_resource r on r.id = e.resource_id
+                left join audittrail_log_line l on l.field_id in %s and l.res_id = r.id and l.object_id = %s
+            where
+                l.id > %s and
+                l.id <= %s and
+                e.employee_type = 'local'
+            group by
+                e.id, e.identification_id, e.homere_uuid_key, r.name
+            order by e.id
+            offset %s
+            limit %s
+        ''', (tuple(field_ids), ressource_model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*self.limit, self.limit+1))
+
+        return [{'id': x[4], 'identification_id': x[0] or '', 'name': x[1] or '', 'type': x[2] or '', 'instance_creator': x[3] or ''} for x in cr.fetchall()]
+
     def _get_partner(self, cr, uid, session_id, page_offset):
         sess = self.browse(cr, 1, session_id)
         model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.partner')])[0]
@@ -497,6 +522,7 @@ class waca_fin_sync(osv.osv):
 
     _objects = {
         'res.partner': _get_partner,
+        'hr.employee': _get_hr_employee,
     }
 
 waca_fin_sync()
