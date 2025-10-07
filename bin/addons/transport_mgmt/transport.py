@@ -30,7 +30,7 @@ class transport_order_customs_fees(osv.osv):
             name_help = fees.name or ''
             for sel_help in CUSTOMS_FEES_HELP:
                 if sel_help[0] == name_help:
-                    name_help = sel_help[1]
+                    name_help = _(sel_help[1])
                     break
             res[fees.id] = {
                 'purchase_details': po and po.details or '',
@@ -129,7 +129,7 @@ class transport_order_transport_fees(osv.osv):
             name_help = fees.name or ''
             for sel_help in TRANSPORT_FEES_HELP:
                 if sel_help[0] == name_help:
-                    name_help = sel_help[1]
+                    name_help = _(sel_help[1])
                     break
             res[fees.id] = {
                 'purchase_details': po and po.details or '',
@@ -313,7 +313,7 @@ class transport_sub_step(osv.osv):
     }
 
     _sql_constraints = [
-        ('unique_name', 'unique(name)', 'Name exists')
+        ('unique_name', 'unique(name)', 'A Sub-Step with the same name already exists')
     ]
 
 
@@ -417,7 +417,7 @@ class transport_order(osv.osv):
         'supplier_address_id': fields.many2one('res.partner.address', 'Supplier Address', select=1, ondelete='restrict'),
 
         'transit_partner_id': fields.many2one('res.partner', 'Ships Via', select=1, ondelete='restrict', left='JOIN'),
-        'transit_address_id': fields.many2one('res.partner.address', ' Transit Address', select=1, ondelete='restrict'),
+        'transit_address_id': fields.many2one('res.partner.address', 'Transit Address', select=1, ondelete='restrict'),
 
         'customer_partner_id': fields.many2one('res.partner', 'Customer Partner', domain=[('customer', '=', True)], select=1, ondelete='restrict', left='JOIN'),
         'customer_address_id': fields.many2one('res.partner.address', 'Customer Address', select=1, ondelete='restrict'),
@@ -440,7 +440,7 @@ class transport_order(osv.osv):
         ], 'Customs Regime'),
 
         'cargo_weight': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Weight [kg]', multi='_total'),
-        'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm3]', multi='_total'),
+        'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm³]', multi='_total'),
         'cargo_parcels':  fields.function(lambda self, *a: self._get_total(*a), type='integer', method=True, string='Total Number of Parcels', multi='_total'),
         'container_type': fields.selection([('dry', 'Dry'), ('reefer', 'Reefer')], 'Container Type'),
         'container_size': fields.selection([('20ft', '20 ft'), ('40ft', '40 ft')], 'Container Size'),
@@ -527,7 +527,7 @@ class transport_order(osv.osv):
         return True
 
     _constraints = [
-        (_check_addresses, 'Adress Error', [])
+        (_check_addresses, 'Address Error', [])
     ]
 
     def _clean_fields(self, cr, uid, vals, context=None):
@@ -1202,7 +1202,7 @@ class transport_order_out(osv.osv):
         if display_warning and self.search_exists(cr, uid, [('id', 'in', to_val_ids), '|', ('customer_partner_id.partner_type', 'in', sync_type), ('customer_partner_id.partner_type', 'in', sync_type)], context=context):
             msg = self.pool.get('message.action').create(cr, uid, {
                 'title':  _('Warning'),
-                'message': '<h3>%s</h3>' % (_("You're about to close an OTO that is synchronized and should be consequently closed by the other instance. Are you sure you want to force the closure at your level ? "), ),
+                'message': '<h3>%s</h3>' % (_("You're about to close an OTO that is synchronized and should be consequently closed by the other instance. Are you sure you want to force the closure at your level ?"), ),
                 'yes_action': lambda cr, uid, context: self.force_button_validate(cr, uid, ids, context=context),
                 'yes_label': _('Process Anyway'),
                 'no_label': _('Close window'),
@@ -1237,7 +1237,7 @@ class transport_order_line(osv.osv):
 
         'description': fields.char('Description', size=256),
         'parcels_nb': fields.integer_null('Number of Parcels'),
-        'volume': fields.float_null('Volume [dm3]', digits=(16,2)),
+        'volume': fields.float_null('Volume [dm³]', digits=(16,2)),
         'weight': fields.float_null('Weight [kg]', digits=(16,2)),
         'amount': fields.float_null('Value', digits=(16,2)),
         'currency_id': fields.many2one('res.currency', 'Currency', domain=[('active', '=', True)]),
@@ -1287,7 +1287,7 @@ class transport_order_in_line(osv.osv):
         'incoming_id': fields.many2one('stock.picking', 'Incoming', select=1, domain=[('type', '=', 'in')], join='LEFT',  context={'pick_type': 'incoming', 'from_transport': 1}),
 
         'process_parcels_nb': fields.integer_null('Number of Parcels'),
-        'process_volume': fields.float_null('Volume [dm3]', digits=(16,2)),
+        'process_volume': fields.float_null('Volume [dm³]', digits=(16,2)),
         'process_weight': fields.float_null('Weight [kg]', digits=(16,2)),
         'process_amount': fields.float('Value', digits=(16,2)),
         'process_kc': fields.boolean('CC'),
