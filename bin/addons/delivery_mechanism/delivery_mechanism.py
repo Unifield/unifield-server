@@ -1148,6 +1148,7 @@ class stock_picking(osv.osv):
                     'in_dpo': context.get('for_dpo', False), # TODO used ?
                     'dpo_incoming': wizard.picking_id.dpo_incoming,
                     'physical_reception_date': wizard.physical_reception_date or False,
+                    'manual_ito_id': wizard.manual_ito_id.id or False,
                 }
 
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -1313,6 +1314,8 @@ class stock_picking(osv.osv):
                     to_write.update({'shipment_ref': imp_shipment_ref})
                 if wizard.imp_filename:
                     to_write.update({'last_imported_filename': wizard.imp_filename})
+                if wizard.manual_ito_id:
+                    to_write['manual_ito_id'] = wizard.manual_ito_id.id
                 if to_write:
                     self.write(cr, uid, picking_id, to_write, context=context)
 

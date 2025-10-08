@@ -102,8 +102,9 @@
                     </group>
                     <group colspan="9" col="10" name="actions">
                         <label colspan="2" string=" " />
-                        <group colspan="1" col="2">
+                        <group colspan="1" col="4">
                             <field name="physical_reception_date" bold="1" />
+                            <field name="manual_ito_id" bold="1" />
                         </group>
                         <label colspan="4" string=" " />
                         <separator string="Actions" colspan="9" />

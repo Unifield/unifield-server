@@ -204,6 +204,7 @@ class patch_scripts(osv.osv):
                 m.id=ANY(old.move_lines)
             '''
                    )
+
         return True
 
     # UF37.0
@@ -239,6 +240,7 @@ class patch_scripts(osv.osv):
         report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
         if menu_obj.read(cr, uid, report_prod_inconsistencies_menu_id, ['active'], context={})['active']:
             menu_obj.write(cr, uid, report_prod_inconsistencies_menu_id, {'active': False}, context={})
+
         return True
 
     def us_14039_store_cash_migration(self, cr, uid, *a, **b):
@@ -270,43 +272,7 @@ class patch_scripts(osv.osv):
 
         return True
 
-    def us_13741_13952_13955_14253_update_prod_supinfo_prices(self, cr, uid, *a, **b):
-        '''
-        The field get_first_price from product.supplierinfo is now stored, so its data will be updated using the same
-        way as the get function
-        '''
-        start_time = time.time()
-        cr.execute("""
-            UPDATE product_supplierinfo si
-            SET get_first_price = (SELECT DISTINCT ON (pi.suppinfo_id) pi.price
-                FROM pricelist_partnerinfo pi WHERE pi.suppinfo_id=si.id ORDER BY pi.suppinfo_id,pi.min_quantity)
-        """)
-        end_time = timedelta(seconds=time.time() - start_time)
-        self.log_info(cr, uid, "US-13741-13952-13955-14253: %s prices of Products Suppliers have been updated in %s" % (cr.rowcount, end_time))
-        return True
-
-
-    def us_13346_13377_set_signee_users(self, cr, uid, *a, **b):
-        '''
-        If there is any user with signature enabled and only the Groups 'Sign_user' and 'Sync / User', make it Signee
-        '''
-        group_obj = self.pool.get('res.groups')
-        user_obj = self.pool.get('res.users')
-        sign_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sign_user')])
-        sync_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
-        user_ids = user_obj.search(cr, uid, [('signature_enabled', '=', True)])
-        if sign_group_ids and sync_group_ids and user_ids:
-            action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu',
-                                                                            'signature_follow_up_to_be_signed_action')[1]
-            needed_groups_ids = {sign_group_ids[0], sync_group_ids[0]}
-            signee_user_ids = []
-            for user in user_obj.read(cr, uid, user_ids, ['groups_id']):
-                if user['groups_id'] and needed_groups_ids == set(user['groups_id']):
-                    signee_user_ids.append(user['id'])
-            user_obj.write(cr, uid, signee_user_ids, {'signee_user': True, 'action_id': action_id})
-
-        return True
-
+    # UF37.0
     def us_12270_13064_13353_sign_roles_and_int_sign(self, cr, uid, *a, **b):
         '''
         In the existing signature lines, change the "HQ" role into "HQ Responsible" for FO/PO, and change the
@@ -335,6 +301,7 @@ class patch_scripts(osv.osv):
         setup_obj.execute(cr, uid, [sign_install])
         return True
 
+
     def us_14124_delete_old_unused_ir_properties(self, cr, uid, *a, **b):
         '''
         The fields property_product_pricelist_purchase, property_product_pricelist, property_account_receivable and
@@ -348,18 +315,6 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, "US-14124: %s ir_properties were deleted" % (cr.rowcount,))
         return True
 
-    def us_14040_14046_fix_duplicated_users_data(self, cr, uid, *a, **b):
-        '''
-        Set users_last_login.date to NULL on users whose user_last_login.date < res_users.create_date
-        Set res_users.last_password_change date to res_users.create_date on users whose
-        res_users.last_password_change < res_users.create_date or whose res_users.last_password_change < 16/06/2021
-        '''
-        cr.execute("""UPDATE users_last_login ll SET date = NULL FROM res_users u 
-            WHERE ll.user_id = u.id AND ll.date IS NOT NULL AND ll.date < u.create_date""")
-        cr.execute("""UPDATE res_users SET last_password_change = create_date WHERE last_password_change IS NOT NULL
-            AND (last_password_change < create_date OR last_password_change < '2021-06-16 18:00:00')""")
-
-        return True
 
     # UF36.0
     def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
@@ -410,6 +365,95 @@ class patch_scripts(osv.osv):
             if real_sdref.get(oc):
                 cr.execute("update ir_model_data set name=%s where name='res_groups_Sign_document_creator_supply' and model='res.groups' and module='sd'", (real_sdref.get(oc), ))
                 self.log_info(cr, uid, "US-13842: sdref changed on Sign_document_creator_supply %s" % (cr.rowcount,))
+        return True
+
+
+
+    # UF37.0
+    def us_14450_sign_roles_in(self, cr, uid, *a, **b):
+        '''
+        To create "Approved by" signature lines on existing INs
+        '''
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+        return True
+
+    def us_14373_empty_fo_ir_location_id(self, cr, uid, *a, **b):
+        '''
+        Remove the location_id from Draft FO/IR lines with the Procurement Method From Stock
+        '''
+        cr.execute("""
+            UPDATE sale_order_line SET location_id = NULL 
+            WHERE type = 'make_to_stock' AND state = 'draft' AND location_id IS NOT NULL
+        """)
+        self.log_info(cr, uid, "US-14373: The Location was removed from %s Draft FO and/or IR lines From Stock" % (cr.rowcount))
+
+        return True
+
+    def us_14341_hide_prod_status_inconsistencies(self, cr, uid, *a, **b):
+        '''
+        Hide the Product Status Inconsistencies menu if it's still active at project
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance or instance.level != 'project':
+            return True
+        menu_obj = self.pool.get('ir.ui.menu')
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
+        if menu_obj.read(cr, uid, report_prod_inconsistencies_menu_id, ['active'], context={})['active']:
+            menu_obj.write(cr, uid, report_prod_inconsistencies_menu_id, {'active': False}, context={})
+        return True
+
+
+    def us_13741_13952_13955_14253_update_prod_supinfo_prices(self, cr, uid, *a, **b):
+        '''
+        The field get_first_price from product.supplierinfo is now stored, so its data will be updated using the same
+        way as the get function
+        '''
+        start_time = time.time()
+        cr.execute("""
+            UPDATE product_supplierinfo si
+            SET get_first_price = (SELECT DISTINCT ON (pi.suppinfo_id) pi.price
+                FROM pricelist_partnerinfo pi WHERE pi.suppinfo_id=si.id ORDER BY pi.suppinfo_id,pi.min_quantity)
+        """)
+        end_time = timedelta(seconds=time.time() - start_time)
+        self.log_info(cr, uid, "US-13741-13952-13955-14253: %s prices of Products Suppliers have been updated in %s" % (cr.rowcount, end_time))
+        return True
+
+
+    def us_13346_13377_set_signee_users(self, cr, uid, *a, **b):
+        '''
+        If there is any user with signature enabled and only the Groups 'Sign_user' and 'Sync / User', make it Signee
+        '''
+        group_obj = self.pool.get('res.groups')
+        user_obj = self.pool.get('res.users')
+        sign_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sign_user')])
+        sync_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+        user_ids = user_obj.search(cr, uid, [('signature_enabled', '=', True)])
+        if sign_group_ids and sync_group_ids and user_ids:
+            action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu',
+                                                                            'signature_follow_up_to_be_signed_action')[1]
+            needed_groups_ids = {sign_group_ids[0], sync_group_ids[0]}
+            signee_user_ids = []
+            for user in user_obj.read(cr, uid, user_ids, ['groups_id']):
+                if user['groups_id'] and needed_groups_ids == set(user['groups_id']):
+                    signee_user_ids.append(user['id'])
+            user_obj.write(cr, uid, signee_user_ids, {'signee_user': True, 'action_id': action_id})
+
+        return True
+
+
+    def us_14040_14046_fix_duplicated_users_data(self, cr, uid, *a, **b):
+        '''
+        Set users_last_login.date to NULL on users whose user_last_login.date < res_users.create_date
+        Set res_users.last_password_change date to res_users.create_date on users whose
+        res_users.last_password_change < res_users.create_date or whose res_users.last_password_change < 16/06/2021
+        '''
+        cr.execute("""UPDATE users_last_login ll SET date = NULL FROM res_users u 
+            WHERE ll.user_id = u.id AND ll.date IS NOT NULL AND ll.date < u.create_date""")
+        cr.execute("""UPDATE res_users SET last_password_change = create_date WHERE last_password_change IS NOT NULL
+            AND (last_password_change < create_date OR last_password_change < '2021-06-16 18:00:00')""")
+
         return True
 
 
