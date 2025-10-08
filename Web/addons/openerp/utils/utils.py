@@ -1,0 +1,439 @@
+###############################################################################
+#
+#  Copyright (C) 2007-TODAY OpenERP SA. All Rights Reserved.
+#
+#  $Id$
+#
+#  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
+#
+#  The OpenERP web client is distributed under the "OpenERP Public License".
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
+#  restrictions:
+#
+#  -   All names, links and logos of OpenERP must be kept as in original
+#      distribution without any changes in all software screens, especially
+#      in start-up page and the software header, even if the application
+#      source code has been changed or updated or code has been added.
+#
+#  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
+#
+###############################################################################
+
+from datetime import datetime
+
+import itertools
+import re
+
+from openerp import validators
+import formencode
+import openobject
+from openerp.utils import rpc
+from openobject import ustr
+import math
+
+crummy_pseudoliteral_matcher = re.compile(r'^(True|False|None|-?\d+(\.\d+)?|\[.*?\]|\(.*?\)|\{.*?\})$', re.M)
+
+
+def format_datetime_value(value, bound):
+    dt_validator = _VALIDATORS.get('datetime', openobject.validators.DefaultValidator)()
+    d_validator = _VALIDATORS.get('date', openobject.validators.DefaultValidator)()
+    try:
+        dt_validator.to_python(value, None)
+    except formencode.api.Invalid:
+        try:
+            d_validator.to_python(value, None)
+            dt = datetime.strptime(value, d_validator.format)
+            if bound == 'from':
+                dt = datetime.combine(dt, datetime.min.time())
+            elif bound == 'to':
+                dt = datetime.combine(dt, datetime.max.time())
+            value = dt.strftime(dt_validator.format)
+        except formencode.api.Invalid:
+            pass
+    return value
+
+
+class noeval(object):
+    """contextmanager that prevent TinyDict from doing evals"""
+    def __init__(self, d):
+        self.d = d
+    def __enter__(self):
+        self.d.set_config_noeval(True)
+        return self.d
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.d.set_config_noeval(False)
+        return False # propage exception if any
+
+class TinyDict(dict):
+    """A dictionary class that allows accessing it's items as it's attributes.
+    It also converts stringified Boolean, None, Number or secuence to python object.
+    This class is mainly used by Controllers to get special `_terp_` arguments and
+    to generate valid dictionary of data fields from the controller keyword arguments.
+    """
+    __config_noeval = False
+
+    def __init__(self, **kwargs):
+        super(TinyDict, self).__init__()
+        for k, v in list(kwargs.items()):
+            if (isinstance(v, dict) and not isinstance(v, TinyDict)):
+                v = TinyDict(**v)
+            self[k] = v
+
+    def get_config_noeval(self):
+        return self._TinyDict__config_noeval
+
+    def set_config_noeval(self, value):
+        dict.__setattr__(self, '_TinyDict__config_noeval', value)
+        # recursively propagate the new value
+        for v in self.values():
+            if isinstance(v, TinyDict):
+                v.set_config_noeval(value)
+
+    def build_new(self, is_params=True):
+        if not is_params:
+            return {}
+        new_dict = type(self)()
+        # propagate noeval config flag
+        new_dict.set_config_noeval(self.get_config_noeval())
+        return new_dict
+
+    def build_dict(self, data, is_params=False, previous_dict_ids=None):
+        """If is_params is True then generates a TinyDict otherwise generates a valid
+        dictionary from the given data to be used with OpenERP.
+
+        @param data: data in the form of {'a': 1, 'b/x': 1, 'b/y': 2}
+        @param is_params: if True generate TinyDict instead of standard dict
+        @param previous_dict_ids: set of dict instance to avoid recursion
+
+        @return: TinyDict or dict
+        """
+        if previous_dict_ids is None:
+            previous_dict_ids = set()
+
+        if id(data) in previous_dict_ids:
+            raise ValueError("Recursive dictionary detected, build_dict does not handle recursive dictionaries.")
+        previous_dict_ids.add(id(data))
+
+        res = self.build_new(is_params)
+
+        for name, value in list(data.items()):
+
+            #XXX: safari 3.0 submits selection field even if no `name` attribute
+            if not name:
+                continue
+
+            if isinstance(name, str) and '/' in name:
+                names = name.split('/')
+                root = names[0]
+                if root in res and not isinstance(res[root], dict):
+                    del res[root]
+                res.setdefault(root, self.build_new(is_params)).update({"/".join(names[1:]): value})
+            elif name not in res:
+                # if name is already in res, it might be an o2m value
+                # which tries to overwrite a recursive object/dict
+                res[name] = value
+
+        for k, v in list(res.items()):
+            if isinstance(v, dict):
+                if not is_params and '__id' in v:
+                    _id = v.pop('__id') or 0
+                    _id = int(_id)
+
+                    # build new dict without keeping previous_dict_ids references
+                    values = self.build_dict(v, is_params, previous_dict_ids=None)
+                    if values and any(values.values()):
+                        res[k] = [(_id and 1, _id, values)]
+                    else:
+                        res[k] = []
+
+                else:
+                    res[k] = self.build_dict(v, is_params and isinstance(v, TinyDict), previous_dict_ids)
+
+        previous_dict_ids.remove(id(data))
+        return res
+
+    def _eval(self, value):
+        if self.get_config_noeval():
+            # current behaviour is to store raw value without evaluating them
+            return value
+
+        if isinstance(value, list):
+            for i, v in enumerate(value):
+                value[i] = self._eval(v)
+            return value
+
+        if not isinstance(value, str):
+            return value
+
+        if crummy_pseudoliteral_matcher.match(value):
+            try:
+                return openobject.tools.ast.literal_eval(value)
+            except ValueError:
+                pass
+            except SyntaxError:
+                # certificates are sequences of digits but may (will?) start
+                # with a pair of zeroes, leading to this code trying (and
+                # failing) to parse them as integers.
+                #
+                # Ignore only this case if we catch a syntax error
+                pass
+
+        return value
+
+    _real_eval = _eval # keep a reference of real _eval method
+
+    def __setattr__(self, name, value):
+        name = '_terp_%s' % name
+        value = self._eval(value)
+
+        self[name] = value
+
+    def __getattr__(self, name):
+        nm = '_terp_%s' % name
+        return self.get(nm, self.get(name, None))
+
+    def __setitem__(self, name, value):
+        value = self._eval(value)
+        super(TinyDict, self).__setitem__(name, value)
+
+    def update(self, d=(), **kwargs):
+        if isinstance(d, dict):
+            seq = iter(d.items())
+        else:
+            seq = d
+        for k, v in itertools.chain(seq, iter(kwargs.items())):
+            self[k] = v
+
+    def updateAttrs(self, d=(), **kwattrs):
+        """ Updates the TinyDict's attrs in bulk, as if using attr access (rather than item access which can be
+        performed via setitem)
+        """
+        if isinstance(d, dict):
+            seq = iter(d.items())
+        else:
+            seq = d
+        for k, v in itertools.chain(seq, iter(kwattrs.items())):
+            setattr(self, k, v)
+
+    def chain_get(self, name, default=None):
+        names = re.split(r'\.|/', ustr(name))
+        value = super(TinyDict, self).get(names[0], default)
+
+        for n in names[1:]:
+            if isinstance(value, TinyDict):
+                value = value.get(n, default)
+
+        return value
+
+    def split_dict(self, kwargs):
+        """A helper function to extract special parameters from the given kwargs.
+
+        @param kwargs: dict of keyword arguments
+
+        @rtype: tuple
+        @return: tuple of dicts, (TinyDict, dict of data)
+        """
+        params = self.build_new()
+        data = {}
+
+        for n, v in list(kwargs.items()):
+            if n.find('_terp_') > -1:
+                params[n] = v
+            else:
+                data[n] = v
+
+        return self.build_dict(params, True), self.build_dict(data, False)
+
+    @staticmethod
+    def split(kwargs):
+        return TinyDict().split_dict(kwargs)
+
+    def make_plain(self, prefix=''):
+
+        res = {}
+
+        def _plain(data, prefix):
+            for k, v in list(data.items()):
+                if isinstance(v, dict) and not k.startswith('_terp_'):
+                    _plain(v, prefix + k +'/')
+                else:
+                    res[prefix + k] = v
+
+        _plain(self, prefix)
+
+        return res
+
+    def make_dict(self):
+        res = {}
+        for k, v in list(self.items()):
+            if isinstance(v, TinyDict):
+                v = v.make_dict()
+            res[k] = v
+        return res
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+
+_VALIDATORS = {
+    'date': lambda *a: validators.DateTime(kind="date"),
+    'time': lambda *a: validators.DateTime(kind="time"),
+    'datetime': lambda *a: validators.DateTime(kind="datetime"),
+    'float_time': lambda *a: validators.FloatTime(),
+    'float': lambda *a: validators.Float(),
+    'integer': lambda *a: validators.Int(),
+    'selection': lambda *a: validators.Selection(),
+    'char': lambda *a: validators.String(),
+    'boolean': lambda *a: validators.Bool(),
+    'reference': lambda *a: validators.Reference(),
+    'binary': lambda *a: validators.Binary(),
+    'text': lambda *a: validators.String(),
+    'text_tag': lambda *a: validators.String(),
+    'many2many': lambda *a: validators.many2many(),
+    'one2many': lambda *a: validators.one2many(),
+    'many2one': lambda *a: validators.many2one(),
+    'email' : lambda *a: validators.Email(),
+    'url' : lambda *a: validators.URL(),
+    'picture': lambda *a: validators.Binary(),
+}
+
+class TinyFormError(formencode.api.Invalid):
+    def __init__(self, field, msg, value):
+        formencode.api.Invalid.__init__(self, msg, value, state=None, error_list=None, error_dict=None)
+        self.field = field
+
+class TinyForm(object):
+    """An utility class to convert:
+
+        1. local form data to the server data (throws exception if any)
+        2. server data to the local data
+
+    Using validators.
+    """
+
+    def __init__(self, **kwargs):
+
+        self.data = {}
+        for k, v in list(kwargs.items()):
+            if '_terp_' not in k:
+                try:
+                    v = eval(v)
+                except:
+                    pass
+                self.data['_terp_form/' + k] = v
+
+    def _convert(self, form=True, safe=False):
+        from openerp.widgets.form import OneToMany
+        kw = {}
+        for name, attrs in list(self.data.items()):
+
+            if not isinstance(attrs, dict):
+                kw[name] = attrs
+                continue
+
+            kind = attrs.get('type', 'char')
+            value = attrs.get('value')
+
+            required = attrs.get('required', False)
+
+            if kind == "one2many":
+                try:
+                    o2m_ids = eval(value)
+                    if o2m_ids:
+                        if not isinstance(o2m_ids, list):
+                            o2m_ids = [o2m_ids]
+
+                        Relation = rpc.RPCProxy(attrs['relation'])
+                        relation_objects = Relation.read(o2m_ids, [], rpc.session.context)
+                        relation_fields = Relation.fields_get(False, rpc.session.context)
+                        for relation_record in relation_objects:
+                            for field_name, field_value in list(relation_record.items()):
+                                if field_name in relation_fields and relation_fields[field_name]['type'] == 'many2many':
+                                    relation_record[field_name] = [OneToMany.replace_all(*field_value)]
+
+                        value = []
+                        for relation_record in relation_objects:
+                            obj_id = relation_record.pop('id')
+                            value.append(OneToMany.update(obj_id, relation_record))
+                    else:
+                        value = []
+                except:
+                    pass
+            elif kind == 'datetime' and (name.endswith('/from') or name.endswith('/to')):
+                bound = name.split('/')[-1]
+                value = format_datetime_value(value, bound)
+            elif kind not in _VALIDATORS:
+                kind = 'char'
+
+            v = _VALIDATORS.get(kind, openobject.validators.DefaultValidator)()
+            if kind == 'float':
+                rounding = False
+                if attrs.get('rounding_value') and attrs.get('uom_rounding'):
+                    if isinstance(attrs.get('rounding_value'), (list, tuple)):
+                        rounding_value = attrs.get('rounding_value')[0]
+                    else:
+                        rounding_value = attrs.get('rounding_value')
+
+                    if rounding_value in attrs.get('uom_rounding'):
+                        rounding = int(abs(math.log10(attrs['uom_rounding'][rounding_value])))
+
+                v = validators.Float(digit=attrs.get("digit"), computation=attrs.get("computation"), rounding=rounding, en_thousand_sep=attrs.get('en_thousand_sep', True))
+
+            v.not_empty = (required or False) and True
+
+            try:
+                if form:
+                    converted = v.to_python(value, None)
+                else:
+                    converted = v.from_python(value, None)
+                kw[name] = converted
+            except formencode.api.Invalid as e:
+                if form and not safe:
+                    raise TinyFormError(name.replace('_terp_form/', ''), e.msg, e.value)
+
+        # Prevent auto conversion from TinyDict
+        with noeval(TinyDict()) as converted_dict:
+            params, data = converted_dict.split_dict(kw)
+            params = params.form or {}
+            converted_dict.update(**params)
+            return converted_dict
+
+    def from_python(self):
+        return self._convert(False)
+
+    def to_python(self, safe=False):
+        return self._convert(True, safe=safe)
+
+
+def get_server_version(dbname, remove_timestamp=True):
+    version = rpc.session.execute_db('server_version', dbname)
+    if version and remove_timestamp:
+        ver_match = re.match(r'(.*)-\d{8}-\d{6}$', version)
+        if ver_match:
+            version = ver_match.group(1)
+    return version
+
+
+if __name__ == "__main__":
+
+    kw = {'_terp_view_ids': "[False, 45]",
+          'view_ids/_terp_view_ids': '[False, False]',
+          'view_ids/child/_terp_view_ids': '[112, 111]'
+          }
+
+    params, data = TinyDict.split(kw)
+
+    params.domain = "[1]"
+    params.setdefault('domain', 'something...')
+    params.context = "{}"
+    params['context'] = "{'id': False}"
+
+    print(params)
+    print(params.view_ids)
+    print(params.chain_get('view_ids'))
+    print(params.chain_get('view_ids.child'))
+    print(params.chain_get('view_ids.child').view_ids)
+
+# vim: ts=4 sts=4 sw=4 si et
