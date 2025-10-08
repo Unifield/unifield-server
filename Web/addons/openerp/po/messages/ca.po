@@ -18,7 +18,7 @@ msgstr ""
 "X-Generator: Launchpad (build 13573)\n"
 
 #: validators.py:75
-msgid "Invalid literal for float"
+msgid "Only numerical values are accepted"
 msgstr "Cadena inválida para número de precisión 'float'"
 
 #: validators.py:114 validators.py:119 validators.py:262

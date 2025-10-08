@@ -19,8 +19,8 @@ msgstr ""
 "Generated-By: Babel None\n"
 
 #: validators.py:75
-msgid "Invalid literal for float"
-msgstr "Format de nombre réel invalide"
+msgid "Only numerical values are accepted"
+msgstr "Seules les valeurs numériques sont acceptées"
 
 #: validators.py:114 validators.py:119 validators.py:262
 msgid "Invalid datetime format"

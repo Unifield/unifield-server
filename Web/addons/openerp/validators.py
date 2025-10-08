@@ -88,7 +88,7 @@ class Float(formencode.validators.Number):
                 raise formencode.api.Invalid(_('Comma character "," not accepted in this field'), value, state)
             value = format.parse_decimal(value)
         except ValueError:
-            raise formencode.api.Invalid(_('Invalid literal for float'), value, state)
+            raise formencode.api.Invalid(_('Only numerical values are accepted'), value, state)
         return value
 
 class FloatTime(Float):
