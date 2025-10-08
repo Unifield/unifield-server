@@ -452,6 +452,37 @@
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
                 <form string="Outbound Transport Object" hide_delete_button="1">
+                    <html colspan="4">
+                        <script language="javascript">
+                            set_customs_help_init = function(init) {
+                                $('table#transport_customs_fees_ids tr[record]').each(function() {
+                                    var button_customs_help = $('input#name_help', this).val();
+                                    $('a#dummy', this).attr('title', button_customs_help);
+                                });
+                            }
+                            set_transport_help_init = function(init) {
+                                $('table#transport_transport_fees_ids tr[record]').each(function() {
+                                    var button_transport_help = $('input#name_help', this).val();
+                                    $('a#dummy', this).attr('title', button_transport_help);
+                                });
+                            }
+
+                            // To allow the help value to be updated after the line is changed
+                            new ListView('transport_customs_fees_ids').after_reload = function() {
+                                set_customs_help_init(true);
+                            };
+                            new ListView('transport_transport_fees_ids').after_reload = function() {
+                                set_transport_help_init(true);
+                            };
+
+                            $(document).ready(function() {
+                                // To allow the help value to be set after load
+                                set_customs_help_init(true);
+                                set_transport_help_init(true);
+                            });
+                        </script>
+                    </html>
+                    <newline/>
                     <field name="name" />
                     <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="shipment_type" />
