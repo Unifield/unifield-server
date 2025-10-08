@@ -576,7 +576,7 @@
                         </page>
 
                         <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [['state', '!=', 'planned'], ('zone_type', 'in', ['int', 'regional'])]}"/>
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
