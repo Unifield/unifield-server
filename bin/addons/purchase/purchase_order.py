@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+#ABCDEFG
 import time
 from osv import osv, fields
 import netsvc
