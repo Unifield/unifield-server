@@ -295,7 +295,7 @@ def act_window(action, data):
         # TODO: we're conservative here - so we set limit to 20,
         #       but we should really use act_window's limit (i.e data['limit'])
         #       once we're sure there is *no* performance impact.
-        cherrypy.request.action_limit = 20
+        cherrypy.request.action_limit = 50
     data['limit'] = None
 
     if action.get('target') and action['target'] == 'popup' and action.get('res_model') and isinstance(action.get('context'), dict):

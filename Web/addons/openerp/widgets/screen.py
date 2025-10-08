@@ -123,7 +123,7 @@ class Screen(TinyInputWidget):
 
         if self.limit is None:
             # limit was not forced by view - use action of defaults
-            self.limit = getattr(cherrypy.request, 'action_limit', 20)
+            self.limit = getattr(cherrypy.request, 'action_limit', 50)
 
     def add_view_id(self, view_id, view_type):
         self.view_id = view_id

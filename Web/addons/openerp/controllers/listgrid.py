@@ -157,7 +157,7 @@ class List(SecuredController):
             view = cache.fields_view_get(model, view_id, view_type, rpc.session.context)
             view = view['fields'][name]['views'][m2m_view_type]
 
-        m2m_view = listgrid.List(name, m2m_model, view, ids,limit=20, editable=disabled!='true', m2m=1, count=len(ids))
+        m2m_view = listgrid.List(name, model, view, ids,limit=50, editable=disabled!='true', m2m=1, count=len(ids))
         m2m_view = ustr(m2m_view.render())
         return dict(m2m_view = m2m_view)
 
@@ -186,7 +186,7 @@ class List(SecuredController):
             view = cache.fields_view_get(model, view_id, view_type, rpc.session.context)
             view = view['fields'][name]['views'][o2m_view_type]
 
-        list_view = listgrid.List(name, model, view, ids=None, domain=o2m_domain, context=context, default_data=copy.deepcopy(o2m_values), limit=20, editable= editable,o2m=1)
+        list_view = listgrid.List(name, model, view, ids=None, domain=o2m_domain, context=context, default_data=copy.deepcopy(o2m_values), limit=50, editable= editable,o2m=1)
         view=ustr(list_view.render())
         formated_o2m_values = []
         for o2m in o2m_values:
@@ -210,7 +210,7 @@ class List(SecuredController):
         groups = ast.literal_eval(groups)
 
         offset = params.offset or 0
-        limit = params.limit or 20
+        limit = params.limit or 50
         args = {'editable': editable,
                 'view_mode': ['tree', 'form', 'calendar', 'graph'],
                 'nolinks': 1, 'group_by_ctx': group_by,

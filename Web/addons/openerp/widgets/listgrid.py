@@ -175,7 +175,7 @@ class List(TinyWidget):
         # 1. use action limit or default global listview limit: 20
         # 2. apply tree view limit if defined in attrs: <tree limit='..'>...</tree>
         # 3. apply user limit if changed
-        self.limit = getattr(cherrypy.request, 'action_limit', 20)
+        self.limit = getattr(cherrypy.request, 'action_limit', 50)
         if attrs.get('limit'):
             try:
                 self.limit = int(attrs.get('limit'))
