@@ -506,7 +506,7 @@ class List(TinyWidget):
                     if kind not in CELLTYPES:
                         kind = 'char'
 
-                    if attrs.get('get_selection') and kind == 'selection' and attrs.get('type2') == 'many2one':
+                    if attrs.get('get_selection') and attrs.get('type') == 'selection' and attrs.get('type2') == 'many2one':
                         proxy = rpc.RPCProxy(self.model)
                         attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.ids, self.context)
 
