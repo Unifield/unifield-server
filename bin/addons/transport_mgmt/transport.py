@@ -353,6 +353,11 @@ class transport_order_step(osv.osv):
         if context is None:
             context = {}
 
+        # Get the current user's lang if there is none
+        if not context.get('lang'):
+            user_lang = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
+            context['lang'] = user_lang or 'en_MF'
+
         dom = [('is_active', '=', True)]
         if context.get('macroprocess_id'):
             dom.append(('macroprocess_ids', '=', context['macroprocess_id']))
