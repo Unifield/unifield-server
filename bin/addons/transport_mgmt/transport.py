@@ -326,16 +326,9 @@ class transport_order_step(osv.osv):
 
     _order = 'name desc, id'
 
-    def _get_step_name(self, cr, uid, ids, field_name, arg, context=None):
-        res = {}
-        for order_step in self.browse(cr, uid, ids, fields_to_fetch=['step_id'], context=context):
-            res[order_step.id] = order_step.step_id and order_step.step_id.name or ''
-        return res
-
     _columns = {
         'name': fields.date('Start Date', required=1),
         'step_id': fields.many2one('transport.step', 'Step', required=1, select=1),
-        'step_name': fields.function(_get_step_name, method=True, type='char', size=256, string='Step'),
         'sub_step_id': fields.many2one('transport.sub.step', 'Sub-Step', select=1),
         'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
@@ -468,10 +461,12 @@ class transport_order(osv.osv):
         del d['id']
         return {'value': d}
 
-    def onchange_macroprocess(self, cr, uid, ids, macroprocess_id, shipment_type):
+    def onchange_macroprocess(self, cr, uid, ids, macroprocess_id, shipment_type, context=None):
         '''
         Check if any of the existing selected steps are not available in the newly selected macroprocess
         '''
+        if context is None:
+            context = {}
         res = {}
         if not ids:
             return res
@@ -481,13 +476,13 @@ class transport_order(osv.osv):
             cr.execute("SELECT step_id FROM transport_order_step WHERE transport_" + shipment_type + "_id IN %s", (tuple(ids),))
             non_conform_step_ids = set([x[0] for x in cr.fetchall()]) - set([step.id for step in new_mcrproc_step])
             if non_conform_step_ids:
-                non_conform_step_names = self.pool.get('transport.step').read(cr, uid, non_conform_step_ids, ['name'])
+                non_conform_step = self.pool.get('transport.step').read(cr, uid, non_conform_step_ids, ['name'], context=context)
                 res.update({
                     'value': {'macroprocess_id': self.read(cr, uid, ids[0], ['macroprocess_id'])['macroprocess_id'][0]},
                     'warning': {
                         'title': _('Warning'),
                         'message': _('The selected Macroprocess is not linked to the steps %s. Please change those steps if you want to select it')
-                                   % (', '.join([step['name'] for step in non_conform_step_names]),),
+                                   % (', '.join([step['name'] for step in non_conform_step]),),
                     }
                 })
 

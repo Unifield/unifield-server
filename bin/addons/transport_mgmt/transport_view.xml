@@ -305,11 +305,10 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
                             <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
                                 <tree string="Steps" editable="top">
-                                    <field name="step_name" displayon="noteditable" />
-                                    <field name="step_id" widget="selection" get_selection="get_steps" displayon="editable" />
+                                    <field name="step_id" widget="selection" get_selection="get_steps" />
                                     <field name="sub_step_id" widget="selection" />
                                     <field name="comment" />
                                     <field name="name" />
@@ -624,11 +623,10 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
                             <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
                                 <tree string="Steps" editable="top">
-                                    <field name="step_name" displayon="noteditable" />
-                                    <field name="step_id" widget="selection" get_selection="get_steps" displayon="editable" />
+                                    <field name="step_id" widget="selection" get_selection="get_steps" />
                                     <field name="sub_step_id" widget="selection" />
                                     <field name="comment" />
                                     <field name="name" />
