@@ -24,7 +24,7 @@
                     </group>
                     <field name="ref"/>
                     <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                    <field name="location_id" domain="[('usage','=','internal')]"
+                    <field name="location_id" domain="[('usage','=','internal')]" on_change="change_location(location_id)"
                            attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="responsible"/>

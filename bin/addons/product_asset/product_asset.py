@@ -11,6 +11,10 @@ import pooler
 from tempfile import NamedTemporaryFile
 from base64 import b64decode
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from lxml import etree
+from openpyxl import load_workbook
+from io import BytesIO
+import re
 
 
 #----------------------------------------------------------
@@ -136,11 +140,11 @@ class product_asset(osv.osv):
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
         line_obj = self.pool.get('product.asset.line')
-        move_line_obj = self.pool.get('account.move.line')
-        to_reset_asset_line_ids = line_obj.search(cr, uid, ['&', '&', ('asset_id', 'in', ids), '|', ('move_id', '=', False), ('move_id.state', '!=', 'posted'), ('analytic_distribution_id', '!=', False)])
-        to_reset_move_line_ids = move_line_obj.search(cr, uid, [('move_id.state', '!=', 'posted'), ('analytic_distribution_id', '!=', False), ('asset_line_id', 'in', to_reset_asset_line_ids)])
-        if to_reset_move_line_ids:
-            move_line_obj.write(cr, uid, to_reset_move_line_ids, {'analytic_distribution_id': False})
+        # move_line_obj = self.pool.get('account.move.line')
+        to_reset_asset_line_ids = line_obj.search(cr, uid, [('asset_id', 'in', ids), ('move_id', '=', False), ('analytic_distribution_id', '!=', False)])
+        # to_reset_move_line_ids = move_line_obj.search(cr, uid, [('move_id.state', '!=', 'posted'), ('analytic_distribution_id', '!=', False), ('asset_line_id', 'in', to_reset_asset_line_ids)])
+        # if to_reset_move_line_ids:
+        #     move_line_obj.write(cr, uid, to_reset_move_line_ids, {'analytic_distribution_id': False})
         if to_reset_asset_line_ids:
             line_obj.write(cr, uid, to_reset_asset_line_ids, {'analytic_distribution_id': False})
         return True
@@ -238,6 +242,21 @@ class product_asset(osv.osv):
             context = {}
 
         instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
+
+        if instance_level == 'coordo' and vals.get('used_instance_id'):
+            # trigger update on asset line if used_instance has changed
+            cr.execute('''
+                update ir_model_data d set
+                    last_modification=now(), touched='[''used_instance_id'']'
+                from product_asset_line line, product_asset asset
+                where
+                    d.model = 'product.asset.line' and
+                    d.res_id = line.id and
+                    line.asset_id = asset.id and
+                    asset.id in %s and
+                    asset.used_instance_id != %s
+            ''', (tuple(ids), vals['used_instance_id']))
+
 
         if context.get('sync_update_execution', False):
             if not self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
@@ -487,17 +506,21 @@ class product_asset(osv.osv):
         ret = {}
         for _id in ids:
             ret[_id] = {'depreciation_amount': False,  'disposal_amount': False}
+
+        cond = " l.move_id is not null "
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'project':
+            cond = " l.project_has_coordo_move_id = 't' "
         cr.execute('''
             select
                 a.id, sum(l.amount), a.invo_value, a.from_invoice, a.from_hq_entry, a.state
             from
                 product_asset a
-                left join product_asset_line l on a.id = l.asset_id and l.move_id is not null
+                left join product_asset_line l on a.id = l.asset_id and ''' + cond + '''
             where
                 a.id in %s
                 and coalesce(l.is_initial_line, 'f') = 'f'
             group by a.id, a.invo_value, a.from_invoice, a.state
-        ''', (tuple(ids), ))
+        ''', (tuple(ids), ))  # not_a_user_entry
         for x in cr.fetchall():
             ret[x[0]] = {'depreciation_amount': x[1] or 0}
             if not x[1] and not x[3] and not x[4] and x[5] in ('depreciated', 'disposed'):
@@ -658,12 +681,16 @@ class product_asset(osv.osv):
         asset_line_obj = self.pool.get('product.asset.line')
         je_to_delete_ids = []
         disposal_to_delete_id = []
+        trigger_update = []
         for asset in self.browse(cr, uid, ids, fields_to_fetch=['line_ids'], context=context):
             for depline in asset.line_ids:
                 if depline.move_id and depline.move_id.state == 'draft':  # draft = Unposted state
                     je_to_delete_ids.append(depline.move_id.id)
+                    trigger_update.append(depline.id)
                     if depline.is_disposal:
                         disposal_to_delete_id.append(depline.id)
+        if trigger_update:
+            asset_line_obj.write(cr, uid, trigger_update, {'move_id': False}, context=context)
         if je_to_delete_ids:
             je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
         if disposal_to_delete_id:
@@ -673,6 +700,24 @@ class product_asset(osv.osv):
             self.button_generate_draft_entries(cr, uid, ids, context=context, entries_regeneration=True)
 
         return True
+    def _get_has_lines_without_ji(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        if not ids:
+            return {}
+        for _id in ids:
+            ret[_id] = False
+        # Set True for assets with asset lines without JI and for assets without asset lines
+        cr.execute("""select
+                          distinct(asset.id)
+                      from
+                          product_asset asset left join product_asset_line line on line.asset_id = asset.id
+                      where
+                          asset.id in %s and
+                          (line.id is null or line.move_id is null)""", (tuple(ids),))
+
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
 
 
     _columns = {
@@ -750,6 +795,8 @@ class product_asset(osv.osv):
         'target_instance_history_ids': fields.many2many('msf.instance', 'asset_owner_instance_rel', 'asset_id', 'instance_id', 'List of owners (accurate at Coo)'),
         'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
                                                 store=False, string='Has unposted entries'),
+        'has_lines_without_ji': fields.function(_get_has_lines_without_ji, string='Has at least one line without JI',
+                                                type='boolean', method=True),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -788,6 +835,7 @@ class product_asset(osv.osv):
         'quantity_divisor': False,
         'used_instance_id': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_id(cr, uid),
         'create_update_sent': False,
+        'has_lines_without_ji': True,
     }
 
     _sql_constraints = [('asset_name_uniq', 'unique(name)', 'Asset Code must be unique.')]
@@ -1247,6 +1295,15 @@ class product_asset_line(osv.osv):
     _description = "Depreciation Lines"
     _trace = True
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view = super(product_asset_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and self.pool.get('res.company')._get_instance_level(cr, uid) == 'project':
+            view_xml = etree.fromstring(view['arch'])
+            for field in view_xml.xpath('//button[@name="button_analytic_distribution"]|//field[@name="analytic_distribution_state_recap"]|//field[@name="move_id"]|//field[@name="move_state"]'):
+                field.set('invisible', "1")
+            view['arch'] = etree.tostring(view_xml, encoding='unicode')
+        return view
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
@@ -1358,6 +1415,21 @@ class product_asset_line(osv.osv):
                 res[x[0]] = {'depreciation_amount': round(x[1], 2) , 'remaining_amount': max(round(x[2], 2), 0)}
         return res
 
+    def _sync_data(self, cr, uid, values, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            values['project_has_coordo_move_id'] = bool(values.get('move_state'))
+
+
+
+    def create(self, cr, uid, values, context=None):
+        self._sync_data(cr, uid, values, context=context)
+        return super(product_asset_line, self).create(cr, uid, values, context=context)
+
+    def write(self, cr, uid, ids, values, context=None):
+        self._sync_data(cr, uid, values, context=context)
+        return super(product_asset_line, self).write(cr, uid, ids, values, context=context)
 
     _columns = {
         'date': fields.date('Date', readonly=1, select=1),
@@ -1384,6 +1456,8 @@ class product_asset_line(osv.osv):
         'is_initial_line': fields.boolean('Initial Line'),
         'depreciation_amount': fields.function(_get_dep, type='float', with_null=True, method=1, string="Cumulative Amount", multi='get_dep'),
         'remaining_amount': fields.function(_get_dep, type='float', with_null=True, method=1, string="Remaining Amount", multi='get_dep'),
+        'used_instance_id': fields.related('asset_id', 'used_instance_id', type='many2one', relation='msf.instance', string='Instance of use', readonly=1, write_relate=False),
+        'project_has_coordo_move_id': fields.boolean('Linked to JI', help='Relevant at project level only', readonly=1),
     }
 
     _defaults = {
@@ -1440,9 +1514,9 @@ class product_asset_line(osv.osv):
 
             period_id = period_cache[line.date]
 
-            #if not line.analytic_distribution_id and line.asset_id.analytic_distribution_id:
-            #    analytic_line_id = self.pool.get('analytic.distribution').copy(cr, uid, line.asset_id.analytic_distribution_id.id, {}, context=context)
-            #    update_data['analytic_distribution_id'] = analytic_line_id
+            if not line.analytic_distribution_id and line.asset_id.analytic_distribution_id:
+                analytic_line_id = self.pool.get('analytic.distribution').copy(cr, uid, line.asset_id.analytic_distribution_id.id, {}, context=context)
+                update_data['analytic_distribution_id'] = analytic_line_id
             #else:
             #    analytic_line_id = line.analytic_distribution_id.id
 
@@ -2009,6 +2083,266 @@ class product_asset_import_entries_errors(osv.osv_memory):
 
 product_asset_import_entries_errors()
 
+
+class import_asset_reference(osv.osv_memory):
+    _name = 'import.asset.reference'
+    _description = 'Import Asset Reference'
+
+    def file_change(self, cr, uid, obj_id, file):
+        """
+            Display the import button only if a file is selected
+        """
+        result = {'value': {'display_import_buttons': False}}
+        if file:
+            result['value']['display_import_buttons'] = True
+        return result
+
+    def button_import(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        updated = 0
+        errors = []
+        current_line_num = None
+        asset_obj = self.pool.get('product.asset')
+        try:
+            # Update wizard
+            self.write(cr, uid, ids, {'message': _('Cleaning up old imports...'), 'progression': 1.00})
+            old_imports_ids = self.pool.get('import.asset.reference.lines').search(cr, uid, [], context=context)
+            if old_imports_ids:
+                self.pool.get('import.asset.reference.lines').unlink(cr, uid, old_imports_ids, context=context)
+
+            for wiz in self.browse(cr, uid, ids):
+                # Check that a file was given
+                if not wiz.file:
+                    raise osv.except_osv(_('Error'), _('Nothing to import.'))
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Reading file...'), 'progression': 2.00})
+                wb = load_workbook(filename=BytesIO(b64decode(wiz.file)), read_only=True)
+                sheet = wb.active
+
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Processing lines...'), 'progression': 4.00})
+                rows = tuple(sheet.rows)
+                nb_rows = len(rows)
+
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Reading headers...'), 'progression': 5.00})
+                # Use the first row to find which column to use
+                cols = {}
+                col_names = [_('Asset Code'), _('Instance Creator'), _('Instance of Use'), _('Journal Item'),
+                             _('Asset Type'), _('Product'), _('External Asset ID'), _('Serial Number'),
+                             _('Brand'), _('Type'), _('Model'), _('Year')]
+                for num, r in enumerate(rows):
+                    line_error = False
+                    updated = 0
+                    if num == 0:
+                        header = [x.value for x in r]
+                        for el in col_names:
+                            if el in header:
+                                cols[el] = header.index(el)
+                            else:
+                                raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el or '',))
+                        continue
+                    else:
+                        # Number of line to bypass in line's count
+                        base_num = 1
+
+                        # Update wizard
+                        self.write(cr, uid, [wiz.id], {'message': _('Reading lines...'), 'progression': 6.00})
+                        # Check file's content
+                        progression = ((float(num + 1) * 94) / float(nb_rows)) + 6
+                        self.write(cr, uid, [wiz.id], {'message': _('Checking file...'), 'progression': progression})
+
+                        current_line_num = num + base_num
+
+                        # Check Asset Code
+                        if not r[cols[_('Asset Code')]].value:
+                            errors.append(
+                                _('Line %s: No Asset Code specified! Update can not be done!') % (current_line_num, ))
+                            line_error = True
+                            continue
+                        else:
+                            asset_id = asset_obj.search(cr, uid, [('name', '=', r[cols[_('Asset Code')]].value)], context=context)
+                            if not asset_id:
+                                errors.append(_('Line %s: No Asset with the code %s found in Unifield!') %
+                                              (current_line_num, r[cols[_('Asset Code')]].value or ''))
+                                line_error = True
+                            else:
+                                # Check if all the fields provided in the line of the import file
+                                # match with the fields of the asset to update
+                                asset = asset_obj.browse(cr, uid, asset_id[0],
+                                                         fields_to_fetch=['external_asset_id', 'instance_id', 'used_instance_id', 'move_line_id',
+                                                                          'asset_type_id', 'product_id'], context=context)
+                                external_asset_id = asset.external_asset_id or ''
+                                if external_asset_id != (r[cols[_('External Asset ID')]].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as External Asset ID in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', external_asset_id,
+                                                   r[cols[_('External Asset ID')]].value or ''))
+                                    line_error = True
+                                asset_instance_creator = asset.instance_id and asset.instance_id.code or ''
+                                if asset.instance_id.code != (r[cols[_('Instance Creator')]].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Instance  Creator in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_instance_creator,
+                                                   r[cols[_('Instance Creator')]].value or ''))
+                                    line_error = True
+                                asset_instance_of_use = asset.used_instance_id and asset.used_instance_id.code or ''
+                                if asset.used_instance_id.code != (r[cols[_('Instance of Use')]].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Instance  of Use in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_instance_of_use,
+                                                   r[cols[_('Instance of Use')]].value or ''))
+                                    line_error = True
+                                asset_ji = asset.move_line_id and asset.move_line_id.move_id and asset.move_line_id.move_id.name or ''
+                                if asset_ji != (r[cols[_('Journal Item')]].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Journal Item in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_ji,
+                                                   r[cols[_('Journal Item')]].value or ''))
+                                    line_error = True
+                                asset_type = asset.asset_type_id and asset.asset_type_id.name or ''
+                                if asset_type != (r[cols[_('Asset Type')]].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Asset Type in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_type,
+                                                   r[cols[_('Asset Type')]].value or ''))
+                                    line_error = True
+                                asset_product_name = asset.product_id and asset.product_id.name and asset.product_id.code and\
+                                    '[%s] %s' % (asset.product_id.code, asset.product_id.name) or ''
+                                if asset_product_name != (r[cols[_('Product')]].value or ''):
+                                    errors.append(_('Line %s: The Asset %s has \'%s\' as Product in Unifield '
+                                                    'but \'%s\' was provided in the import file.') %
+                                                  (current_line_num, r[cols[_('Asset Code')]].value or '', asset_product_name,
+                                                   r[cols[_('Product')]].value or ''))
+                                    line_error = True
+                                # Check year format
+                                if r[cols[_('Year')]].value and not re.match(r'^(19|20)\d{2}$', str(r[cols[_('Year')]].value)):
+                                    errors.append(_('Line %s: The year of Asset %s must be a number between 1900 and 2099.') % (current_line_num, r[cols[_('Asset Code')]].value or ''))
+                                    line_error = True
+
+                                vals = {
+                                    'serial_nb': r[cols[_('Serial Number')]].value or '',
+                                    'brand': r[cols[_('Brand')]].value or '',
+                                    'type': r[cols[_('Type')]].value or '',
+                                    'model': r[cols[_('Model')]].value or '',
+                                    'year': r[cols[_('Year')]].value or '',
+                                    'wizard_id': wiz.id,
+                                    'asset_id': asset.id,
+                                }
+                    if not line_error:
+                        line_res = self.pool.get('import.asset.reference.lines').create(cr, uid, vals, context=context)
+                        if not line_res:
+                            errors.append(_('Line %s: A problem occurred for line registration. Please contact an Administrator.') % (current_line_num,))
+                            continue
+            # Update wizard
+            self.write(cr, uid, ids,
+                       {'message': _('Check complete. Reading potential errors or write needed changes.'),
+                        'progression': 100.0})
+            wiz_state = 'done'
+            # If errors, cancel probable modifications
+            if errors:
+                cr.rollback()
+                updated = 0
+                message = _('Import FAILED.')
+                # Delete old errors
+                error_ids = self.pool.get('import.asset.reference.errors').search(cr, uid, [], context=context)
+                if error_ids:
+                    self.pool.get('import.asset.reference.errors').unlink(cr, uid, error_ids, context=context)
+                # create error lines
+                for e in errors:
+                    self.pool.get('import.asset.reference.errors').create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context=context)
+                wiz_state = 'error'
+            else:
+                # Update wizard
+                self.write(cr, uid, ids, {'message': _('Writing changes...'), 'progression': 0.0})
+                # Update all asset entries
+                import_lines_ids = self.pool.get('import.asset.reference.lines').search(cr, uid, [('wizard_id', '=', wiz.id)], context=context)
+                import_lines = self.pool.get('import.asset.reference.lines').browse(cr, uid, import_lines_ids, context=context)
+                context.update({'from_import': True})
+                try:
+                    for asset in import_lines:
+                        asset_vals = {
+                            'serial_nb': asset.serial_nb,
+                            'brand': asset.brand,
+                            'type': asset.type,
+                            'model': asset.model,
+                            'year': asset.year,
+                        }
+                        self.pool.get('product.asset').write(cr, uid, asset.asset_id.id, asset_vals, context=context)
+                        updated += 1
+                    message = _('Import successful. %s assets updated.') % (updated,)
+                except osv.except_osv as osv_error:
+                    cr.rollback()
+                    self.write(cr, uid, ids,
+                               {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,),
+                                'state': 'done', 'progression': 100.0})
+                    cr.close(True)
+
+            # Update wizard
+            self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
+
+        except osv.except_osv as osv_error:
+            cr.rollback()
+            self.write(cr, uid, ids, {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
+        except Exception as e:
+            cr.rollback()
+            if current_line_num is not None:
+                message = _("An error occurred on line %s: %s") % (current_line_num, e.args and e.args[0] or '')
+            else:
+                message = _("An error occurred: %s") % (e.args and e.args[0] or '',)
+            self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
+        return True
+
+    _columns = {
+        'assets_ids': fields.many2many('product.asset','import_asset_reference_product_asset_rel',
+                                       'asset_id', 'wizard_id', string="Assets to update"),
+        'file': fields.binary(string="File", filters='*.xlsx', required=True),
+        'filename': fields.char(string="Imported filename", size=256),
+        'progression': fields.float(string="Progression", readonly=True),
+        'message': fields.char(string="Message", size=256, readonly=True),
+        'display_import_buttons': fields.boolean('Display import buttons'),
+        'state': fields.selection(
+            [('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('done', 'Done')],
+            string="State", readonly=True, required=True),
+        'error_ids': fields.one2many('import.asset.reference.errors', 'wizard_id', "Errors", readonly=True),
+    }
+
+    _defaults = {
+        'display_import_buttons': lambda *a: False,
+        'progression': lambda *a: 0.0,
+        'state': lambda *a: 'draft',
+        'message': lambda *a: _('Initialization...'),
+    }
+
+import_asset_reference()
+
+class import_asset_reference_lines(osv.osv):
+    _name = 'import.asset.reference.lines'
+
+    _columns = {
+        'asset_id': fields.many2one('product.asset', string='Asset'),
+        'serial_nb': fields.char('Serial Number', size=128),
+        'brand': fields.char('Brand', size=128),
+        'type': fields.char('Type', size=128),
+        'model': fields.char('Model', size=128),
+        'year': fields.char('Year', size=4),
+        'wizard_id': fields.integer("Wizard", required=True),
+    }
+
+import_asset_reference_lines()
+
+
+class import_asset_reference_errors(osv.osv_memory):
+    _name = 'import.asset.reference.errors'
+    _description = 'Assets Reference Update - Error List'
+
+    _columns = {
+        'name': fields.text("Description", readonly=True, required=True),
+        'wizard_id': fields.many2one('import.asset.reference', "Wizard", required=True, readonly=True),
+    }
+
+import_asset_reference_errors()
 
 #----------------------------------------------------------
 # Products

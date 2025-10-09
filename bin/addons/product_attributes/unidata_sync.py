@@ -318,6 +318,8 @@ class ud_sync():
         self.context = context
         self.logger = logger
         self.oc = self.pool.get('sync.client.entity').get_entity(self.cr, self.uid, context).oc
+        if self.oc == 'waca':
+            self.oc = 'ocp'
 
         sync_id = self.pool.get('ir.model.data').get_object_reference(self.cr, self.uid, 'product_attributes', 'unidata_sync_config')[1]
         config = self.pool.get('unidata.sync').read(self.cr, self.uid, sync_id, context=self.context)
@@ -524,6 +526,10 @@ class ud_sync():
             },
             'golden_status': {
                 'ud': 'state',
+            },
+            'new_code': {
+                'ud': 'mergeToCode',
+                'ignore_missing': True,
             },
             'sterilized': {
                 'ud': 'medical/sterile',
@@ -826,8 +832,17 @@ class ud_sync():
                     continue
 
                 uf_value = ud_data
+                ignore_missing = False
+
                 for key in field_desc['ud'].split('/'):
+                    if self.uf_config[uf_key].get('ignore_missing') and key not in uf_value:
+                        ignore_missing = True
+                        break
                     uf_value = uf_value.get(key, {})
+
+                if ignore_missing:
+                    continue
+
                 if not uf_value:
                     uf_value = False
 
@@ -1159,7 +1174,11 @@ class ud_sync():
                         if not x.get('ocSubscriptions').get(self.oc):
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
                                 if x.get('state') != 'Golden' or is_full:
-                                    self.cr.execute("update product_product set golden_status=%s, ud_seen='t' where id=%s", (x.get('state'), prod_ids[0]))
+                                    to_write = {'ud_seen': True, 'golden_status': x.get('state')}
+                                    if x.get('mergeToCode'):
+                                        to_write['new_code'] = x.get('mergeToCode')
+                                        self.log('Write New code %s on product id: %s' % (to_write['new_code'], prod_ids[0]))
+                                    prod_obj.write(self.cr, self.uid, [prod_ids[0]], to_write)
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
@@ -1686,13 +1705,6 @@ class unidata_sync(osv.osv):
             first_merged = param_obj.get_param(cr, 1, 'UD_GETALL_MERGED')
             if first_merged == '1':
                 if not full:
-                    cr.execute('''
-                        update product_product p set golden_status='Golden'
-                            from product_international_status st
-                            where
-                                st.id = p.international_status and
-                                st.code = 'unidata'
-                        ''')
                     trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products('(./metaData/state!="Golden")', False, session_id, is_full=is_full)
                     nb_prod += tmp_nb_prod
                     updated += tmp_updated
@@ -1761,14 +1773,13 @@ class unidata_sync(osv.osv):
             return False
 
         if is_full:
-            cr.execute('''
-                update product_product p set golden_status=''
-                    from product_international_status st
-                    where
-                        st.id = p.international_status and
-                        st.code = 'unidata' and
-                        p.ud_seen = 'f'
-                ''')
+            prod_obj = self.pool.get('product.product')
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            not_seen_ud_ids = prod_obj.search(cr, uid, [('ud_seen', '=', False), ('international_status', '=', unidata_id), ('active', 'in', ['t', 'f'])])
+
+            if not_seen_ud_ids:
+                prod_obj.write(cr, uid, not_seen_ud_ids, {'golden_status': ''})
 
         logger.info('End of Script')
         handler.close()

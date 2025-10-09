@@ -641,8 +641,15 @@ class account_invoice(osv.osv):
         Ticket utp917 - added code to avoid currency cd change if a direct invoice
         """
         res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, ctype, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
-        if is_inkind_donation and partner_id:
+        partner = False
+        if partner_id:
             partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if not from_supply and doc_type in ('di', 'si') and partner.state == 'phase_out':
+                return {
+                    'value': {'partner_id': False, 'invoice_address_id': False, 'address_invoice_id': False, 'account_id': False},
+                    'warning': {'title': _('Error'), 'message': _('The selected Supplier is Phase Out, please select another Supplier')}
+                }
+        if is_inkind_donation and partner:
             account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
             res['value']['account_id'] = account_id
         if is_intermission and partner_id:
@@ -656,18 +663,17 @@ class account_invoice(osv.osv):
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
                 res['value']['account_id'] = account_id
-        if partner_id and ctype:
-            p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+        if partner and ctype:
             ai_direct_invoice = False
             if ids: #utp917
                 ai = self.browse(cr, uid, ids)[0]
                 ai_direct_invoice = ai.is_direct_invoice
-            if p:
+            if partner:
                 c_id = False
-                if ctype in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
-                    c_id = p.property_product_pricelist_purchase.currency_id.id
-                elif ctype in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
-                    c_id = p.property_product_pricelist.currency_id.id
+                if ctype in ['in_invoice', 'out_refund'] and partner.property_product_pricelist_purchase:
+                    c_id = partner.property_product_pricelist_purchase.currency_id.id
+                elif ctype in ['out_invoice', 'in_refund'] and partner.property_product_pricelist:
+                    c_id = partner.property_product_pricelist.currency_id.id
                 # UFTP-121: regarding UTP-917, we have to change currency when changing partner, but not for direct invoices
                 if c_id and (not is_direct_invoice and not ai_direct_invoice):
                     if not res.get('value', False):
@@ -1049,6 +1055,10 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             values = {}
             curr_date = strftime('%Y-%m-%d')
+            if context.get('from_button') and inv.real_doc_type in ('di', 'si') and inv.state == 'draft' and \
+                    inv.partner_id and inv.partner_id.state == 'phase_out':
+                raise osv.except_osv(_('Error'),
+                                     _('The selected Supplier is Phase Out, please select another Supplier'))
             if inv.is_debit_note:
                 for inv_line in inv.invoice_line:
                     if inv_line.partner_id != inv.partner_id:

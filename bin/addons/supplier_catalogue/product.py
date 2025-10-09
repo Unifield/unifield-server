@@ -31,7 +31,7 @@ class product_supplierinfo(osv.osv):
 
     def unlink(self, cr, uid, info_ids, context=None):
         '''
-        Disallow the possibility to remove a supplier info if 
+        Disallow the possibility to remove a supplier info if
         it's linked to a catalogue
         If 'product_change' is set to True in context, allows the deletion
         because it says that the unlink method is called by the write method
@@ -133,7 +133,7 @@ class pricelist_partnerinfo(osv.osv):
 
     def unlink(self, cr, uid, info_id, context=None):
         '''
-        Disallow the possibility to remove a supplier pricelist 
+        Disallow the possibility to remove a supplier pricelist
         if it's linked to a catalogue line.
         If 'product_change' is set to True in context, allows the deletion
         because the product on catalogue line has changed and the current line

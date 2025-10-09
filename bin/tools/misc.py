@@ -2302,11 +2302,13 @@ def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, co
             'field_description': desc,
         }, context=context)
 
-def get_global_instance_level(self, cr, uid, ids, *a, **b):
+def get_instance_level(self, cr, uid):
     if self.pool.get('msf.instance'):
-        level = self.pool.get('res.company')._get_instance_level(cr, uid)
-    else:
-        level = False
+        return self.pool.get('res.company')._get_instance_level(cr, uid)
+    return False
+
+def get_global_instance_level(self, cr, uid, ids, *a, **b):
+    level = get_instance_level(self, cr, uid)
     ret = {}
     for _id in ids:
         ret[_id] = level
@@ -2321,3 +2323,7 @@ def search_global_instance_level(self, cr, uid, obj, name, args, context=None):
         if not self.pool.get('msf.instance').search_exists(cr, uid, [('level', arg[1], arg[2]), ('id', '=', instance_id)]):
             return [('id', '=', 0)]
     return []
+
+class ParsedException(Exception):
+    pass
+

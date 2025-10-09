@@ -1220,5 +1220,27 @@
         <record id="us_14450_sign_roles_in" model="patch.scripts">
             <field name="method">us_14450_sign_roles_in</field>
         </record>
+
+        <!-- UF38.0 -->
+        <record id="us_14507_fix_ct30_mix_cold_chain" model="patch.scripts">
+            <field name="method">us_14507_fix_ct30_mix_cold_chain</field>
+        </record>
+
+        <record id="us_12985_partner_state_ppl_pack_from_wkf" model="patch.scripts">
+            <field name="method">us_12985_partner_state_ppl_pack_from_wkf</field>
+        </record>
+
+        <record id="us_13980_update_new_code_on_merged" model="patch.scripts">
+            <field name="method">us_13980_update_new_code_on_merged</field>
+        </record>
+
+        <record id="us_9592_pack_family_to_table" model="patch.scripts">
+            <field name="method">us_9592_pack_family_to_table</field>
+        </record>
+
+        <!-- UF38.1 -->
+        <record id="us_14880_update_parcel_comment" model="patch.scripts">
+            <field name="method">us_14880_update_parcel_comment</field>
+        </record>
     </data>
 </openerp>

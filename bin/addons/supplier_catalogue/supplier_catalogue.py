@@ -30,6 +30,7 @@ from msf_partner import PARTNER_TYPE
 import decimal_precision as dp
 
 import time
+import logging
 
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -46,6 +47,7 @@ class supplier_catalogue(osv.osv):
     _description = 'Supplier catalogue'
     _order = 'period_from, period_to'
     _trace = True
+    _logger = logging.getLogger('supplier_catalogue')
 
     def copy(self, cr, uid, catalogue_id, default=None, context=None):
         '''
@@ -101,6 +103,10 @@ class supplier_catalogue(osv.osv):
         if context is None:
             context = {}
 
+        # Check URs before trying to delete
+        self.pool.get('ir.model.access').check(cr, uid, self._name, 'unlink', context=context)
+        self.check_access_rule(cr, uid, ids, 'unlink', context=context)
+
         # forbid supplier catalogue coming from higher instance level to be manually deleted:
         to_unlink = set()
         for catalogue in self.read(cr, uid, ids, ['from_sync'], context=context):
@@ -112,7 +118,33 @@ class supplier_catalogue(osv.osv):
                     _('Warning! You cannot delete a synched supplier catalogue created in a higher instance level.')
                 )
 
-        return super(supplier_catalogue, self).unlink(cr, uid, list(to_unlink), context=context)
+        if to_unlink:
+            # Log for history
+            cat_names = ', '.join([cat['name'] for cat in self.read(cr, uid, to_unlink, ['name'], context=context)])
+            if len(to_unlink) == 1:
+                msg = 'Catalogue Deletion: 1 catalogue was deleted: %s' % (cat_names,)
+            else:
+                msg = 'Catalogue Deletion: %s catalogues were deleted: %s' % (len(to_unlink), cat_names)
+            self._logger.warning(msg)
+            self.pool.get('res.log').create(cr, uid, {'name': '%s' % msg, 'read': True, 'res_model': 'supplier.catalogue'}, context=context)
+
+            # remove line sdref to prevent sync updates generation
+            cr.execute("""DELETE FROM ir_model_data
+                WHERE
+                    model='supplier.catalogue.line' AND
+                    module='sd' AND
+                    res_id in (
+                        select id from supplier_catalogue_line WHERE catalogue_id in %s
+                    )
+            """, (tuple(to_unlink),))
+
+            cr.execute("""DELETE FROM supplier_catalogue WHERE id IN %s""", (tuple(to_unlink),))
+            # To sync the deletion
+            cr.execute("""
+                UPDATE ir_model_data SET last_modification=NOW() WHERE model='supplier.catalogue' AND res_id IN %s
+            """, (tuple(to_unlink),))
+
+        return True
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -465,6 +497,24 @@ class supplier_catalogue(osv.osv):
 
         return res
 
+    def _search_is_from_sync(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        if context is None:
+            context = {}
+
+        if args[0][1] != '=':
+            raise osv.except_osv(_('Error'), _('Operator not supported yet!'))
+        else:
+            entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+            cat_ids = []
+            for cat in self.read(cr, uid, self.search(cr, uid, [('active', 'in', ['t', 'f'])], context=context), ['partner_id'], context=context):
+                catalogue_sd_ref = self.get_sd_ref(cr, uid, cat['id'])
+                res = catalogue_sd_ref and not catalogue_sd_ref.startswith(entity_identifier) or False
+                if res == args[0][2]:
+                    cat_ids.append(cat['id'])
+            return [('id', 'in', cat_ids)]
+
     def _get_instance_level(self, cr, uid, ids, field_name, args, context=None):
         level = self.pool.get('res.company')._get_instance_level(cr, uid)
         res = {}
@@ -511,7 +561,7 @@ class supplier_catalogue(osv.osv):
         'esc_update_ts': fields.datetime('Last updated on', readonly=True),  # UTP-746 last update date for ESC Supplier
         'is_esc': fields.function(_is_esc, type='boolean', string='Is ESC Supplier', method=True),
         'state': fields.selection([('draft', 'Draft'), ('confirmed', 'Confirmed')], string='State', required=True, readonly=True),
-        'from_sync': fields.function(_is_from_sync, type='boolean', string='Created by Sync', method=True),
+        'from_sync': fields.function(_is_from_sync, fnct_search=_search_is_from_sync, type='boolean', string='Created by Sync', method=True),
         'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
         'ranking': fields.selection([(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'),
                                      (5, '5th choice'), (6, '6th choice'), (7, '7th choice'), (8, '8th choice'),
@@ -535,7 +585,7 @@ class supplier_catalogue(osv.osv):
         Check if the To date is older than the From date
         '''
         for catalogue in self.browse(cr, uid, ids):
-            if catalogue.period_to and catalogue.period_to < catalogue.period_from:
+            if catalogue.period_from and catalogue.period_to and catalogue.period_to < catalogue.period_from:
                 return False
         return True
 
@@ -1530,6 +1580,7 @@ class supplier_historical_catalogue(osv.osv_memory):
                 'view_id': [view_id],
                 'context': context}
 
+
 supplier_historical_catalogue()
 
 
@@ -1571,6 +1622,7 @@ class from_supplier_choose_catalogue(osv.osv_memory):
 
         return self.pool.get('supplier.catalogue').open_lines(cr, uid, wiz.catalogue_id.id, context=context)
 
+
 from_supplier_choose_catalogue()
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
