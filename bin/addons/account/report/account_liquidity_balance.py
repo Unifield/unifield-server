@@ -58,9 +58,9 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         """
         journal_obj = self.pool.get('account.journal')
         period_obj = self.pool.get('account.period')
-        last_open_reg_period = False
         new_reg_data = []
         for reg in reg_data:
+            last_open_reg_period = False
             j_info = journal_obj.read(self.cr, self.uid, reg['id'], ['is_active', 'inactivation_date',
                                                                      'last_period_with_open_register_id'])
             if j_info and j_info['last_period_with_open_register_id']:
