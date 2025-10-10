@@ -383,8 +383,9 @@
                     <field name="cloud_url" widget="url" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="is_editable" invisible="1" />
                     <field name="has_config" invisible="1" />
-                    <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
-                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_tenant" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_client_id" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_set_cert" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_retry_from" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_retry_to" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
@@ -411,8 +412,9 @@
                     <field name="cloud_url" widget="url" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="is_editable" invisible="1" />
                     <field name="has_config" invisible="1" />
-                    <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
-                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_tenant" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_client_id" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_set_cert" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_retry_from" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_retry_to" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
@@ -432,7 +434,8 @@
                     <field name="code"/>
                     <field name="name"/>
                     <field name="cloud_url" />
-                    <field name="cloud_login" />
+                    <field name="cloud_tenant" />
+                    <field name="cloud_client_id" />
                     <field name="cloud_schedule_time" widget="float_time"/>
                 </search>
             </field>
