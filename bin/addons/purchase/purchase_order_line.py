@@ -641,7 +641,10 @@ class purchase_order_line(osv.osv):
         res = {}
         for line in self.read(cr, uid, ids, ['price_unit', 'catalog_price_unit'], context=context):
             if line['catalog_price_unit']:
-                res[line['id']] = round(((line['catalog_price_unit'] - line['price_unit']) / line['catalog_price_unit']) * 100, 2)
+                if line['price_unit'] <= line['catalog_price_unit']:
+                    res[line['id']] = round(((line['catalog_price_unit'] - line['price_unit']) / line['catalog_price_unit']) * 100, 2)
+                else:
+                    res[line['id']] = round(-((line['price_unit'] - line['catalog_price_unit']) / line['price_unit']) * 100, 2)
             else:
                 res[line['id']] = 0.00
         return res

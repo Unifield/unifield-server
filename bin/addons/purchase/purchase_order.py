@@ -989,7 +989,10 @@ class purchase_order(osv.osv):
                 for pol in pol_obj.read(cr, uid, x[4], ['price_subtotal', 'catalog_subtotal'], context=context):
                     po_subtotal += pol['price_subtotal']
                     catalog_po_subtotal += pol['catalog_subtotal'] or pol['price_subtotal']
-                catalogue_total_price_deviation = round(((catalog_po_subtotal - po_subtotal) / catalog_po_subtotal) * 100, 2)
+                if po_subtotal <= catalog_po_subtotal:
+                    catalogue_total_price_deviation = round(((catalog_po_subtotal - po_subtotal) / catalog_po_subtotal) * 100, 2)
+                else:
+                    catalogue_total_price_deviation = round(-((po_subtotal - catalog_po_subtotal) / po_subtotal) * 100, 2)
                 ret[x[0]].update({
                     'catalogue_total_price_deviation': catalogue_total_price_deviation,
                     'catalogue_deviation_text': _('%% deviation of the PO total vs the theoretical catalogue price: <span class="readonlyfield">%d%%</span>') % (catalogue_total_price_deviation,),
