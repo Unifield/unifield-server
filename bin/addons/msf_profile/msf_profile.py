@@ -110,6 +110,24 @@ class patch_scripts(osv.osv):
                             res_id IN %s
                        """ % (tuple(updated_journals_ids),))
         return True
+
+
+    # UF38.1
+    def us_14880_update_parcel_comment(self, cr, uid, *a, **b):
+        '''
+        Update the parcel_comment field of Draft/Available pack_family_memory using the linked Pack's (stock_picking) description_ppl
+        '''
+        cr.execute("""
+
+            UPDATE pack_family_memory AS pf SET parcel_comment = p.description_ppl
+            FROM stock_picking AS p
+            WHERE pf.draft_packing_id = p.id AND pf.state IN ('draft', 'assigned')
+        """)
+        self.log_info(cr, uid, 'US-14880: The Parcel Comment of %s Pack Families have been updated' % (cr.rowcount,))
+
+        return True
+
+
     # UF38.0
     def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
         '''
