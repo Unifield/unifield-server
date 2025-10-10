@@ -490,13 +490,11 @@ class msf_instance_cloud(osv.osv):
     _backoff_max = 5
     _backoff_factor = 0.1
 
-    def _get_backoff(self, dav, error):
-        if not dav:
+    def _get_backoff(self, nb_errors, error):
+        if not nb_errors:
             self._logger.info(error)
             time.sleep(self._backoff_factor)
 
-        nb_errors = dav.session_nb_error
-        dav.session_nb_error += 1
         if nb_errors <= 1:
             return 0
 
@@ -744,10 +742,10 @@ class msf_instance_cloud(osv.osv):
     def _is_in_time_range(self, starttime, endtime):
         if starttime == endtime:
             return False
-        # TODO JFB
-        start_dt = (datetime.now()+relativedelta(hour=starttime or 0,minute=0, second=0)).time
-        end_dt = (datetime.now()+relativedelta(hour=endtime or 0,minute=0, second=0)).time
-        now_dt = datetime.now().time
+
+        start_dt = datetime.now().replace(hour=int(starttime), minute=int((starttime%1)*60))
+        end_dt = datetime.now().replace(hour=int(endtime), minute=int((endtime%1)*60))
+        now_dt = datetime.now()
 
         if start_dt < end_dt:
             return now_dt >= start_dt and now_dt <= end_dt
@@ -845,6 +843,7 @@ class msf_instance_cloud(osv.osv):
             temp_create = False
             error = False
             dav = False
+            nb_errors = 0
             while True:
                 try:
                     if not dav_connected:
@@ -856,13 +855,14 @@ class msf_instance_cloud(osv.osv):
                         temp_create = True
 
                     dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj, continuation=True)
-                    dav.move(temp_drive_file, final_name)
+                    dav.move_to_file(temp_drive_file, final_name)
                     break
 
                 except requests.exceptions.RequestException as e:
                     if not self._is_in_time_range(range_data['cloud_retry_from'], range_data['cloud_retry_to']):
                         raise
-                    self._get_backoff(dav, 'OneDrive: retry except %s' % e)
+                    self._get_backoff(nb_errors, 'OneDrive: retry except %s' % e)
+                    nb_errors += 1
 
             temp_fileobj.close()
             monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})

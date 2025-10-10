@@ -142,6 +142,10 @@ class Client(object):
         webUri = '%s%s' % (self.path, remote_path)
         return self.request.web.get_file_by_server_relative_url(webUri).delete_object().execute_query_with_incremental_retry(max_retry=self.max_retry)
 
+    def copy(self, file, dest_folder, new_name):
+        webUri = '%s%s' % (self.path, file)
+        return self.request.web.get_file_by_server_relative_path(webUri).copyto(dest_folder, True, new_name).execute_query_with_incremental_retry(max_retry=self.max_retry)
+
     def move(self, remote_path, dest, retry=True):
         # Move file to folder
         webUri = '%s%s' % (self.path, remote_path)
@@ -207,6 +211,16 @@ class Client(object):
             .expand(["TimeLastModified"])
             .execute_query_retry(max_retry=self.max_retry)
         )
+
+    def file_info(self, file_path):
+        webUri = '%s%s' % (self.path, file_path)
+        return self.request.web.get_file_by_server_relative_url(webUri).get().execute_query_with_incremental_retry(max_retry=self.max_retry)
+
+    def list_folder(self, remote_path):
+        if not remote_path.startswith(self.path):
+            remote_path = posixpath.join(self.path, remote_path)
+        f = self.request.web.get_folder_by_server_relative_path(remote_path).get().execute_query()
+        return f.get_folders(False).execute_query()
 
     def folder_exists(self, remote_path):
         webUri = '%s%s' % (self.path, remote_path)
