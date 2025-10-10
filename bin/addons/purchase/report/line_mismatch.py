@@ -26,10 +26,10 @@ class line_mismatch(XlsxReportParser):
 
 
         self.duplicate_column_dimensions(default_width=10.75)
-        for col in ['O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V']:
+        for col in ['P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W']:
             sheet.column_dimensions[col].hidden = True
         sheet.freeze_panes = 'A11'
-        sheet.auto_filter.ref = "A10:W10"
+        sheet.auto_filter.ref = "A10:X10"
 
         sheet.title = _('PO Catalogue Mismatch')
 
@@ -63,11 +63,11 @@ class line_mismatch(XlsxReportParser):
 
         col_title = [_('PO line'), _('Product Code'), _('Product Description'), _('PO Quantity'),
                      _('UoM'), _('PO Unit Price'), _('PO Subtotal'), _('Currency'),
-                     _('Delivery Request Date'), _('Mismatch'), _('Catalogue Price'),
-                     _('Catalogue Subtotal'), _('Catalogue SoQ'), _('Comment'), _('External Ref'),
-                     _('Justification Code'), _('Justification Coordination'), _('HQ Remarks'),
-                     _('Justification Y/N'), _('Cold chain type'), _('Dangerous Good Type'),
-                     _('Controlled Substance Type'), _('State')]
+                     _('Delivery Request Date'), _('Mismatch'), _('Catalogue Unit Price'),
+                     _('Catalogue Subtotal'),_('% Price Deviation'), _('Catalogue SoQ'), _('Comment'),
+                     _('External Ref'), _('Justification Code'), _('Justification Coordination'),
+                     _('HQ Remarks'), _('Justification Y/N'), _('Cold chain type'),
+                     _('Dangerous Good Type'), _('Controlled Substance Type'), _('State')]
         sheet.append([self.cell_ro(x, 'col_title') for x in col_title])
 
 
@@ -79,11 +79,14 @@ class line_mismatch(XlsxReportParser):
         label_dangerous_goods = dict(fields['dangerous_goods']['selection'])
 
         for line in po.order_line_mismatch:
-            catalog_price_unit, catalog_subtotal = '', ''
+            catalog_price_unit, catalog_subtotal, catalog_price_deviation = '', '', ''
             if not isinstance(line.catalog_price_unit, bool) and line.catalog_price_unit is not None:
                 catalog_price_unit = line.catalog_price_unit
             if not isinstance(line.catalog_subtotal, bool) and line.catalog_subtotal is not None:
                 catalog_subtotal = line.catalog_subtotal
+            if not isinstance(line.catalog_price_deviation, bool) and line.catalog_price_deviation is not None \
+                    and line.catalog_price_deviation != 0:
+                catalog_price_deviation = line.catalog_price_deviation
 
             sheet.append([
                 self.cell_ro(line.line_number, 'row_int'),
@@ -98,6 +101,7 @@ class line_mismatch(XlsxReportParser):
                 self.cell_ro(label_catalog_mismatch.get(line.catalog_mismatch) or '', 'row_text'),
                 self.cell_ro(catalog_price_unit, 'row_float'),
                 self.cell_ro(catalog_subtotal, 'row_float'),
+                self.cell_ro(catalog_price_deviation, 'row_float'),
                 self.cell_ro(line.catalog_soq or '', 'row_float'),
                 self.cell_ro(line.comment or '', 'row_text'),
                 self.cell_ro(line.external_ref or '', 'row_text'),

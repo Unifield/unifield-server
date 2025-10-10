@@ -934,24 +934,28 @@ class purchase_order(osv.osv):
         if not ids:
             return {}
         ret = {}
+        pol_obj = self.pool.get('purchase.order.line')
         for _id in ids:
             ret[_id] = {
                 'catalogue_ratio_conform': False,
                 'catalogue_ratio_no_catalogue': False,
                 'catalogue_ratio_not_conform': False,
+                'catalogue_total_price_deviation': False,
                 'catalogue_exists': False,
                 'catalogue_display_tab': False,
                 'catalogue_exists_text': False,
                 'catalogue_ratio_text': '',
+                'catalogue_deviation_text': '',
             }
-        self.pool.get('purchase.order.line')._compute_catalog_mismatch(cr, uid, order_id=ids, context=context)
+        pol_obj._compute_catalog_mismatch(cr, uid, order_id=ids, context=context)
 
         cr.execute("""
             select
                 pol.order_id,
                 count(pol.catalog_mismatch!='' or NULL),
                 count(pol.catalog_mismatch='conform' or NULL),
-                count(pol.catalog_mismatch='na' or NULL)
+                count(pol.catalog_mismatch='na' or NULL),
+                array_agg(pol.id)
             from
                 purchase_order_line pol, purchase_order po
             where
@@ -979,6 +983,17 @@ class purchase_order(osv.osv):
 
             else:
                 ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">%s</h2>' % _('No valid catalogue')
+
+            if x[4]:
+                po_subtotal, catalog_po_subtotal = 0, 0
+                for pol in pol_obj.read(cr, uid, x[4], ['price_subtotal', 'catalog_subtotal'], context=context):
+                    po_subtotal += pol['price_subtotal']
+                    catalog_po_subtotal += pol['catalog_subtotal'] or pol['price_subtotal']
+                catalogue_total_price_deviation = round(((catalog_po_subtotal - po_subtotal) / catalog_po_subtotal) * 100, 2)
+                ret[x[0]].update({
+                    'catalogue_total_price_deviation': catalogue_total_price_deviation,
+                    'catalogue_deviation_text': _('%% deviation of the PO total vs the theoretical catalogue price: <span class="readonlyfield">%d%%</span>') % (catalogue_total_price_deviation,),
+                })
         return ret
 
     def _get_catalogue_description_text(self, cr, uid, ids, name, arg, context=None):
@@ -1235,12 +1250,15 @@ class purchase_order(osv.osv):
         'catalogue_ratio_not_conform': fields.function(_get_catalogue_ratio, method=True, type='integer', string='PO Lines Mismatch', multi='catalogue'),
         'catalogue_ratio_no_catalogue': fields.function(_get_catalogue_ratio, method=True, type='integer', string='Not in Catalogue', multi='catalogue'),
         'catalogue_ratio_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Ratio', multi='catalogue'),
+        'catalogue_total_price_deviation': fields.function(_get_catalogue_ratio, method=True, type='float_null', string='Catalogue Total Price Deviation', digits_compute=dp.get_precision('Purchase Price'), multi='catalogue'),
+        'catalogue_deviation_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Deviation', multi='catalogue'),
         'catalogue_exists': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Has a valid catalogue', multi='catalogue'),
         'catalogue_display_tab': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Display tab catalogue', multi='catalogue'),
         'catalogue_exists_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Lines Status', multi='catalogue'),
         'catalogue_description_text': fields.function(_get_catalogue_description_text,  method=True, type='char', string='Catalogue Text', multi='cat_info'),
         'catalogue_id': fields.function(_get_catalogue_description_text,  method=True, type='many2one', relation='supplier.catalogue', string='Catalogue', multi='cat_info'),
         'catalogue_not_applicable': fields.boolean('PO confirmed before pol catalogue', readonly=1),
+
     }
     _defaults = {
         'po_version': 2,

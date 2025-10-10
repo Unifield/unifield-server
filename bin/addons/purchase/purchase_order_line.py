@@ -637,6 +637,15 @@ class purchase_order_line(osv.osv):
                 res[line.id] = False
         return res
 
+    def _catalog_price_deviation(self, cr, uid, ids, prop, arg, context=None):
+        res = {}
+        for line in self.read(cr, uid, ids, ['price_unit', 'catalog_price_unit'], context=context):
+            if line['catalog_price_unit']:
+                res[line['id']] = round(((line['catalog_price_unit'] - line['price_unit']) / line['catalog_price_unit']) * 100, 2)
+            else:
+                res[line['id']] = 0.00
+        return res
+
     def _check_po_locked(self, cr, uid, ids, field_name, args, context=None):
         """
         Check if the PO has been locked by signature
@@ -802,9 +811,10 @@ class purchase_order_line(osv.osv):
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
 
         'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'Not in Catalogue'), ('soq', 'SOQ'), ('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
-        'catalog_price_unit': fields.float_null('Catalogue Price', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
+        'catalog_price_unit': fields.float_null('Catalogue Unit Price', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
         'catalog_subtotal': fields.function(_amount_line_catalog, method=True, type='float_null', string='Catalogue Subtotal', digits_compute=dp.get_precision('Purchase Price')),
         'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
+        'catalog_price_deviation': fields.function(_catalog_price_deviation, method=True, type='float_null', string='% Price Deviation', help='Percentage of deviation of the catalogue price compared to the PO price'),
         'po_locked': fields.function(_check_po_locked, method=True, string='Is PO signature-locked ?', type='boolean'),
     }
 

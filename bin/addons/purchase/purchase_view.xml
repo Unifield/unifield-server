@@ -108,7 +108,10 @@
             <field name="arch" type="xml">
                 <form string="Purchase Order">
                     <field name="catalogue_description_text" widget="html_text" nolabel="1" />
-                    <field name="catalogue_ratio_text" widget="html_text" nolabel="1"/>
+                    <group col="1">
+                        <field name="catalogue_ratio_text" widget="html_text" nolabel="1"/>
+                        <field name="catalogue_deviation_text" widget="html_text" nolabel="1"/>
+                    </group>
                     <group colspan="4">
                         <button string="Export Lines" type="object" icon="gtk-execute" name="export_line_mismatch" colspan="1" />
                         <label colspan="3" />
@@ -129,10 +132,11 @@
                             <field name="soq_updated" invisible="1"/>
                             <field name="product_qty" string="Qty" />
                             <field name="product_uom" string="UoM" />
-                            <field name="price_unit" string="PO Unit Price" />
+                            <field name="price_unit" string="PO Unit Price" bold="catalog_price_unit is not False and price_unit > catalog_price_unit" />
                             <field name="price_subtotal" string="PO Subtotal"/>
                             <field name="catalog_price_unit"/>
                             <field name="catalog_subtotal"/>
+                            <field name="catalog_price_deviation"/>
                             <field name="original_changed" string="CHG"/>
                             <field name="catalog_mismatch" />
                             <field name="po_state_stored" invisible="True"/>
