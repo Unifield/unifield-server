@@ -9,7 +9,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Activate/Deactivate Employees">
-                <field name="active_status"/>
+                <field name="active_status" on_change="onchange_active(active_status, context)"/>
                 <button icon="gtk-cancel" string="Cancel" special="cancel"/>
                 <button icon="terp-camera_test" string="Approve" name="change_employee_status" type="object" default_focus="1"/>
             </form>
