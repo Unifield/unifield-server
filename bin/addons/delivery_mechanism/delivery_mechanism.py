@@ -1092,7 +1092,7 @@ class stock_picking(osv.osv):
                                 if exta_move.pack_info_id and line.pack_info_id and exta_move.pack_info_id.id != line.pack_info_id.id:
                                     # extra qty with new pack info: create a new line
                                     context['keepLineNumber'] = True
-                                    new_id = move_obj.copy(cr, uid, out_move.id, {'product_qty': extra_qty, 'pack_info_id': line.pack_info_id.id, 'state': exta_move.state}, context=context)
+                                    new_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
                                     processed_out_moves.append(new_id)
                                     processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or '', []).append(new_id)
                                     context['keepLineNumber'] = False
