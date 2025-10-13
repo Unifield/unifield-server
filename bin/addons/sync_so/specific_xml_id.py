@@ -252,11 +252,17 @@ class account_target_costcenter(osv.osv):
         res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)
         # create lines in instance's children
         if 'instance_id' in vals:
+            cc_link_obj = self.pool.get('dest.cc.link')
             instance = self.pool.get('msf.instance').browse(cr, uid, vals['instance_id'], context=context)
             current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
             if instance.state == 'active' and current_instance.level == 'section':
                 # "touch" cost center if instance is active (to sync to new targets)
                 self.pool.get('account.analytic.account').synchronize(cr, uid, [vals['cost_center_id']], context=context)
+                # also combination CC / Dest
+                cc_link_ids = cc_link_obj.search(cr, uid, [('cc_id', '=', vals['cost_center_id'])], context=context)
+                if cc_link_ids:
+                    cc_link_obj.synchronize(cr, uid, cc_link_ids, context=context)
+
         return res_id
 
     def unlink(self, cr, uid, ids, context=None):
