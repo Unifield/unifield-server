@@ -1084,12 +1084,20 @@ class stock_picking(osv.osv):
                             if extra_qty > 0 and not context.get('auto_import_ok') and not context.get('sync_message_execution'):
                                 self.infolog(cr, uid, '%s, (2) in line id %s Extra qty %s received' % (move.picking_id.name, move.id, extra_qty))
                                 extra_fo_qty = extra_qty
-                                product_qty = move_obj.read(cr, uid, out_move.id, ['product_qty'], context=context)['product_qty']
                                 if out_move.product_uom.id != move.purchase_line_id.product_uom.id:
-                                    product_qty += uom_obj._compute_qty(cr, uid, move.purchase_line_id.product_uom.id, extra_qty, out_move.product_uom.id)
+                                    extra_qty = uom_obj._compute_qty(cr, uid, move.purchase_line_id.product_uom.id, extra_qty, out_move.product_uom.id)
+
+                                exta_move = move_obj.browse(cr, uid, out_move.id, fields_to_fetch=['product_qty', 'pack_info_id', 'state'], context=context)
+                                product_qty = exta_move.product_qty
+                                if exta_move.pack_info_id and line.pack_info_id and exta_move.pack_info_id.id != line.pack_info_id.id:
+                                    # extra qty with new pack info: create a new line
+                                    context['keepLineNumber'] = True
+                                    new_id = move_obj.copy(cr, uid, out_move.id, {'product_qty': extra_qty, 'pack_info_id': line.pack_info_id.id, 'state': exta_move.state}, context=context)
+                                    processed_out_moves.append(new_id)
+                                    processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or '', []).append(new_id)
+                                    context['keepLineNumber'] = False
                                 else:
-                                    product_qty += extra_qty
-                                move_obj.write(cr, uid, out_move.id, {'product_qty': product_qty}, context=context)
+                                    move_obj.write(cr, uid, out_move.id, {'product_qty': product_qty + extra_qty}, context=context)
                                 extra_qty = 0
                             remaining_out_qty = 0
 
@@ -1402,9 +1410,8 @@ class stock_picking(osv.osv):
                         # sub pick creation
                         new_pick = self.do_create_picking(cr, uid, [picking_id], context=context, only_pack_ids=pack_ids).get('res_id')
                         overall_to_compute.append(new_pick)
-                        if  pack['packing_list']:
+                        if pack['packing_list']:
                             self.write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
-
 
                         # ppl creation
                         ppl_id = self.do_validate_picking(cr, uid, [new_pick], context=context, ignore_quick=True).get('res_id')
