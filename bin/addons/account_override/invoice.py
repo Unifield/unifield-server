@@ -425,6 +425,17 @@ class account_invoice(osv.osv):
             dom = [('date_invoice', '>=', fy.date_start), ('date_invoice', '<=', fy.date_stop)]
         return dom
 
+    def _get_customer_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Add the customer name information as it is on the PO source of the supplier invoice
+        """
+        res = {}
+        for inv in self.browse(cr, uid, ids):
+            res[inv.id] = False
+            if inv.picking_id and inv.picking_id.purchase_id and inv.picking_id.purchase_id.dest_partner_names:
+                res[inv.id] = inv.picking_id.purchase_id.dest_partner_names
+        return res
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -467,6 +478,7 @@ class account_invoice(osv.osv):
         'open_fy': fields.function(_get_fake, method=True, type='boolean', string='Open Fiscal Year', store=False,
                                    fnct_search=_search_open_fy),
         'fiscalyear_id': fields.function(_get_fiscalyear, fnct_search=_get_search_by_fiscalyear, type='many2one', obj='account.fiscalyear', method=True, store=False, string='Fiscal year', readonly=True),
+        'customers': fields.function(_get_customer_id, method=True, type='char', size=1024, string='Customers', readonly=True, store=False),
     }
 
     _defaults = {
