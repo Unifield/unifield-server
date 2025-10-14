@@ -520,9 +520,76 @@ class waca_fin_sync(osv.osv):
 
         return [{'id': x[0] or '', 'name': x[1] or '', 'instance_creator': x[2] or '', 'partner_type': x[3] or ''} for x in cr.fetchall()]
 
+
+    def _get_journal(self, cr, uid, session_id, page_offset):
+        sess = self.browse(cr, 1, session_id)
+        model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'account.journal')])[0]
+        field_ids = self.pool.get('ir.model.fields').search(cr, 1, [
+            ('model_id', '=', model_id),
+            ('name', 'in', [
+                'type', 'code', 'name', 'currency', 'is_active', 'instance_id', 'analytic_journal_id',
+                'bank_account_name', 'bank_address', 'bank_account_number', 'bank_swift_code', 'bank_journal_id'
+            ])
+        ])
+
+        cond = ''
+        if not sess.previous_auditrail_id:
+            cond = ' or l.id is null '
+
+        j_type_dict = dict(self.pool.get('account.journal').get_journal_type(cr, uid))
+        cr.execute('''
+            select
+                j.id,
+                j.type as j_type,
+                j.code as j_code,
+                j.name as j_name,
+                c.name as curr_code,
+                j.is_active as is_active,
+                i.mission as mission,
+                i.code as prop_instance_code,
+                aj.code as analytic_j_code,
+                j.bank_account_name as bank_account_name,
+                j.bank_address as bank_address,
+                j.bank_account_number as bank_account_number,
+                j.bank_swift_code as bank_swift_code,
+                b.id as bank_journal_id
+            from
+                account_journal j
+                inner join res_currency c on c.id = j.currency
+                inner join msf_instance i on i.id = j.instance_id
+                left join account_analytic_journal aj on aj.id = j.analytic_journal_id
+                left join account_journal b on b.id = j.bank_journal_id
+                left join audittrail_log_line l on l.field_id in %s and l.res_id = j.id and l.object_id = %s
+            where
+                (l.id > %s and l.id <= %s ''' + cond + ''')
+            group by
+                j.id, j.type, j.code, j.name, c.name, j.is_active, i.mission, i.code, aj.code, j.bank_account_name, j.bank_address, j.bank_account_number, j.bank_swift_code, b.id
+            order by j.bank_journal_id NULLS first, j.code, j.id
+            offset %s
+            limit %s
+        ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*self.limit, self.limit+1)) # not_a_user_entry
+
+        return [{
+                'Journal Code/ID': x.get('id'),
+                'Journal Type': j_type_dict.get(x['j_type']),
+                'Journal Code': x.get('j_code'),
+                'Journal Name': x.get('j_name'),
+                'Currency': x.get('curr_code'),
+                'State': x['is_active'] and 'Active' or 'Inactive',
+                'Mission': x['mission'] or '',
+                'Proprietary Instance': x['prop_instance_code'],
+                'Analytic Journal': x['analytic_j_code'],
+                'Bank Account Name': x['bank_account_name'] or '',
+                'Address': x['bank_address'] or '',
+                'Bank Account Number': x['bank_account_number'] or '',
+                'Swift Code': x['bank_swift_code'] or '',
+                'Corresponding bank journal': x['bank_journal_id'] or '',
+                } for x in cr.dictfetchall()]
+
     _objects = {
         'res.partner': _get_partner,
         'hr.employee': _get_hr_employee,
+        'account.journal': _get_journal,
     }
 
 waca_fin_sync()
