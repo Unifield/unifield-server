@@ -61,7 +61,7 @@ def _fields_get_all(model, views, context=None):
             view['fields'])
 
     proxy = rpc.RPCProxy(model)
-
+    context['for_export_list'] = True
     tree_view = proxy.fields_view_get(views.get('tree', False), 'tree', context)
     form_view = proxy.fields_view_get(views.get('form', False), 'form', context)
 
