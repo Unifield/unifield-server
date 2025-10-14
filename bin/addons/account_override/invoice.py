@@ -1681,7 +1681,6 @@ class account_invoice_line(osv.osv):
     def _get_cc(self, cr, uid, ids, field_name=None, arg=None, context=None):
         res = {}
         for i in ids:
-            res[i] = ''
             cost_centers = ''
             cc = []
             line_ad = self.browse(cr, uid, i,fields_to_fetch=['analytic_distribution_id'], context=context)
@@ -1699,7 +1698,6 @@ class account_invoice_line(osv.osv):
     def _get_dest(self, cr, uid, ids, field_name=None, arg=None, context=None):
         res = {}
         for i in ids:
-            res[i] = ''
             destinations = ''
             dest = []
             line_ad = self.browse(cr, uid, i, fields_to_fetch=['analytic_distribution_id'], context=context)
