@@ -1398,6 +1398,8 @@ class orm_template(object):
         if list(self._columns.keys()):
             for f in list(self._columns.keys()):
                 field_col = self._columns[f]
+                if allfields and f not in allfields and context.get('for_export_list') and field_col.listed_in_export:
+                    allfields.append(f)
                 if allfields and f not in allfields:
                     continue
                 res[f] = {'type': field_col._type}

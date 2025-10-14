@@ -168,7 +168,6 @@
                     <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
-                    <field name="customers" invisible="1"/>
                 </tree>
             </field>
         </record>

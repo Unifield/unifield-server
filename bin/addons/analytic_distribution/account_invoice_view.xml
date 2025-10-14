@@ -26,8 +26,6 @@
                             <field name="uos_id" string="UoM"/>
                             <field name="price_unit"/>
                             <field name="price_subtotal"/>
-                            <field name="cost_centers" invisible="1"/>
-                            <field name="destinations" invisible="1"/>
                         </tree>
                     </xpath>
                 </data>
