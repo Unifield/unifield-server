@@ -36,7 +36,7 @@
                 <form string="Claim">
                     <group col="6" colspan="4">
                         <group col="4" colspan="4">
-                            <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="name" readonly="1" />
                             <field name="type_return_claim"
                                 attrs="{'readonly': ['|', ('state', 'in', ('draft_progress', 'done')), ('contains_event_return_claim', '=', True)]}" />
                             <field name="category_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
