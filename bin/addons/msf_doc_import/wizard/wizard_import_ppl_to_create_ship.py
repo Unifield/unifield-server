@@ -367,7 +367,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     if row.cells[15].data:
                         pack_type_ids = pack_type_obj.search(cr, uid, [('name', '=', tools.ustr(row.cells[15].data))])
                         if pack_type_ids:
-                            pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[0])
+                            # Taking the last id because LOOKUP in Excel will choose the last item in a list with same names
+                            pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[-1])
                             to_update.update({
                                 'pack_type': pack_type
                             })

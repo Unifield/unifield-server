@@ -303,7 +303,7 @@ class ppl_family_processor(osv.osv):
 
     def onchange_pack_type(self, cr, uid, ids, pack_type):
         """
-        Update values of the PPL family from the stock pack selecetd
+        Update values of the PPL family from the stock pack selected
         """
         # Objects
         p_type_obj = self.pool.get('pack.type')

@@ -33,7 +33,6 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
             'getPickingShipper': self.get_picking_shipper,
             'getConsignee': self.get_consignee,
             'getPackTypes': self.get_pack_types,
-            'getPackTypeFormula': self.get_pack_type_formula,
         })
 
     def get_consignee(self, picking):
@@ -146,27 +145,6 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
             packs.append([pack_type['name'], '%gx%gx%g' % (pack_type['width'], pack_type['length'], pack_type['height'])])
 
         return packs, len(pack_type_ids)
-
-    def get_pack_type_formula(self, line, nb_pack_types):
-        '''
-        Construct the formula necessary to dynamically get the correct value for the Size column
-        With 2 Pack Types, it looks like this for 2 lines having the formula starting at cell O11:
-        "=IF(RC[1]='Pack Types'!R[-9]C[-14],'Pack Types'!R[-9]C[-13],IF(RC[1]='Pack Types'!R[-8]C[-14],'Pack Types'!R[-8]C[-13],&quot;&quot;))"
-        "=IF(RC[1]='Pack Types'!R[-10]C[-14],'Pack Types'!R[-10]C[-13],IF(RC[1]='Pack Types'!R[-9]C[-14],'Pack Types'!R[-9]C[-13],&quot;&quot;))"
-        '''
-        if not line or not nb_pack_types:
-            return ''
-
-        start = "="
-        iffs = ""
-        end = '""'  # "\"\"" is transformed into "&#34;&#34;" which doesn't work
-        start_row = -(8 + line)
-        for i in range(0, nb_pack_types):
-            row = start_row + i
-            iff = "IF(RC[1]=\'Pack Types\'!R[%s]C[-14],\'Pack Types\'!R[%s]C[-13]," % (row, row)
-            iffs += iff
-            end += ")"
-        return start + iffs + end
 
 
 SpreadsheetReport(
