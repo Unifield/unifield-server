@@ -298,6 +298,8 @@ class ImpEx(SecuredController):
 
         id = params.id
 
+
+        ctx['for_export_list'] = True
         res = self.get_data(params.model, ctx)
         ir_export = rpc.RPCProxy('ir.exports')
         ir_export_line = rpc.RPCProxy('ir.exports.line')
