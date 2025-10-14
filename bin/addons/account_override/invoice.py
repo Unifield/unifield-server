@@ -1686,8 +1686,8 @@ class account_invoice_line(osv.osv):
             res[line.id] = {'cost_centers': '', 'destinations': ''}
             if ad and ad.funding_pool_lines:
                 res[line.id] = {
-                    'cost_centers': ', '.join([x.cost_center_id.code for x in ad.funding_pool_lines]),
-                    'destinations': ', '.join([x.destination_id.code for x in ad.funding_pool_lines]),
+                    'cost_centers': ';'.join([x.cost_center_id.code for x in ad.funding_pool_lines]),
+                    'destinations': ';'.join([x.destination_id.code for x in ad.funding_pool_lines]),
                 }
         return res
 
