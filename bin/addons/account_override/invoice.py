@@ -1678,6 +1678,34 @@ class account_invoice_line(osv.osv):
         """
         return self.pool.get('account.invoice')._get_invoice_type_list(cr, uid, context=context)
 
+    def _get_cc(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        res = {}
+        for i in ids:
+            res[i] = False
+            cost_centers = ''
+            line_ad = self.browse(cr, uid, i,fields_to_fetch=['analytic_distribution_id'], context=context)
+            if line_ad and line_ad.analytic_distribution_id and line_ad.analytic_distribution_id.funding_pool_lines:
+                cc = []
+                for fp_line in line_ad.analytic_distribution_id.funding_pool_lines:
+                    cc.append(fp_line.cost_center_id.code)
+                cost_centers = ', '.join(cc)
+            res[i] = cost_centers
+        return res
+
+    def _get_dest(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        res = {}
+        for i in ids:
+            res[i] = False
+            destinations = ''
+            line_ad = self.browse(cr, uid, i, fields_to_fetch=['analytic_distribution_id'], context=context)
+            if line_ad and line_ad.analytic_distribution_id and line_ad.analytic_distribution_id.funding_pool_lines:
+                dest = []
+                for fp_line in line_ad.analytic_distribution_id.funding_pool_lines:
+                    dest.append(fp_line.destination_id.code)
+                destinations = ', '.join(dest)
+            res[i] = destinations
+        return res
+
     _columns = {
         'line_number': fields.integer(string='Line Number'),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
@@ -1704,6 +1732,8 @@ class account_invoice_line(osv.osv):
                                            relation="account.analytic.account", string='Funding Pool',
                                            states={'draft': [('readonly', False)]},
                                            help="Field used for import only"),
+        'cost_centers':fields.function(_get_cc, method=True, type='char', size=1024, string='Cost Centers', readonly=True),
+        'destinations': fields.function(_get_dest, method=True, type='char', size=1024, string='Destinations', readonly=True),
         'from_supply': fields.related('invoice_id', 'from_supply', type='boolean', string='From Supply', readonly=True, store=False),
         'synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False),
         # field "line_synced" created to be used in the views where the "synced" field at doc level is displayed
