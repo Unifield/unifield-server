@@ -310,13 +310,16 @@
                                 <field name="customer_ref" widget="char"/>
                                 <group colspan="4">
                                     <field name="no_line" invisible="1"/>
-                                    <field name="pricelist_id" string="Currency" attrs="{'readonly': [('no_line', '=', False)]}"/>
+                                    <field name="pricelist_id" string="Currency" attrs="{'readonly': ['|', ('no_line', '=', False), ('rfq_state', '=', 'cancel')]}"/>
                                     <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('state', 'in', ['rfq_updated', 'done', 'cancel'])]}" />
                                 </group>
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
                             <newline/>
-                            <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', 'not in', ['sent', 'done'])]}"/>
+                            <group colspan="4" col="4" attrs="{'invisible': [('rfq_state', '!=', 'sent')]}">
+                                <button name="rfq_sent_import" string="Import RfQ" icon="gtk-execute" colspan="1" type="object" />
+                                <button name="rfq_sent_export" string="Export RfQ" icon="gtk-execute" colspan="1" type="object" />
+                            </group>
                             <field colspan="4" name="order_line" nolabel="1" mode="tree,form" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" context="{'rfq_ok': 1}"
                                    filter_selector="[('Show all', []), ('Hide closed', [('rfq_line_state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('rfq_line_state', '=', 'done')]), ('Hide cancelled', [('rfq_line_state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('rfq_line_state', 'in', ['cancel', 'cancel_r'])])]" default_selector="'3'">
                                 <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
