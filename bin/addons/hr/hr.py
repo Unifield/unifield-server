@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 
 class hr_employee_category(osv.osv):
@@ -199,6 +200,20 @@ class hr_employee(osv.osv):
             work_email = self.pool.get('res.users').browse(cr, uid, user_id, context=context).user_email
         return {'value': {'work_email' : work_email}}
 
+    def onchange_active(self, cr, uid, ids, active, employee_type, not_to_be_used, context=None):
+        if employee_type == 'ex' and not_to_be_used and active:
+            return {
+                'warning': {
+                    'message': _('You can not activate an employee flagged as not to be used')
+                },
+                'value': {'active': False}
+            }
+        return {}
+
+    def onchange_not_to_be_used(self, cr, uid, ids, not_to_be_used, context=None):
+        if not_to_be_used:
+            return {'value': {'active': False}}
+        return {}
 
     _defaults = {
         'active': 1,
