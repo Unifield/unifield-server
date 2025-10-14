@@ -4369,6 +4369,7 @@ class stock_picking(osv.osv):
                                                                                   'shipment_id': shipment_id,
                                                                                   'state': 'assigned',
                                                                                   'packing_list': picking.packing_list,
+                                                                                  'parcel_comment': picking.description_ppl,
                                                                               }, context=context)
                     pack_move_data['shipment_line_id'] = ship_line_id
 
@@ -5059,28 +5060,30 @@ class pack_family_memory(osv.osv):
 
         return True
 
-    def change_description(self, cr, uid, ids, context=None):
-
+    def change_parcel_comment(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         if isinstance(ids, int):
             ids = [ids]
 
-        mod_obj = self.pool.get('ir.model.data')
-        res = mod_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_change_desc_wizard')
-        pack_obj = self.read(cr, uid, ids, ['draft_packing_id'], context=context)
-        for pack in pack_obj:
-            res_id = pack['draft_packing_id'][0]
-            return {
-                'name': _('Change parcel comment'),
-                'view_type': 'form',
-                'view_mode': 'form',
-                'view_id': [res and res[1] or False],
-                'res_model': 'stock.picking',
-                'context': "{}",
-                'type': 'ir.actions.act_window',
-                'target': 'new',
-                'res_id': res_id or False,
-            }
-        return {}
+        res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'pack_family_memory_parcel_comment_wizard')
+        return {
+            'name': _('Change parcel comment'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [res and res[1] or False],
+            'res_model': 'pack.family.memory',
+            'context': "{}",
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'res_id': ids and ids[0] or False,
+        }
+
+    def save_parcel_comment(self, cr, uid, ids, context=None):
+        '''
+        Trigger write method and close the wizard
+        '''
+        return {'type': 'ir.actions.act_window_close'}
 
     def change_selected_number(self, cr, uid, ids, selected_number, context=None):
         if not selected_number:

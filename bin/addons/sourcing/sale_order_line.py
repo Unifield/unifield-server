@@ -1204,6 +1204,20 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     _('You cannot re-sync a line more than 2 times')
                 )
 
+            if len(ids) == 1:  # To prevent re-checking the restrictions done in multiple sourcing
+                sol = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id', 'supplier', 'product_id', 'type', 'line_number'], context=context)
+                if sol.product_id and sol.supplier and sol.type == 'make_to_order':
+                    sourcing_not_donation = sol.order_id.order_type not in ['donation_prog', 'donation_exp', 'donation_st'] or False
+                    restr_vals = {
+                        'obj_type': 'purchase.order',
+                        'partner_id': sol.supplier.id,
+                        'sourcing_not_donation': sourcing_not_donation
+                    }
+                    p_error, p_msg = product_obj._test_restriction_error(cr, uid, [sol.product_id.id], vals=restr_vals, context=context)
+                    if p_error:
+                        raise osv.except_osv(_('Errors'), _('There is an error on sourcing line %s of %s: %s')
+                                             % (sol.line_number, sol.order_id.name, p_msg))
+
         self.source_line(cr, uid, ids, context=context)
 
         return True

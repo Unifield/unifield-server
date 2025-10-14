@@ -135,7 +135,7 @@ class SpreadsheetXML(SpreadsheetTools):
             if xmlfile:
                 if context.get('from_je_import') or context.get('from_regline_import'):
                     # replace any invalid xml 1.0 &#x; where x<32 by a special code
-                    for line in fileinput.FileInput(xmlfile, inplace=1):
+                    for line in fileinput.FileInput(xmlfile, inplace=1, encoding='utf8'):
                         print(re.sub('&#([0-9]|[0-2][0-9]|3[01]);', '%s_\\1' % SPECIAL_CHAR, line))
 
                 self.xmlobj = etree.parse(xmlfile)
