@@ -55,12 +55,21 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         Applies the following changes to the reg_data:
         - adds the journal status
         - removes the lines for which the journal is inactive only if the Starting Balance, the Movements, and the Closing Balance are all 0.00
+        - removes the lines for journals not from current instance neither from one of its children
         """
         journal_obj = self.pool.get('account.journal')
         period_obj = self.pool.get('account.period')
+        instance_obj = self.pool.get('msf.instance')
         new_reg_data = []
+        current_instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, self.context).company_id.instance_id
+        child_ids = [x.id for x in current_instance.child_ids]
+        instance_children = [x.code for x in instance_obj.browse(self.cr, self.uid, child_ids, self.context)]
+        instance_children.append(current_instance.code)
+        current_instance_and_children = dict([(inst, True) for inst in set(instance_children)])
         for reg in reg_data:
             last_open_reg_period = False
+            if not current_instance_and_children.get(reg['instance'], False):
+                continue
             j_info = journal_obj.read(self.cr, self.uid, reg['id'], ['is_active', 'inactivation_date',
                                                                      'last_period_with_open_register_id'])
             if j_info and j_info['last_period_with_open_register_id']:
