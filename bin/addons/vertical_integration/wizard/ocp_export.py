@@ -555,8 +555,8 @@ class waca_fin_sync(osv.osv):
                 b.id as bank_journal_id
             from
                 account_journal j
-                inner join res_currency c on c.id = j.currency
                 inner join msf_instance i on i.id = j.instance_id
+                left join res_currency c on c.id = j.currency
                 left join account_analytic_journal aj on aj.id = j.analytic_journal_id
                 left join account_journal b on b.id = j.bank_journal_id
                 left join audittrail_log_line l on l.field_id in %s and l.res_id = j.id and l.object_id = %s
@@ -574,11 +574,11 @@ class waca_fin_sync(osv.osv):
                 'Journal Type': j_type_dict.get(x['j_type']),
                 'Journal Code': x.get('j_code'),
                 'Journal Name': x.get('j_name'),
-                'Currency': x.get('curr_code'),
+                'Currency': x.get('curr_code') or '',
                 'State': x['is_active'] and 'Active' or 'Inactive',
                 'Mission': x['mission'] or '',
                 'Proprietary Instance': x['prop_instance_code'],
-                'Analytic Journal': x['analytic_j_code'],
+                'Analytic Journal': x['analytic_j_code'] or '',
                 'Bank Account Name': x['bank_account_name'] or '',
                 'Address': x['bank_address'] or '',
                 'Bank Account Number': x['bank_account_number'] or '',
