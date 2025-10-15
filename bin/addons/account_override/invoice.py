@@ -425,6 +425,17 @@ class account_invoice(osv.osv):
             dom = [('date_invoice', '>=', fy.date_start), ('date_invoice', '<=', fy.date_stop)]
         return dom
 
+    def _get_customer_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Add the customer name information as it is on the PO source of the supplier invoice
+        """
+        res = {}
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['picking_id']):
+            res[inv.id] = False
+            if inv.picking_id and inv.picking_id.purchase_id and inv.picking_id.purchase_id.dest_partner_names:
+                res[inv.id] = inv.picking_id.purchase_id.dest_partner_names
+        return res
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -467,6 +478,7 @@ class account_invoice(osv.osv):
         'open_fy': fields.function(_get_fake, method=True, type='boolean', string='Open Fiscal Year', store=False,
                                    fnct_search=_search_open_fy),
         'fiscalyear_id': fields.function(_get_fiscalyear, fnct_search=_get_search_by_fiscalyear, type='many2one', obj='account.fiscalyear', method=True, store=False, string='Fiscal year', readonly=True),
+        'customers': fields.function(_get_customer_id, method=True, type='char', size=1024, string='Customers', listed_in_export=True),
     }
 
     _defaults = {
@@ -1666,6 +1678,19 @@ class account_invoice_line(osv.osv):
         """
         return self.pool.get('account.invoice')._get_invoice_type_list(cr, uid, context=context)
 
+    def _get_dest_cc(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        res = {}
+
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['analytic_distribution_id', 'invoice_id'], context=context):
+            ad = line.analytic_distribution_id or line.invoice_id.analytic_distribution_id
+            res[line.id] = {'cost_centers': '', 'destinations': ''}
+            if ad and ad.funding_pool_lines:
+                res[line.id] = {
+                    'cost_centers': ';'.join([x.cost_center_id.code for x in ad.funding_pool_lines]),
+                    'destinations': ';'.join([x.destination_id.code for x in ad.funding_pool_lines]),
+                }
+        return res
+
     _columns = {
         'line_number': fields.integer(string='Line Number'),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
@@ -1692,6 +1717,8 @@ class account_invoice_line(osv.osv):
                                            relation="account.analytic.account", string='Funding Pool',
                                            states={'draft': [('readonly', False)]},
                                            help="Field used for import only"),
+        'cost_centers':fields.function(_get_dest_cc, method=True, type='char', size=1024, string='Cost Centers', listed_in_export=True, multi='get_dest_cc'),
+        'destinations': fields.function(_get_dest_cc, method=True, type='char', size=1024, string='Destinations', listed_in_export=True, multi='get_dest_cc'),
         'from_supply': fields.related('invoice_id', 'from_supply', type='boolean', string='From Supply', readonly=True, store=False),
         'synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False),
         # field "line_synced" created to be used in the views where the "synced" field at doc level is displayed
@@ -1727,6 +1754,7 @@ class account_invoice_line(osv.osv):
         ('ck_invl_account', "CHECK(account_id IS NOT NULL OR COALESCE(allow_no_account, 'f') = 't')",
          'The invoice lines must have an account.')
     ]
+
 
     def _check_on_invoice_line_big_amounts(self, cr, uid, ids, context=None):
         """
