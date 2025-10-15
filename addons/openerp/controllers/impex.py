@@ -61,7 +61,7 @@ def _fields_get_all(model, views, context=None):
             view['fields'])
 
     proxy = rpc.RPCProxy(model)
-
+    context['for_export_list'] = True
     tree_view = proxy.fields_view_get(views.get('tree', False), 'tree', context)
     form_view = proxy.fields_view_get(views.get('form', False), 'form', context)
 
@@ -298,6 +298,8 @@ class ImpEx(SecuredController):
 
         id = params.id
 
+
+        ctx['for_export_list'] = True
         res = self.get_data(params.model, ctx)
         ir_export = rpc.RPCProxy('ir.exports')
         ir_export_line = rpc.RPCProxy('ir.exports.line')
