@@ -327,14 +327,14 @@ liquidity_sql = """
                 SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
                 FROM (
                     (
-                    -- hq: list cheque journal if a register has been created for the period selected
+                    -- hq: list bank or cash journal if a register has been created for the period selected
                         SELECT j.id AS journal_id, j.default_debit_account_id AS account_id, 0.00 as col1, 0.00 as col2, 0.00 as col3
                         FROM account_journal j, account_period p
                         WHERE
                             j.type IN %(j_type)s AND
                             j.last_period_with_open_register_id = p.id AND
-                            cast(date_trunc('month', j.create_date) as date) <= %(date_from)s AND
-                            p.date_stop <= %(date_to)s
+                            cast(date_trunc('month', j.create_date) as date) <= %(date_to)s AND
+                            p.date_stop >= %(date_from)s
                         GROUP BY j.id, j.default_debit_account_id
                     )
                 UNION
