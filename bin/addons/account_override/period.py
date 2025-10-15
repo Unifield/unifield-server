@@ -53,14 +53,7 @@ def get_period_from_date(self, cr, uid, date=False, context=None):
         ('date_stop', '>=', date),
         number_criteria,
     ], limit=limit,
-        order='date_start asc, name asc', context=context) or []
-    # Get last period if no period found
-    if not period_ids:
-        period_ids = self.pool.get('account.period').search(cr, uid, [
-            ('state', '=', 'open'),
-            number_criteria,
-        ], limit=limit,
-            order='date_stop desc, name desc', context=context) or []
+        order='date_start asc, number asc', context=context) or []
 
     if isinstance(period_ids, int):
         period_ids = [period_ids]

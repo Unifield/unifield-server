@@ -94,6 +94,9 @@
                         <separator string="Computation in functional currency" colspan="4"/>
                         <field name="currency_date_type" />
                         <field name="currency_date_beginning" />
+
+                        <separator string="Extra accounting period booking permission" colspan="4" />
+                            <field name="extra_period_config" />
                     </page>
 
                     <xpath expr="/form//field[@name='currency_id']" position="replace">

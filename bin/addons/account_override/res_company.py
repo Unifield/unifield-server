@@ -32,6 +32,26 @@ class res_company(osv.osv):
     _name = 'res.company'
     _inherit = 'res.company'
 
+    _extra_period = False
+    def extra_period_config(self, cr):
+        if not self._extra_period:
+            cr.execute("SELECT oc FROM sync_client_entity LIMIT 1;")
+            oc = cr.fetchone()[0]
+            self._extra_period = {
+                'ocb': 'nothing',
+                'ocp': 'hq',
+                'waca': 'hq',
+                'oca': 'other'
+            }.get(oc)
+
+        return self._extra_period
+
+    def _get_extra_period_config(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        for id_ in ids:
+            res[id_] = self.extra_period_config(cr)
+        return res
+
     def _get_currency_date_type(self, cr, uid, ids, name, args, context=None):
         """
         Returns the type of date used for functional amount computation in this instance
@@ -77,6 +97,7 @@ class res_company(osv.osv):
         'has_move_regular_bs_to_0': fields.boolean("Move regular B/S account to 0"),
         'has_book_pl_results': fields.boolean("Book the P&L results"),
         'display_hq_system_accounts_buttons': fields.boolean("Display HQ system accounts mapping?", help="Display HQ system accounts on JI and AJI list views"),
+        'extra_period_config': fields.function(_get_extra_period_config, method=True, type='selection', selection=[('nothing', 'Nothing booked'), ('hq', 'HQ entries'), ('other', 'HQ Entries, Accrual, Revaluation, IVO, IVI, Corrections')], string='Extra Accounting Behavior', help='Allowed entries on P13, P14 and P15'),
     }
 
     _defaults = {
