@@ -63,6 +63,12 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         new_reg_data = []
         current_instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, self.context).company_id.instance_id
         child_ids = [x.id for x in current_instance.child_ids]
+        if current_instance.level == 'section':
+            # get children of children if we are in HQ
+            for coordo_id in child_ids:
+                child_projects = instance_obj.browse(self.cr, self.uid, coordo_id, self.context).child_ids
+                child_projects_ids = [x.id for x in child_projects]
+                child_ids.extend(child_projects_ids)
         instance_children = [x.code for x in instance_obj.browse(self.cr, self.uid, child_ids, self.context)]
         instance_children.append(current_instance.code)
         current_instance_and_children = dict([(inst, True) for inst in set(instance_children)])
