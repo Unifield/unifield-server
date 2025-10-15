@@ -175,6 +175,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         error_log = ''
         # List of sequences for from_pack and to_pack
         sequences = []
+        # List of pack types per sequence
+        seq_pack_types = {}
 
         wiz_browse = self.browse(cr, uid, ids[0], context)
         # List of data to update moves
@@ -364,6 +366,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         line_errors.append(_(' Weight per pack has to be an float.'))
 
                     # pack type + width, length & height
+                    pack_type_ids = False
                     if row.cells[15].data:
                         pack_type_ids = pack_type_obj.search(cr, uid, [('name', '=', tools.ustr(row.cells[15].data))])
                         if pack_type_ids:
@@ -374,6 +377,15 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             })
                         else:
                             line_errors.append(_(' This Pack Type doesn\'t exists.'))
+                    # List to display an error if two of more sequences have different pack types
+                    if to_update.get('from_pack') and to_update.get('to_pack'):
+                        current_seq = _('from %s to %s') % (to_update['from_pack'], to_update['to_pack'])
+                        pack_type_data = pack_type_ids and pack_type_ids[-1] or 'None'
+                        if seq_pack_types.get(current_seq):
+                            if pack_type_data not in seq_pack_types[current_seq]:
+                                seq_pack_types[current_seq].append(pack_type_data)
+                        else:
+                            seq_pack_types[current_seq] = [pack_type_data]
 
                     to_update.update({
                         'error_list': line_errors,
@@ -435,6 +447,16 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 if from_to_pack_errors:
                     from_to_pack_errors = _("From pack - To pack sequences errors : \n") + from_to_pack_errors
 
+            # Check the number of pack types in each sequence
+            seq_pack_types_errors = []
+            seq_pack_types_error_msg = ''
+            for seq_pack_type in seq_pack_types:
+                if len(seq_pack_types[seq_pack_type]) >= 2:
+                    seq_pack_types_errors.append(seq_pack_type)
+            if seq_pack_types_errors:
+                seq_pack_types_error_msg = _('The Parcels %s contain multiple pack types. Please assign only one Pack Type per parcel.\n') \
+                    % (', '.join(seq_pack_types_errors),)
+
             # Check qties
             qty_errors = ''
             cr.execute('''SELECT m.line_number, p.default_code, SUM(product_qty) FROM stock_move m, product_product p
@@ -447,7 +469,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
             if qty_errors:
                 qty_errors = _('Quantities errors : \n') + qty_errors
 
-            if not error_log and not from_to_pack_errors and not qty_errors:
+            if not error_log and not from_to_pack_errors and not seq_pack_types_error_msg and not qty_errors:
                 for data in updated_data:
                     if data.get('move_id'):
                         vals = {
@@ -461,7 +483,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             'height': data.get('pack_type') and data['pack_type'].height or data.get('height', 0),
                         }
                         move_obj.write(cr, uid, data['move_id'], vals, context=context)
-            if error_log or from_to_pack_errors or qty_errors:
+            if error_log or from_to_pack_errors or seq_pack_types_error_msg or qty_errors:
                 cr.rollback()
 
             end_time = time.time()
@@ -475,7 +497,9 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
     %s
     
     %s
-    ''') % (total_time, complete_lines, line_num, lines_to_correct, error_log, qty_errors, from_to_pack_errors)
+    
+    %s
+    ''') % (total_time, complete_lines, line_num, lines_to_correct, error_log, qty_errors, from_to_pack_errors, seq_pack_types_error_msg)
             wizard_vals = {'message': final_message, 'state': 'done', 'percent_completed': 100}
             if line_with_error:
                 file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids,
