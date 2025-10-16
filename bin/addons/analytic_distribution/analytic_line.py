@@ -373,8 +373,7 @@ class analytic_line(osv.osv):
                     # UTP-943: Shoud have a correction journal on these lines
                     self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': corr_j, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
                     # UTP-943: Check that period is open
-                    allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
-                    correction_period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date, allow_extra=allow_extra, context=context)
+                    correction_period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date, check_extra_config=True, context=context)
                     if not correction_period_id:
                         raise osv.except_osv(_('Error'), _('No open period found for this date: %s') % (date,))
                     # then create new lines
@@ -423,8 +422,7 @@ class analytic_line(osv.osv):
         date_stop = account and account.get('date', False) or False
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
         cmp_dates = {}
-        allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
-        wiz_period_open = self.pool.get('account.period').get_open_period_from_date(cr, uid, wiz_date, allow_extra=allow_extra, context=context)
+        wiz_period_open = self.pool.get('account.period').get_open_period_from_date(cr, uid, wiz_date, check_extra_config=True, context=context)
 
         try:
             pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',

@@ -489,8 +489,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         hq_corr_journal_id = j_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
 
         # Search attached period
-        allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
-        period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date, allow_extra=allow_extra)
+        period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date, check_extra_config=True)
         if not period_id:
             raise osv.except_osv(_('Error'), _('No open period found for the given date: %s') % (date,))
         is_dec = strptime(date, '%Y-%m-%d').tm_mon == 12

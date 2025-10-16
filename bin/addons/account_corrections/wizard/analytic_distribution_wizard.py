@@ -135,8 +135,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         journal = journal_obj.browse(cr, uid, journal_id, context=context)
         code = journal.code
 
-        allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
-        period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date=posting_date, allow_extra=allow_extra, context=context)
+        period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date=posting_date, check_extra_config=True, context=context)
         if not period_id:
             raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (posting_date or ''))
 
@@ -312,7 +311,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                                       source_date=curr_date, name=name, context=context)
             new_line_ids.extend(list(created_analytic_line_ids.values()))
             working_period_id = working_period_id or \
-                self.pool.get('account.period').get_open_period_from_date(cr, uid, date=create_date, allow_extra=allow_extra, context=context)
+                self.pool.get('account.period').get_open_period_from_date(cr, uid, date=create_date, check_extra_config=True, context=context)
             # Set right analytic correction journal to these lines
             if period_closed or is_HQ_origin:
                 sql_to_cor = ['journal_id=%s']
@@ -418,7 +417,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'date': aal_date,
                 'document_date': orig_document_date,
             })
-            working_period_id = working_period_id or self.pool.get('account.period').get_open_period_from_date(cr, uid, date=aal_date, allow_extra=allow_extra, context=context)
+            working_period_id = working_period_id or self.pool.get('account.period').get_open_period_from_date(cr, uid, date=aal_date, check_extra_config=True, context=context)
             ana_line_obj.write(cr, uid, to_override_ids, vals)
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {

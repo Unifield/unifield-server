@@ -291,8 +291,7 @@ class distribution_line(osv.osv):
             # TO NOTE that, in correction wizard:
             # in December we are well in December, never in 13, 14, 15, 16
 
-            allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
-            period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date=date, allow_extra=allow_extra, context=context)
+            period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date=date, check_extra_config=True, context=context)
             if not period_id:
                 raise osv.except_osv(_('Warning'), _('AJI: no open period found for the date: %s') % (date or ''))
 

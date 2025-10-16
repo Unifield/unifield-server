@@ -366,13 +366,11 @@ class account_analytic_line(osv.osv):
         if posting_date is None:
             posting_date = strftime('%Y-%m-%d')
 
-        allow_extra = False
         if strptime(posting_date, '%Y-%m-%d').tm_mon and context.get('period_id_for_dec_hq_entries'):
             # (US-815) use the right period for December HQ Entries
             period_id = context['period_id_for_dec_hq_entries']
         else:
-            allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
-            period_id = period_obj.get_open_period_from_date(cr, uid, date=posting_date, allow_extra=allow_extra, context=context)
+            period_id = period_obj.get_open_period_from_date(cr, uid, date=posting_date, check_extra_config=True, context=context)
 
         if not period_id:
             raise osv.except_osv(_('Warning'), _('AJI REV: no open period found for the date: %s') % (posting_date or ''))
