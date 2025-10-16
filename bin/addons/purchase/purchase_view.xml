@@ -276,7 +276,8 @@
                                          $('#order_line_extra_text').html(catalogue_text);
                                     }
                                     var is_doc_locked_for_sign = $('#doc_locked_for_sign').val();
-                                    if (is_doc_locked_for_sign == "1") {
+                                    var allowed_to_be_signed_unsigned = $('#allowed_to_be_signed_unsigned').val();
+                                    if (is_doc_locked_for_sign == "1" &amp;&amp; allowed_to_be_signed_unsigned == "1") {
                                         msg_dom = $('#view_purchase_order_locked_for_signature')
                                         msg_dom.show();
                                     }
