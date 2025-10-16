@@ -26,6 +26,8 @@ from tools.translate import _
 from time import strptime
 
 
+
+
 def get_period_from_date(self, cr, uid, date=False, context=None):
     """
     Get period in which this date could go into, otherwise return last open period.
@@ -203,6 +205,22 @@ class account_period(osv.osv):
 
     def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
         return get_period_range(self, cr, uid, period_from_id, period_to_id, context=context)
+
+    def get_open_period_from_date(self, cr, uid, date, allow_extra, context=None):
+        if not date:
+            return False
+        if allow_extra:
+            dom = [('number', '>', 0), ('number', '<', 16)]
+        else:
+            dom = [('number', '>', 0), ('number', '<', 13)]
+
+        period_ids = self.pool.get('account.period').search(cr, uid, [
+            ('date_start', '<=', date),
+            ('date_stop', '>=', date),
+            ('state', '=', 'draft'),
+        ] + dom, limit=1,
+            order='date_start asc, number asc', context=context) or []
+        return period_ids and period_ids[0] or False
 
 
 account_period()

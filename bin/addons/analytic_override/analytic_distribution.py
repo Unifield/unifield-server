@@ -290,8 +290,11 @@ class distribution_line(osv.osv):
             # US-945: deduce real period id from date
             # TO NOTE that, in correction wizard:
             # in December we are well in December, never in 13, 14, 15, 16
-            period_ids = self.pool.get('account.period').get_period_from_date(
-                cr, uid, date=date, context=context)
+
+            allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
+            period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date=date, allow_extra=allow_extra, context=context)
+            if not period_id:
+                raise osv.except_osv(_('Warning'), _('AJI: no open period found for the date: %s') % (date or ''))
 
             curr_date = currency_date.get_date(self, cr, move_line.document_date, move_line.date,
                                                source_date=source_date or move_line.source_date)
@@ -314,7 +317,7 @@ class distribution_line(osv.osv):
                 'distribution_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
                 'ref': ref or move_line.move_id.name or False,
-                'real_period_id':  period_ids and period_ids[0] or False,  # US-945
+                'real_period_id':  period_id or False,  # US-945
             }
             if self._name == 'funding.pool.distribution.line':
                 vals.update({

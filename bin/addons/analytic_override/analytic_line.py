@@ -25,7 +25,7 @@ from lxml import etree
 from tools.translate import _
 from base import currency_date
 import decimal_precision as dp
-from time import strftime
+from time import strftime, strptime
 import logging
 
 
@@ -365,17 +365,20 @@ class account_analytic_line(osv.osv):
         period_obj = self.pool.get('account.period')
         if posting_date is None:
             posting_date = strftime('%Y-%m-%d')
-        # US-945: deduce real period id from date
-        # TO NOTE that, in correction wizard:
-        # in December we are well in December, never in 13, 14, 15, 16
-        period_ids = period_obj.get_period_from_date(
-            cr, uid, date=posting_date, context=context)
-        # (US-815) use the right period for December HQ Entries
-        period_number = period_ids and period_obj.browse(cr, uid, period_ids, context)[0].number or False
-        period_id_dec_hq_entry = False
-        if period_number == 12 and context.get('period_id_for_dec_hq_entries', False):
-            period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
+
+        allow_extra = False
+        if strptime(posting_date, '%Y-%m-%d').tm_mon and context.get('period_id_for_dec_hq_entries'):
+            # (US-815) use the right period for December HQ Entries
+            period_id = context['period_id_for_dec_hq_entries']
+        else:
+            allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
+            period_id = period_obj.get_open_period_from_date(cr, uid, date=posting_date, allow_extra=allow_extra, context=context)
+
+        if not period_id:
+            raise osv.except_osv(_('Warning'), _('AJI REV: no open period found for the date: %s') % (posting_date or ''))
+
         res = []
+
         for al in self.browse(cr, uid, ids, context=context):
             self.pool.get('finance.tools').check_correction_date_fy(al.date, posting_date, context=context)
             curr_date = currency_date.get_date(self, cr, al.document_date, al.date, source_date=al.source_date)
@@ -389,7 +392,7 @@ class account_analytic_line(osv.osv):
                 'currency_id': al.currency_id.id,
                 'is_reversal': True,
                 'ref': al.entry_sequence,
-                'real_period_id': period_id_dec_hq_entry or period_ids and period_ids[0] or False,  # US-945
+                'real_period_id': period_id,  # US-945
             }
             new_al = self.copy(cr, uid, al.id, vals, context=context)
             res.append(new_al)

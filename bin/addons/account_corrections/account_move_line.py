@@ -67,12 +67,13 @@ class account_move_line(osv.osv):
 
         acc_corr = {}
 
+        allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
         # Skip to next element if the line is set to False
         for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True
             acc_corr.setdefault(ml.account_id.id, ml.account_id.user_type.not_correctible)
             # False if special (or implicitly system period)
-            if ml.period_id.special:
+            if not allow_extra and ml.period_id.special or ml.period_id.number in (0, 16):
                 res[ml.id] = False
                 continue
             # False if account type is transfer

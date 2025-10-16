@@ -36,11 +36,15 @@ class account_analytic_line(osv.osv):
         if context is None:
             context = {}
         res = {}
+
+        allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
+
         for aml in self.browse(cr, uid, ids, context=context):
             res[aml.id] = True
             # note that AJIs linked to JIs on inactive journals are still correctable (US-7563).
             if aml.is_reallocated or aml.is_reversal or aml.journal_type == 'engagement' or \
-                    (aml.real_period_id and aml.real_period_id.special) or \
+                    (not allow_extra and aml.real_period_id and aml.real_period_id.special) or \
+                    aml.real_period_id and aml.real_period_id.number in (0, 16) or \
                     not aml.move_id or not aml.move_id.is_corrigible:
                 res[aml.id] = False
         return res
