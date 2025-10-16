@@ -531,13 +531,11 @@ class journal_items_corrections(osv.osv_memory):
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
 
+        allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
         # UFTP-388: Check if the given period is valid: period open, or not close, if not just block the correction
-        correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
-        if not correction_period_ids:
-            raise osv.except_osv(_('Error'), _('No period found for the given date: %s') % (wizard.date,))
-        for cp in self.pool.get('account.period').browse(cr, uid, correction_period_ids):
-            if cp.state != 'draft':
-                raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
+        correction_period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, wizard.date, allow_extra=allow_extra)
+        if not correction_period_id:
+            raise osv.except_osv(_('Error'), _('No open period found for the given date: %s') % (wizard.date,))
 
         # Fetch old line
         old_line = wizard.move_line_id
