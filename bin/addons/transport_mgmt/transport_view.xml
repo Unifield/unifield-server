@@ -139,6 +139,10 @@
                 <form string="Inbound Transport Object" hide_delete_button="1">
                     <html colspan="4">
                         <script language="javascript">
+                            $('#select_incoming_text').css('display', 'none');
+                            $('#select_incoming_open').css('display', 'none');
+                            $('#select_incoming_select').css('position', 'static');
+                            $('[for="select_incoming"]').css('width', '1%%');
                             set_customs_help_init = function(init) {
                                 $('table#transport_customs_fees_ids tr[record]').each(function() {
                                     var button_customs_help = $('input#name_help', this).val();
@@ -175,7 +179,14 @@
                     <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <group colspan="2" col="3" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                        <field name="no_line" invisible="1"/>
+                        <field name="ship_ref" on_change="onchange_ship_ref(ship_ref, select_incoming)"/>
+                        <field name="select_incoming" on_change="onchange_select_incoming(select_incoming)" nolabel="1" displayon="editable"
+                               domain="[('type', '=', 'in'), ('partner_id', '=', supplier_partner_id), ('shipment_ref', '!=', False)]"
+                               attrs="{'invisible': ['|', ('no_line', '=', False), ('ship_ref', '!=', False)]}"
+                               context="{'pick_type': 'incoming', 'transport_object': True}" />
+                    </group>
                     <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="sync_ref" />
                     <field name="from_sync" invisible="1" />
@@ -191,7 +202,7 @@
                                         <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
                                     </group>
                                 </group>
-                                <group colspan="4" col="4">
+                                <group colspan="4" col="4" attrs="{'readonly': [('no_line', '=', False)]}">
                                     <separator colspan="4" string="Shipping" />
                                     <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
                                     <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />

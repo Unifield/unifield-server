@@ -380,6 +380,12 @@ class transport_order(osv.osv):
             }
         return res
 
+    def _get_macroprocess_id(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        macroprocess_ids = self.pool.get('transport.macroprocess').search(cr, uid, [], limit=1, context=context)
+        return macroprocess_ids and macroprocess_ids[0] or False
+
     _columns = {
         'name': fields.char('Reference', size=64, required=True, select=True, readonly=True, copy=False),
         'original_cargo_ref': fields.char('Original Cargo ref', size=256, select=True),
@@ -452,6 +458,7 @@ class transport_order(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'macroprocess_id': _get_macroprocess_id,
     }
 
     def change_line(self, cr, uid, ids, context=None):
@@ -758,7 +765,17 @@ class transport_order_in(osv.osv):
             ret[x[0]] = ','.join(x[1])
         return ret
 
-
+    def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if the ITO has lines
+        """
+        res = {}
+        for _id in ids:
+            res[_id] = True
+        cr.execute("select transport_id from transport_order_in_line where transport_id in %s group by transport_id", (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = False
+        return res
 
     _columns = {
         'line_ids': fields.one2many('transport.order.in.line', 'transport_id', 'Lines', copy=False),
@@ -781,6 +798,8 @@ class transport_order_in(osv.osv):
         'oto_id': fields.many2one('transport.order.out', 'OTO', readonly=True, copy=False),
         'from_sync': fields.boolean('From sync', readonly=True, copy=False),
         'sync_ref': fields.char('OTO Reference', size=64, readonly=True, copy=False, select=1),
+        'select_incoming': fields.many2one('stock.picking', string='IN'),
+        'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line')
     }
     _defaults = {
         'shipment_type': 'in',
@@ -795,6 +814,45 @@ class transport_order_in(osv.osv):
             self.generate_closure_sync_message(cr, uid, ids, context=context)
         return ret
 
+    def onchange_ship_ref(self, cr, uid, ids, ship_ref, select_incoming, context=None):
+        '''
+        Remove the
+        '''
+
+    def onchange_select_incoming(self, cr, uid, ids, select_incoming, context=None):
+        '''
+        Populate the lines using the Ship Reference of the selected IN
+        '''
+        if context is None:
+            context = {}
+
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, int):
+            ids = [ids]
+
+        ship_ref = self.pool.get('stock.picking').read(cr, uid, select_incoming, context=context)['shipment_ref']
+        if ship_ref:
+            cr.execute('''SELECT id FROM stock_picking WHERE shipment_ref = %s''', (ship_ref,))
+            in_ids = cr.fetchall()
+            for in_id in in_ids:
+                value = self.pool.get('transport.order.in.line').change_incoming(cr, uid, False, in_id, context=context)
+                if value and value.get('value'):
+                    line_vals = value.get('value')
+                    line_vals.update({'transport_id': ids[0], 'incoming_id': in_id})
+                    self.pool.get('transport.order.in.line').create(cr, uid, line_vals, context=context)
+            self.write(cr, uid, ids[0], {'ship_ref': ship_ref}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'target': 'same',
+            'context': context,
+        }
 
     def _check_partner_consistency(self, cr, uid, ids, context=None):
         # to check at doc validation
@@ -1385,15 +1443,11 @@ class transport_order_in_line(osv.osv):
                 ''', (incoming_id, ))
             x = cr.fetchone()
             if x[0]:
-                value['parcels_nb'] = x[0]
-                if x[1]:
-                    value['weight'] = round(x[1], 2)
-                else:
-                    value['weight'] = False
-                if x[2]:
-                    value['volume'] = round(x[2]/1000, 2)
-                else:
-                    value['volume'] = False
+                value.update({
+                    'parcels_nb': x[0],
+                    'weight': x[1] and round(x[1], 2) or 0,
+                    'volume': x[2] and round(x[2] / 1000, 2) or 0
+                })
 
             return {
                 'value': value

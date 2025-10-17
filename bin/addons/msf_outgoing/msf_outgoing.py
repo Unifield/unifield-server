@@ -2166,7 +2166,7 @@ class stock_picking(osv.osv):
         if not context:
             context = {}
 
-        if not view_id and context.get('wh_dashboard') and view_type == 'search':
+        if not view_id and (context.get('wh_dashboard') or context.get('transport_object')) and view_type == 'search':
             try:
                 if context.get('pick_type') == 'incoming':
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_search')[1]
