@@ -1087,9 +1087,9 @@ class stock_picking(osv.osv):
                                 if out_move.product_uom.id != move.purchase_line_id.product_uom.id:
                                     extra_qty = uom_obj._compute_qty(cr, uid, move.purchase_line_id.product_uom.id, extra_qty, out_move.product_uom.id)
 
-                                exta_move = move_obj.browse(cr, uid, out_move.id, fields_to_fetch=['product_qty', 'pack_info_id', 'state'], context=context)
+                                exta_move = move_obj.browse(cr, uid, out_move.id, fields_to_fetch=['product_qty', 'pack_info_id', 'state', 'prodlot_id'], context=context)
                                 product_qty = exta_move.product_qty
-                                if exta_move.pack_info_id and line.pack_info_id and exta_move.pack_info_id.id != line.pack_info_id.id:
+                                if (exta_move.pack_info_id and line.pack_info_id and exta_move.pack_info_id.id != line.pack_info_id.id or line.prodlot_id and line.prodlot_id.id != exta_move.prodlot_id.id):
                                     # extra qty with new pack info: create a new line
                                     context['keepLineNumber'] = True
                                     new_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
