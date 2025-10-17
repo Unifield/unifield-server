@@ -115,7 +115,6 @@ class account_invoice_import(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
         partner_obj = self.pool.get('res.partner')
         account_obj = self.pool.get('account.account')
-        product_obj = self.pool.get('product.product')
         import_cell_data_obj = self.pool.get('import.cell.data')
         errors_obj = self.pool.get('account.invoice.import.errors')
         ana_obj = self.pool.get('analytic.distribution')
@@ -276,12 +275,7 @@ class account_invoice_import(osv.osv_memory):
                         if not product_code:
                             vals['product_id'] = False  # delete the existing value
                         else:
-                            product_ids = product_obj.search(cr, uid, [('default_code', '=', product_code), ('active', '=', True)],
-                                                             limit=1, context=context)
-                            if not product_ids:
-                                errors.append(_("Line %s: the product %s doesn't exist or is inactive.") % (current_line_num, product_code))
-                                continue
-                            vals['product_id'] = product_ids[0]
+                            del(vals['product_id'])
                         try:
                             quantity = float(quantity)
                         except ValueError:

@@ -218,10 +218,7 @@
                                     <field name="line_number" readonly="1" displayon="noteditable"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
-                                    <field name="product_id"
-                                           attrs="{'readonly': [('from_supply', '=', True)]}"
-                                           on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
-                                    />
+                                    <field name="product_id" readonly="1" />
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]" required="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
                                         context="{'d_journal_id': parent.journal_id , 'd_partner_id': parent.partner_id, 'd_address_invoice_id':parent.address_invoice_id,'d_date_invoice': parent.date_invoice, 'd_register_posting_date': parent.register_posting_date, 'd_account_id': parent.account_id, 'd_partner_bank_id': parent.partner_bank_id, 'd_payment_term': parent.payment_term, 'd_name': parent.name, 'd_origine': parent.origin, 'd_address_contact_id': parent.address_contact_id, 'd_user_id': parent.user_id, 'd_comment': parent.comment}"
@@ -241,11 +238,7 @@
                                 </tree>
                                 <form string="Donation Line">
                                     <field name="from_supply" invisible="1"/>
-                                    <field name="product_id"
-                                           attrs="{'readonly': [('from_supply', '=', True)]}"
-                                           on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"
-                                           default_focus="1"
-                                    />
+                                    <field name="product_id" readonly="1" />
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]" required="1"/>
                                     <field name="name" colspan="4" />
                                     <field name="quantity"
@@ -402,12 +395,7 @@
                                     <field name="line_number" displayon="noteditable"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
-                                    <field name="product_id"
-                                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
-                                                   attrs="{'readonly': ['|',
-                                                                        ('from_supply', '=', True),
-                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)],
-                                                           'required': [('is_asset', '=', True)]}" />
+                                    <field name="product_id" readonly="1" />
                                     <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines'), ('asset_for_product', '=', [is_asset, product_id])]"
                                            required="1"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type, 'intermission_type': parent.type == 'out_invoice' and 'out' or 'in'}"
@@ -431,7 +419,7 @@
                                     />
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
-                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="not context.get('is_asset_activated')"/>
+                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="not context.get('is_asset_activated')" attrs="{'invisible': [('product_id', '=', False)]}"/>
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
                                     <field name="inactive_product" invisible="1" />
@@ -443,13 +431,7 @@
                                             <field name="from_supply" invisible="1"/>
                                             <field name="line_synced" invisible="1"/>
                                             <field name="invoice_type" invisible="1"/>
-                                            <field name="product_id"
-                                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
-                                                   default_focus="1"
-                                                   attrs="{'readonly': ['|',
-                                                                        ('from_supply', '=', True),
-                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)],
-                                                            'required': [('is_asset', '=', True)]}" />
+                                            <field name="product_id" readonly="1" />
                                             <field name="uos_id"
                                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                                    attrs="{'readonly': ['|',
