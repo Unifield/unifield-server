@@ -328,8 +328,7 @@ class stock_card_wizard(osv.osv_memory):
                 new_line['balance'] = initial_stock
                 line_obj.create(cr, uid, new_line, context=context)
 
-        self.write(cr, uid, [ids[0]], {'real_stock': initial_stock},
-                   context=context)
+        self.write(cr, uid, [ids[0]], {'real_stock': initial_stock}, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.card.wizard',
@@ -370,7 +369,7 @@ stock_card_wizard()
 class stock_card_wizard_line(osv.osv_memory):
     _name = 'stock.card.wizard.line'
     _description = 'Stock card line'
-    _order = 'date_done desc'  # To calculate the balance from older to newer, then display newer first
+    _order = 'date_done desc, id desc'  # To calculate the balance from older to newer, then display newer first
 
     _columns = {
         'card_id': fields.many2one('stock.card.wizard', string='Card', required=True),

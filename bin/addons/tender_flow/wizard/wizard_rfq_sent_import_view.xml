@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="wizard_rfq_sent_import_form_view" model="ir.ui.view">
+            <field name="name">wizard.rfq.sent.import.form.view</field>
+            <field name="model">wizard.rfq.sent.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Update Sent RfQ import">
+                    <separator colspan="4" string="RfQ Information" />
+                    <field name="rfq_id" />
+                    <group colspan="4" name="file" string="Import data">
+                        <group colspan="4">
+                            <field name="file_to_import" filename="filename" colspan="1" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="filename" invisible="1" />
+                        </group>
+                        <field name="state" />
+                    </group>
+                    <separator colspan="12" string="Information" />
+                    <field name="message" colspan="4" nolabel="1"/>
+                    <group colspan="18" col="6">
+                        <button name="go_to_rfq" string="Return to the RfQ" icon="gtk-cancel" type="object"
+                            attrs="{'invisible':[('state', '=', 'in_progress')]}"/>
+                        <button name="import_file" string="Import file" icon="gtk-go-forward" type="object"
+                            attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="dummy" string="Update" icon="gtk-execute" type="object"
+                            attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

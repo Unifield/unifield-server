@@ -28,5 +28,16 @@
 
         <report auto="False" id="stock.report_purchase_quotation" model="purchase.order" name="purchase.quotation" rml="purchase/report/request_quotation.rml" string="Request for Quotation" view_ids="tender_flow.view_rfq_tree,tender_flow.view_rfq_form"/>
         <report auto="False" id="purchase_override.report_purchase_msf_quotation" model="purchase.order" name="msf.purchase.quotation" rml="purchase_override/report/rfq.rml" string="Request for Quotation" view_ids="tender_flow.view_rfq_tree,tender_flow.view_rfq_form"/>
+
+        <report
+            id="report_rfq_sent_export"
+            string="Update Sent RfQ"
+            model="purchase.order"
+            name="report_rfq_sent_export_xlsx"
+            report_type="openpyxl"
+            auto="False"
+            target_filename="Update Sent RfQ"
+            menu="False"
+            />
   </data>
 </openerp>

@@ -38,7 +38,7 @@
   </stylesheet>
   <story>    
     <!-- LINES LIST -->
-    <blockTable colWidths="43.0,43.0,43.0,27.0,105.0,43.0,35.0,35.0,35.0,43.0,43.0,89.0,65.0,65.0,43.0,43.0,43.0" style="LinesList">
+    <blockTable colWidths="59.0,43.0,43.0,23.0,105.0,43.0,23.0,35.0,35.0,43.0,23.0,89.0,65.0,65.0,48.0,48.0,53.0" style="LinesList">
         <tr>
             <td>
                 <para style="InformationHeader">PO</para>
@@ -50,7 +50,7 @@
                 <para style="InformationHeader">Cat.</para>
             </td>
             <td>
-                <para style="InformationHeader">O. l.</para>
+                <para style="InformationHeader">#</para>
             </td>
             <td>
                 <para style="InformationHeader">Product</para>
@@ -71,7 +71,7 @@
                 <para style="InformationHeader">Subtotal</para>
             </td>
             <td>
-                <para style="InformationHeader">Currency</para>
+                <para style="InformationHeader">Cur.</para>
             </td>
 
             <td>
@@ -81,7 +81,7 @@
                 <para style="InformationHeader">Destination</para>
             </td>
           	<td>
-                <para style="InformationHeader">Cost Center</para>
+                <para style="InformationHeader">C.C.</para>
             </td>
 
             <td>
@@ -99,7 +99,7 @@
    
    <section>
    [[repeatIn(objects,'o')]]
-   <blockTable colWidths="43.0,43.0,43.0,27.0,105.0,43.0,35.0,35.0,35.0,43.0,43.0,89.0,65.0,65.0,43.0,43.0,43.0" style="LinesList">
+   <blockTable colWidths="59.0,43.0,43.0,23.0,105.0,43.0,23.0,35.0,35.0,43.0,23.0,89.0,65.0,65.0,48.0,48.0,53.0" style="LinesList">
         <tr>
             <td>
                 <parawrap style="Information">[[ o.order_id.name ]]</parawrap>

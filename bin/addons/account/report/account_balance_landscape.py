@@ -103,8 +103,8 @@ class account_balance_landscape(report_sxw.rml_parse):
         self.done_total=0
 
         for t1 in range(0,len(form['fiscalyear'])):
-            self.result_total["sum_credit" + str(t1)]=locale.format("%.2f", self.result_total["sum_credit" + str(t1)], grouping=True)
-            self.result_total["sum_debit" + str(t1)]=locale.format("%.2f", self.result_total["sum_debit" + str(t1)], grouping=True)
+            self.result_total["sum_credit" + str(t1)]=locale.format_string("%.2f", self.result_total["sum_credit" + str(t1)], grouping=True)
+            self.result_total["sum_debit" + str(t1)]=locale.format_string("%.2f", self.result_total["sum_debit" + str(t1)], grouping=True)
 
         for temp in range(0,len(form['fiscalyear'])):
             fy=self.pool.get('account.fiscalyear').name_get(self.cr, self.uid, form['fiscalyear'][temp])
@@ -253,9 +253,9 @@ class account_balance_landscape(report_sxw.rml_parse):
 
                 for j in range(0,len(entry)):
 
-                    res["debit"+str(j)]=locale.format("%.2f", entry[j].debit, grouping=True)
-                    res["credit"+str(j)]=locale.format("%.2f", entry[j].credit, grouping=True)
-                    res["balance"+str(j)]=locale.format("%.2f", entry[j].balance, grouping=True)
+                    res["debit"+str(j)]=locale.format_string("%.2f", entry[j].debit, grouping=True)
+                    res["credit"+str(j)]=locale.format_string("%.2f", entry[j].credit, grouping=True)
+                    res["balance"+str(j)]=locale.format_string("%.2f", entry[j].balance, grouping=True)
 
 
                     if j==0:
@@ -263,13 +263,13 @@ class account_balance_landscape(report_sxw.rml_parse):
                         res["bal_perc"+str(j)]="0.00%"
                     else:
                         temp_cash=entry[j].balance - entry[j-1].balance
-                        res["bal_cash"+str(j)]=locale.format("%.2f", temp_cash, grouping=True)
+                        res["bal_cash"+str(j)]=locale.format_string("%.2f", temp_cash, grouping=True)
                         if entry[j-1].balance!=0.00:
                             temp_perc=(entry[j].balance - entry[j-1].balance )*100/entry[j-1].balance
                         else:
                             temp_perc=(entry[j].balance) *100
 
-                        res["bal_perc"+str(j)]=locale.format("%.2f", temp_perc) + "%"
+                        res["bal_perc"+str(j)]=locale.format_string("%.2f", temp_perc) + "%"
 
 
                     if ref_bal=='nothing':

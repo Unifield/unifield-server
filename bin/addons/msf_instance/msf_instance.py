@@ -24,7 +24,6 @@ from tools.translate import _
 from tools import misc
 from tools import config
 import os
-import io
 from tools import webdav
 import zipfile
 from tempfile import NamedTemporaryFile
@@ -491,13 +490,11 @@ class msf_instance_cloud(osv.osv):
     _backoff_max = 5
     _backoff_factor = 0.1
 
-    def _get_backoff(self, dav, error):
-        if not dav:
+    def _get_backoff(self, nb_errors, error):
+        if not nb_errors:
             self._logger.info(error)
             time.sleep(self._backoff_factor)
 
-        nb_errors = dav.session_nb_error
-        dav.session_nb_error += 1
         if nb_errors <= 1:
             return 0
 
@@ -509,36 +506,46 @@ class msf_instance_cloud(osv.osv):
         time.sleep(sleep_time)
 
 
-    def _get_cloud_set_password(self, cr, uid, ids, fields, arg, context=None):
+    def _get_cloud_set_cert(self, cr, uid, ids, fields, arg, context=None):
         ret = {}
-        for x in self.read(cr, uid, ids, ['cloud_password'], context=context):
-            ret[x['id']] = x['cloud_password'] and self._empty_pass or False
+        for x in self.read(cr, uid, ids, ['cloud_cert_content'], context=context):
+            ret[x['id']] = x['cloud_cert_content'] and self._empty_pass or False
         return ret
 
-    def _set_cloud_password(self, cr, uid, id, name, value, arg, context):
+    def _set_cloud_cert(self, cr, uid, id, name, value, arg, context):
         if not value:
-            self.write(cr, uid, id, {'cloud_password': False})
+            self.write(cr, uid, id, {'cloud_cert_content': False})
         elif value != self._empty_pass:
+            lines = []
+            if '\n' not in value:
+                for x in value.split(' '):
+                    if lines and (x.endswith('---') or x == 'PRIVATE'):
+                        lines[-1] +=' %s'%x
+                    else:
+                        lines.append(x)
+
+                value = '\n'.join(lines)
             identifier = self.read(cr, uid, id, ['instance_identifier'], context=context)['instance_identifier']
             if not identifier:
-                raise osv.except_osv(_('Warning !'), _('Unable to store password if Instance identifier is not set.'))
+                raise osv.except_osv(_('Warning !'), _('Unable to store certificate if Instance identifier is not set.'))
             crypt_o = misc.crypt(identifier)
-            self.write(cr, uid, id, {'cloud_password': crypt_o.encrypt(value)}, context=context)
+            self.write(cr, uid, id, {'cloud_cert_content': crypt_o.encrypt(value)}, context=context)
         return True
 
     def _get_cloud_info(self, cr, uid, id, context=None):
-        d = self.read(cr, uid, id, ['instance_identifier', 'cloud_password', 'cloud_url', 'cloud_login'], context=context)
+        d = self.read(cr, uid, id, ['instance_identifier', 'cloud_tenant', 'cloud_client_id', 'cloud_cert_content', 'cloud_url'], context=context)
         ret = {
             'url': d['cloud_url'],
-            'login': d['cloud_login'],
-            'password': False
+            'tenant': d['cloud_tenant'],
+            'client_id': d['cloud_client_id'],
+            'cert_content': False
         }
-        if d['cloud_password'] and d['instance_identifier']:
+        if d['cloud_cert_content'] and d['instance_identifier']:
             try:
                 crypt_o = misc.crypt(d['instance_identifier'])
-                ret['password'] = crypt_o.decrypt(d['cloud_password'])
+                ret['cert_content'] = crypt_o.decrypt(d['cloud_cert_content'])
             except:
-                raise osv.except_osv(_('Warning !'), _('Unable to decode password'))
+                raise osv.except_osv(_('Warning !'), _('Unable to decode Certificate'))
 
         return ret
 
@@ -558,7 +565,7 @@ class msf_instance_cloud(osv.osv):
 
     def _get_has_config(self, cr, uid, ids, fields, arg, context=None):
         ret = {}
-        fields = ['instance_identifier', 'cloud_url', 'cloud_login', 'cloud_password']
+        fields = ['instance_identifier', 'cloud_url', 'cloud_tenant', 'cloud_client_id', 'cloud_cert_content']
         for instance in self.read(cr, uid, ids, fields, context=context):
             ret[instance['id']] = True
             for field in fields:
@@ -575,9 +582,9 @@ class msf_instance_cloud(osv.osv):
             raise osv.except_osv(_('Error'), _('Filter not implemented'))
 
         if args[0][2]:
-            return  [('instance_identifier', '!=', False), ('cloud_url', '!=', False), ('cloud_login', '!=', False), ('cloud_password', '!=', False)]
+            return  [('instance_identifier', '!=', False), ('cloud_url', '!=', False), ('cloud_tenant', '!=', False), ('cloud_client_id', '!=', False), ('cloud_cert_content', '!=', False)]
 
-        return ['|', '|', '|', ('instance_identifier', '=', False), ('cloud_url', '=', False), ('cloud_login', '=', False), ('cloud_password', '=', False)]
+        return ['|', '|', '|', '|', ('instance_identifier', '=', False), ('cloud_url', '=', False), ('cloud_tenant', '=', False), ('cloud_client_id', '=', False), ('cloud_cert_content', '=', False)]
 
     def _get_filter_by_level(self, cr, uid, ids, fields, arg, context=None):
         ret = {}
@@ -600,7 +607,7 @@ class msf_instance_cloud(osv.osv):
         retry_from = sc_info['cloud_retry_from'] or 0
         retry_to =  sc_info['cloud_retry_to'] or 0
         for x in to_write:
-            data = {'cloud_url': info['url'] , 'cloud_login': info['login'], 'cloud_set_password':  info['password'], 'cloud_retry_from': retry_from, 'cloud_retry_to': retry_to, 'delay_minute': -1}
+            data = {'cloud_url': info['url'] , 'cloud_tenant': info['tenant'], 'cloud_client_id': info['client_id'], 'cloud_set_cert':  info['cert_content'], 'cloud_retry_from': retry_from, 'cloud_retry_to': retry_to, 'delay_minute': -1}
             if sc_info['delay_minute'] and sc_info['delay_minute'] != -1:
                 init_time += (sc_info['delay_minute'] or 0) / 60.
                 init_time = init_time % 24
@@ -612,10 +619,11 @@ class msf_instance_cloud(osv.osv):
 
     _columns = {
         'cloud_url': fields.char('Cloud URL', size=256),
-        'cloud_login': fields.char('Cloud Login', size=256),
-        'cloud_password': fields.char('Cloud Password', size=1024),
+        'cloud_tenant': fields.char('Cloud Tenant', size=256),
+        'cloud_client_id': fields.char('Cloud Client-id', size=1024),
         'cloud_schedule_time': fields.float('Schedule task time', help="Remote time"),
-        'cloud_set_password': fields.function(_get_cloud_set_password, type='char', size=256, fnct_inv=_set_cloud_password, method=True, string='Password'),
+        'cloud_set_cert': fields.function(_get_cloud_set_cert, type='text', fnct_inv=_set_cloud_cert, method=True, string='Certificate'),
+        'cloud_cert_content': fields.text('Certificate', help="format:\n-----BEGIN CERTIFICATE-----\nXXX\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\nZZZ\n-----END PRIVATE KEY-----"),
         'cloud_retry_from': fields.float('Retry from time'),
         'cloud_retry_to': fields.float('Retry to time'),
         'is_editable': fields.function(_get_is_editable, type='boolean', string='Has identifier', method=True),
@@ -642,21 +650,23 @@ class msf_instance_cloud(osv.osv):
         info = self._get_cloud_info(cr, uid, ids[0])
         if not info.get('url'):
             raise osv.except_osv(_('Warning !'), _('URL is not set!'))
-        if not info.get('login'):
-            raise osv.except_osv(_('warning !'), _('login is not set!'))
-        if not info.get('password'):
-            raise osv.except_osv(_('Warning !'), _('Password is not set!'))
+        if not info.get('client_id'):
+            raise osv.except_osv(_('warning !'), _('Client_id is not set!'))
+        if not info.get('tenant'):
+            raise osv.except_osv(_('Warning !'), _('Tenant is not set!'))
+        if not info.get('cert_content'):
+            raise osv.except_osv(_('Warning !'), _('Certificate is not set!'))
 
         url = urlparse(info['url'])
         if not url.netloc:
             raise osv.except_osv(_('Warning !'), _('Unable to parse url: %s') % (info['url']))
         return {
             'host': url.netloc,
-            'port': url.port,
-            'protocol': url.scheme,
-            'username': info['login'],
-            'password': info['password'],
             'path': url.path,
+            'tenant': info['tenant'],
+            'client_id': info['client_id'],
+            'cert_content': info['cert_content'],
+            'max_retry': 3,
         }
 
     def get_backup_connection(self, cr, uid, ids, context=None):
@@ -674,11 +684,12 @@ class msf_instance_cloud(osv.osv):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         dav = self.get_backup_connection(cr, uid, ids, context=None)
         test_file_name = 'test-file-%s.txt' % (local_instance.instance, )
-        locale_file = io.StringIO()
-        locale_file.write('TEST UF')
-        locale_file.seek(0)
+
         try:
-            dav.upload(locale_file, test_file_name)
+            with NamedTemporaryFile('w+', delete=False) as locale_file:
+                locale_file.write('TEST UF')
+                locale_file.seek(0)
+                dav.upload(locale_file, test_file_name)
         except Exception as e:
             raise osv.except_osv(_('Warning !'), _('Unable to upload a test file: %s') % (e, ))
 
@@ -699,7 +710,7 @@ class msf_instance_cloud(osv.osv):
     def _activate_cron(self, cr, uid, ids, context=None):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if local_instance and local_instance.id in ids:
-            fields = ['cloud_url', 'cloud_login', 'cloud_password', 'instance_identifier']
+            fields = ['cloud_url', 'cloud_tenant', 'cloud_client_id', 'cloud_cert_content', 'instance_identifier']
             myself = self.read(cr, uid, local_instance.id, fields+['cloud_schedule_time'], context=context)
             to_activate = True
             for field in fields:
@@ -731,10 +742,10 @@ class msf_instance_cloud(osv.osv):
     def _is_in_time_range(self, starttime, endtime):
         if starttime == endtime:
             return False
-        # TODO JFB
-        start_dt = (datetime.now()+relativedelta(hour=starttime or 0,minute=0, second=0)).time
-        end_dt = (datetime.now()+relativedelta(hour=endtime or 0,minute=0, second=0)).time
-        now_dt = datetime.now().time
+
+        start_dt = datetime.now().replace(hour=int(starttime), minute=int((starttime%1)*60))
+        end_dt = datetime.now().replace(hour=int(endtime), minute=int((endtime%1)*60))
+        now_dt = datetime.now()
 
         if start_dt < end_dt:
             return now_dt >= start_dt and now_dt <= end_dt
@@ -749,7 +760,7 @@ class msf_instance_cloud(osv.osv):
         if not local_instance:
             return True
         info = self._get_cloud_info(cr, uid, local_instance.id)
-        for data in ['url', 'login', 'password']:
+        for data in ['url', 'tenant', 'client_id', 'cert_content']:
             if not info[data]:
                 self.pool.get('sync.version.instance.monitor').create(cr, uid, {'cloud_error': 'SharePoint indentifiers not set.'}, context=context)
                 return True
@@ -831,8 +842,8 @@ class msf_instance_cloud(osv.osv):
             dav_connected = False
             temp_create = False
             error = False
-            upload_ok = False
             dav = False
+            nb_errors = 0
             while True:
                 try:
                     if not dav_connected:
@@ -843,32 +854,16 @@ class msf_instance_cloud(osv.osv):
                         dav.create_folder(self._temp_folder)
                         temp_create = True
 
-                    if not upload_ok:
-                        upload_ok, error = dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj, continuation=True)
-
-                    # please don't change the following to else:
-                    if upload_ok:
-                        dav.move(temp_drive_file, final_name)
-                        break
-                    else:
-                        if not self._is_in_time_range(range_data['cloud_retry_from'], range_data['cloud_retry_to']):
-                            break
-
-                        self._get_backoff(dav, 'OneDrive: retry %s' % error)
-                        if 'timed out' in error or '2130575252' in error:
-                            self._logger.info('OneDrive: session time out')
-                            dav.login()
+                    dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj, continuation=True)
+                    dav.move_to_file(temp_drive_file, final_name)
+                    break
 
                 except requests.exceptions.RequestException as e:
                     if not self._is_in_time_range(range_data['cloud_retry_from'], range_data['cloud_retry_to']):
                         raise
-                    self._get_backoff(dav, 'OneDrive: retry except %s' % e)
+                    self._get_backoff(nb_errors, 'OneDrive: retry except %s' % e)
+                    nb_errors += 1
 
-            if not upload_ok:
-                if error:
-                    raise Exception(error)
-                else:
-                    raise Exception('Unknown error')
             temp_fileobj.close()
             monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})
             if progress_obj:

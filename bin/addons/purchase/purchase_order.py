@@ -1940,7 +1940,7 @@ class purchase_order(osv.osv):
                     inv_data['journal_id'] = inkind_journal_ids[0]
                     inv_data['is_inkind_donation'] = True
                 else:
-                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
+                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)])
                     if not journal_ids:
                         raise osv.except_osv(_('Error !'),
                                              _('There is no purchase journal defined for this company: "%s" (id:%d)') % (o.company_id.name, o.company_id.id))

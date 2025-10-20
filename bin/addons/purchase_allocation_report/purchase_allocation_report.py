@@ -63,7 +63,7 @@ class purchase_order_line_allocation_report(osv.osv):
                                         ('purchase_list', 'Purchase List'), ('direct', 'Direct Purchase Order')],
                                        string='Type'),
         'order_category': fields.selection(ORDER_CATEGORY, string='Cat.'),
-        'line_number': fields.integer(string='O. l.'),
+        'line_number': fields.integer(string='#'),
         'product_id': fields.many2one('product.product', string='Product'),
         'product_code': fields.related(
             'product_id',
@@ -90,7 +90,7 @@ class purchase_order_line_allocation_report(osv.osv):
         'percentage': fields.float(digits=(16,2), string='%'),
         'subtotal': fields.float(digits=(16,2), string='Subtotal'),
         'currency_id': fields.many2one('res.currency', string='Cur.'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost center'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='C.C.'),
         'destination_id': fields.many2one('account.analytic.account', string='Destination'),
         #'cost_center_id': fields.many2one('cost.center.distribution.line', string='Cost center'),
         #'account_id': fields.many2one('account.account', string='Account'),

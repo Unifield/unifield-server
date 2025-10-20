@@ -105,6 +105,7 @@ class _column(object):
         self.group_operator = args.get('group_operator', False)
         self.m2o_order = args.get('m2o_order', False)
         self.sort_column = False
+        self.listed_in_export = args.get('listed_in_export')
         for a in args:
             if args[a]:
                 setattr(self, a, args[a])
