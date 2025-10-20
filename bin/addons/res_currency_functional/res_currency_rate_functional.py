@@ -56,13 +56,24 @@ class res_currency_rate_functional(osv.osv):
 
         max_date = self._get_next_date(cr, uid, date, currency)
         move_line_search_params = [('currency_id', '=', currency), ('is_revaluated_ok', '=', False)]
+        date_params = []
         if date is not None:
             date_type = self._get_date_type(cr, date)
-            move_line_search_params.append((date_type, '>=', date))
-            if max_date:
-                move_line_search_params.append((date_type, '<', max_date))
+            date_params.append('|')
+            date_params.append(('source_date', '>=', date))
+            date_params.append('&')
+            date_params.append(('source_date', '=', False))
+            date_params.append((date_type, '>=', date))
 
-        move_line_ids = move_line_obj.search(cr, uid, move_line_search_params)
+            if max_date:
+                date_params.insert(0, '&')
+                date_params.append('|')
+                date_params.append(('source_date', '<', max_date))
+                date_params.append('&')
+                date_params.append(('source_date', '=', False))
+                date_params.append((date_type, '<', max_date))
+
+        move_line_ids = move_line_obj.search(cr, uid, move_line_search_params+date_params)
         move_line_obj.update_amounts(cr, uid, move_line_ids)
         move_ids = []
         reconcile = set()
