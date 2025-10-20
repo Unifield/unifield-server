@@ -488,6 +488,7 @@ class stock_picking(osv.osv):
                     min(m.price_currency_id),
                     pick.partner_id,
                     pick.order_category,
+                    pick.name,
                     pick.shipment_ref
                 from stock_picking pick
                     left join stock_move m on m.picking_id = pick.id
@@ -508,7 +509,8 @@ class stock_picking(osv.osv):
             x = cr.fetchone()
             in_partner_id = x[8]
             in_order_category = x[9]
-            in_shipment_ref = x[10]
+            in_name = x[10]
+            in_shipment_ref = x[11]
             ito_line_data = {
                 'description': x[0],
                 'kc': x[1],
@@ -553,13 +555,25 @@ class stock_picking(osv.osv):
                         'cargo_category': ito_categ,
                     }
                     ito_id = ito_obj.create(cr, uid, ito_data, context=context)
+                    crea_upd = _('created')
                 else:
                     ito_id = ito_ids[0]
                     if ito_obj.read(cr, uid, ito_id, ['cargo_category'], context=context)['cargo_category'] != ito_categ:
                         ito_obj.write(cr, uid, ito_id, {'cargo_category': 'mixed'}, context=context)
+                    crea_upd = _('updated')
 
+                ito_name = ito_obj.read(cr, uid, ito_id, ['name'], context=context)['name']
                 ito_line_data.update({'transport_id': ito_id, 'incoming_id': upd_in_id})
                 self.pool.get('transport.order.in.line').create(cr, uid, ito_line_data, context=context)
+
+                # Comment added to the import job report
+                job_comment = context.get('job_comment', [])
+                job_comment.append({
+                    'res_model': 'stock.picking',
+                    'res_id': upd_in_id,
+                    'msg': _('%s was %s with %s in its lines') % (ito_name, crea_upd, in_name),
+                })
+                context['job_comment'] = job_comment
 
         return True
 

@@ -182,7 +182,7 @@
                     <group colspan="2" col="3" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                         <field name="no_line" invisible="1"/>
                         <field name="ship_ref" on_change="onchange_ship_ref(ship_ref, select_incoming)"/>
-                        <field name="select_incoming" on_change="onchange_select_incoming(select_incoming)" nolabel="1" displayon="editable"
+                        <field name="select_incoming" on_change="onchange_select_incoming(select_incoming)" nolabel="1"
                                domain="[('type', '=', 'in'), ('partner_id', '=', supplier_partner_id), ('shipment_ref', '!=', False)]"
                                attrs="{'invisible': ['|', ('no_line', '=', False), ('ship_ref', '!=', False)]}"
                                context="{'pick_type': 'incoming', 'transport_object': True}" />
@@ -202,7 +202,7 @@
                                         <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
                                     </group>
                                 </group>
-                                <group colspan="4" col="4" attrs="{'readonly': [('no_line', '=', False)]}">
+                                <group colspan="4" col="4" attrs="{'readonly': [('name', '!=', False), ('no_line', '=', False)]}">
                                     <separator colspan="4" string="Shipping" />
                                     <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
                                     <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />

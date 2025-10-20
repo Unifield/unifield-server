@@ -816,8 +816,15 @@ class transport_order_in(osv.osv):
 
     def onchange_ship_ref(self, cr, uid, ids, ship_ref, select_incoming, context=None):
         '''
-        Remove the
+        Remove the selected IN when the ship_ref is removed
         '''
+        if context is None:
+            context = {}
+        res = {}
+        if select_incoming:
+            res['value'] = {'select_incoming': False}
+
+        return res
 
     def onchange_select_incoming(self, cr, uid, ids, select_incoming, context=None):
         '''
@@ -836,23 +843,16 @@ class transport_order_in(osv.osv):
         if ship_ref:
             cr.execute('''SELECT id FROM stock_picking WHERE shipment_ref = %s''', (ship_ref,))
             in_ids = cr.fetchall()
+            line_ids = []
             for in_id in in_ids:
                 value = self.pool.get('transport.order.in.line').change_incoming(cr, uid, False, in_id, context=context)
                 if value and value.get('value'):
                     line_vals = value.get('value')
                     line_vals.update({'transport_id': ids[0], 'incoming_id': in_id})
-                    self.pool.get('transport.order.in.line').create(cr, uid, line_vals, context=context)
-            self.write(cr, uid, ids[0], {'ship_ref': ship_ref}, context=context)
+                    line_ids.append(self.pool.get('transport.order.in.line').create(cr, uid, line_vals, context=context))
+            res['value'] = {'ship_ref': ship_ref, 'line_ids': [(6, 0, line_ids)]}
 
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': ids[0],
-            'view_type': 'form',
-            'view_mode': 'form,tree',
-            'target': 'same',
-            'context': context,
-        }
+        return res
 
     def _check_partner_consistency(self, cr, uid, ids, context=None):
         # to check at doc validation
