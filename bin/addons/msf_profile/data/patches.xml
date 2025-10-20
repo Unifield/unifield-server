@@ -1242,5 +1242,9 @@
         <record id="us_14880_update_parcel_comment" model="patch.scripts">
             <field name="method">us_14880_update_parcel_comment</field>
         </record>
+
+        <record id="us_12391_cleanup_rate_VEF_2016" model="patch.scripts">
+            <field name="method">us_12391_cleanup_rate_VEF_2016</field>
+        </record>
     </data>
 </openerp>

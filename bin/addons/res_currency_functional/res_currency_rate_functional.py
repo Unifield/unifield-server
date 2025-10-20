@@ -41,15 +41,26 @@ class res_currency_rate_functional(osv.osv):
             date_type = currency_date.get_date_type(self, cr) == 'posting' and 'date' or 'document_date'
         return date_type
 
+    def _get_next_date(self, cr, uid, date, currency_id):
+        if not date or not currency_id:
+            return False
+        cr.execute("select name from res_currency_rate where currency_id=%s and name>%s order by name asc limit 1", (currency_id, date))
+        m_res = cr.fetchone()
+        return m_res and m_res[0] or False
+
     def refresh_move_lines(self, cr, uid, ids, date=None, currency=None):
         move_line_obj = self.pool.get('account.move.line')
         if currency is None:
             currency_obj = self.read(cr, uid, ids, ['currency_id'])[0]
             currency = currency_obj['currency_id'][0]
+
+        max_date = self._get_next_date(cr, uid, date, currency)
         move_line_search_params = [('currency_id', '=', currency), ('is_revaluated_ok', '=', False)]
         if date is not None:
             date_type = self._get_date_type(cr, date)
             move_line_search_params.append((date_type, '>=', date))
+            if max_date:
+                move_line_search_params.append((date_type, '<', max_date))
 
         move_line_ids = move_line_obj.search(cr, uid, move_line_search_params)
         move_line_obj.update_amounts(cr, uid, move_line_ids)
@@ -77,17 +88,29 @@ class res_currency_rate_functional(osv.osv):
         # Engagement lines object
         eng_obj = self.pool.get('account.analytic.line')
         # Search all engagement journal lines that don't come from a move and which date is superior to the rate
-        search_params = [('move_id', '=', '')]
+        max_date = False
+        curency_dom = []
         if currency:
-            search_params.append(('currency_id', '=', currency))
+            curency_dom.append(('currency_id', '=', currency))
+            max_date = self._get_next_date(cr, uid, date, currency)
         if date:
+            date_params = []
             date_type = self._get_date_type(cr, date)
-            search_params.append('|')
-            search_params.append(('source_date', '>=', date))
-            search_params.append('&')  # UFTP-361 in case source_date no set
-            search_params.append(('source_date', '=', False))
-            search_params.append((date_type, '>=', date))
-        eng_ids = eng_obj.search(cr, uid, search_params, context=context)
+            date_params.append('|')
+            date_params.append(('source_date', '>=', date))
+            date_params.append('&')  # UFTP-361 in case source_date no set
+            date_params.append(('source_date', '=', False))
+            date_params.append((date_type, '>=', date))
+            if max_date:
+                date_params.insert(0, '&')
+                date_params.append('|')
+                date_params.append(('source_date', '<', max_date))
+                date_params.append('&')  # UFTP-361 in case source_date no set
+                date_params.append(('source_date', '=', False))
+                date_params.append((date_type, '<', max_date))
+
+
+        eng_ids = eng_obj.search(cr, uid, [('move_id', '=', '')]+curency_dom+date_params, context=context)
         if eng_ids:
             eng_obj.update_amounts(cr, uid, eng_ids, context=context)
         return True
@@ -126,15 +149,26 @@ class res_currency_rate_functional(osv.osv):
                 # check if the rate has changed (rates in Unifield have an accuracy of 6 digits after the comma)
                 rate_changed = 'rate' in vals and abs(vals['rate'] - old_rates[r_id]['rate']) > 10**-7
                 if date_changed or rate_changed:
-                    date_for_recompute = vals.get('name') or old_rates[r_id]['date']
-                    if date_changed:
-                        # use the earliest date for the re-computation
-                        date_for_recompute = old_rates[r_id]['date'] < vals['name'] and old_rates[r_id]['date'] or vals['name']
-                    self.refresh_move_lines(cr, uid, [r_id], date=date_for_recompute)
-                    # Also update analytic move lines that don't come from a move (engagement journal lines)
                     rate = self.browse(cr, uid, r_id, fields_to_fetch=['currency_id'], context=context)
                     currency_id = rate.currency_id and rate.currency_id.id or False
-                    self.refresh_analytic_lines(cr, uid, [r_id], date=date_for_recompute, currency=currency_id, context=context)
+
+                    if date_changed:
+                        next1 = self._get_next_date(cr, uid, vals['name'], currency_id)
+                        next2 = self._get_next_date(cr, uid, old_rates[r_id]['date'], currency_id)
+                        if next1 == next2:
+                            date_for_recompute = old_rates[r_id]['date'] < vals['name'] and old_rates[r_id]['date'] or vals['name']
+                            self.refresh_move_lines(cr, uid, [r_id], date=date_for_recompute, currency=currency_id)
+                            self.refresh_analytic_lines(cr, uid, [r_id], date=date_for_recompute, currency=currency_id, context=context)
+                        else:
+                            self.refresh_move_lines(cr, uid, [r_id], date=vals['name'], currency=currency_id)
+                            self.refresh_analytic_lines(cr, uid, [r_id], date=vals['name'], currency=currency_id, context=context)
+
+                            self.refresh_move_lines(cr, uid, [r_id], date=old_rates[r_id]['date'], currency=currency_id)
+                            self.refresh_analytic_lines(cr, uid, [r_id], date=old_rates[r_id]['date'], currency=currency_id, context=context)
+                    else:
+                        self.refresh_move_lines(cr, uid, [r_id], date=old_rates[r_id]['date'], currency=currency_id)
+                        # Also update analytic move lines that don't come from a move (engagement journal lines)
+                        self.refresh_analytic_lines(cr, uid, [r_id], date=old_rates[r_id]['date'], currency=currency_id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -145,17 +179,23 @@ class res_currency_rate_functional(osv.osv):
         period_obj = self.pool.get('account.period')
         if context is None:
             context = {}
-        for currency in self.read(cr, uid, ids, ['currency_id', 'name'], context=context):
-            period_ids = period_obj.get_period_from_date(cr, uid, currency['name'], context=context)
-            if period_ids:
-                period = period_obj.read(cr, uid, period_ids[0], ['state', 'name'], context=context)
-                if period['state'] != 'created':
-                    raise osv.except_osv(_('Error'),
-                                         _("You can't delete this FX rate as the period \"%s\" isn't in Draft state.") % period['name'])
-            res = res & super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
-            if currency['currency_id']:
-                currency_id = currency['currency_id'][0]
-                self.refresh_move_lines(cr, uid, ids, currency=currency_id)
+        for currency_rate in self.browse(cr, uid, ids, fields_to_fetch=['currency_id', 'name'], context=context):
+            if currency_rate.currency_id and currency_rate.currency_id.currency_table_id:
+                # currency table rate, no check
+                res = res & super(res_currency_rate_functional, self).unlink(cr, uid, currency_rate.id, context)
+            else:
+                rate_currency_id = currency_rate.currency_id and currency_rate.currency_id.id or False
+                rate_name = currency_rate.name
+                period_ids = period_obj.get_period_from_date(cr, uid, currency_rate.name, context=context)
+                if period_ids:
+                    period = period_obj.read(cr, uid, period_ids[0], ['state', 'name'], context=context)
+                    if period['state'] != 'created':
+                        raise osv.except_osv(_('Error'),
+                                             _("You can't delete this FX rate as the period \"%s\" isn't in Draft state.") % period['name'])
+                res = res & super(res_currency_rate_functional, self).unlink(cr, uid, currency_rate.id, context)
+                if rate_currency_id:
+                    self.refresh_move_lines(cr, uid, ids, currency=rate_currency_id, date=rate_name)
+                    self.refresh_analytic_lines(cr, uid, ids, date=rate_name, currency=rate_currency_id, context=context)
         return res
 
 res_currency_rate_functional()
