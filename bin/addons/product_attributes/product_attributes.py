@@ -3437,9 +3437,9 @@ class product_attributes(osv.osv):
         if merge_type == 'section':
             old_prod_new_data = {'active': False, 'unidata_merged': True, 'unidata_merge_date': fields.datetime.now(), 'kept_product_id': kept_id, 'kept_initial_product_id': kept_id, 'new_code': kept_data['default_code']}
         else:
-            old_prod_new_data = {'active': False, 'replaced_by_product_id': kept_id}
+            old_prod_new_data = {'active': False, 'replaced_by_product_id': kept_id, 'new_code': kept_data['default_code']}
             if local:
-                old_prod_new_data.update({'local_product_merged': True, 'new_code': kept_data['default_code']})
+                old_prod_new_data.update({'local_product_merged': True})
         self.write(cr, uid, old_prod_id, old_prod_new_data, context=context)
 
         # US-11877: To have those translations in the audittrail without putting mandatory lang at the creation
