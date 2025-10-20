@@ -68,12 +68,12 @@ class wizard_interactive_report(osv.osv_memory):
         data.append([parent_hierarchy,
                      line.code,
                      line.name,
-                     locale.format(format_str, line_allocated_budget, grouping=False),
-                     locale.format(format_str, line_allocated_real, grouping=False),
-                     '0%' if line_allocated_real == 0 or line_allocated_budget == 0 else str(locale.format(format_str, self._round(line_allocated_real/line_allocated_budget * 100, context=context), grouping=False)) + "%",
-                     locale.format(format_str, line_project_budget, grouping=False),
-                     locale.format(format_str, line_project_real, grouping=False),
-                     '0%' if line_project_real == 0 or line_project_budget == 0 else str(locale.format(format_str, self._round(line_project_real/line_project_budget * 100, context=context), grouping=False)) + "%"])
+                     locale.format_string(format_str, line_allocated_budget, grouping=False),
+                     locale.format_string(format_str, line_allocated_real, grouping=False),
+                     '0%' if line_allocated_real == 0 or line_allocated_budget == 0 else str(locale.format_string(format_str, self._round(line_allocated_real/line_allocated_budget * 100, context=context), grouping=False)) + "%",
+                     locale.format_string(format_str, line_project_budget, grouping=False),
+                     locale.format_string(format_str, line_project_real, grouping=False),
+                     '0%' if line_project_real == 0 or line_project_budget == 0 else str(locale.format_string(format_str, self._round(line_project_real/line_project_budget * 100, context=context), grouping=False)) + "%"])
 
         for child_line in line.child_ids:
             new_max_parent_hierarchy = self._create_reporting_line(cr, uid, reporting_currency_id, child_line, parent_hierarchy + 1, data, line_amount_list, out_currency_id, context=context)
@@ -164,12 +164,12 @@ class wizard_interactive_report(osv.osv_memory):
             [0,
              '',
              'TOTAL',
-             locale.format(format_str, total_allocated_budget, grouping=False),
-             locale.format(format_str, total_allocated_real, grouping=False),
-             '0%' if total_allocated_real == 0  or total_allocated_budget == 0 else str(locale.format(format_str, self._round(total_allocated_real/total_allocated_budget * 100, context=context), grouping=False)) + "%",
-             locale.format(format_str, total_project_budget, grouping=False),
-             locale.format(format_str, total_project_real, grouping=False),
-             '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format(format_str, self._round(total_project_real/total_project_budget * 100, context=context), grouping=False)) + "%"]]
+             locale.format_string(format_str, total_allocated_budget, grouping=False),
+             locale.format_string(format_str, total_allocated_real, grouping=False),
+             '0%' if total_allocated_real == 0  or total_allocated_budget == 0 else str(locale.format_string(format_str, self._round(total_allocated_real/total_allocated_budget * 100, context=context), grouping=False)) + "%",
+             locale.format_string(format_str, total_project_budget, grouping=False),
+             locale.format_string(format_str, total_project_real, grouping=False),
+             '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format_string(format_str, self._round(total_project_real/total_project_budget * 100, context=context), grouping=False)) + "%"]]
 
         # Now, do the hierarchy
         analytic_data = []
