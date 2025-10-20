@@ -486,7 +486,7 @@ class stock_picking(osv.osv):
         if in_partner_id and value and value.get('value'):
             ito_ids = ito_obj.search(cr, uid, [('state', '=', 'planned'), ('supplier_partner_id', '=', in_partner_id),
                           ('ship_ref', '=', in_shipment_ref)], context=context)
-            ito_categ = in_order_category == 'medical' and '' or in_order_category == 'log' and '' or 'mixed'
+            ito_categ = in_order_category == 'medical' and 'medical' or in_order_category == 'log' and 'log' or 'mixed'
             if not ito_ids:
                 company_partner_id = self.pool.get('res.users').get_current_company_partner_id(cr, uid)[0]
                 company_address = partner_obj.address_get(cr, uid, company_partner_id, [])
