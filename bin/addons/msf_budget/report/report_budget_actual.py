@@ -122,7 +122,7 @@ class report_budget_actual(report_sxw.report_sxw):
             formatted_monthly_amounts = []
             for amount_line in temp_result:
                 formatted_amount_line = [amount_line[0]]
-                formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:]]
+                formatted_amount_line += [locale.format_string("%d", amount, grouping=True) for amount in amount_line[1:]]
                 formatted_monthly_amounts.append(formatted_amount_line)
             result += formatted_monthly_amounts
         return result
