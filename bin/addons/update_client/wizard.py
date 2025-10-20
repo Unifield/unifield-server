@@ -41,16 +41,6 @@ class upgrade(osv.osv_memory):
         updater.restart_server()
         return {'type': 'ir.actions.act_window_close'}
 
-    def _get_error(self, cr, uid, context=None):
-        text = ""
-        account_move_obj = self.pool.get('account.move')
-        a_m_ids = account_move_obj.get_valid_but_unbalanced(cr, uid, context)
-        if a_m_ids:
-            text += "Warning ! Before patching please correct the following unbalanced Journal Entries: \n"
-            for a_m in account_move_obj.read(cr, uid, a_m_ids, ['name']):
-                text += " - %s\n"% (a_m['name'])
-        return text
-
     def download(self, cr, uid, ids, context=None):
         """Downlad the patch to fill the version record"""
         revisions = self.pool.get('sync_client.version')
@@ -276,13 +266,11 @@ class upgrade(osv.osv_memory):
             ('blocked','Blocked')
         ], string="Status"),
         'patch' : fields.binary("Patch"),
-        'error': fields.text('Error', readonly="1"),
     }
 
     _defaults = {
         'message' : _generate,
         'state' : _get_state,
-        'error': _get_error,
     }
 
 upgrade()

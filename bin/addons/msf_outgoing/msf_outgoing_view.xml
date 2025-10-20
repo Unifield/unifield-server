@@ -1254,15 +1254,15 @@
 		<!--<menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>-->
 
 		<!-- Shipment -->
-		<record id="view_change_desc_wizard" model="ir.ui.view">
-			<field name="name">stock.picking.wizard</field>
-			<field name="model">stock.picking</field>
+		<record id="pack_family_memory_parcel_comment_wizard" model="ir.ui.view">
+			<field name="name">pack.family.memory.parcel.comment.wizard</field>
+			<field name="model">pack.family.memory</field>
 			<field name="type">form</field>
             <field name="priority">21</field>
 			<field name="arch" type="xml">
                 <form string="Change parcel comment shipment line">
-                    <field name="description_ppl"/>
-					<button name="change_description_save" string="Save parcel comment" icon="gtk-save" type="object" />
+                    <field name="parcel_comment"/>
+					<button name="save_parcel_comment" string="Save parcel comment" icon="gtk-save" type="object" />
 				</form>
 			</field>
 		</record>
@@ -1333,7 +1333,7 @@
                                     <field name="from_pack" readonly="1" tooltip="parcel_ids"/>
                                     <field name="to_pack" tooltip="parcel_ids" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" readonly="0"/>
                                     <field name="parcel_comment" readonly="1"/>
-                                    <button name="change_description" string="Change parcel comment" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
+                                    <button name="change_parcel_comment" string="Change parcel comment" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="num_of_packs" tooltip="parcel_ids" readonly="1" />
                                     <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0" on_change="change_selected_number(selected_number)"/>
                                     <field name="parcel_ids_error" invisible="1" />
@@ -1553,7 +1553,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[]</field>
-			<field name="context">{'packing_screen': True, 'search_default_not_empty':1, 'search_default_partner': 1}</field>
+			<field name="context">{'packing_screen': True, 'search_default_draft':1, 'search_default_shipped':1, 'search_default_not_empty':1, 'search_default_partner': 1}</field>
 			<field name="search_view_id" ref="view_shipment_search"/>
 			<field name="help">This is the list of all shipment lists that have been picked. The shipment lists are regrouped by address.</field>
 		</record>

@@ -44,6 +44,7 @@
         'tender_flow_report.xml',
         'audittrail_data_tender.yml',
         'tender_flow_data.xml',
+        'wizard/wizard_rfq_sent_import_view.xml'
     ],
     'installable': True,
 }

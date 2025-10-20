@@ -751,22 +751,27 @@ class orm_template(object):
 
                                 if no_data:
                                     dt = ''
-                                    rel_table_name = r[0]._table_name
-                                    name_relation = self.pool.get(rel_table_name)._rec_name
-                                    if isinstance(r[0][name_relation], browse_record):
-                                        rel = True
-                                        rel_table_name = r[0][name_relation]._table_name
-                                        all_rr = [rr[name_relation].id for rr in r]
-                                    else:
-                                        rel = False
-                                        all_rr = [rr.id for rr in r]
-                                    all_name_get = dict(self.pool.get(rel_table_name).name_get(cr, uid, all_rr, context=context))
-                                    for rr in r:
-                                        if not rel:
-                                            rr_name = all_name_get.get(rr.id, '')
+                                    if len(fields[fpos]) == 1:
+                                        # concat names in fields only if subfield are not requested, otherwise export ''
+                                        # for example for account.invoice export:
+                                        # if ['invoice_line'] is requested then export _name_get
+                                        # but if ['invoice_line', 'cost_centers'] is requested then export ''
+                                        rel_table_name = r[0]._table_name
+                                        name_relation = self.pool.get(rel_table_name)._rec_name
+                                        if isinstance(r[0][name_relation], browse_record):
+                                            rel = True
+                                            rel_table_name = r[0][name_relation]._table_name
+                                            all_rr = [rr[name_relation].id for rr in r]
                                         else:
-                                            rr_name = all_name_get.get(rr[name_relation].id, '')
-                                        dt += tools.ustr(rr_name or '') + ','
+                                            rel = False
+                                            all_rr = [rr.id for rr in r]
+                                        all_name_get = dict(self.pool.get(rel_table_name).name_get(cr, uid, all_rr, context=context))
+                                        for rr in r:
+                                            if not rel:
+                                                rr_name = all_name_get.get(rr.id, '')
+                                            else:
+                                                rr_name = all_name_get.get(rr[name_relation].id, '')
+                                            dt += tools.ustr(rr_name or '') + ','
                                     data[fpos] = dt[:-1]
                                     break
                                 lines += lines2[1:]
@@ -1398,6 +1403,8 @@ class orm_template(object):
         if list(self._columns.keys()):
             for f in list(self._columns.keys()):
                 field_col = self._columns[f]
+                if allfields and f not in allfields and context.get('for_export_list') and field_col.listed_in_export:
+                    allfields.append(f)
                 if allfields and f not in allfields:
                     continue
                 res[f] = {'type': field_col._type}

@@ -41,6 +41,7 @@ import tempfile
 from tools import webdav
 from urllib.parse import urlparse
 import requests
+import traceback
 
 class RemoteInterface(object):
     port = 0
@@ -80,12 +81,14 @@ class RemoteOneDrive(RemoteInterface):
         if self.url:
             parsed_url = urlparse(self.url)
             self.host = parsed_url.netloc
-            self.protocol = parsed_url.scheme
             self.path = parsed_url.path
+            self.tenant = data.get('sharepoint_tenant_id')
+            self.client_id = data.get('sharepoint_app_id')
+            self.cert_content = data.get('sharepoint_cert')
 
     def connect(self):
         try:
-            self.dav = webdav.Client(host=self.host, port=self.port, protocol=self.protocol, username=self.username, password=self.password, path=self.path)
+            self.dav = webdav.Client(host=self.host, tenant=self.tenant, client_id=self.client_id, cert_content=self.cert_content, max_retry=20, path=self.path)
         except webdav.ConnectionFailed as e:
             raise Exception(_('Unable to connect: %s') % (e,))
 
@@ -102,12 +105,12 @@ class RemoteOneDrive(RemoteInterface):
 
         res = []
         for filename in self.dav.list(path):
-            fn = filename['Name']
+            fn = filename.name
             if startswith and not fn.startswith(startswith):
                 continue
             posix_name = posixpath.join(path, fn)
             if posix_name not in already:
-                res.append((filename['TimeLastModified'], posixpath.join(path, fn)))
+                res.append((filename.time_last_modified, posixpath.join(path, fn)))
         return res
 
     def get_file_content(self, path):
@@ -117,30 +120,19 @@ class RemoteOneDrive(RemoteInterface):
             return fich.read()
 
     def rename(self, src_file_name, dest_file_name):
-        self.dav.move(src_file_name, dest_file_name)
+        self.dav.move_to_file(src_file_name, dest_file_name)
         return True
 
     def push(self, local_name, remote_name):
         f = open(local_name, 'r')
         retries = 0
-        max_retries = 3
-        logged = True
+        max_retries = 2
         while True:
             try:
                 f.seek(0)
                 self.connect()
-                ok, error = self.dav.upload(f, remote_name)
-                if ok:
-                    break
-                if retries > max_retries:
-                    f.close()
-                    raise Exception(error)
-                retries += 1
-                time.sleep(2)
-                if not logged or 'timed out' in error or '2130575252' in error:
-                    logged = False
-                    self.connect()
-                    logged = True
+                self.dav.upload(f, remote_name)
+                break
             except requests.exceptions.RequestException:
                 if retries > max_retries:
                     f.close()
@@ -393,7 +385,7 @@ class Remote(object):
         try:
             self.connection.connect()
         except Exception as e:
-            self.infolog(e)
+            self.infolog(traceback.format_exc())
             raise osv.except_osv(_('Error'), e)
 
         self.infolog(_('Connection succeeded'))
@@ -682,6 +674,9 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_port': fields.char(string='Remote server port', size=56),
         'ftp_login': fields.char(string='Remote login', size=256),
         'ftp_password': fields.char(string='Remote password', size=256),
+        'sharepoint_cert': fields.text(string='Certificate', help="format:\n-----BEGIN CERTIFICATE-----\nXXX\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\nZZZ\n-----END PRIVATE KEY-----"),
+        'sharepoint_app_id': fields.char('App-id', size=128),
+        'sharepoint_tenant_id': fields.char('Tenant-id', size=128),
         'ftp_source_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
         'ftp_dest_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
         'ftp_dest_fail_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),

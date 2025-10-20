@@ -1237,5 +1237,10 @@
         <record id="us_9592_pack_family_to_table" model="patch.scripts">
             <field name="method">us_9592_pack_family_to_table</field>
         </record>
+
+        <!-- UF38.1 -->
+        <record id="us_14880_update_parcel_comment" model="patch.scripts">
+            <field name="method">us_14880_update_parcel_comment</field>
+        </record>
     </data>
 </openerp>

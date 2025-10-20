@@ -1481,7 +1481,7 @@ class purchase_order(osv.osv):
         pol_obj = self.pool.get('purchase.order.line')
 
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
-        for rfq in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
+        for rfq in self.browse(cr, uid, ids, fields_to_fetch=['name', 'order_type', 'partner_id'], context=context):
             if rfq.order_type not in ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp'] and rfq.partner_id.state == 'phase_out':
                 raise osv.except_osv(_('Error'), _('The selected Supplier is Phase Out, please select another Supplier'))
             non_cancel_rfq_line_ids = pol_obj.search(cr, uid, [('order_id', '=', rfq.id), ('state', 'not in', ['cancel', 'cancel_r']),
@@ -1615,6 +1615,50 @@ price. Please set unit price on these lines or cancel them'''),
         pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'done'}, context=context)
 
         return True
+
+    def rfq_sent_import(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to update a Sent RfQ from a file
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        wiz_data = {
+            'rfq_id': ids[0],
+            'state': 'draft',
+            'message': _('IMPORTANT : The file should be in xlsx format. Please use the template given with the "Export RfQ" button'),
+        }
+        wiz_id = self.pool.get('wizard.rfq.sent.import').create(cr, uid, wiz_data, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.rfq.sent.import',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'same',
+            'context': context,
+        }
+
+    def rfq_sent_export(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        filename = _('Update_Sent_RfQ')
+        if ids:
+            filename = self.read(cr, uid, ids[0], ['name'], context=context)['name']
+        filename += '_' + datetime.today().strftime('%Y%m%d_%H%M')
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'report_rfq_sent_export',
+            'datas': {'target_filename': filename},
+            'context': context
+        }
 
 
 purchase_order()
