@@ -201,7 +201,8 @@
                             <field name="reference_type" nolabel="1" size="0"/>
                             <field name="reference" nolabel="1"/>
                             <field name="name"/>
-                            <field name="origin" attrs="{'readonly': [('from_supply', '=', True)]}"/>
+                            <field name="copied_from_supply" invisible="1" />
+                            <field name="origin" attrs="{'readonly': ['|', ('from_supply', '=', True), ('copied_from_supply', '=', True)]}"/>
                             <newline/>
                             <label string="" colspan="2"/>
                             <field name="check_total" required="2"/>
@@ -531,10 +532,12 @@
                             <newline/>
                             <field domain="[('partner_id.ref_companies', 'in', [company_id])]" name="partner_bank_id" />
                             <field name="refunded_invoice_id" invisible="1"/>
+                            <field name="copied_from_supply" invisible="1" />
                             <field name="origin"
-                                   attrs="{'readonly': ['|', '|',
+                                   attrs="{'readonly': ['|', '|', '|',
                                                         ('state', '!=', 'draft'),
                                                         ('refunded_invoice_id', '!=', False),
+                                                        ('copied_from_supply', '=', True),
                                                         ('from_supply', '=', True)]}"/>
                             <field colspan="4" domain="[('partner_id','=',partner_id)]" name="address_contact_id" />
                             <field name="move_id" />
