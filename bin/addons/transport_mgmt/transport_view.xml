@@ -202,7 +202,7 @@
                                         <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
                                     </group>
                                 </group>
-                                <group colspan="4" col="4" attrs="{'readonly': [('name', '!=', False), ('no_line', '=', False)]}">
+                                <group colspan="4" col="4" attrs="{'readonly': [('no_line', '=', False)]}">
                                     <separator colspan="4" string="Shipping" />
                                     <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
                                     <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
@@ -234,7 +234,7 @@
                                     <field name="incoterm_location" />
                                 </group>
                             </group>
-                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" on_change="onchange_line_ids(line_ids)" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                                 <tree string="Lines" editable="top">
                                     <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
                                     <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>

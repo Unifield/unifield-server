@@ -799,13 +799,14 @@ class transport_order_in(osv.osv):
         'from_sync': fields.boolean('From sync', readonly=True, copy=False),
         'sync_ref': fields.char('OTO Reference', size=64, readonly=True, copy=False, select=1),
         'select_incoming': fields.many2one('stock.picking', string='IN'),
-        'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line')
+        'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
     }
     _defaults = {
         'shipment_type': 'in',
         'state': 'planned',
         'oto_created': False,
         'from_sync': False,
+        'no_line': lambda *a: True,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -822,7 +823,7 @@ class transport_order_in(osv.osv):
             context = {}
         res = {}
         if select_incoming:
-            res['value'] = {'select_incoming': False}
+            res['value'] = {'ship_ref': ship_ref, 'select_incoming': False}
 
         return res
 
@@ -851,6 +852,16 @@ class transport_order_in(osv.osv):
                     line_vals.update({'transport_id': ids[0], 'incoming_id': in_id})
                     line_ids.append(self.pool.get('transport.order.in.line').create(cr, uid, line_vals, context=context))
             res['value'] = {'ship_ref': ship_ref, 'line_ids': [(6, 0, line_ids)]}
+
+        return res
+
+    def onchange_line_ids(self, cr, uid, ids, lines, context=None):
+        '''
+        Change no_line if lines are changed
+        '''
+        res = {'value': {'no_line': True}}
+        if lines:
+            res = {'value': {'no_line': False}}
 
         return res
 
