@@ -292,7 +292,12 @@ class stock_picking(osv.osv):
             })
             import_success = True
 
-            self.create_update_ito(cr, uid, [context.get('new_picking', in_id)], context=context)
+            # Create/Update an ITO using the shipment_ref
+            in_data = self.read(cr, uid, context.get('new_picking', in_id), ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
+            if in_data['shipment_ref']:
+                in_partner_id = in_data['partner_id'] and in_data['partner_id'][0] or False
+                self.create_update_ito(cr, uid, in_data['id'], in_data['name'], in_data['shipment_ref'],
+                                       in_partner_id, in_data['order_category'], context=context)
         except Exception as e:
             raise e
 
@@ -466,7 +471,7 @@ class stock_picking(osv.osv):
             'context': context,
         }
 
-    def create_update_ito(self, cr, uid, ids, context=None):
+    def create_update_ito(self, cr, uid, upd_in_id, in_name, in_shipment_ref, in_partner_id, in_order_category, context=None):
         '''
         Create or update the Inbound Transport Object with the Available Updated IN as new line using the Ship Reference
         '''
@@ -474,106 +479,46 @@ class stock_picking(osv.osv):
             context = {}
 
         ito_obj = self.pool.get('transport.order.in')
+        ito_line_obj = self.pool.get('transport.order.in.line')
         partner_obj = self.pool.get('res.partner')
 
-        for upd_in_id in ids:
-            cr.execute('''
-                select pick.details,
-                    bool_or(is_kc),
-                    bool_or(dangerous_goods = 'True'),
-                    bool_or(cs_txt = 'X'),
-                    sum(m.price_unit * m.product_qty / rate.rate),
-                    sum(m.price_unit * m.product_qty),
-                    count(distinct (m.price_currency_id)),
-                    min(m.price_currency_id),
-                    pick.partner_id,
-                    pick.order_category,
-                    pick.name,
-                    pick.shipment_ref
-                from stock_picking pick
-                    left join stock_move m on m.picking_id = pick.id
-                    left join product_product p on p.id = m.product_id
-                    left join lateral (
-                        select rate.rate, rate.name as fx_date
-                        from res_currency_rate rate
-                        where rate.name <= coalesce(pick.physical_reception_date, pick.min_date)
-                            and rate.currency_id = m.price_currency_id
-                        order by rate.name desc, id desc
-                           limit 1
-                        ) rate
-                       on true
-                where
-                   pick.id = %s
-                group by pick.id
-            ''', (upd_in_id,))
-            x = cr.fetchone()
-            in_partner_id = x[8]
-            in_order_category = x[9]
-            in_name = x[10]
-            in_shipment_ref = x[11]
-            ito_line_data = {
-                'description': x[0],
-                'kc': x[1],
-                'dg': x[2],
-                'cs': x[3],
-            }
-            if x[6] and x[6] > 1:
-                ito_line_data['amount'] = x[4]
-                ito_line_data['currency_id'] = self.pool.get('res.users').get_company_currency_id(cr, uid)
+        value = ito_line_obj.change_incoming(cr, uid, False, upd_in_id, context=context)
+        if in_partner_id and value and value.get('value'):
+            ito_ids = ito_obj.search(cr, uid, [('state', '=', 'planned'), ('supplier_partner_id', '=', in_partner_id),
+                          ('ship_ref', '=', in_shipment_ref)], context=context)
+            ito_categ = in_order_category == 'medical' and '' or in_order_category == 'log' and '' or 'mixed'
+            if not ito_ids:
+                company_partner_id = self.pool.get('res.users').get_current_company_partner_id(cr, uid)[0]
+                company_address = partner_obj.address_get(cr, uid, company_partner_id, [])
+                supplier_address = partner_obj.address_get(cr, uid, in_partner_id, [])
+                ito_data = {
+                    'supplier_partner_id': in_partner_id,
+                    'ship_ref': in_shipment_ref,
+                    'zone_type': company_address and company_address.country_id and supplier_address and supplier_address.country_id and
+                         company_address.country_id.id == supplier_address.country_id.id and 'regional' or 'int',
+                    'cargo_category': ito_categ,
+                }
+                ito_id = ito_obj.create(cr, uid, ito_data, context=context)
+                crea_upd = _('created')
             else:
-                ito_line_data['amount'] = x[5]
-                ito_line_data['currency_id'] = x[7]
+                ito_id = ito_ids[0]
+                if ito_obj.read(cr, uid, ito_id, ['cargo_category'], context=context)['cargo_category'] != ito_categ:
+                    ito_obj.write(cr, uid, ito_id, {'cargo_category': 'mixed'}, context=context)
+                crea_upd = _('updated')
 
-            cr.execute('''
-                select sum(parcel_to - parcel_from + 1),
-                    sum(total_weight * (parcel_to - parcel_from + 1)),
-                    sum(total_height * total_length * total_width * (parcel_to - parcel_from + 1))
-                from wizard_import_in_pack_simulation_screen pa
-                where pa.id in (select m.pack_info_id from stock_move m where m.picking_id = %s)
-               ''', (upd_in_id,))
-            x = cr.fetchone()
-            if x[0]:
-                ito_line_data.update({
-                    'parcels_nb': x[0],
-                    'weight': x[1] and round(x[1], 2) or 0,
-                    'volume': x[2] and round(x[2] / 1000, 2) or 0
-                })
+            line_vals = value['value']
+            line_vals.update({'transport_id': ito_id, 'incoming_id': upd_in_id})
+            ito_line_obj.create(cr, uid, line_vals, context=context)
 
-            if in_partner_id:
-                ito_ids = ito_obj.search(cr, uid, [('state', '=', 'planned'), ('supplier_partner_id', '=', in_partner_id),
-                              ('ship_ref', '=', in_shipment_ref)], context=context)
-                ito_categ = in_order_category == 'medical' and '' or in_order_category == 'log' and '' or 'mixed'
-                if not ito_ids:
-                    company_partner_id = self.pool.get('res.users').get_current_company_partner_id(cr, uid)[0]
-                    company_address = partner_obj.address_get(cr, uid, company_partner_id, [])
-                    supplier_address = partner_obj.address_get(cr, uid, in_partner_id, [])
-                    ito_data = {
-                        'supplier_partner_id': in_partner_id,
-                        'ship_ref': in_shipment_ref,
-                        'zone_type': company_address and company_address.country_id and supplier_address and supplier_address.country_id and
-                             company_address.country_id.id == supplier_address.country_id.id and 'regional' or 'int',
-                        'cargo_category': ito_categ,
-                    }
-                    ito_id = ito_obj.create(cr, uid, ito_data, context=context)
-                    crea_upd = _('created')
-                else:
-                    ito_id = ito_ids[0]
-                    if ito_obj.read(cr, uid, ito_id, ['cargo_category'], context=context)['cargo_category'] != ito_categ:
-                        ito_obj.write(cr, uid, ito_id, {'cargo_category': 'mixed'}, context=context)
-                    crea_upd = _('updated')
-
-                ito_name = ito_obj.read(cr, uid, ito_id, ['name'], context=context)['name']
-                ito_line_data.update({'transport_id': ito_id, 'incoming_id': upd_in_id})
-                self.pool.get('transport.order.in.line').create(cr, uid, ito_line_data, context=context)
-
-                # Comment added to the import job report
-                job_comment = context.get('job_comment', [])
-                job_comment.append({
-                    'res_model': 'stock.picking',
-                    'res_id': upd_in_id,
-                    'msg': _('%s was %s with %s in its lines') % (ito_name, crea_upd, in_name),
-                })
-                context['job_comment'] = job_comment
+            # Comment added to the import job report
+            ito_name = ito_obj.read(cr, uid, ito_id, ['name'], context=context)['name']
+            job_comment = context.get('job_comment', [])
+            job_comment.append({
+                'res_model': 'stock.picking',
+                'res_id': upd_in_id,
+                'msg': _('%s was %s with %s in its lines') % (ito_name, crea_upd, in_name),
+            })
+            context['job_comment'] = job_comment
 
         return True
 
