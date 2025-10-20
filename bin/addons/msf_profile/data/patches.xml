@@ -1242,5 +1242,10 @@
         <record id="us_14880_update_parcel_comment" model="patch.scripts">
             <field name="method">us_14880_update_parcel_comment</field>
         </record>
+        
+        <!-- UF39.0 -->
+        <record id="us_14605_remove_new_code_old_merge" model="patch.scripts">
+            <field name="method">us_14605_remove_new_code_old_merge</field>
+        </record>
     </data>
 </openerp>
