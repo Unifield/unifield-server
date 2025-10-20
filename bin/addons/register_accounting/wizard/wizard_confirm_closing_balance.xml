@@ -22,10 +22,19 @@
                                           <div style="height:20em">
                                                 <p></p>
                                           </div>
-                                          <div align="center" style="color:red; font-weight:bold; font-size:2.5em">
-                                                <p >
-                                                      <translate>Are you sure you want to freeze closing balance while the previous period is still open?</translate>
-                                                      <field name="display_override" attrs="{'invisible': [('is_prev_reg_open', '=', False)]}" nolabel="1" colspan="4"/>
+                                          <div align="center" style="color:red; font-weight:bold; font-size:2.5em; vertical-align:top;">
+                                                <p class="par">
+                                                      <style>
+                                                            .par input[type=checkbox]{
+                                                                  -moz-transform: scale(2.5); /* Firefox */
+                                                                  -webkit-transform: scale(2.5); /* Safari and Chrome */
+                                                                  transform: scale(2.5);
+                                                                  margin: 0.25em;
+                                                                  height: 0.75em;
+                                                            }
+                                                      </style>
+                                                      <span><translate>Are you sure you want to freeze closing balance while the previous period is still open?</translate></span>
+                                                      <span><field name="display_override" attrs="{'invisible': [('is_prev_reg_open', '=', False)]}" colspan="4"/></span>
                                                 </p>
                                           </div>
                                     </html>
