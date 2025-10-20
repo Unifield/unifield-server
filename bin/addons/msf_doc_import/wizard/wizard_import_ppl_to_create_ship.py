@@ -175,6 +175,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         error_log = ''
         # List of sequences for from_pack and to_pack
         sequences = []
+        # List of pack types per sequence
+        seq_pack_types = {}
 
         wiz_browse = self.browse(cr, uid, ids[0], context)
         # List of data to update moves
@@ -364,15 +366,28 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         line_errors.append(_(' Weight per pack has to be an float.'))
 
                     # pack type + width, length & height
+                    pack_type_name = False
                     if row.cells[15].data:
                         pack_type_ids = pack_type_obj.search(cr, uid, [('name', '=', tools.ustr(row.cells[15].data))])
                         if pack_type_ids:
-                            pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[0])
+                            # Taking the last id because LOOKUP in Excel will choose the last item in a list with same names
+                            pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[-1])
+                            pack_type_name = pack_type.name
                             to_update.update({
                                 'pack_type': pack_type
                             })
                         else:
                             line_errors.append(_(' This Pack Type doesn\'t exists.'))
+                    # List to display an error if two of more sequences have different pack types
+                    if to_update.get('from_pack') and to_update.get('to_pack'):
+                        current_seq = '%s-%s' % (to_update['from_pack'], to_update['to_pack'])
+                        pack_type_data = pack_type_name or _('none')
+                        if seq_pack_types.get(current_seq):
+                            if pack_type_data != seq_pack_types[current_seq]:
+                                line_errors.append(_(' The Parcel %s to %s contain multiple pack types (%s instead of %s). Please assign only one Pack Type per parcel.')
+                                                   % (to_update['from_pack'], to_update['to_pack'], pack_type_data, seq_pack_types[current_seq]))
+                        else:
+                            seq_pack_types[current_seq] = pack_type_data
 
                     to_update.update({
                         'error_list': line_errors,
