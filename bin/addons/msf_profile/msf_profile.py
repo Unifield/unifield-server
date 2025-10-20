@@ -84,6 +84,18 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_14561_14593_14656_remove_approved_by_signature_lines_ins(self, cr, uid, *a, **b):
+        '''
+        Removed the signature lines 'Approved by' (fr) linked to INs
+        '''
+        cr.execute("""
+            DELETE FROM signature_line sl USING signature s, stock_picking p
+            WHERE sl.signature_id = s.id AND s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' 
+                AND sl.name_key = 'fr' AND p.type = 'in' AND p.subtype = 'standard'
+        """)
+        self.log_info(cr, uid, "US-14561-14593-14656: %s 'Approved by' signature(s) were removed from INs" % (cr.rowcount,))
+        return True
+
     # UF38.1
     def us_14880_update_parcel_comment(self, cr, uid, *a, **b):
         '''
@@ -95,7 +107,6 @@ class patch_scripts(osv.osv):
             WHERE pf.draft_packing_id = p.id AND pf.state IN ('draft', 'assigned')
         """)
         self.log_info(cr, uid, 'US-14880: The Parcel Comment of %s Pack Families have been updated' % (cr.rowcount,))
-
         return True
 
     # UF38.0
