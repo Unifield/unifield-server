@@ -64,15 +64,19 @@
                             <field name="line_synced" invisible="1"/>
                             <field name="partner_type" invisible="1"/>
                             <field name="product_id" readonly="1" />
+                            <field name="original_invoice_line_id" invisible="1" />
+                            <field name="original_line_qty" invisible="1" />
                             <field name="uos_id"
                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
-                                   attrs="{'readonly': ['|',
+                                   attrs="{'readonly': ['|', '|',
+                                                        ('original_invoice_line_id', '!=', False),
                                                         '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                         '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
                             <field name="quantity" attrs="{'readonly': ['|',
                                                            '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                            '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
+                                on_change="change_refund_quantity(quantity, original_invoice_line_id, original_line_qty, context)"
                             />
                             <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field name="discount" groups="base.group_extended"
@@ -256,8 +260,9 @@
                                     <field name="have_analytic_distribution_from_header" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="is_allocatable" invisible="1"/>
-
-                                    <field name="quantity"
+                                    <field name="original_invoice_line_id" invisible="1" />
+                                    <field name="original_line_qty" invisible="1" />
+                                    <field name="quantity" on_change="change_refund_quantity(quantity, original_invoice_line_id, original_line_qty, context)"
                                            attrs="{'readonly': ['|',
                                                                 '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True),('from_supply', '=', True),
                                                                 '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
