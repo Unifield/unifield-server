@@ -7,7 +7,7 @@
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['code', 'name', 'state']
+        fields = ['code', 'name', 'state', 'is_for_reval']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.currency.table'), ('name', 'in', fields)], context=context)
 
         vals = {

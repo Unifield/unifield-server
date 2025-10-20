@@ -191,7 +191,7 @@
                 <tree string="Users">
                     <field name="name"/>
                     <field name="login"/>
-                    <field name="context_lang"/>
+                    <field name="user_email"/>
                     <field name="last_authentication" allow_sort="1"/>
                     <field name="never_expire" />
                     <field name="last_password_change" />
@@ -208,7 +208,7 @@
                 <search string="Users">
                     <field name="name"/>
                     <field name="login"/>
-                    <field name="address_id" string="Address"/>
+                    <field name="user_email"/>
                     <field name="context_department_id" widget="selection" string="Department" />
                     <field name="synchronize"/>
                 </search>

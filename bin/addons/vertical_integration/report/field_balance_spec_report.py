@@ -17,7 +17,7 @@ class field_balance_spec_report(osv.osv_memory):
 
 
     def _get_has_multi_table(self, cr, uid, ids, name, arg=None, context=None):
-        nb = self.pool.get('res.currency.table').search(cr, uid, [('sate', '=', 'valid')], count=True)
+        nb = self.pool.get('res.currency.table').search(cr, uid, [('state', '=', 'valid')], count=True)
         ret = {}
         for _id in ids:
             ret[_id] = nb > 1
@@ -25,14 +25,21 @@ class field_balance_spec_report(osv.osv_memory):
 
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True, domain=[('level', '=', 'coordo'), ('state', '=', 'active'), ('instance_to_display_ids','=',True)]),
+        'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True, domain=[('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]),
         'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', 'in', ['draft', 'field-closed', 'mission-closed']), ('number', 'not in', [0, 16])]),
+        # domain changed in fields_get for HQ
         'selection': fields.selection([('total', 'Total of entries reconciled in later period'),
                                        ('details', 'Details of entries reconciled in later period')],
                                       string="Select", required=True),
         'eoy': fields.boolean('End of Year', help='Field is disabled if no valid currency table'),
         'has_one_table': fields.boolean('Has a single valid currency table', readonly=1),
     }
+
+    def fields_get(self, cr, uid, allfields=None, context=None, write_access=True, with_uom_rounding=False):
+        fg = super(field_balance_spec_report, self).fields_get(cr, uid, allfields=allfields, context=context, write_access=write_access, with_uom_rounding=with_uom_rounding)
+        if fg.get('period_id') and self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+            fg['period_id']['domain'] = [('state', '!=', 'created'), ('number', 'not in', [0, 16])]
+        return fg
 
     def _get_instance(self, cr, uid, *a, **b):
         instance = self.pool.get('res.company')._get_instance_record(cr, uid)
@@ -41,7 +48,7 @@ class field_balance_spec_report(osv.osv_memory):
         return False
 
     def _get_has_currency_table(self, cr, uid, *a, **b):
-        return self.pool.get('res.currency.table').search_exists(cr, uid, [('state', '=', 'valid')])
+        return self.pool.get('res.currency.table').search_exists(cr, uid, [('state', 'in', ['closed', 'valid']), ('is_for_reval', '=', True)])
 
     _defaults = {
         'selection': lambda *a: 'details',
@@ -600,20 +607,17 @@ class field_balance_spec_parser(XlsxReportParser):
         ct_fx_rates_by_id = {}
         if self.report.eoy:
             self.cr.execute('''
-                select cur.name,
-                    (select rate.rate
-                        from res_currency_rate rate
-                        where rate.currency_id = cur.id
-                        order by
-                        rate.name desc
-                        limit 1
-                    ) as fx_rate,
-                    cur.reference_currency_id
-                from res_currency cur, res_currency_table t
+                select
+                    distinct on (cur.name) cur.name, rate.rate, cur.reference_currency_id
+                from
+                    res_currency cur, res_currency_table t, res_currency_rate rate
                 where
                     cur.currency_table_id = t.id
-                    and t.state = 'valid'
+                    and t.state in ('closed', 'valid')
+                    and t.is_for_reval = 't'
+                    and rate.currency_id = cur.id
                     and cur.name in %s
+                order by cur.name, rate.name desc, t.id desc
             ''', (tuple(list_curr), ))
             for x in self.cr.fetchall():
                 ct_fx_rates[x[0]] = x[1]

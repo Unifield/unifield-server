@@ -50,6 +50,9 @@ from tools import ustr
 import psycopg2
 _regex = re.compile(r'\[\[(.+?)\]\]')
 
+from bidi import get_display
+from . import arabic_reshaper
+
 def str2xml(s):
     return (s or '').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
@@ -136,7 +139,7 @@ def _process_text(self, txt):
                 result += str2xml(txt)
             elif txt and (txt is not None) and (txt is not False):
                 result += ustr(txt)
-    return result
+    return get_display(arabic_reshaper.reshape(result))
 
 def text_get(node):
     return ''.join([ustr(n.text) for n in node])

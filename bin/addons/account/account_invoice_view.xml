@@ -195,7 +195,7 @@
                                         'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         <newline/>
                         <field string="Supplier" name="partner_id" domain="[('supplier', '=', True)]"
-                               on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term,partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice,False)"
+                               on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term,partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice,False,doc_type,from_supply)"
                                context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"
                                attrs="{'readonly': ['|',
                                                     ('state', '!=', 'draft'),
@@ -333,7 +333,7 @@
                                                                 '&amp;', ('doc_type', '=', 'isi'), ('counterpart_inv_status', '!=', 'inv_close')]}"
                                     />
                                     <group attrs="{'invisible': [('doc_type', 'in', ('isi', 'isr'))]}">
-                                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
+                                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward" context="{'from_button': True}"/>
                                         <field name="is_direct_invoice" invisible="1"/>
                                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
                                     </group>

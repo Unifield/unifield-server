@@ -131,7 +131,6 @@ WHITE_LIST_MODEL = [
     'sale.order',
     'sale.order.line',
     'sale.order.line.cancel',
-    'shipment',
     'stock.frequence',
     'stock.inventory',
     'stock.inventory.line',

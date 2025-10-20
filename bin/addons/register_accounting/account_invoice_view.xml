@@ -16,7 +16,7 @@
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />
                         <newline/>
-                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,'1')" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1"/>
+                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,'1',False,doc_type,from_supply)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1"/>
                         <newline/>
                         <field name="document_date" required="1"/>
@@ -24,6 +24,8 @@
                         <field name="register_posting_date" required="1"/>
                         <field name="reference" />
                         <field name="state" invisible="1"/>
+                        <field name="from_supply" invisible="1"/>
+                        <field name="doc_type" invisible="1"/>
                         <newline/>
                         <label string="" colspan="4"/>
                         <field name="amount_total"/>

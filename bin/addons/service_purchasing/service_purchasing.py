@@ -31,7 +31,7 @@ class product_template(osv.osv):
 
     PRODUCT_TYPE = [
         ('product', 'Stockable Product'),
-        ('consu', 'Non-Stockable'),
+        ('consu', 'Non-Stockable Product'),
         ('service_recep', 'Service with Reception'),
     ]
 

@@ -68,7 +68,6 @@ class patch_scripts(osv.osv):
             UPDATE product_cold_chain SET code = 'CT3+', name = 'CT3+ - Temperature Monitoring 2-40°C' 
                 WHERE id IN (SELECT res_id FROM ir_model_data WHERE name = 'product_attributes_cold_20')
         """)
-
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if current_instance and current_instance.instance == 'HQ_OCA':
             mixcheck_cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'cold_21')[1]
@@ -80,7 +79,105 @@ class patch_scripts(osv.osv):
                     WHERE model = 'product.product' AND res_id IN (SELECT id FROM product_product WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205'))
             """)
             self.log_info(cr, uid, "US-14507: The Thermosensitivity of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 was set to Mix/Check")
+        return True
 
+    def us_12985_partner_state_ppl_pack_from_wkf(self, cr, uid, *a, **b):
+        '''
+        Set the partners' Status to Active for Active partners and Inactive for deactivated partners
+        Set "from_wkf" to True to all PPLs and PACKs
+        '''
+        cr.execute("""UPDATE res_partner SET state = 'active' WHERE active = 't'""")
+        self.log_info(cr, uid, "US-12985: %s active partners had their set Status set to Active" % (cr.rowcount,))
+        cr.execute("""UPDATE res_partner SET state = 'inactive' WHERE active = 'f'""")
+        self.log_info(cr, uid, "US-12985: %s deactivated partners had their set Status set to Inactive" % (cr.rowcount,))
+        cr.execute("""UPDATE stock_picking SET from_wkf = 't' WHERE type = 'out' AND subtype IN ('ppl', 'packing') AND from_wkf = 'f'""")
+        self.log_info(cr, uid, "US-12985: %s PPLs and PACKs are now considered from workflow" % (cr.rowcount,))
+        return True
+
+    def us_13980_update_new_code_on_merged(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'UD_GETALL_MERGED', '1')
+        return True
+
+    def us_9592_pack_family_to_table(self, cr, uid, *a, **b):
+        cr.execute('''
+            insert into pack_family_memory (
+                    create_uid,
+                    create_date,
+                    write_uid,
+                    write_date,
+                    shipment_id,
+                    draft_packing_id,
+                    sale_order_id,
+                    ppl_id,
+                    from_pack,
+                    to_pack,
+                    parcel_comment,
+                    pack_type,
+                    length,
+                    width,
+                    height,
+                    weight,
+                    packing_list,
+                    location_id,
+                    location_dest_id,
+                    selected_number,
+                    description_ppl,
+                    not_shipped,
+                    comment,
+                    volume_set,
+                    weight_set,
+                    quick_flow,
+                    state,
+                    tmp_previous_pf
+                )
+                (
+                    select
+                        p.create_uid,
+                        p.create_date,
+                        p.write_uid,
+                        p.write_date,
+                        pf.shipment_id,
+                        pf.draft_packing_id,
+                        pf.sale_order_id,
+                        pf.ppl_id,
+                        pf.from_pack,
+                        pf.to_pack,
+                        pf.parcel_comment,
+                        pf.pack_type,
+                        pf.length,
+                        pf.width,
+                        pf.height,
+                        pf.weight,
+                        pf.packing_list,
+                        pf.location_id,
+                        pf.location_dest_id,
+                        pf.selected_number,
+                        pf.description_ppl,
+                        pf.not_shipped,
+                        pf.comment,
+                        pf.volume_set,
+                        pf.weight_set,
+                        pf.quick_flow,
+                        pf.state,
+                        pf.id
+
+                    from
+                        pack_family_memory_old pf
+                        left join stock_picking p on p.id = pf.draft_packing_id
+                )
+        ''')
+
+        cr.execute('''
+            update stock_move m
+                set shipment_line_id = pf.id
+            from pack_family_memory pf, pack_family_memory_old old
+            where
+                old.id = pf.tmp_previous_pf and
+                m.id=ANY(old.move_lines)
+            '''
+                   )
         return True
 
     # UF37.0
@@ -4215,6 +4312,8 @@ class patch_scripts(osv.osv):
         return True
 
     def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        return True
+        # patch script disabled
         cr.execute('''
             update stock_move
                 set selected_number=to_pack-from_pack+1

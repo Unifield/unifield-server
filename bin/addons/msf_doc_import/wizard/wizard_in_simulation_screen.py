@@ -74,8 +74,9 @@ PACK_HEADER = [
     (_('ESC Message 1'), 'message_esc1', '', ''),
     (_('ESC Message 2'), 'message_esc2', '', ''),
 ]
+#    (_('Parcel No.'), 'parcel_ids', '', ''),
 
-pack_header = [x[1] for x in PACK_HEADER if x[0]]
+pack_header = [x[1] for x in PACK_HEADER if x[0]] + ['parcel_ids']
 pack_header_mandatory = [x[1] for x in PACK_HEADER if x[2] == 'mandatory']
 pack_coeff = dict((x[1], x[4]) for x in PACK_HEADER if len(x) == 5)
 
@@ -361,6 +362,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
 
 
+        parcel_ids_seen = set()
         for node in rec.findall('field'):
             if node.attrib['name'] != 'move_lines':
                 index += 1
@@ -379,9 +381,50 @@ class wizard_import_in_simulation_screen(osv.osv):
                     values[index] = dict((x, False) for x in pack_header)
                     for pack_data_node in record.findall('field'):
                         if with_pack:
+                            node_name = pack_data_node.attrib['name']
                             if pack_data_node.attrib['name'] not in pack_header:
-                                error.append(_('Pack record node %s, wrong attribute %s') % (nb_pack, pack_data_node.attrib['name']))
-                            values[index][pack_data_node.attrib['name']]= pack_data_node.text and pack_data_node.text.strip() or False
+                                error.append(_('Pack record node %s, wrong attribute %s') % (nb_pack, node_name))
+                            if node_name == 'parcel_ids':
+                                values[index]['parcel_ids'] = {}
+                                for parcel_record in pack_data_node.findall('record'):
+                                    parcel_nr = False
+                                    parcel_id = False
+                                    for f in parcel_record.findall('field'):
+                                        f_value = f.text and f.text.strip() or False
+                                        if f.attrib['name'] == 'parcel_nr':
+                                            if f_value:
+                                                try:
+                                                    parcel_nr = int(f_value)
+                                                except:
+                                                    error.append(_('parcel_ids node %s, parcel_nr %s must be interger') % (nb_pack, f_value))
+                                                    break
+                                        elif f.attrib['name'] == 'parcel_id':
+                                            parcel_id = f_value
+                                        else:
+                                            error.append(_('parcel_ids node %s, wrong attribute %s') % (nb_pack, f.attrib['name']))
+                                            break
+                                    if parcel_nr or parcel_id:
+                                        if not parcel_id:
+                                            error.append(_('parcel_ids node %s, for parcel_nr %s, parcel_nr must be set') % (nb_pack, parcel_id))
+                                            break
+                                        if ',' in parcel_id:
+                                            error.append(_('parcel_ids node %s, comma (,) is not allowed in parcel_id') % (nb_pack, parcel_id))
+                                            break
+                                        if not parcel_nr:
+                                            error.append(_('parcel_ids node %s, for parcel_id %s, parcel_id must be set') % (nb_pack, parcel_nr))
+                                            break
+                                        if parcel_nr in values[index]['parcel_ids']:
+                                            error.append(_('parcel_ids node %s, parcel_nr %s already used') % (nb_pack, parcel_nr))
+                                            break
+                                        if parcel_id in parcel_ids_seen:
+                                            error.append(_('parcel_ids node %s, parcel_id must be unique, %s already used') % (nb_pack, parcel_id))
+                                            break
+                                        parcel_ids_seen.add(parcel_id)
+
+                                        values[index]['parcel_ids'][parcel_nr] = parcel_id
+                            else:
+                                values[index][node_name]= pack_data_node.text and pack_data_node.text.strip() or False
+
                     if with_pack:
                         for x in PACK_HEADER:
                             if x[2] == 'mandatory' and not values[index][x[1]]:
@@ -441,15 +484,19 @@ class wizard_import_in_simulation_screen(osv.osv):
         process_pack_header = False
         process_pack_line = False
         process_move_line = False
+        process_parcel_id = False
         is_line = False
+        pack_index = False
         # Get values per line
         index = 0
+        parcel_ids_seen = set()
         for row in rows:
             index += 1
             values.setdefault(index, [])
             if len(row) > 2 and row[1] and row[1].data and (row[1].data == PACK_HEADER[1][0] or
                                                             (row[1].type == 'str' and row[1].data.lower() == PACK_HEADER[1][0].lower())):
                 # this line is for pack header
+                pack_index = False
                 nb_pack += 1
                 for nb, x in enumerate(PACK_HEADER):
                     if x[0] and (not row.cells[nb].data or row.cells[nb].type != 'str' or row.cells[nb].data.lower() != x[0].lower()):
@@ -478,9 +525,27 @@ class wizard_import_in_simulation_screen(osv.osv):
                             float(row.cells[nb].data)
                         except:
                             error.append(_('Line %s, column %s, float expected, found %s') % (index, nb+1, row.cells[nb].data))
-
             elif process_pack_line:
-                # previous line was pack data so current line must be move line header
+                if row.cells and row.cells[0].data == _('Parcel No.'):
+                    process_parcel_id = True
+                    continue
+
+                if process_parcel_id and pack_index:
+                    if row.cells[0] and row.cells[0].type == 'int' and len(row.cells) > 1:
+                        parcel_id = row.cells[1].data and str(row.cells[1].data).strip() or ''
+                        if parcel_id and ',' in parcel_id:
+                            error.append(_('Line %s:  comma (,) is not allowed in Parcel ID') % (index,))
+                            break
+                        if parcel_id:
+                            if parcel_id in parcel_ids_seen:
+                                error.append(_('Line %s:  Parcel ID must be unique, %s already used') % (index, parcel_id))
+                                break
+                            parcel_ids_seen.add(parcel_id)
+                        values[pack_index].setdefault('parcel_ids', {}).update({row.cells[0].data: row.cells[1].data and parcel_id})
+                        continue
+                    else:
+                        process_parcel_id = False
+                # previous line was pack data so current line must be move line header / or pack ID
                 process_pack_line = False
                 process_move_line = True
                 for nb, x in enumerate(LINES_COLUMNS):
@@ -511,6 +576,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                             cell_data = '%s' % cell_data
                         values[index][LINES_COLUMNS[cell_nb][1]] = cell_data
                     elif process_pack_line:
+                        pack_index = index
                         values[index][PACK_HEADER[cell_nb][1]] = cell_data
                     else:
                         values[index].append(cell_data)
@@ -666,7 +732,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     file_parse_errors.append(str(e))
 
                 if context.get('auto_import_ok') and file_parse_errors:
-                    raise Exception('\n'.join(file_parse_errors))
+                    raise tools.misc.ParsedException('\n'.join(file_parse_errors))
 
                 '''
                 We check for each line if the number of columns is consistent
@@ -691,8 +757,6 @@ Nothing has been imported because of %s. See below:
 
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                    cr.commit()
-                    cr.close(True)
                     return res
 
                 '''
@@ -710,16 +774,12 @@ Nothing has been imported because of %s. See below:
                         message = _("Import aborted, the Origin should not be filled in an Incoming Shipment from scratch.")
                         self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                         res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                        cr.commit()
-                        cr.close(True)
                         return res
                     elif wiz.purchase_id.name.lower() not in origin.lower():
                         message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
                             % (origin, wiz.picking_id.name, wiz.origin)
                         self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                         res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                        cr.commit()
-                        cr.close(True)
                         return res
                 header_values['imp_origin'] = wiz.origin
 
@@ -768,11 +828,30 @@ Nothing has been imported because of %s. See below:
                                     pack_info[key] = '%s' % pack_info[key]
                             if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30:
                                 values_line_errors.append(_('Packing List %s, max characters length is 30, found %s') % (pack_info.get('packing_list'), len(pack_info.get('packing_list', ''))))
+                            p_from = int(pack_info.get('parcel_from', 0))
+                            p_to = int(pack_info.get('parcel_to', 0))
+                            if pack_info.get('parcel_ids'):
+                                if p_from <= p_to and len(pack_info.get('parcel_ids')) != p_to - p_from + 1:
+                                    values_line_errors.append(_('Packing List %s, number of packs %s does not match the number of Parcel IDs %s') % (pack_info.get('packing_list'), p_to - p_from + 1, len(pack_info.get('parcel_ids'))))
+                                elif p_from <= p_to:
+                                    init_pack = p_from
+                                    while init_pack <= p_to:
+                                        if not pack_info['parcel_ids'].get(init_pack):
+                                            values_line_errors.append(_('Packing List %s, parcel number %s not found in Parcel Id') % (pack_info.get('packing_list'), init_pack))
+                                            break
+                                        init_pack += 1
+                                    else:
+                                        pack_info['parcel_ids'] = ','.join([pack_info['parcel_ids'][x] for x in sorted(pack_info['parcel_ids'].keys())])
+
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
-                            pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
+                            pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((p_from, p_to, pack_id))
                             if values[x]['parcel_from']:
                                 pack_found = True
-                        x += 2
+                        x += 1
+                        while x < len(values) + 1 and (not isinstance(values[x], list) or not len(values[x])):
+                            # find row with line headers ['line_number', 'external_ref', 'product_code', 'product_name', ...]
+                            x += 1
+                        x += 1
 
                     if pack_id:
                         values[x]['pack_info_id'] = pack_id
@@ -1120,21 +1199,20 @@ Nothing has been imported because of %s. See below:
                 self.write(cr, uid, [wiz.id], header_values, context=context)
 
                 res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                cr.commit()
-                cr.close(True)
                 return res
 
-            cr.commit()
-            cr.close(True)
 
+        except tools.misc.ParsedException:
+            cr.rollback()
+            raise
         except Exception as e:
             cr.rollback()
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
-            cr.commit()
-            cr.close(True)
 
         finally:
+            cr.commit()
+            cr.close(True)
             # Clear the cache
             PRODUCT_CODE_ID = {}
             UOM_NAME_ID = {}
@@ -1304,6 +1382,7 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
         'integrity_status': fields.selection(string='Integrity Status', selection=PACK_INTEGRITY_STATUS_SELECTION, readonly=True),
         'real_total_volume': fields.function(_get_real_total, method=True, type='integer_null', string='Total volume for all packs', multi='real_total'),
         'real_total_weight': fields.function(_get_real_total, method=True, type='integer_null', string='Total weight for all packs', multi='real_total'),
+        'parcel_ids': fields.text('Parcel Ids'),
     }
 
     _defaults = {
