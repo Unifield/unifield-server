@@ -1714,7 +1714,9 @@ class account_invoice_line(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'reversed_invoice_line_id': fields.many2one('account.invoice.line', string='Reversed Invoice Line',
                                                     help='Invoice line that has been reversed by this one through a '
-                                                         '"refund cancel" or "refund modify"'),
+                                                         '"refund cancel" or "refund modify"'),  # use to tag JI
+        'original_invoice_line_id': fields.many2one('account.invoice.line', string='In case of refund, original line id', readonly=1),
+        'original_line_qty': fields.float('Refund: original quantity', readonly=True),
         'cost_center_id': fields.function(_get_fake_m2o, method=True, type='many2one', store=False,
                                           states={'draft': [('readonly', False)]},  # see def detect_data in unifield-web/addons/openerp/controllers/impex.py
                                           relation="account.analytic.account", string='Cost Center',
@@ -1958,6 +1960,8 @@ class account_invoice_line(osv.osv):
             raise osv.except_osv(_('Warning'), _("Duplication not allowed. Please set an account on all lines first."))
         default.update({'move_lines': False,
                         'reversed_invoice_line_id': False,
+                        'original_invoice_line_id': False,
+                        'original_line_qty': False,
                         'merged_line': False,
                         'allow_no_account': False,
                         'is_asset': False,
