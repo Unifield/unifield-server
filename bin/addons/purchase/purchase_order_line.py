@@ -642,11 +642,11 @@ class purchase_order_line(osv.osv):
         for line in self.read(cr, uid, ids, ['price_unit', 'catalog_price_unit'], context=context):
             if line['catalog_price_unit']:
                 if line['price_unit'] <= line['catalog_price_unit']:
-                    res[line['id']] = round(((line['catalog_price_unit'] - line['price_unit']) / line['catalog_price_unit']) * 100, 2)
+                    res[line['id']] = '+' + str(round(((line['catalog_price_unit'] - line['price_unit']) / line['catalog_price_unit']) * 100, 2))
                 else:
-                    res[line['id']] = round(-((line['price_unit'] - line['catalog_price_unit']) / line['price_unit']) * 100, 2)
+                    res[line['id']] = (round(-((line['price_unit'] - line['catalog_price_unit']) / line['price_unit']) * 100, 2))
             else:
-                res[line['id']] = 0.00
+                res[line['id']] = False
         return res
 
     def _check_po_locked(self, cr, uid, ids, field_name, args, context=None):
@@ -817,7 +817,7 @@ class purchase_order_line(osv.osv):
         'catalog_price_unit': fields.float_null('Catalogue Unit Price', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
         'catalog_subtotal': fields.function(_amount_line_catalog, method=True, type='float_null', string='Catalogue Subtotal', digits_compute=dp.get_precision('Purchase Price')),
         'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
-        'catalog_price_deviation': fields.function(_catalog_price_deviation, method=True, type='float_null', string='% Price Deviation', help='Percentage of deviation of the catalogue price compared to the PO price'),
+        'catalog_price_deviation': fields.function(_catalog_price_deviation, method=True, type='char', size=16, string='% Price Deviation', help='Percentage of deviation of the catalogue price compared to the PO price'),
         'po_locked': fields.function(_check_po_locked, method=True, string='Is PO signature-locked ?', type='boolean'),
     }
 

@@ -945,7 +945,9 @@ class purchase_order(osv.osv):
                 'catalogue_display_tab': False,
                 'catalogue_exists_text': False,
                 'catalogue_ratio_text': '',
+                'catalogue_ratio_plain_text': '',
                 'catalogue_deviation_text': '',
+                'catalogue_deviation_plain_text': '',
             }
         pol_obj._compute_catalog_mismatch(cr, uid, order_id=ids, context=context)
 
@@ -980,6 +982,7 @@ class purchase_order(osv.osv):
                 if catalogue_ratio_conform != 100:
                     ret[x[0]]['catalogue_display_tab'] = True
                 ret[x[0]]['catalogue_ratio_text'] = _('<b>Catalogue Adherence Summary:</b><br />PO lines adherence: <span class="readonlyfield">%d%%</span> PO Lines Mismatch: <span class="readonlyfield">%d%%</span> of which Not in catalogue: <span class="readonlyfield">%d%%</span>') % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
+                ret[x[0]]['catalogue_ratio_plain_text'] = _('PO lines adherence: %d%% PO Lines Mismatch: %d%% of which Not in catalogue: %d%%') % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
 
             else:
                 ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">%s</h2>' % _('No valid catalogue')
@@ -987,15 +990,18 @@ class purchase_order(osv.osv):
             if x[4]:
                 po_subtotal, catalog_po_subtotal = 0, 0
                 for pol in pol_obj.read(cr, uid, x[4], ['price_subtotal', 'catalog_subtotal'], context=context):
-                    po_subtotal += pol['price_subtotal']
-                    catalog_po_subtotal += pol['catalog_subtotal'] or pol['price_subtotal']
+                    # Add to the subtotal only if the line has a catalogue
+                    if pol['catalog_subtotal']:
+                        po_subtotal += pol['price_subtotal']
+                        catalog_po_subtotal += pol['catalog_subtotal']
                 if po_subtotal <= catalog_po_subtotal:
-                    catalogue_total_price_deviation = round(((catalog_po_subtotal - po_subtotal) / catalog_po_subtotal) * 100, 2)
+                    catalogue_total_price_deviation = '+' + str(round(((catalog_po_subtotal - po_subtotal) / catalog_po_subtotal) * 100, 2))
                 else:
-                    catalogue_total_price_deviation = round(-((po_subtotal - catalog_po_subtotal) / po_subtotal) * 100, 2)
+                    catalogue_total_price_deviation = str(round(-((po_subtotal - catalog_po_subtotal) / po_subtotal) * 100, 2))
                 ret[x[0]].update({
                     'catalogue_total_price_deviation': catalogue_total_price_deviation,
-                    'catalogue_deviation_text': _('%% deviation of the PO total vs the theoretical catalogue price: <span class="readonlyfield">%d%%</span>') % (catalogue_total_price_deviation,),
+                    'catalogue_deviation_text': _('%% deviation of PO subtotal vs theoretical catalogue subtotal (for catalogue lines): <span class="readonlyfield">%s%%</span>') % (catalogue_total_price_deviation,),
+                    'catalogue_deviation_plain_text': _('%% deviation of PO subtotal vs theoretical catalogue subtotal (for catalogue lines): %s%%') % (catalogue_total_price_deviation,),
                 })
         return ret
 
@@ -1253,8 +1259,10 @@ class purchase_order(osv.osv):
         'catalogue_ratio_not_conform': fields.function(_get_catalogue_ratio, method=True, type='integer', string='PO Lines Mismatch', multi='catalogue'),
         'catalogue_ratio_no_catalogue': fields.function(_get_catalogue_ratio, method=True, type='integer', string='Not in Catalogue', multi='catalogue'),
         'catalogue_ratio_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Ratio', multi='catalogue'),
-        'catalogue_total_price_deviation': fields.function(_get_catalogue_ratio, method=True, type='float_null', string='Catalogue Total Price Deviation', digits_compute=dp.get_precision('Purchase Price'), multi='catalogue'),
+        'catalogue_ratio_plain_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Ratio', multi='catalogue'),
+        'catalogue_total_price_deviation': fields.function(_get_catalogue_ratio, method=True, type='char', size=16, string='Catalogue Total Price Deviation', multi='catalogue'),
         'catalogue_deviation_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Deviation', multi='catalogue'),
+        'catalogue_deviation_plain_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Deviation', multi='catalogue'),
         'catalogue_exists': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Has a valid catalogue', multi='catalogue'),
         'catalogue_display_tab': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Display tab catalogue', multi='catalogue'),
         'catalogue_exists_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Lines Status', multi='catalogue'),

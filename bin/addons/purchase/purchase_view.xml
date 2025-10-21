@@ -133,8 +133,8 @@
                             <field name="product_qty" string="Qty" />
                             <field name="product_uom" string="UoM" />
                             <field name="price_unit" string="PO Unit Price" bold="catalog_price_unit is not False and price_unit > catalog_price_unit" />
-                            <field name="price_subtotal" string="PO Subtotal"/>
                             <field name="catalog_price_unit"/>
+                            <field name="price_subtotal" string="PO Subtotal"/>
                             <field name="catalog_subtotal"/>
                             <field name="catalog_price_deviation"/>
                             <field name="original_changed" string="CHG"/>
