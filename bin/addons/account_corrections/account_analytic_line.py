@@ -37,7 +37,7 @@ class account_analytic_line(osv.osv):
             context = {}
         res = {}
 
-        allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
+        allow_extra = self.pool.get('res.company').extra_period_config(cr) in ('other', 'other_no_is')
 
         for aml in self.browse(cr, uid, ids, context=context):
             res[aml.id] = True

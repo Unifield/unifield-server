@@ -211,7 +211,7 @@ class account_period(osv.osv):
             return False
 
         max_p_num = 12
-        if check_extra_config and self.pool.get('res.company').extra_period_config(cr) == 'other':
+        if check_extra_config and self.pool.get('res.company').extra_period_config(cr) in ('other', 'other_no_is'):
             max_p_num = 15
 
         period_ids = self.pool.get('account.period').search(cr, uid, [

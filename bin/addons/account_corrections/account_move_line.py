@@ -67,7 +67,7 @@ class account_move_line(osv.osv):
 
         acc_corr = {}
 
-        allow_extra = self.pool.get('res.company').extra_period_config(cr) == 'other'
+        allow_extra = self.pool.get('res.company').extra_period_config(cr) in ('other', 'other_no_is')
         # Skip to next element if the line is set to False
         for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True

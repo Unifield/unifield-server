@@ -1056,10 +1056,13 @@ class account_move(osv.osv):
                     continue
                 raise osv.except_osv(_('Error'), _('Posting date should be include in defined Period%s.') % (m.period_id and ': ' + m.period_id.name or '',))
         extra_p_restriction = self.pool.get('res.company').extra_period_config(cr)
-        if extra_p_restriction in ('hq', 'nothing'):
+        if extra_p_restriction in ('hq', 'nothing', 'other_no_is'):
             allowed_type = ['cur_adj']
             if extra_p_restriction == 'hq':
-                allowed_type += ['od', 'odhq']
+                allowed_type += ['hq', 'correction_hq']
+            if extra_p_restriction == 'other_no_is':
+                allowed_type += ['accrual', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system']
+
             # exclude done period for old JEs already created on P13,14,15
             cr.execute('''
                 select
