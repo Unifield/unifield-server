@@ -26,25 +26,39 @@ from osv import fields
 from base import currency_date
 from tools.translate import _
 from . import ACCOUNT_RESTRICTED_AREA
-
+import json
 
 class res_company(osv.osv):
     _name = 'res.company'
     _inherit = 'res.company'
 
     _extra_period = False
+    _restricted_journal_type_extra_period = None
+
     def extra_period_config(self, cr):
         if not self._extra_period:
             cr.execute("SELECT oc FROM sync_client_entity LIMIT 1")
             oc = cr.fetchone()[0]
             self._extra_period = {
                 'ocb': 'nothing',
+                'ocg': 'nothing',
                 'ocp': 'other_no_is',
                 'waca': 'other_no_is',
                 'oca': 'other'
             }.get(oc)
 
         return self._extra_period
+
+    def get_restricted_journal_type_extra_period(self, cr):
+        if self._restricted_journal_type_extra_period is None:
+            j = self.pool.get('ir.config_parameter').get_param(cr, 1, 'journal_extr_p')
+            if j:
+                try:
+                    self._restricted_journal_type_extra_period = json.loads(j)
+                except Exception:
+                    pass
+        return self._restricted_journal_type_extra_period
+
 
     def _get_extra_period_config(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -97,7 +111,7 @@ class res_company(osv.osv):
         'has_move_regular_bs_to_0': fields.boolean("Move regular B/S account to 0"),
         'has_book_pl_results': fields.boolean("Book the P&L results"),
         'display_hq_system_accounts_buttons': fields.boolean("Display HQ system accounts mapping?", help="Display HQ system accounts on JI and AJI list views"),
-        'extra_period_config': fields.function(_get_extra_period_config, method=True, type='selection', selection=[('nothing', 'Nothing booked'), ('hq', 'HQ entries'), ('other_no_is', 'HQ Entries, Manual ODM, Accrual, Revaluation, Corrections, FXA'), ('other', 'HQ Entries, Manual Journal Entries, Accrual, Revaluation, IVO, IVI, Corrections, FXA')], string='Extra Accounting Behavior', help='Allowed entries on P13, P14 and P15'),
+        'extra_period_config': fields.function(_get_extra_period_config, method=True, type='selection', selection=[('nothing', 'Nothing booked'), ('other_no_is', 'HQ Entries, Manual ODM, Accrual, Revaluation, Corrections, FXA'), ('other', 'HQ Entries, Manual Journal Entries, Accrual, Revaluation, IVO, IVI, Corrections, FXA')], string='Extra Accounting Behavior', help='Allowed entries on P13, P14 and P15'),
     }
 
     _defaults = {

@@ -1055,14 +1055,8 @@ class account_move(osv.osv):
                 if m.date and m.period_id and m.period_id.date_start and m.date >= m.period_id.date_start and m.period_id.date_stop and m.date <= m.period_id.date_stop:
                     continue
                 raise osv.except_osv(_('Error'), _('Posting date should be include in defined Period%s.') % (m.period_id and ': ' + m.period_id.name or '',))
-        extra_p_restriction = self.pool.get('res.company').extra_period_config(cr)
-        if extra_p_restriction in ('hq', 'nothing', 'other_no_is'):
-            allowed_type = ['cur_adj']
-            if extra_p_restriction == 'hq':
-                allowed_type += ['hq', 'correction_hq']
-            if extra_p_restriction == 'other_no_is':
-                allowed_type += ['accrual', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system']
-
+        journal_restrictions_on_extra_p = self.pool.get('res.company').get_restricted_journal_type_extra_period(cr)
+        if journal_restrictions_on_extra_p:
             # exclude done period for old JEs already created on P13,14,15
             cr.execute('''
                 select
@@ -1077,7 +1071,7 @@ class account_move(osv.osv):
                     m.id in %s and
                     j.type not in %s
                 limit 5
-            ''', (tuple(ids), tuple(allowed_type)))
+            ''', (tuple(ids), tuple(journal_restrictions_on_extra_p)))
             if cr.rowcount:
                 error = cr.fetchall()
                 raise osv.except_osv(_('Error'), _('Following entries %s cannot be created on %s') % (', '.join([x[0] for x in error]), ', '.join(set([x[1] for x in error]))))
