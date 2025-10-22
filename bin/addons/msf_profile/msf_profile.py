@@ -70,7 +70,7 @@ class patch_scripts(osv.osv):
                     'oca': [],
                     'ocb': ['none'],
                     'ocg': ['none'],
-                    'ocp': ['cur_adj', 'accrual', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
+                    'ocp': ['cur_adj', 'accrual', 'hq', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
                     'waca': ['cur_adj', 'accrual', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
                 }
                 oc = entity_obj.get_entity(cr, uid).oc
