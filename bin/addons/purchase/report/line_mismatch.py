@@ -106,7 +106,7 @@ class line_mismatch(XlsxReportParser):
 
         col_title = [_('PO line'), _('Product Code'), _('Product Description'), _('PO Quantity'),
                      _('UoM'), _('PO Unit Price'), _('Catalogue Unit Price'), _('PO Subtotal'),
-                     _('Catalogue Subtotal'), _('Currency'), _('% Price Deviation'),
+                     _('Catalogue Subtotal'), _('Currency'), _('% PO Unit Price Deviation'),
                      _('Delivery Request Date'), _('Mismatch'), _('Catalogue SoQ'), _('Comment'),
                      _('External Ref'), _('Justification Code'), _('Justification Coordination'),
                      _('HQ Remarks'), _('Justification Y/N'), _('Cold chain type'),
