@@ -43,7 +43,7 @@ class res_company(osv.osv):
                 'ocb': 'nothing',
                 'ocg': 'nothing',
                 'ocp': 'other_no_is',
-                'waca': 'other_no_is',
+                'waca': 'other',
                 'oca': 'other'
             }.get(oc)
 
