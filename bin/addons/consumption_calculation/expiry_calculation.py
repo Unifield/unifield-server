@@ -289,6 +289,8 @@ class product_likely_expire_report(osv.osv):
         res = {}
         if consumption_type == 'amc':
             res['value'] = {'location_id': False, 'input_output_ok': False}
+        if consumption_type == 'rr-amc':
+            res['value'] = {'input_output_ok': False}
 
         return res
 

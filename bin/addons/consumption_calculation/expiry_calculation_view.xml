@@ -170,7 +170,7 @@
                         <field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', 'in', ['rac','rr-amc'])]}" />
                         <field name="segment_id" readonly="1" attrs="{'invisible': [('segment_id', '=', False)]}"/>
                         <newline />
-                        <field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
+                        <field name="input_output_ok" attrs="{'invisible': ['|', ('location_id', '!=', False), ('consumption_type', '=', 'rr-amc')]}" />
                     </group>
                     <separator colspan="4" string="Actions" />
                     <button name="process_lines" string="View report" type="object" colspan="2" icon="gtk-execute" />
@@ -187,12 +187,12 @@
             <field name="arch" type="xml">
                 <form string="Products list likely to expire">
                     <separator colspan="4" string="Location" />
-                <group colspan="2" col="2">
+                    <group colspan="2" col="2">
                         <field name="location_id" readonly="1" attrs="{'invisible': [('location_id', '=', False)]}"/>
                         <field name="segment_id" readonly="1" attrs="{'invisible': [('segment_id', '=', False)]}"/>
                         <field name="msf_instance" readonly="1" attrs="{'invisible': [('location_id', '!=', False)]}"/>
-                </group>
-                <field name="input_output_ok" readonly="1" />
+                    </group>
+                    <field name="input_output_ok" readonly="1" />
                     <separator colspan="4" string="Period of calculation" />
                     <field name="date_from" readonly="1" />
                     <field name="date_to" readonly="1" />
