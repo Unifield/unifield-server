@@ -876,6 +876,8 @@ class transport_order_in(osv.osv):
     def _process_step(self, cr, uid, ids, current_step, context=None):
         to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', current_step)], context=context)
         if to_process_ids:
+            if current_step != 'planned' and self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _('Please choose a Customs Regime before trying to process the ITO'))
             all_st = [x[0] for x in self._columns['state'].selection]
             next_st = all_st[all_st.index(current_step)+1]
             self.write(cr, uid, to_process_ids, {'state': next_st}, context=context)
@@ -1269,6 +1271,8 @@ class transport_order_out(osv.osv):
             return True
 
         sync_type = ['internal', 'section', 'intermission']
+        if self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
+            raise osv.except_osv(_('Warning'), _('Please choose a Customs Regime before trying to process the OTO'))
         if display_warning and self.search_exists(cr, uid, [('id', 'in', to_val_ids), '|', ('customer_partner_id.partner_type', 'in', sync_type), ('customer_partner_id.partner_type', 'in', sync_type)], context=context):
             msg = self.pool.get('message.action').create(cr, uid, {
                 'title':  _('Warning'),
