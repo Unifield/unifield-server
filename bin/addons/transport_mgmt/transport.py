@@ -442,7 +442,7 @@ class transport_order(osv.osv):
             ('reexport', 'Re-Export'),
             ('bondedwh', 'Bonded Warehouse'),
             ('temp', 'Temporary Importation'),
-        ], 'Customs Regime', required=1),
+        ], 'Customs Regime'),
 
         'cargo_weight': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Weight [kg]', multi='_total'),
         'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm³]', multi='_total'),
