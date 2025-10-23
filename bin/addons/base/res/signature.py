@@ -63,7 +63,6 @@ list_sign = {
     'stock.picking.in': [
         ('tr', _('Received by'), True, 1),
         ('sr', _('Controlled by'), True, 2),
-        ('fr', _('Approved by'), False, 3),
     ],
     'stock.picking.int': [
         ('tr', _('Approved by'), True, 1),

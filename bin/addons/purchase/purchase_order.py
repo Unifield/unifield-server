@@ -3160,7 +3160,7 @@ class purchase_order(osv.osv):
         context.update({'generate_po_from_rfq': True})
         for rfq_line in rfq.order_line:
             # Ignore cancelled lines and lines with a price of 0
-            if rfq_line.state in ('cancel', 'cancel_r') or rfq_line.rfq_line_state in ('cancel', 'cancel_r') or \
+            if rfq_line.state in ('cancel', 'cancel_r') or rfq_line.rfq_line_state != 'updated' or \
                     rfq_line.price_unit == 0.00:
                 continue
 

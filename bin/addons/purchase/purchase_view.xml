@@ -195,7 +195,7 @@
                                 <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
                                 <p id="view_purchase_order_locked_for_signature" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                     <translate>
-                                        WARNING: This PO uses e-signatures. To edit it, e-signatures must be removed.
+                                        WARNING: This Purchase Order is locked for e-signature. To edit it, click the "Remove signatures to unlock PO" button.
                                     </translate>
                                     <br/>
                                 </p>
@@ -276,7 +276,8 @@
                                          $('#order_line_extra_text').html(catalogue_text);
                                     }
                                     var is_doc_locked_for_sign = $('#doc_locked_for_sign').val();
-                                    if (is_doc_locked_for_sign == "1") {
+                                    var allowed_to_be_signed_unsigned = $('#allowed_to_be_signed_unsigned').val();
+                                    if (is_doc_locked_for_sign == "1" &amp;&amp; allowed_to_be_signed_unsigned == "1") {
                                         msg_dom = $('#view_purchase_order_locked_for_signature')
                                         msg_dom.show();
                                     }

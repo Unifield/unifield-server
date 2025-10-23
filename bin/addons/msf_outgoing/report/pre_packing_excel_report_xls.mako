@@ -69,6 +69,16 @@
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
     </Style>
+    <Style ss:ID="line_left_no_number">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <NumberFormat ss:Format="@"/>
+    </Style>
     <Style ss:ID="line_right">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
         <Borders>
@@ -148,8 +158,12 @@
     </Style>
  </Styles>
 
+<% pack_types, nb_pack_types = getPackTypes() %>
 % for pt in objects:
 <ss:Worksheet ss:Name="Pre-Packing Excel Report">
+    <Names>
+        <NamedRange ss:Name="pack_types_list" ss:RefersTo="='Pack Types'!R2C1:R${1 + nb_pack_types|x}C1"/>
+    </Names>
     <Table x:FullColumns="1" x:FullRows="1">
         ## Item
         <Column ss:AutoFitWidth="1" ss:Width="40.0" />
@@ -275,6 +289,7 @@
         % endfor
         </Row>
 
+        <% line = 1 %>
         % for m in sorted(pt.move_lines, key=lambda move: move.line_number):
             % if m.state == 'assigned':
             <Row ss:Height="14.25">
@@ -297,9 +312,14 @@
                 <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number">${m.from_pack or 0|x}</Data></Cell>
                 <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number">${m.to_pack or 0|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="Number">${m.weight or 0|x}</Data></Cell>
+                % if nb_pack_types:
+                <Cell ss:StyleID="line_left" ss:Formula="=IF(RC[1]&lt;&gt;&quot;&quot;,LOOKUP(RC[1],'Pack Types'!R[${-(8 + line)|x}]C[-14]:R[${-(9 + line) + nb_pack_types|x}]C[-14],'Pack Types'!R[${-(8 + line)|x}]C[-13]:R[${-(9 + line) + nb_pack_types|x}]C[-13]),&quot;&quot;)"><Data ss:Type="String"></Data></Cell>
+                % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.pack_type and m.pack_type.name or ''|x}</Data></Cell>
+                % endif
+                <Cell ss:StyleID="line_left_no_number"><Data ss:Type="String">${m.pack_type and m.pack_type.name or ''|x}</Data></Cell>
             </Row>
+            <% line += 1 %>
             %endif
         % endfor
 
@@ -320,6 +340,32 @@
         <ProtectObjects>False</ProtectObjects>
         <ProtectScenarios>False</ProtectScenarios>
     </WorksheetOptions>
+    % if nb_pack_types:
+    <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
+        <Range>R11C16:R${line+9}C16</Range>
+        <Type>List</Type>
+        <Value>pack_types_list</Value>
+    </DataValidation>
+    % endif
 </ss:Worksheet>
 % endfor
+<ss:Worksheet ss:Name="Pack Types" ss:Protected="1">
+    <Table x:FullColumns="1" x:FullRows="1">
+        ## Pack Type
+        <Column ss:AutoFitWidth="1" ss:Width="75.0" />
+        ## Size (w x l x h) (cm)
+        <Column ss:AutoFitWidth="1" ss:Width="125.0" />
+
+        <Row ss:Height="14.25">
+            <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('Pack Type')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('Size (w x l x h) (cm)')|x}</Data></Cell>
+        </Row>
+        % for pack_type in pack_types:
+            <Row ss:Height="14.25">
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${pack_type[0] or ''|x}</Data><NamedCell ss:Name="pack_types_list"/></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${pack_type[1] or ''|x}</Data></Cell>
+            </Row>
+        % endfor
+    </Table>
+</ss:Worksheet>
 </Workbook>
