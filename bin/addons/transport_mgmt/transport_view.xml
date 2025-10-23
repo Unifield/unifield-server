@@ -261,14 +261,14 @@
                                 <field name="container_size" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                                 <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                             </group>
-                            <field name="manifest_link" widget="url"  attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
+                            <field name="manifest_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                             <field name="packing_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                             <field name="invoice_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                         </page>
 
-                        <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'dom'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
+                        <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'domestic'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', 'in', ['planned', 'cancel'])]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
@@ -585,8 +585,8 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
                         </page>
 
-                        <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
+                        <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'domestic'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', 'in', ['planned', 'cancel'])]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"

@@ -495,7 +495,7 @@ class stock_picking(osv.osv):
                     'supplier_partner_id': in_partner_id,
                     'ship_ref': in_shipment_ref,
                     'zone_type': company_address and company_address.country_id and supplier_address and supplier_address.country_id and
-                         company_address.country_id.id == supplier_address.country_id.id and 'regional' or 'int',
+                         company_address.country_id.id == supplier_address.country_id.id and 'domestic' or 'int',
                     'cargo_category': ito_categ,
                 }
                 ito_id = ito_obj.create(cr, uid, ito_data, context=context)
