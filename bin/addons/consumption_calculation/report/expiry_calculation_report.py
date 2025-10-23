@@ -31,6 +31,7 @@ CONSUMPTION_TYPE = [
     ('fmc', _('FMC -- Forecasted Monthly Consumption')),
     ('amc', _('AMC -- Average Monthly Consumption')),
     ('rac', _('RAC -- Real Average Consumption')),
+    ('rr-amc', _('RR-AMC -- RR Average Monthly Consumption')),
 ]
 
 
@@ -73,7 +74,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         res = ""
         for val, label in CONSUMPTION_TYPE:
             if val == report.consumption_type:
-                if val == 'amc':
+                if val in ('amc', 'rr-amc'):
                     return _(label) + tools.ustr(' (' + self.str_to_time(report.consumption_from) + ' - ' + self.str_to_time(report.consumption_to) + ')')
                 else:
                     return _(label)
