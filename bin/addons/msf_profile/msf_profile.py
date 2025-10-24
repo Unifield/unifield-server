@@ -85,7 +85,7 @@ class patch_scripts(osv.osv):
                     j_obj.write(cr, uid, [x[0]], {'first_register_date': x[1] or False, 'last_register_date': x[2] or False})
 
             else: # HQ
-                decom_coor = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo'), ('state', '!=', 'inactive')])
+                decom_coor = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo'), ('state', '=', 'inactive')])
                 if decom_coor:
                     decom_coor += self.pool.get('msf.instance').search(cr, uid, [('parent_id', 'in', decom_coor)])
 
