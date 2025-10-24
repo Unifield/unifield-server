@@ -160,6 +160,7 @@ class Client(object):
 
         dest_file_name = full_name_dest.split('/')[-1]
         dest_folder = '/'.join(full_name_dest.split('/')[0:-1])
+        dest_folder = self.request.web.get_folder_by_server_relative_url(dest_folder).execute_query_with_incremental_retry(max_retry=self.max_retry)
         self.request.web.get_file_by_server_relative_path(webUri).move_to_newname(dest_folder, dest_file_name, 1).execute_query_with_incremental_retry(max_retry=self.max_retry)
         return True
 
