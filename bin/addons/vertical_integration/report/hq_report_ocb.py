@@ -340,6 +340,14 @@ liquidity_sql = """
                     )
                 UNION
                     (
+                    -- HQ 
+                        SELECT j.id AS journal_id, j.default_debit_account_id  AS account_id, 0 as col1, 0 as col2, 0 as col3
+                        FROM account_journal j
+                        WHERE
+                            (j.first_register_date, j.last_register_date) OVERLAPS (%(date_from)s, %(date_to)s)
+                    )
+                UNION
+                    (
                         SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
                         FROM account_move_line AS aml 
                         LEFT JOIN account_journal j 

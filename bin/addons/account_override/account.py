@@ -978,6 +978,8 @@ class account_journal(osv.osv):
             _get_fake, fnct_search=_search_instance_filter,
             method=True, type='boolean', string='Instance filter'
         ),
+        'first_register_date': fields.date('First register date', readonly=1),
+        'last_register_date': fields.date('Last register date', readonly=1),
     }
 
 account_journal()
