@@ -24,15 +24,15 @@ from tools.translate import _
 
 TRANSPORT_FEES_HELP = [
     ('freight_fixed', _("""What:
-Use this type when encoding the actual transport costs according to what is negotiated in the MSF contract or quotation agreed with the service provider/transporter.
-
-How:
-Identify all transport-related expenses that MSF is paying to transporters when they provide these transportation services to MSF. Usually negotiated and defined in the contracts (eg: MIFAT contracts).""")),
-    ('freight_negotiable', _("""What:
 Use this type when encoding sum of any official fees paid to government authorities (with official receipts) that are not part of the transport costs negotiated in the MSF contract or quotation agreed with the service provider/transporter.
 
 How:
 Identify all transport-related expenses that MSF is paying to transporters when they provide these transportation services to MSF. MSF or Transporter has no control on these fees.""")),
+    ('freight_negotiable', _("""What:
+Use this type when encoding the actual transport costs according to what is negotiated in the MSF contract or quotation agreed with the service provider/transporter.
+
+How:
+Identify all transport-related expenses that MSF is paying to transporters when they provide these transportation services to MSF. Usually negotiated and defined in the contracts (eg: MIFAT contracts).""")),
     ('freight_return', _("""What:
 Use this type when encoding transport costs linked to return of cargo (eg: from project back to coordination) according to what is negotiated in the MSF contract or quotation agreed with the service provider/transporter.
 
@@ -77,7 +77,7 @@ This applies to all expenses that we can classify as official non direct taxes p
 
 How:
 Identify all transport-related expenses/taxes that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).""")),
-    ('other', _("""What:
+    ('other_transport', _("""What:
 Any other freight-related fees that don't fit in any of the above defined categories**. Make sure you add a comment to explain why this fee is \"Other\".""")),
 ]
 
@@ -141,7 +141,7 @@ These are fees that can provide an indicator that the Importation process may no
 All loading fees, whether done by manual labour or forklift charges.""")),
     ('unloading', _("""What:
 All unloading/offloading fees, whether done by manual labour or forklift charges.""")),
-    ('other', _("""What:
+    ('other_customs', _("""What:
 Any other customs related fees that don't fit in any of the above defined categories**. Make sure you add a comment to explain why this fee is \"Other\".""")),
 ]
 

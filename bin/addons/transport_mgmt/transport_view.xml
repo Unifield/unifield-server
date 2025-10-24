@@ -277,11 +277,10 @@
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
                                     <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}" help=""/>
-                                    <field name="name" />
+                                    <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
                                     <field name="purchase_details" readonly="1" />
-                                    <field name="purchase_currency_id" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
@@ -300,11 +299,10 @@
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
                                     <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
-                                    <field name="name" />
+                                    <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
                                     <field name="purchase_details" readonly="1" />
-                                    <field name="purchase_currency_id" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
@@ -595,11 +593,10 @@
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
                                     <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
-                                    <field name="name" />
+                                    <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
                                     <field name="purchase_details" readonly="1" />
-                                    <field name="purchase_currency_id" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
@@ -618,11 +615,10 @@
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
                                     <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
-                                    <field name="name" />
+                                    <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
                                     <field name="purchase_details" readonly="1" />
-                                    <field name="purchase_currency_id" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />

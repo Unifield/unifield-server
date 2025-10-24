@@ -8,6 +8,21 @@ from tools.translate import _
 from tools.misc import get_fake
 from . import TRANSPORT_FEES_HELP, CUSTOMS_FEES_HELP
 
+
+class transport_order_fees_type(osv.osv):
+    _name = 'transport.order.fees.type'
+    _description = 'Fees types'
+
+    _columns = {
+        'name': fields.char('Name', size=256, select=1, required=1, translate=1),
+        'code': fields.char('Code', size=128, select=1, required=1),
+        'customs_fee': fields.boolean('Is a Customs Fee'),
+        'transport_fee': fields.boolean('Is a Transport Fee'),
+    }
+
+transport_order_fees_type()
+
+
 class transport_order_customs_fees(osv.osv):
     _name = 'transport.order.customs.fees'
     _description = 'Fees'
@@ -27,14 +42,13 @@ class transport_order_customs_fees(osv.osv):
         for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             po = fees.purchase_id
             parent = fees.transport_in_id or fees.transport_out_id or False
-            name_help = fees.name or ''
+            name_help = fees.name and fees.name.code or ''
             for sel_help in CUSTOMS_FEES_HELP:
                 if sel_help[0] == name_help:
                     name_help = _(sel_help[1])
                     break
             res[fees.id] = {
                 'purchase_details': po and po.details or '',
-                'purchase_currency_id': po and po.pricelist_id and po.pricelist_id.currency_id.id or False,
                 'parent_name': parent and parent.name or '',
                 'parent_state': parent and parent.state or '',
                 'name_help': name_help,
@@ -43,22 +57,7 @@ class transport_order_customs_fees(osv.osv):
         return res
 
     _columns = {
-        'name': fields.selection([
-            ('customs_clearance', 'Customs Clearance fees (fixed)'),
-            ('customs_clearance_srv', 'Customs Clearance service fees (negotiable)'),
-            ('prearrival', 'Pre-Arrival processing fees (fixed)'),
-            ('prearrival_srv', 'Pre-Arrival processing service fees (negotiable)'),
-            ('direct', 'Direct Taxes / Duties'),
-            ('indirect', 'Other Indirect Taxes / Duties'),
-            ('handling', 'Terminal Handling Fees'),
-            ('bonded_wh', 'Customs Bonded service fees (warehousing)'),
-            ('bonded_ex_wh', 'Customs Bonded service fees (ex-warehousing)'),
-            ('storage', 'Customs Storage fees'),
-            ('penalty', 'Customs Penalty fees'),
-            ('loading', 'Loading Service fees'),
-            ('unloading', 'Unloading Service fees'),
-            ('other', 'Other Customs fees'),
-        ], 'Type', add_empty=True, required=1),
+        'name': fields.many2one('transport.order.fees.type', 'Type', domain=[('customs_fee', '=', True)], add_empty=1, select=1, required=1),
         'value': fields.float('Cost', decimal=(16,2)),
         'currency_id': fields.many2one('res.currency', 'Currency', required=1, domain=[('active', '=', True)]),
         'details': fields.char('Details', size=512),
@@ -68,8 +67,6 @@ class transport_order_customs_fees(osv.osv):
         'purchase_id': fields.many2one('purchase.order', 'Custom Fees', domain=[('categ', 'in', ['service', 'transport'])], select=1),
         'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
                                             store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
-        'purchase_currency_id': fields.function(_get_vals, method=True, string='PO Currency', type='many2one', relation='res.currency', multi='get_vals',
-                                                store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
                                         selection=[('planned', 'Planned'),
@@ -92,9 +89,9 @@ class transport_order_customs_fees(osv.osv):
         res = {}
         if purchase_id:
             po = self.pool.get('purchase.order').browse(cr, uid, purchase_id, fields_to_fetch=['details', 'pricelist_id'])
-            res['value'] = {'purchase_details': po.details, 'purchase_currency_id': po.pricelist_id.currency_id.id}
+            res['value'] = {'purchase_details': po.details, 'currency_id': po.pricelist_id.currency_id.id}
         else:
-            res['value'] = {'purchase_details': '', 'purchase_currency_id': False}
+            res['value'] = {'purchase_details': '', 'currency_id': False}
         return res
 
     def button_validate_fees(self, cr, uid, ids, context=None):
@@ -126,14 +123,13 @@ class transport_order_transport_fees(osv.osv):
         for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             po = fees.purchase_id
             parent = fees.transport_in_id or fees.transport_out_id or False
-            name_help = fees.name or ''
+            name_help = fees.name and fees.name.code or ''
             for sel_help in TRANSPORT_FEES_HELP:
                 if sel_help[0] == name_help:
                     name_help = _(sel_help[1])
                     break
             res[fees.id] = {
                 'purchase_details': po and po.details or '',
-                'purchase_currency_id': po and po.pricelist_id and po.pricelist_id.currency_id.id or False,
                 'parent_name': parent and parent.name or '',
                 'parent_state': parent and parent.state or '',
                 'name_help': name_help,
@@ -142,21 +138,7 @@ class transport_order_transport_fees(osv.osv):
         return res
 
     _columns = {
-        'name': fields.selection([
-            ('freight_fixed', 'Freight Service fees (fixed)'),
-            ('freight_negotiable', 'Freight Service fees (negotiable)'),
-            ('freight_return', 'Freight Service fees (return trip)'),
-            ('insurance', 'Insurance Service fees'),
-            ('truck', 'Truck Detention fees'),
-            ('demurrage', 'Demurrage fees'),
-            ('freight_storage', 'Freight Storage fees'),
-            ('container', 'Container Deposit fees'),
-            ('freight_load', 'Freight Loading Service fees'),
-            ('freight_unload', 'Freight Unloading Service fees'),
-            ('direct', 'Direct Taxes / Duties'),
-            ('indirect', 'Other Indirect Taxes / Duties'),
-            ('other', 'Other Freight fees'),
-        ], 'Type', add_empty=True, required=1),
+        'name': fields.many2one('transport.order.fees.type', 'Type', domain=[('transport_fee', '=', True)], add_empty=1, select=1, required=1),
         'value': fields.float('Cost', decimal=(16,2)),
         'currency_id': fields.many2one('res.currency', 'Currency', required=1, domain=[('active', '=', True)]),
         'details': fields.char('Details', size=512),
@@ -166,8 +148,6 @@ class transport_order_transport_fees(osv.osv):
         'purchase_id': fields.many2one('purchase.order', 'Transport Fees', domain=[('categ', 'in', ['service', 'transport'])], select=1),
         'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
                                             store={'transport.order.transport.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
-        'purchase_currency_id': fields.function(_get_vals, method=True, string='PO Currency', type='many2one', relation='res.currency', multi='get_vals',
-                                                store={'transport.order.transport.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
                                         selection=[('planned', 'Planned'),
@@ -190,9 +170,9 @@ class transport_order_transport_fees(osv.osv):
         res = {}
         if purchase_id:
             po = self.pool.get('purchase.order').browse(cr, uid, purchase_id, fields_to_fetch=['details', 'pricelist_id'])
-            res['value'] = {'purchase_details': po.details, 'purchase_currency_id': po.pricelist_id.currency_id.id}
+            res['value'] = {'purchase_details': po.details, 'currency_id': po.pricelist_id.currency_id.id}
         else:
-            res['value'] = {'purchase_details': '', 'purchase_currency_id': False}
+            res['value'] = {'purchase_details': '', 'currency_id': False}
         return res
 
     def button_validate_fees(self, cr, uid, ids, context=None):
@@ -434,7 +414,6 @@ class transport_order(osv.osv):
         'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', required=1, select=1, ondelete='restrict'),
 
         'customs_regime': fields.selection([
-            ('', ''),
             ('import', 'Import'),
             ('export', 'Export'),
             ('transit', 'Transit'),
@@ -442,7 +421,7 @@ class transport_order(osv.osv):
             ('reexport', 'Re-Export'),
             ('bondedwh', 'Bonded Warehouse'),
             ('temp', 'Temporary Importation'),
-        ], 'Customs Regime'),
+        ], 'Customs Regime', add_empty=True),
 
         'cargo_weight': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Weight [kg]', multi='_total'),
         'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm³]', multi='_total'),
