@@ -160,7 +160,7 @@ if (auto_field && auto_field.val()){
             <td class="grid-cell"><b>|</b></td>
         % elif field_attrs.get('displayon') != 'editable':
             <td class="grid-cell ${field_attrs.get('type', 'char')}"
-                style="${(data[field].color or None) and 'color: ' + data[field].color};"
+                style="${(data[field].color or None) and 'color: ' + data[field].color}; ${(data[field].bold or None) and 'font-weight: bold'};"
                 sortable_value="${data[field].get_sortable_text()}">\
                 % if impex:
                     <a href="javascript: void(0)" onclick="do_select('${data['id']}')">${data[field].display()}</a>\

@@ -563,6 +563,12 @@ class List(TinyWidget):
                                     break
                             except:
                                 pass
+                        if attrs.get('bold'):
+                            try:
+                                if expr_eval(attrs['bold'], dict(row_value, active_id=rpc.session.active_id or False)):
+                                    cell.bold = True
+                            except:
+                                pass
                         row[name] = cell
 
                     if invisible:
@@ -602,6 +608,7 @@ class Char(TinyWidget):
         self.truncate = attrs.get('truncate', False)
 
         self.color = None
+        self.bold = None
         self.onclick = None
 
     def get_text(self):
@@ -640,6 +647,7 @@ class Image(TinyWidget):
         super(Image, self).__init__(**attrs)
         self.img = self.value
         self.color = None
+        self.bold = None
         self.height = attrs.get('height')
         self.width = attrs.get('width')
 
@@ -933,6 +941,7 @@ class Hidden(TinyInputWidget):
         self.relation = attrs.get('relation') or None
         self.editable = self.readonly
         self.color = None
+        self.bold = None
         if 'field_id' not in attrs:
             self.field_id = self.name
 
