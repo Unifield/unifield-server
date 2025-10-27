@@ -239,7 +239,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                     WHERE req.journal_id = j.id
                     AND j.instance_id = i.id
                     AND j.currency = c.id
-                    AND j.instance_id IN %(instance_ids);
+                    AND j.instance_id IN %(instance_ids)s
                     """
         # ensure not to have empty arrays to avoid crash at query execution...
         pending_chq_starting_bal_ids = pending_chq_starting_bal_ids or [-1]
