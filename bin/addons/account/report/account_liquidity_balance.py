@@ -50,7 +50,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             'get_general_total': self._get_general_total,
         })
 
-    def _filter_journal_status(self, reg_data, date_from):
+    def _filter_journal_status(self, reg_data, date_from, date_to):
         """
         Applies the following changes to the reg_data:
         - adds the journal status
@@ -59,12 +59,18 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         all_ids = [x['id'] for x in reg_data]
         inactives_at_date = self.pool.get('account.journal').search(self.cr, self.uid, [('id', 'in', all_ids), ('inactivation_date', '<', date_from)])
 
+        no_register = self.pool.get('account.journal').search(self.cr, self.uid, [('id', 'in', all_ids), '|', ('last_register_date', '<', date_from), ('first_register_date', '>', date_to)])
+
+        used_journal = []
         for reg in reg_data:
+            if reg['id'] in no_register and not reg['opening'] and not reg['calculated'] and not reg['closing']:
+                continue
             if reg['id'] in inactives_at_date:
                 reg['journal_status'] = _('Inactive')
             else:
                 reg['journal_status'] = _('Active')
-        return reg_data
+            used_journal.append(reg)
+        return used_journal
 
     def _get_register_data(self):
         """
@@ -136,7 +142,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         }
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
-        cash_bank_res = self._filter_journal_status(cash_bank_res, date_from)
+        cash_bank_res = self._filter_journal_status(cash_bank_res, date_from, date_to)
         cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, context=self.context)
         res.extend(cash_bank_res)
         # Cheque registers
@@ -232,7 +238,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         cheque_params = (period_title, date_from, date_to, date_from, date_to, tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
-        cheque_res = self._filter_journal_status(cheque_res, date_from)
+        cheque_res = self._filter_journal_status(cheque_res, date_from, date_to)
         cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, context=self.context)
         res.extend(cheque_res)
         # sort result by instance code and by journal code

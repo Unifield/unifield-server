@@ -345,6 +345,7 @@ liquidity_sql = """
                         FROM account_journal j
                         WHERE
                             (j.first_register_date, j.last_register_date) OVERLAPS (%(date_from)s, %(date_to)s)
+                            AND j.type IN %(j_type)s
                     )
                 UNION
                     (
