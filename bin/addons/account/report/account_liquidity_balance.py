@@ -178,7 +178,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         pending_chq_closing_bal_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [], [], date_to,
                                                                      aml_ids=chq_closing_bal_ids, context=self.context)
         cheque_sql = """
-                    SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, 
+                    SELECT i.code AS instance, j.code, j.id, %(period_title)s AS period, req.opening, req.calculated, req.closing, 
                     c.name AS currency
                     FROM res_currency c,
                     (
