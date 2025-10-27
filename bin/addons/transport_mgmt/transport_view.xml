@@ -1,0 +1,648 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<openerp>
+    <data>
+        <record id="transport_order_in_planned_action" model="ir.actions.act_window">
+            <field name="name">Planned Inbound Cargo</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', '=', 'planned')]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_in_preclearance_action" model="ir.actions.act_window">
+            <field name="name">Inbound Cargo Under Pre Clearance</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', 'in', ['preclearance', 'transit'])]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_in_waiting_action" model="ir.actions.act_window">
+            <field name="name">Inbound Cargo Awaiting Parcel Reception</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', 'in', ['border', 'customs', 'warehouse'])]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_out_planned_action" model="ir.actions.act_window">
+            <field name="name">Planned Outbound Cargo</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.out</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', '=', 'planned')]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_out_transit_action" model="ir.actions.act_window">
+            <field name="name">Outbound Cargo in Transit</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.out</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', '=', 'dispatched')]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="board_transportation_form" model="ir.ui.view">
+            <field name="name">board.transportation.form</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="priority">200</field>
+            <field name="arch" type="xml">
+                <form />
+            </field>
+        </record>
+
+
+        <record id="board_transportation" model="ir.actions.act_window">
+            <field name="name">Transportation Dashboard</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="usage">menu</field>
+            <field name="view_id" ref="board_transportation_form"/>
+        </record>
+
+
+        <menuitem icon="terp-purchase" id="menu_transportation_root" name="Transportation" sequence="5" web_icon="images/transportation.png" web_icon_hover="images/transportation-hover.png" action="board_transportation"/>
+        <menuitem id="menu_transport_management" name="Transport Management" parent="menu_transportation_root" />
+
+        <record id="transport_order_in_search" model="ir.ui.view">
+            <field name="name">transport_order_in_search</field>
+            <field name="model">transport.order.in</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Inbound Transport Object">
+                    <group col="8" colspan="4">
+                        <filter icon="terp-document-new" name="planned" string="Planned" domain="[('state', '=', 'planned')]" />
+                        <filter icon="terp-check" name="under_preclearance" string="Under Preclearance" domain="[('state', '=', 'preclearance')]" />
+                        <filter icon="gtk-media-forward" name="in_transit" string="In Transit" domain="[('state', '=', 'transit')]" />
+                        <filter icon="gtk-goto-last" name="at_border" string="At Border" domain="[('state', '=', 'border')]" />
+                        <filter icon="gtk-paste-v" name="customs_cleared" string="Customs Cleared" domain="[('state', '=', 'customs')]" />
+                        <filter icon="gtk-home" name="at_warehouse" string="At Warehouse" domain="[('state', '=', 'warehouse')]" />
+                        <filter icon="gtk-close" name="closed" string="Closed" domain="[('state', '=', 'closed')]" />
+                        <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', '=', 'cancel')]" />
+                        <separator orientation="vertical"/>
+                        <newline />
+                        <field name="name" />
+                        <field name="supplier_partner_id" string="Supplier" />
+                        <field name="customer_partner_id" string="Customer"/>
+                        <field name="transport_partner_id" />
+                        <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
+                        <field name="incoming_ids"  />
+                        <field name="transport_po_id" />
+                        <field name="cargo_category" />
+                        <field name="arrival_planned_date" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_order_in_tree" model="ir.ui.view">
+            <field name="name">transport_order_in_tree</field>
+            <field name="model">transport.order.in</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Inbound Transport Object" hide_delete_button="1">
+                    <field name="name" />
+                    <field name="supplier_partner_id" string="Supplier" />
+                    <field name="customer_partner_id" string="Customer"/>
+                    <field name="transport_partner_id" />
+                    <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
+                    <field name="incoming_ids" />
+                    <field name="transport_po_id" />
+                    <field name="cargo_category" />
+                    <field name="arrival_planned_date" />
+                    <field name="details"  truncate="50"/>
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_order_in_from" model="ir.ui.view">
+            <field name="name">transport_order_in_form</field>
+            <field name="model">transport.order.in</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <form string="Inbound Transport Object" hide_delete_button="1">
+                    <field name="name" />
+                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="shipment_type"  />
+                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="sync_ref" />
+                    <field name="from_sync" invisible="1" />
+                    <notebook colspan="4">
+                        <page string="Transport Object">
+                            <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Transit" />
+                                    <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
+                                    <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
+                                    <group colspan="4" col="4">
+                                        <field name="transit_arrival_planned_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                        <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                    </group>
+                                </group>
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Shipping" />
+                                    <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
+                                    <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
+                                </group>
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Transporter" />
+                                    <field name="transport_partner_id" />
+                                    <field name="transport_mode" />
+                                    <field name="transport2_partner_id" />
+                                    <field name="transport2_mode" />
+                                    <group colspan="4" col="4" attrs="{'invisible': [('transit_partner_id', '=', False)]}">
+                                        <field name="post_transport_partner_id" />
+                                        <field name="post_transport_mode" />
+                                        <field name="post2_transport_partner_id" />
+                                        <field name="post2_transport_mode" />
+                                    </group>
+                                    <group colspan="2" col="4">
+                                        <field name="arrival_planned_date" />
+                                        <field name="departure_date" />
+                                    </group>
+                                    <field name="transport_po_id" />
+                                    <field name="notify_partner_id" />
+                                </group>
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Customer" />
+                                    <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" domain="['|', ('customer', '=', True), '('is_instance', '=', True)]"/>
+                                    <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
+                                    <field name="incoterm_type" />
+                                    <field name="incoterm_location" />
+                                </group>
+                            </group>
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                                <tree string="Lines" editable="top">
+                                    <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
+                                    <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>
+                                    <field name="parcels_nb" required="1"/>
+                                    <field name="volume" />
+                                    <field name="weight" />
+                                    <field name="amount" />
+                                    <field name="currency_id" attrs="{'required': [('amount', '!=', False)]}"/>
+                                    <field name="comment" />
+                                    <field name="kc" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
+                                    <field name="dg" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
+                                    <field name="cs" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
+                                </tree>
+
+                            </field>
+                        </page>
+
+                        <page string="Cargo" on_change="change_line()">
+                            <group colspan="4" col="6">
+                                <field name="cargo_parcels" />
+                                <field name="cargo_volume" />
+                                <field name="cargo_weight" />
+                                <field name="container_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="container_size" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                            </group>
+                            <field name="manifest_link" widget="url"  attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
+                            <field name="packing_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
+                            <field name="invoice_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
+                            <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
+                        </page>
+
+                        <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
+                            <newline />
+                            <field name="transport_fees_ids" nolabel="1" colspan="4"
+                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
+                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    o2m_selectable="2"
+                                >
+                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                    <field name="name" />
+                                    <field name="value" />
+                                    <field name="currency_id" />
+                                    <field name="details" />
+                                    <field name="validated" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Steps">
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}">
+                                <tree string="Steps" editable="top">
+                                    <field name="step_id" />
+                                    <field name="name" />
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Notes">
+                            <field name="notes" nolabel="1" colspan="4" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
+                        </page>
+
+                    </notebook>
+                    <field name="state" />
+                    <group colspan="2" col="14">
+                        <button string="Process" states="planned" type="object" name="button_process" icon="terp-check" />
+                        <button string="Process Lines" states="planned" type="object" name="button_process_lines" icon="gtk-indent" />
+                        <button string="Dispatch" states="preclearance" type="object" name="button_dispatch" icon="gtk-media-forward" />
+                        <button string="Arrive in Country" states="transit" type="object" name="button_arrive" icon="gtk-goto-last" />
+                        <button string="Clear Customs" states="border" type="object" name="button_clear_customs" icon="gtk-paste-v" />
+                        <button string="Delivery to Warehouse" states="customs" type="object" name="button_delivery" icon="gtk-home" />
+                        <button string="Parcel Reception" states="warehouse" type="object" name="button_reception" icon="terp-check" />
+                        <button string="Parcel Partial Reception" states="warehouse" type="object" name="button_partial_reception" icon="gtk-indent" />
+                        <button string="Create Outbound Transport Order for these goods" type="object" name="button_create_oto" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('state', '!=', 'closed') ,('oto_created', '=', True)]}" />
+                        <field name="oto_created" attrs="{'invisible': [('oto_created', '=', False)]}" />
+                        <button string="Cancel document" states="planned,preclearance,transit,border,customs,warehouse" type="object" name="button_cancel" icon="gtk-cancel"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="transport_order_in_partial" model="ir.ui.view">
+            <field name="name">transport_order_in_form</field>
+            <field name="model">transport.order.in</field>
+            <field name="type">form</field>
+            <field name="priority" eval="160" />
+            <field name="arch" type="xml">
+                <form string="Partial Process">
+                    <field name="name" />
+                    <group colspan="4">
+                        <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all"  />
+                        <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all"  />
+                    </group>
+
+                    <field name="line_ids" colspan="4" nolabel="1" >
+                        <tree string="Lines" editable="top" hide_delete_button="1" hide_new_button="1">
+                            <field name="incoming_id" readonly="1"/>
+                            <field name="description" readonly="1"/>
+                            <field name="parcels_nb" readonly="1" string="Original\nNb parcels"/>
+                            <field name="volume" readonly="1" string="Original\nVolume"/>
+                            <field name="weight" readonly="1" string="Original\nWeight"/>
+                            <field name="amount" readonly="1" string="Original\nValue" />
+                            <field name="currency_id" readonly="1" />
+                            <field name="kc" readonly="1" string="Original\nCC"/>
+                            <field name="dg" readonly="1" string="Original\nDG"/>
+                            <field name="cs" readonly="1" string="Original\nCS"/>
+                            <field name="process_parcels_nb" required="1" on_change="change_nb_parcels(parcels_nb, process_parcels_nb, volume, weight, amount)"/> <!-- TODO: process more -->
+                            <field name="process_volume" />
+                            <field name="process_weight"  />
+                            <field name="process_amount" />
+                            <field name="process_kc"  />
+                            <field name="process_dg"  />
+                            <field name="process_cs"  />
+                        </tree>
+                    </field>
+                    <group colspan="2" col="14">
+                        <button string="Process" type="object" name="button_wizard_process" icon="terp-check" />
+                        <button string="Cancel" type="object" name="button_wizard_cancel" icon="gtk-cancel"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="transport_order_in_action" model="ir.actions.act_window">
+            <field name="name">Inbound Transport Object</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem action="transport_order_in_action" id="transport_order_in_menu" parent="menu_transport_management" sequence="6"/>
+
+
+        <record id="transport_order_out_search" model="ir.ui.view">
+            <field name="name">transport_order_out_search</field>
+            <field name="model">transport.order.out</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Outound Transport Object">
+                    <group col="8" colspan="4">
+                        <filter icon="terp-document-new" name="planned" string="Planned" domain="[('state', '=', 'planned')]" />
+                        <filter icon="terp-dialog-close" name="dispatched" string="Dispatched" domain="[('state', '=', 'dispatched')]" />
+                        <filter icon="gtk-close" name="closed" string="Closed" domain="[('state', '=', 'closed')]" />
+                        <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', '=', 'cancel')]" />
+                        <separator orientation="vertical"/>
+                        <newline />
+                        <field name="name" />
+                        <field name="customer_partner_id" string="Customer"/>
+                        <field name="transport_partner_id" />
+                        <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
+                        <field name="shipment_ids"  />
+                        <field name="transport_po_id" />
+                        <field name="cargo_category" />
+                        <field name="departure_date" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_order_out_tree" model="ir.ui.view">
+            <field name="name">transport_order_out_tree</field>
+            <field name="model">transport.order.out</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Outbound Transport Object" hide_delete_button="1">
+                    <field name="name" />
+                    <field name="customer_partner_id" string="Customer"/>
+                    <field name="transport_partner_id" />
+                    <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
+                    <field name="shipment_ids"  />
+                    <field name="transport_po_id" />
+                    <field name="cargo_category" />
+                    <field name="arrival_planned_date" />
+                    <field name="details"  truncate="50"/>
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_order_out_from" model="ir.ui.view">
+            <field name="name">transport_order_out_form</field>
+            <field name="model">transport.order.out</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <form string="Outbound Transport Object" hide_delete_button="1">
+                    <field name="name" />
+                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="shipment_type" />
+                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="ito_ref" />
+                    <field name="supplier_partner_id" readonly="1" invisible="1"/>
+                    <notebook colspan="4">
+                        <page string="Transport Object">
+                            <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Transit" />
+                                    <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
+                                    <field name="transit_address_id" domain="[('partner_id', '=', transit_partner_id), ('partner_id', '!=', False)]"/>
+                                    <group colspan="4" col="4">
+                                        <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                        <field name="transit_arrival_planned_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
+                                    </group>
+                                </group>
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Shipping" />
+                                    <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id),('partner_id', '!=', False)]" colspan="2"/>
+                                </group>
+
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Transporter" />
+                                    <field name="transport_partner_id" />
+                                    <field name="transport_mode" />
+                                    <field name="transport2_partner_id" />
+                                    <field name="transport2_mode" />
+                                    <group colspan="4" col="4" attrs="{'invisible': [('transit_partner_id', '=', False)]}">
+                                        <field name="post_transport_partner_id" />
+                                        <field name="post_transport_mode" />
+                                        <field name="post2_transport_partner_id" />
+                                        <field name="post2_transport_mode" />
+                                    </group>
+                                    <group colspan="2" col="4">
+                                        <field name="departure_date" />
+                                        <field name="arrival_planned_date" />
+                                    </group>
+                                    <field name="transport_po_id" />
+                                    <field name="notify_partner_id" />
+                                </group>
+                                <group colspan="4" col="4">
+                                    <separator colspan="4" string="Customer" />
+                                    <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
+                                    <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
+                                    <field name="incoterm_type" />
+                                    <field name="incoterm_location" />
+                                </group>
+                            </group>
+
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                                <tree string="Lines" editable="top">
+                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [[parent.customer_partner_id, parent.transit_partner_id], context.get('parent_doc_id')])]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
+                                    <field name="is_split" />
+                                    <field name="description" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="parcels_nb" attrs="{'readonly': [('shipment_id', '!=', False)]}" required="1"/>
+                                    <field name="volume" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="weight" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="amount" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="currency_id" attrs="{'readonly': [('shipment_id', '!=', False)], 'required': [('amount', '!=', False)]}"/>
+                                    <field name="comment" />
+                                    <field name="kc" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="dg" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="cs" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <button name="button_split" type="object" icon="terp-stock_effects-object-colorize" string="Split" attrs="{'invisible': ['|', '|', ('state', '!=', 'planned'), ('shipment_id', '=', 'False'), ('shipment_state', 'not in', ['done', 'delivered'])]}" />
+                                    <field name="shipment_state" />
+                                </tree>
+
+                            </field>
+                        </page>
+
+                        <page string="Cargo" on_change="change_line()">
+                            <group colspan="4" col="6">
+                                <field name="cargo_parcels" />
+                                <field name="cargo_volume" />
+                                <field name="cargo_weight" />
+                                <field name="container_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="container_size" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                            </group>
+                            <field name="manifest_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}"/>
+                            <field name="packing_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
+                            <field name="invoice_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
+                            <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
+                        </page>
+
+                        <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
+                            <newline />
+                            <field name="transport_fees_ids" nolabel="1" colspan="4"
+                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
+                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    o2m_selectable="2"
+                                >
+                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                    <field name="name" />
+                                    <field name="value" />
+                                    <field name="currency_id" />
+                                    <field name="details" />
+                                    <field name="validated" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Steps">
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}">
+                                <tree string="Steps" editable="top">
+                                    <field name="step_id" />
+                                    <field name="name" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" nolabel="1" colspan="4" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
+                        </page>
+
+                    </notebook>
+                    <field name="state" />
+                    <group colspan="2" col="6">
+                        <button string="Dispatch" states="planned" type="object" name="button_dispatch" icon="terp-dialog-close" />
+                        <button string="Validate" states="dispatched" type="object" name="button_validate"  icon="terp-check" />
+                        <button string="Cancel document" states="planned,dispatched" type="object" name="button_cancel" icon="gtk-cancel"/>
+                    </group>
+
+                </form>
+            </field>
+        </record>
+
+
+        <record id="transport_order_out_action" model="ir.actions.act_window">
+            <field name="name">Outbound Transport Object</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.out</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem action="transport_order_out_action" id="transport_order_out_menu" parent="menu_transport_management" sequence="40"/>
+
+
+        <record id="board_transportation_form" model="ir.ui.view">
+            <field name="name">board.transportation.form</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="priority">200</field>
+            <field name="arch" type="xml">
+                <form>
+                    <hpaned>
+                        <child1>
+                            <action colspan="4" height="220" name="%(transport_order_in_planned_action)d" string="Planned Inbound Cargo" width="510" menu_ref="%(transport_order_in_menu)d"/>
+                            <action colspan="4" height="220" name="%(transport_order_in_preclearance_action)d" string="Inbound Cargo Under Pre Clearance" width="510" menu_ref="%(transport_order_in_menu)d"/>
+                            <action colspan="4" height="220" name="%(transport_order_in_waiting_action)d" string="Inbound Cargo Awaiting Parcel Reception" width="510" menu_ref="%(transport_order_in_menu)d" />
+                            <action colspan="4" height="220" name="%(transport_order_out_planned_action)d" string="Planned Outbound Cargo" width="510" menu_ref="%(transport_order_out_menu)d"/>
+                            <action colspan="4" height="220" name="%(transport_order_out_transit_action)d" string="Outbound Cargo in Transit" width="510" menu_ref="%(transport_order_out_menu)d"/>
+                        </child1>
+                    </hpaned>
+                </form>
+            </field>
+        </record>
+
+        <record id="transport_step_search" model="ir.ui.view">
+            <field name="name">transport_step_search</field>
+            <field name="model">transport.step</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Transport Steps">
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_step_tree" model="ir.ui.view">
+            <field name="name">transport_step_tree</field>
+            <field name="model">transport.step</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Transport Steps" editable="top">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_step_action" model="ir.actions.act_window">
+            <field name="name">Transport Steps</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.step</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem action="transport_step_action" id="transport_step_menu" parent="menu_transport_management" sequence="100"/>
+
+        <record id="transport_order_out_line_form_split" model="ir.ui.view">
+            <field name="name">transport_order_out_line_form_split</field>
+            <field name="model">transport.order.out.line</field>
+            <field name="type">form</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <form string="Outound Transport Split">
+                    <field name="transport_id" readonly="1" />
+                    <field name="shipment_id" readonly="1" />
+                    <field name="pack_family_ids" colspan="4" nolabel="1" o2m_selectable="2">
+                        <tree string="Tick a line to remove the item from current OTO" noteditable="1" hide_new_button="1" hide_delete_button="1">
+                            <field name="sale_order_id"  filter_selector="1" />
+                            <field name="ppl_id"  filter_selector="1" />
+                            <field name="num_of_packs" />
+                            <field name="total_volume" />
+                            <field name="total_weight" />
+                        </tree>
+                    </field>
+                    <field name="item_ids" colspan="4" nolabel="1" o2m_selectable="2">
+                        <tree string="Tick a line to remove the item from current OTO" noteditable="1" hide_new_button="1" hide_delete_button="1" editable="top">
+                            <field name="name" filter_selector="1" />
+                            <field name="comment" filter_selector="1" />
+                            <field name="nb_parcels" />
+                            <field name="volume" />
+                            <field name="weight" />
+                        </tree>
+                    </field>
+                    <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                    <button string="Group checked lines in a new OTO" type="object" name="split_oto" icon="terp-stock_effects-object-colorize" set_ids="pack_family_ids,item_ids" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_ito_from_po" model="ir.actions.server">
+            <field name="name">Linked ITOs</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.open_ito_from_po(cr, uid, ids, context=context)
+            </field>
+        </record>
+
+       <record id="open_ito_from_po" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">purchase.order</field>
+            <field name="name">Linked ITOs</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_ito_from_po"/>
+            <field name="view_ids" ref="purchase.purchase_order_form,purchase.purchase_order_tree" />
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="200"/>
+        </record>
+
+
+    </data>
+</openerp>

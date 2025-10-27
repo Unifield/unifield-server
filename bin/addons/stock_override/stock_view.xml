@@ -563,13 +563,17 @@
                             <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_wkf', '=', True), ('claim', '=', True)], 'required': [('state', '=', 'draft'), ('from_wkf', '=', False), ('claim', '=', False)]}"/>
                         </group>
                         <group colspan="2" col="2">
-                            <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="min_date" string="Expected Receipt Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
-                            on_change="change_min_date()" required="1" />
+                            <group colspan="2" col="4">
+                                <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
+                                <field name="min_date" string="Expected Receipt Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
+                                    on_change="change_min_date()" required="1" />
+                            </group>
                             <field name="min_date_manually" invisible="1" />
-                            <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                            <field name="warehouse_id" widget="selection" readonly="1" invisible="1"/>
+                            <field name="oto_ref" />
                             <field name="shipment_ref" />
                             <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="manual_ito_id" readonly="1" />
                             <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
                         </group>
                     </group>

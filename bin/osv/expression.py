@@ -126,28 +126,45 @@ class expression(object):
             fargs = left.split('.', 1)
             inherited_fields = fargs[0] in table._inherit_fields
 
-            if not inherited_fields and len(fargs) > 1:
-                # check if m2o fields can be sql joined
-                field = working_table._columns.get(fargs[0], False)
-                if field and field._type == 'many2one' and field._obj and field._join:
-                    new_working_table = working_table.pool.get(field._obj)
-                    if field._join == 'LEFT':
-                        # experimental condition used on product.asser.line
-                        if new_working_table._table not in self.__leftjoins_tables:
-                            self.__leftjoins.setdefault('"%s"'%main_table._table, []).append([new_working_table._table, fargs[0], 'id', 'LEFT JOIN'])
-                            self.__leftjoins_tables.append(new_working_table._table)
-                    else:
-                        if new_working_table not in self.__all_tables:
-                            self.__joins.append('%s.%s=%s.%s' % (new_working_table._table, 'id', main_table._table, fargs[0]))
-                            self.__all_tables.append(new_working_table)
-                    working_table = new_working_table
-                    self.__field_tables[i] = working_table
-                    left = fargs[1]
-                    fargs = left.split('.', 1)
-                    self.__exp[i] = (left, operator, right)
-                    inherited_fields = fargs[0] in working_table._inherit_fields
-                    if inherited_fields:
+            join_type = False
+            if not inherited_fields:
+                while len(fargs) > 1:
+                    # check if m2o fields can be sql joined
+                    field = working_table._columns.get(fargs[0], False)
+
+                    this_fk = False
+                    other_fk = False
+
+                    if field and field._type == 'one2many':
+                        join_type = working_table.pool.get(field._obj)._columns.get(field._fields_id)._join
+                        if join_type:
+                            this_fk = 'id'
+                            other_fk = field._fields_id
+                    if field and field._type == 'many2one' and field._obj:
+                        join_type = field._join
+                        this_fk = fargs[0]
+                        other_fk = 'id'
+
+                    if join_type:
+                        new_working_table = working_table.pool.get(field._obj)
+                        if join_type == 'LEFT':
+                            if new_working_table._table not in self.__leftjoins_tables:
+                                # experimental condition used on product.asset.line
+                                self.__leftjoins.setdefault('"%s"'%main_table._table, []).append([new_working_table._table, this_fk, other_fk, 'LEFT JOIN'])
+                                self.__leftjoins_tables.append(new_working_table._table)
+                        else:
+                            if new_working_table not in self.__all_tables:
+                                self.__joins.append('%s.%s=%s.%s' % (new_working_table._table, other_fk, main_table._table, this_fk))
+                                self.__all_tables.append(new_working_table)
+                        working_table = new_working_table
+                        self.__field_tables[i] = working_table
+                        left = fargs[1]
+                        fargs = left.split('.', 1)
+                        self.__exp[i] = (left, operator, right)
+                        inherited_fields = fargs[0] in working_table._inherit_fields
                         main_table = working_table
+                    else:
+                        break
 
             if inherited_fields:
                 while True:
@@ -349,7 +366,6 @@ class expression(object):
                         else:
                             right = [x[0] for x in res_ids]
                             return (left, 'in', right)
-
                     m2o_str = False
                     if right:
                         if isinstance(right, str): # and not isinstance(field, fields.related):

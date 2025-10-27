@@ -70,6 +70,7 @@
         'data/audittrail_data_sync.yml',
         'data/audittrail_data_auto_import_export.yml',
         'data/audittrail_data_supplier_catalogue.yml',
+        'data/transport_order.yml',
     ],
     'demo_xml': [],
     'installable': True,
