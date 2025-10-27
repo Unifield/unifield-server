@@ -192,8 +192,8 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                                     st.journal_id = j.id
                                     AND st.period_id = p.id
                                     AND j.type = 'cheque'
-                                    AND p.date_start >= %s
-                                    AND p.date_stop <= %s
+                                    AND p.date_start >= %(date_from)s
+                                    AND p.date_stop <= %(date_to)s
                                 GROUP BY j.id, j.default_debit_account_id
                             )
                         UNION
@@ -204,23 +204,32 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                                 WHERE
                                 aml.journal_id = j.id
                                 AND j.type = 'cheque'
-                                AND aml.date >= %s
-                                AND aml.date <= %s
+                                AND aml.date >= %(date_from)s
+                                AND aml.date <= %(date_to)s
                                 AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                                 GROUP BY aml.journal_id, aml.account_id
                             )
                         UNION
                             (
+                            -- HQ
+                                SELECT j.id AS journal_id, j.default_debit_account_id  AS account_id, 0 as col1, 0 as col2, 0 as col3
+                                FROM account_journal j
+                                WHERE
+                                    (j.first_register_date, j.last_register_date) OVERLAPS (%(date_from)s, %(date_to)s)
+                                    AND j.type = 'cheque'
+                            )
+                        UNION
+                            (
                                 SELECT journal_id, account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
                                 FROM account_move_line
-                                WHERE id IN %s
+                                WHERE id IN %(starting_ids)s
                                 GROUP BY journal_id, account_id
                             )
                         UNION
                             (
                                 SELECT journal_id, account_id, 0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
                                 FROM account_move_line
-                                WHERE id IN %s
+                                WHERE id IN %(closing_ids)s
                                 GROUP BY journal_id, account_id
                             )
                         ) AS ssreq
@@ -230,12 +239,19 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                     WHERE req.journal_id = j.id
                     AND j.instance_id = i.id
                     AND j.currency = c.id
-                    AND j.instance_id IN %s;
+                    AND j.instance_id IN %(instance_ids);
                     """
         # ensure not to have empty arrays to avoid crash at query execution...
         pending_chq_starting_bal_ids = pending_chq_starting_bal_ids or [-1]
         pending_chq_closing_bal_ids = pending_chq_closing_bal_ids or [-1]
-        cheque_params = (period_title, date_from, date_to, date_from, date_to, tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
+        cheque_params = {
+            'period_title': period_title,
+            'date_from': date_from,
+            'date_to': date_to,
+            'starting_ids': tuple(pending_chq_starting_bal_ids),
+            'closing_ids': tuple(pending_chq_closing_bal_ids),
+            'instance_ids': tuple(self.instance_ids)
+        }
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
         cheque_res = self._filter_journal_status(cheque_res, date_from, date_to)
