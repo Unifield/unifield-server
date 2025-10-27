@@ -21,7 +21,7 @@
 
 from osv import osv
 from osv import fields
-
+from tools import misc
 import decimal_precision as dp
 
 
@@ -112,6 +112,7 @@ class purchase_order(osv.osv):
         'shipment_transport_ids': fields.one2many('shipment', 'transport_order_id', string='Linked shipments'),
         'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'purchase_id', string='Inbound/Outbound Transport Orders for Customs Fees'),
         'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'purchase_id', string='Inbound/Outbound Transport Orders for Transport Fees'),
+        'transport_active': fields.function(misc.get_transport_active, method=True, type='boolean', string='Transport Management active'),
     }
 
     _defaults = {

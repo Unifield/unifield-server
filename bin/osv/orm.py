@@ -1305,6 +1305,12 @@ class orm_template(object):
                     if f not in defaults:
                         defaults[f] = False
 
+        if self._name in ('shipment', 'stock.picking', 'purchase.order') and \
+                'transport_active' in fields_list and \
+                'transport_active' not in defaults:
+            defaults['transport_active'] = self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='transport')
+
+
         # get the default values set by the user and override the default
         # values defined in the object
         ir_values_obj = self.pool.get('ir.values')

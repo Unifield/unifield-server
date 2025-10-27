@@ -464,7 +464,8 @@
                                     </tree>
                                 </field>
                             </group>
-                            <group colspan="1" col="1" attrs="{'invisible': [('categ', 'not in', ['service', 'transport'])]}">
+                            <field name="transport_active" invisible="1"/>
+                            <group colspan="1" col="1" attrs="{'invisible': ['|', ('categ', 'not in', ['service', 'transport']), ('transport_active', '=', False)]}">
                                 <separator string="Transport documents for Customs Fees"/>
                                 <field name="transport_customs_fees_ids" nolabel="1" widget="many2many" readonly="1">
                                     <tree string="Inbound/Outbound Transport Orders">
@@ -473,7 +474,7 @@
                                     </tree>
                                 </field>
                             </group>
-                            <group colspan="1" col="1" attrs="{'invisible': [('categ', 'not in', ['service', 'transport'])]}">
+                            <group colspan="1" col="1" attrs="{'invisible': ['|', ('categ', 'not in', ['service', 'transport']), ('transport_active', '=', False)]}">
                                 <separator string="Transport documents for Transport Fees"/>
                                 <field name="transport_transport_fees_ids" nolabel="1" widget="many2many" readonly="1">
                                     <tree string="Inbound/Outbound Transport Orders">

@@ -570,10 +570,11 @@
                             </group>
                             <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id" widget="selection" readonly="1" invisible="1"/>
-                            <field name="oto_ref" />
+                            <field name="transport_active" invisible="1" />
+                            <field name="oto_ref" attrs="{'invisible': [('transport_active', '=', False)]}" />
                             <field name="shipment_ref" />
                             <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                            <field name="manual_ito_id" readonly="1" />
+                            <field name="manual_ito_id" readonly="1" attrs="{'invisible': [('transport_active', '=', False)]}" />
                             <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
                         </group>
                     </group>

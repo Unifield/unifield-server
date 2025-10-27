@@ -440,6 +440,7 @@ class shipment(osv.osv):
         'has_ret_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Return Pack(s)'),
         'oto_line_ids': fields.one2many('transport.order.out.line', 'shipment_id', 'OTO line'),
         'manual_oto_id': fields.many2one('transport.order.out', 'Outbound Transport Order', copy=False),
+        'transport_active': fields.function(tools.misc.get_transport_active, method=True, type='boolean', string='Transport Management active'),
     }
 
     def _get_sequence(self, cr, uid, context=None):

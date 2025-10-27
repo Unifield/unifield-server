@@ -1,0 +1,48 @@
+<openerp>
+  <data>
+    <record id="view_transport_setup" model="ir.ui.view">
+      <field name="name">Transport Management Configuration</field>
+      <field name="model">transport.setup</field>
+      <field name="type">form</field>
+      <field name="inherit_id" ref="base.res_config_view_base"/>
+      <field name="arch" type="xml">
+        <data>
+          <form position="attributes">
+            <attribute name="string">Activate Transport Management</attribute>
+          </form>
+          <xpath expr="//label[@string='description']" position="attributes">
+                <attribute name="string">Determines if users could use Transport ITO / OTO objects.</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="title"]' position='attributes'>
+                    <attribute name='string'>Activate the Transport Management feature</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="vsep"]' position='attributes'>
+                    <attribute name='rowspan'>25</attribute>
+                    <attribute name='string'></attribute>
+          </xpath>
+          <group string="res_config_contents" position="replace">
+              <group colspan="5">
+                <field name="transport" />
+              </group>
+           </group>
+        </data>
+      </field>
+    </record>
+
+    <record id="action_transport_setup" model="ir.actions.act_window">
+      <field name="name">Activate Transport Management</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">transport.setup</field>
+      <field name="view_id" ref="view_transport_setup"/>
+      <field name="view_type">form</field>
+      <field name="view_mode">form</field>
+      <field name="target">new</field>
+    </record>
+
+    <record id="transport_setup_todo" model="ir.actions.todo">
+        <field name="action_id" ref="action_transport_setup"/>
+        <field name="sequence">25</field>
+        <field name="restart">always</field>
+    </record>
+  </data>
+</openerp>

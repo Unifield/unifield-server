@@ -235,6 +235,7 @@ class stock_picking(osv.osv):
         ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
         return ret
 
+
     _columns = {
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
@@ -287,6 +288,7 @@ class stock_picking(osv.osv):
                                                help='Picking or Out that created this Internal Move after cancellation'),
         'ret_from_unit_rt': fields.function(_get_ret_from_unit_rt, method=True, type='boolean', string='Check if the Reason Type is Return from Unit', store=False),
         'manual_ito_id': fields.many2one('transport.order.in', 'Inbound Order Transport', readonly=True, copy=False),
+        'transport_active': fields.function(tools.misc.get_transport_active, method=True, type='boolean', string='Transport Management active'),
     }
 
     _defaults = {

@@ -1314,7 +1314,8 @@
                                    on_change="on_change_address_id(address_id)"
                                    />
                             <field name="in_ref" readonly="True" />
-                            <field name="manual_oto_id"  attrs="{'readonly': [('state', 'not in', ['shipped'])]}" />
+                            <field name="transport_active" invisible="True" />
+                            <field name="manual_oto_id"  attrs="{'readonly': [('state', 'not in', ['shipped'])], 'invisible': [('transport_active', '=', False)]}" />
                             <field name="partner_type" invisible="True" readonly="True" />
                         </group>
                     </group>

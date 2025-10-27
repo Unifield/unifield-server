@@ -73,7 +73,7 @@
         </record>
 
 
-        <menuitem icon="terp-purchase" id="menu_transportation_root" name="Transportation" sequence="5" web_icon="images/transportation.png" web_icon_hover="images/transportation-hover.png" action="board_transportation"/>
+        <menuitem icon="terp-purchase" id="menu_transportation_root" name="Transportation" sequence="5" web_icon="images/transportation.png" web_icon_hover="images/transportation-hover.png" action="board_transportation" active_config="transport"/>
         <menuitem id="menu_transport_management" name="Transport Management" parent="menu_transportation_root" />
 
         <record id="transport_order_in_search" model="ir.ui.view">

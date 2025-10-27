@@ -292,12 +292,13 @@ class stock_picking(osv.osv):
             })
             import_success = True
 
-            # Create/Update an ITO using the shipment_ref
-            in_data = self.read(cr, uid, context.get('new_picking', in_id), ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
-            if in_data['shipment_ref']:
-                in_partner_id = in_data['partner_id'] and in_data['partner_id'][0] or False
-                self.create_update_ito(cr, uid, in_data['id'], in_data['name'], in_data['shipment_ref'],
-                                       in_partner_id, in_data['order_category'], context=context)
+            if self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='transport'):
+                # Create/Update an ITO using the shipment_ref
+                in_data = self.read(cr, uid, context.get('new_picking', in_id), ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
+                if in_data['shipment_ref']:
+                    in_partner_id = in_data['partner_id'] and in_data['partner_id'][0] or False
+                    self.create_update_ito(cr, uid, in_data['id'], in_data['name'], in_data['shipment_ref'],
+                                           in_partner_id, in_data['order_category'], context=context)
         except Exception as e:
             raise e
 
