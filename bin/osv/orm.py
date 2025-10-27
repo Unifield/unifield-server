@@ -3343,7 +3343,8 @@ class orm(orm_template):
                             self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE SET NULL",
                                                 self._obj, f._fields_id, f._table)
                 elif isinstance(f, fields.many2many):
-                    if not self.pool.get(f._obj):
+                    if not self.pool.get(f._obj) or \
+                            not cr.table_exists(self.pool.get(f._obj)._table):
                         missing_m2m.setdefault(f._obj, [])
                         missing_m2m[f._obj].append((self, f))
                     else:

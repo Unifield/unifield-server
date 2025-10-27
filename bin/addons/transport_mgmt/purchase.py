@@ -25,6 +25,7 @@ from osv import fields
 import decimal_precision as dp
 
 
+
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
@@ -109,6 +110,8 @@ class purchase_order(osv.osv):
         'transport_order_id': fields.many2one('purchase.order', string='Linked Purchase Order', domain=[('categ', '!=', 'transport')]),
         'picking_transport_ids': fields.one2many('stock.picking', 'transport_order_id', string='Linked deliveries'),
         'shipment_transport_ids': fields.one2many('shipment', 'transport_order_id', string='Linked shipments'),
+        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'purchase_id', string='Inbound/Outbound Transport Orders for Customs Fees'),
+        'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'purchase_id', string='Inbound/Outbound Transport Orders for Transport Fees'),
     }
 
     _defaults = {

@@ -137,6 +137,41 @@
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
                 <form string="Inbound Transport Object" hide_delete_button="1">
+                    <html colspan="4">
+                        <script language="javascript">
+                            $('#select_incoming_text').css('display', 'none');
+                            $('#select_incoming_open').css('display', 'none');
+                            $('#select_incoming_select').css('position', 'static');
+                            $('[for="select_incoming"]').css('width', '1%%');
+                            set_customs_help_init = function(init) {
+                                $('table#transport_customs_fees_ids tr[record]').each(function() {
+                                    var button_customs_help = $('input#name_help', this).val();
+                                    $('a#dummy', this).attr('title', button_customs_help);
+                                });
+                            }
+                            set_transport_help_init = function(init) {
+                                $('table#transport_transport_fees_ids tr[record]').each(function() {
+                                    var button_transport_help = $('input#name_help', this).val();
+                                    $('a#dummy', this).attr('title', button_transport_help);
+                                });
+                            }
+
+                            // To allow the help value to be updated after the line is changed
+                            new ListView('transport_customs_fees_ids').after_reload = function() {
+                                set_customs_help_init(true);
+                            };
+                            new ListView('transport_transport_fees_ids').after_reload = function() {
+                                set_transport_help_init(true);
+                            };
+
+                            $(document).ready(function() {
+                                // To allow the help value to be set after load
+                                set_customs_help_init(true);
+                                set_transport_help_init(true);
+                            });
+                        </script>
+                    </html>
+                    <newline/>
                     <field name="name" />
                     <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="shipment_type"  />
@@ -144,7 +179,14 @@
                     <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <group colspan="2" col="3" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                        <field name="no_line" invisible="1"/>
+                        <field name="ship_ref" on_change="onchange_ship_ref(ship_ref, select_incoming)"/>
+                        <field name="select_incoming" on_change="onchange_select_incoming(select_incoming)" nolabel="1"
+                               domain="[('type', '=', 'in'), ('partner_id', '=', supplier_partner_id), ('shipment_ref', '!=', False)]"
+                               attrs="{'invisible': ['|', ('no_line', '=', False), ('ship_ref', '!=', False)]}"
+                               context="{'pick_type': 'incoming', 'transport_object': True}" />
+                    </group>
                     <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="sync_ref" />
                     <field name="from_sync" invisible="1" />
@@ -160,7 +202,7 @@
                                         <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
                                     </group>
                                 </group>
-                                <group colspan="4" col="4">
+                                <group colspan="4" col="4" attrs="{'readonly': [('no_line', '=', False)]}">
                                     <separator colspan="4" string="Shipping" />
                                     <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
                                     <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
@@ -192,7 +234,7 @@
                                     <field name="incoterm_location" />
                                 </group>
                             </group>
-                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" on_change="onchange_line_ids(line_ids)" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                                 <tree string="Lines" editable="top">
                                     <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
                                     <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>
@@ -219,22 +261,48 @@
                                 <field name="container_size" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                                 <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                             </group>
-                            <field name="manifest_link" widget="url"  attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
+                            <field name="manifest_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                             <field name="packing_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                             <field name="invoice_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                         </page>
 
-                        <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
+                        <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'domestic'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', 'not in', ['planned', 'cancel'])]}"/>
                             <newline />
-                            <field name="transport_fees_ids" nolabel="1" colspan="4"
+                            <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
                                     attrs="{'readonly': [('state', '=', 'cancel')]}"
                                     o2m_selectable="2"
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
-                                    <field name="name" />
+                                    <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}" help=""/>
+                                    <field name="name" widget="selection" />
+                                    <field name="name_help" invisible="1" />
+                                    <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_details" readonly="1" />
+                                    <field name="value" />
+                                    <field name="currency_id" />
+                                    <field name="details" />
+                                    <field name="validated" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Transport Fees">
+                            <field name="transport_transport_fees_ids" nolabel="1" colspan="4"
+                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
+                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    o2m_selectable="2"
+                                >
+                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                    <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
+                                    <field name="name" widget="selection" />
+                                    <field name="name_help" invisible="1" />
+                                    <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_details" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
@@ -246,10 +314,15 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}">
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
                                 <tree string="Steps" editable="top">
-                                    <field name="step_id" />
+                                    <field name="step_id" widget="selection" get_selection="get_steps" />
+                                    <field name="sub_step_id" widget="selection" />
+                                    <field name="comment" />
                                     <field name="name" />
+                                    <field name="target_end_date" />
+                                    <field name="end_date" />
                                 </tree>
                             </field>
                         </page>
@@ -387,6 +460,37 @@
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
                 <form string="Outbound Transport Object" hide_delete_button="1">
+                    <html colspan="4">
+                        <script language="javascript">
+                            set_customs_help_init = function(init) {
+                                $('table#transport_customs_fees_ids tr[record]').each(function() {
+                                    var button_customs_help = $('input#name_help', this).val();
+                                    $('a#dummy', this).attr('title', button_customs_help);
+                                });
+                            }
+                            set_transport_help_init = function(init) {
+                                $('table#transport_transport_fees_ids tr[record]').each(function() {
+                                    var button_transport_help = $('input#name_help', this).val();
+                                    $('a#dummy', this).attr('title', button_transport_help);
+                                });
+                            }
+
+                            // To allow the help value to be updated after the line is changed
+                            new ListView('transport_customs_fees_ids').after_reload = function() {
+                                set_customs_help_init(true);
+                            };
+                            new ListView('transport_transport_fees_ids').after_reload = function() {
+                                set_transport_help_init(true);
+                            };
+
+                            $(document).ready(function() {
+                                // To allow the help value to be set after load
+                                set_customs_help_init(true);
+                                set_transport_help_init(true);
+                            });
+                        </script>
+                    </html>
+                    <newline/>
                     <field name="name" />
                     <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="shipment_type" />
@@ -479,16 +583,42 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
                         </page>
 
-                        <page string="Customs" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'regional'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
+                        <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'domestic'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', 'not in', ['planned', 'cancel'])]}"/>
                             <newline />
-                            <field name="transport_fees_ids" nolabel="1" colspan="4"
+                            <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
                                     attrs="{'readonly': [('state', '=', 'cancel')]}"
                                     o2m_selectable="2"
                                 >
                                 <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
-                                    <field name="name" />
+                                    <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
+                                    <field name="name" widget="selection" />
+                                    <field name="name_help" invisible="1" />
+                                    <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_details" readonly="1" />
+                                    <field name="value" />
+                                    <field name="currency_id" />
+                                    <field name="details" />
+                                    <field name="validated" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Transport Fees">
+                            <field name="transport_transport_fees_ids" nolabel="1" colspan="4"
+                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
+                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    o2m_selectable="2"
+                                >
+                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                    <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
+                                    <field name="name" widget="selection" />
+                                    <field name="name_help" invisible="1" />
+                                    <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_details" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
@@ -500,10 +630,15 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}">
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
                                 <tree string="Steps" editable="top">
-                                    <field name="step_id" />
+                                    <field name="step_id" widget="selection" get_selection="get_steps" />
+                                    <field name="sub_step_id" widget="selection" />
+                                    <field name="comment" />
                                     <field name="name" />
+                                    <field name="target_end_date" />
+                                    <field name="end_date" />
                                 </tree>
                             </field>
                         </page>
@@ -556,13 +691,77 @@
             </field>
         </record>
 
+        <record id="transport_macroprocess_search" model="ir.ui.view">
+            <field name="name">transport_macroprocess_search</field>
+            <field name="model">transport.macroprocess</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Macroprocess">
+                    <filter icon="terp-check" name="active" string="Active" domain="[('active', '=', True)]" separator="1" />
+                    <filter icon="gtk-dialog-error" name="inactive" string="Inactive" domain="[('active', '=', False)]" separator="1" />
+                    <separator orientation="vertical" />
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_macroprocess_tree" model="ir.ui.view">
+            <field name="name">transport_macroprocess_tree</field>
+            <field name="model">transport.macroprocess</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Macroprocess" hide_delete_button="1" hide_new_button="1">
+                    <field name="name" />
+                    <field name="active" />
+                    <button name="activate" string="Activate Macroprocess" icon="gtk-paste-v" attrs="{'invisible': [('active', '=', True)]}" type="object" />
+                    <button name="deactivate" string="Deactivate Macroprocess" icon="unsign.png" attrs="{'invisible': [('active', '=', False)]}" type="object" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_macroprocess_form" model="ir.ui.view">
+            <field name="name">transport_macroprocess_form</field>
+            <field name="model">transport.macroprocess</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <form string="Macroprocess" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" hide_duplicate_button="1">
+                    <field name="name" readonly="1"/>
+                    <field name="active" readonly="1" />
+                    <newline />
+                    <field name="step_ids" nolabel="1" readonly="1" colspan="6">
+                        <tree string="Linked Steps" noteditable="1">
+                            <field name="name"/>
+                            <field name="is_active"/>
+                        </tree>
+                    </field>
+                    <button name="activate" string="Activate Macroprocess" icon="gtk-paste-v" attrs="{'invisible': [('active', '=', True)]}" type="object" />
+                    <button name="deactivate" string="Deactivate Macroprocess" icon="unsign.png" attrs="{'invisible': [('active', '=', False)]}" type="object" />
+                </form>
+            </field>
+        </record>
+
+        <record id="transport_macroprocess_action" model="ir.actions.act_window">
+            <field name="name">Macroprocess</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.macroprocess</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
         <record id="transport_step_search" model="ir.ui.view">
             <field name="name">transport_step_search</field>
             <field name="model">transport.step</field>
             <field name="type">search</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <search string="Transport Steps">
+                <search string="Steps">
+                    <filter icon="terp-check" name="active" string="Active" domain="[('is_active', '=', True)]" separator="1" />
+                    <filter icon="gtk-dialog-error" name="inactive" string="Inactive" domain="[('is_active', '=', False)]" separator="1" />
+                    <separator orientation="vertical" />
                     <field name="name" />
                 </search>
             </field>
@@ -574,14 +773,35 @@
             <field name="type">tree</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <tree string="Transport Steps" editable="top">
+                <tree string="Steps" hide_delete_button="1" hide_new_button="1">
                     <field name="name" />
+                    <field name="is_active" />
                 </tree>
             </field>
         </record>
 
+        <record id="transport_step_form" model="ir.ui.view">
+            <field name="name">transport_step_form</field>
+            <field name="model">transport.step</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <form string="Steps" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="name" readonly="1"/>
+                    <field name="is_active" on_change="onchange_is_active(is_active)" />
+                    <newline />
+                    <field name="macroprocess_ids" nolabel="1" readonly="1" colspan="6">
+                        <tree string="Linked Macroprocesses" noteditable="1">
+                            <field name="name"/>
+                            <field name="active"/>
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
         <record id="transport_step_action" model="ir.actions.act_window">
-            <field name="name">Transport Steps</field>
+            <field name="name">Steps</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">transport.step</field>
             <field name="view_type">form</field>
@@ -589,7 +809,43 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <menuitem action="transport_step_action" id="transport_step_menu" parent="menu_transport_management" sequence="100"/>
+        <record id="transport_sub_step_search" model="ir.ui.view">
+            <field name="name">transport_sub_step_search</field>
+            <field name="model">transport.sub.step</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Sub-Steps">
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_sub_step_tree" model="ir.ui.view">
+            <field name="name">transport_sub_step_tree</field>
+            <field name="model">transport.sub.step</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Sub-Steps" editable="top">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_sub_step_action" model="ir.actions.act_window">
+            <field name="name">Sub-Steps</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.sub.step</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem name="Configuration" id="transport_configuration_menu" parent="menu_transport_management" sequence="100"/>
+        <menuitem action="transport_macroprocess_action" id="transport_macroprocess_menu" parent="transport_configuration_menu" sequence="1"/>
+        <menuitem action="transport_step_action" id="transport_step_menu" parent="transport_configuration_menu" sequence="2"/>
+        <menuitem action="transport_sub_step_action" id="transport_subs_tep_menu" parent="transport_configuration_menu" sequence="3"/>
 
         <record id="transport_order_out_line_form_split" model="ir.ui.view">
             <field name="name">transport_order_out_line_form_split</field>
@@ -633,7 +889,7 @@ action = self.open_ito_from_po(cr, uid, ids, context=context)
             </field>
         </record>
 
-       <record id="open_ito_from_po" model="ir.values">
+        <record id="open_ito_from_po" model="ir.values">
             <field name="key2">client_action_relate</field>
             <field name="model">purchase.order</field>
             <field name="name">Linked ITOs</field>

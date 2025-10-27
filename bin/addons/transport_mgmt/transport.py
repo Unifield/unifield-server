@@ -6,42 +6,291 @@ import time
 #import decimal_precision as dp
 from tools.translate import _
 from tools.misc import get_fake
+from . import TRANSPORT_FEES_HELP, CUSTOMS_FEES_HELP
 
-class transport_order_fees(osv.osv):
-    _name = 'transport.order.fees'
+
+class transport_order_fees_type(osv.osv):
+    _name = 'transport.order.fees.type'
+    _description = 'Fees types'
+
+    _columns = {
+        'name': fields.char('Name', size=256, select=1, required=1, translate=1),
+        'code': fields.char('Code', size=128, select=1, required=1),
+        'customs_fee': fields.boolean('Is a Customs Fee'),
+        'transport_fee': fields.boolean('Is a Transport Fee'),
+    }
+
+transport_order_fees_type()
+
+
+class transport_order_customs_fees(osv.osv):
+    _name = 'transport.order.customs.fees'
     _description = 'Fees'
 
     _order = 'name, id'
 
+    def _get_vals(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get PO data from the selected PO
+        Get ITO/OTO data from the parent
+        '''
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        ftf = ['purchase_id', 'transport_in_id', 'transport_out_id', 'name']
+        for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            po = fees.purchase_id
+            parent = fees.transport_in_id or fees.transport_out_id or False
+            name_help = fees.name and fees.name.code or ''
+            for sel_help in CUSTOMS_FEES_HELP:
+                if sel_help[0] == name_help:
+                    name_help = _(sel_help[1])
+                    break
+            res[fees.id] = {
+                'purchase_details': po and po.details or '',
+                'parent_name': parent and parent.name or '',
+                'parent_state': parent and parent.state or '',
+                'name_help': name_help,
+            }
+
+        return res
+
     _columns = {
-        'name': fields.selection([
-            ('customs_clearance', 'Customs Clearance Fees'),
-            ('preclearance_cargo', 'Preclearance fees per cargo'),
-            ('direct', 'Direct Taxes / Duties per cargo'),
-            ('indirect', 'Other indirect taxes / fees per cargo'),
-            ('handling', 'Handling Fees'),
-            ('bonded_wh', 'Customs Bonded (warehousing) fees per cargo'),
-            ('bonded_ex_wh', 'Customs Bonded (ex-warehousing) fees per cargo'),
-            ('bonded_storage', 'Bonded storage fees'),
-            ('storage', 'Storage Fees'),
-        ], 'Type', add_empty=True, required=1),
-        'value': fields.float('Cost', decimal=(16,2), required=1),
+        'name': fields.many2one('transport.order.fees.type', 'Type', domain=[('customs_fee', '=', True)], add_empty=1, select=1, required=1),
+        'value': fields.float('Cost', decimal=(16,2)),
         'currency_id': fields.many2one('res.currency', 'Currency', required=1, domain=[('active', '=', True)]),
         'details': fields.char('Details', size=512),
         'validated': fields.boolean('Validated', readonly=1),
         'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
-        'transport_in_id': fields.many2one('transport.order.in', 'OTO', select=1),
+        'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
+        'purchase_id': fields.many2one('purchase.order', 'Custom Fees', domain=[('categ', 'in', ['service', 'transport'])], select=1),
+        'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
+                                            store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
+        'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
+        'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
+                                        selection=[('planned', 'Planned'),
+                                                   ('preclearance', 'Under Preclearance'),
+                                                   ('transit', 'In Transit'),
+                                                   ('border', 'At Border Point'),
+                                                   ('customs', 'Customs Cleared'),
+                                                   ('warehouse', 'At Warehouse'),
+                                                   ('dispatched', 'Dispatched'),
+                                                   ('closed', 'Closed'),
+                                                   ('cancel', 'Cancelled')]),
+        'name_help': fields.function(_get_vals, method=True, string='Customs fees help message', type='text', multi='get_vals'),
     }
 
     _default = {
         'validated': False,
     }
 
+    def onchange_purchase_id(self, cr, uid, ids, purchase_id):
+        res = {}
+        if purchase_id:
+            po = self.pool.get('purchase.order').browse(cr, uid, purchase_id, fields_to_fetch=['details', 'pricelist_id'])
+            res['value'] = {'purchase_details': po.details, 'currency_id': po.pricelist_id.currency_id.id}
+        else:
+            res['value'] = {'purchase_details': '', 'currency_id': False}
+        return res
+
     def button_validate_fees(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'validated': True}, context=context)
         return True
 
-transport_order_fees()
+    def dummy(self, cr, uid, ids, context=None):
+        return True
+
+transport_order_customs_fees()
+
+
+class transport_order_transport_fees(osv.osv):
+    _name = 'transport.order.transport.fees'
+    _description = 'Transport Fees'
+
+    _order = 'name, id'
+
+    def _get_vals(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get PO data from the selected PO
+        Get ITO/OTO data from the parent
+        '''
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        ftf = ['purchase_id', 'transport_in_id', 'transport_out_id', 'name']
+        for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            po = fees.purchase_id
+            parent = fees.transport_in_id or fees.transport_out_id or False
+            name_help = fees.name and fees.name.code or ''
+            for sel_help in TRANSPORT_FEES_HELP:
+                if sel_help[0] == name_help:
+                    name_help = _(sel_help[1])
+                    break
+            res[fees.id] = {
+                'purchase_details': po and po.details or '',
+                'parent_name': parent and parent.name or '',
+                'parent_state': parent and parent.state or '',
+                'name_help': name_help,
+            }
+
+        return res
+
+    _columns = {
+        'name': fields.many2one('transport.order.fees.type', 'Type', domain=[('transport_fee', '=', True)], add_empty=1, select=1, required=1),
+        'value': fields.float('Cost', decimal=(16,2)),
+        'currency_id': fields.many2one('res.currency', 'Currency', required=1, domain=[('active', '=', True)]),
+        'details': fields.char('Details', size=512),
+        'validated': fields.boolean('Validated', readonly=1),
+        'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
+        'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
+        'purchase_id': fields.many2one('purchase.order', 'Transport Fees', domain=[('categ', 'in', ['service', 'transport'])], select=1),
+        'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
+                                            store={'transport.order.transport.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
+        'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
+        'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
+                                        selection=[('planned', 'Planned'),
+                                                   ('preclearance', 'Under Preclearance'),
+                                                   ('transit', 'In Transit'),
+                                                   ('border', 'At Border Point'),
+                                                   ('customs', 'Customs Cleared'),
+                                                   ('warehouse', 'At Warehouse'),
+                                                   ('dispatched', 'Dispatched'),
+                                                   ('closed', 'Closed'),
+                                                   ('cancel', 'Cancelled')]),
+        'name_help': fields.function(_get_vals, method=True, string='Transport fees help message', type='text', multi='get_vals'),
+    }
+
+    _default = {
+        'validated': False,
+    }
+
+    def onchange_purchase_id(self, cr, uid, ids, purchase_id):
+        res = {}
+        if purchase_id:
+            po = self.pool.get('purchase.order').browse(cr, uid, purchase_id, fields_to_fetch=['details', 'pricelist_id'])
+            res['value'] = {'purchase_details': po.details, 'currency_id': po.pricelist_id.currency_id.id}
+        else:
+            res['value'] = {'purchase_details': '', 'currency_id': False}
+        return res
+
+    def button_validate_fees(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'validated': True}, context=context)
+        return True
+
+    def dummy(self, cr, uid, ids, context=None):
+        return True
+
+
+transport_order_transport_fees()
+
+
+class transport_macroprocess(osv.osv):
+    _name = 'transport.macroprocess'
+    _description = 'Macroprocess'
+    _order = 'id'
+    _columns = {
+        'name': fields.char('Name', size=128, select=1, required=1, translate=1),
+        'active': fields.boolean('Active', readonly=1),
+        'transport_management': fields.selection([('in', 'Inbound'), ('out', 'Outbound'), ('both', 'Inbound and Outbound')], 'Active', required=1),
+        'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
+        # step_ids many2many added in the inherit
+    }
+
+    def activate(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return self.write(cr, uid, ids, {'active': True}, context=context)
+
+    def deactivate(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        cr.execute("""
+            (
+                SELECT name FROM transport_order_in WHERE macroprocess_id IN %s AND state NOT IN ('closed', 'cancel')
+            ) UNION (
+                SELECT name FROM transport_order_out WHERE macroprocess_id IN %s AND state NOT IN ('closed', 'cancel')
+            )
+        """, (tuple(ids), tuple(ids)))
+        non_done_transport = [x[0] for x in cr.fetchall()]
+        if non_done_transport:
+            raise osv.except_osv(
+                _('Warning'), _('The Macroprocess is actively used by %s and can not be deactivated')
+                % (', '.join(non_done_transport),)
+            )
+
+        return self.write(cr, uid, ids, {'active': False}, context=context)
+
+
+transport_macroprocess()
+
+
+class transport_step(osv.osv):
+    _name = 'transport.step'
+    _description = 'Steps'
+    _order = 'id'
+    _columns = {
+        'name': fields.char('Name', size=256, select=1, required=1, translate=1),
+        'is_active': fields.boolean('Active'),
+        'macroprocess_ids': fields.many2many('transport.macroprocess', 'macroprocess_step_rel', 'step_ids', 'macroprocess_ids', 'Linked Macroprocesses'),
+    }
+
+    def onchange_is_active(self, cr, uid, ids, is_active, context=None):
+        """
+        Give a warning if the step is used on an Transport Step
+        """
+        if not context:
+            context = {}
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        if not is_active:
+            t_order_obj = self.pool.get('transport.order.step')
+            domain = [
+                ('step_id', 'in', ids), '|',
+                '&', ('transport_in_id', '!=', False), ('transport_in_id.state', 'not in', ['closed', 'cancel']),
+                '&', ('transport_out_id', '!=', False), ('transport_out_id.state', 'not in', ['closed', 'cancel']),
+            ]
+            t_order_step_ids = t_order_obj.search(cr, uid, domain, context=context)
+            if t_order_step_ids:
+                ftf = ['transport_in_id', 'transport_out_id']
+                t_order_step = t_order_obj.browse(cr, uid, t_order_step_ids, fields_to_fetch=ftf, context=context)
+                t_order_step_names = [tos.transport_in_id and tos.transport_in_id.name or tos.transport_out_id.name for tos in t_order_step]
+                res.update({
+                    'value': {'is_active': True},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The Step is actively used by %s and can not be deactivated') % (', '.join(t_order_step_names),),
+                    }
+                })
+
+        return res
+
+
+transport_step()
+
+
+class transport_sub_step(osv.osv):
+    _name = 'transport.sub.step'
+    _description = 'Sub-Steps'
+    _order = 'name, id'
+    _columns = {
+        'name': fields.char('Name', size=128, select=1, required=1, translate=1),
+    }
+
+    _sql_constraints = [
+        ('unique_name', 'unique(name)', 'A Sub-Step with the same name already exists')
+    ]
+
+
+transport_sub_step()
+
 
 class transport_order_step(osv.osv):
     _name = 'transport.order.step'
@@ -50,14 +299,38 @@ class transport_order_step(osv.osv):
     _order = 'name desc, id'
 
     _columns = {
-        'name': fields.date('Date', required=1),
-        'step_id': fields.many2one('transport.step', 'Step', required=1),
+        'name': fields.date('Start Date', required=1),
+        'step_id': fields.many2one('transport.step', 'Step', required=1, select=1),
+        'sub_step_id': fields.many2one('transport.sub.step', 'Sub-Step', select=1),
         'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
-        'transport_in_id': fields.many2one('transport.order.in', 'OTO', select=1),
+        'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
+        'comment': fields.char(size=256, string='Comment'),
+        'target_end_date': fields.date('Target End Date'),
+        'end_date': fields.date('Actual End Date'),
     }
 
-transport_order_step()
+    _sql_constraints = [
+        ('in_order_step_unique', 'unique(transport_in_id, step_id)', 'You can not select the same Step twice !'),
+        ('out_order_step_unique', 'unique(transport_out_id, step_id)', 'You can not select the same Step twice !'),
+    ]
 
+    def get_steps(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        # Get the current user's lang if there is none
+        if not context.get('lang'):
+            user_lang = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
+            context['lang'] = user_lang or 'en_MF'
+
+        dom = [('is_active', '=', True)]
+        if context.get('macroprocess_id'):
+            dom.append(('macroprocess_ids', '=', context['macroprocess_id']))
+
+        return self.pool.get('transport.step')._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
+
+
+transport_order_step()
 
 
 class transport_order(osv.osv):
@@ -79,13 +352,19 @@ class transport_order(osv.osv):
             }
         return res
 
+    def _get_macroprocess_id(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        macroprocess_ids = self.pool.get('transport.macroprocess').search(cr, uid, [], limit=1, context=context)
+        return macroprocess_ids and macroprocess_ids[0] or False
+
     _columns = {
         'name': fields.char('Reference', size=64, required=True, select=True, readonly=True, copy=False),
         'original_cargo_ref': fields.char('Original Cargo ref', size=256, select=True),
         'shipment_type': fields.selection([('in', 'Inbound'), ('out', 'Outbound')], 'Shipment Type', required=True, readonly=True),
-        'shipment_flow': fields.selection([('single', 'Single'), ('multi', 'Multileg')], 'Shipment Flow'),
-        'zone_type': fields.selection([('int', 'International'), ('regional', 'Regional'),('local', 'Local')], 'Zone Type', required=True, add_empty=True),
-        'cargo_category': fields.selection([('medical', 'Medical'), ('log', 'Logistic'), ('service', 'Service'), ('mixed', 'Mixed')], 'Cargo Type', required=True, add_empty=True),
+        'shipment_flow': fields.selection([('single', 'Direct'), ('multi', 'Multileg')], 'Shipment Flow'),
+        'zone_type': fields.selection([('int', 'International'), ('domestic', 'Domestic')], 'Zone Type', required=True, add_empty=True),
+        'cargo_category': fields.selection([('medical', 'Medical'), ('log', 'Logistic'), ('mixed', 'Mixed')], 'Cargo Type', required=True, add_empty=True),
         'creation_date': fields.date('Creation Date'),
         'ship_ref': fields.char('Ship Reference', size=256, select=True),
         #'linked_transport_id': # TODO m2o vs free text
@@ -94,19 +373,19 @@ class transport_order(osv.osv):
 
 
         'transport_partner_id': fields.many2one('res.partner', 'Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
-        'transport_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Transport Mode'),
+        'transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Transport Mode'),
 
         'transit_departure_date': fields.date('Transit Location Date of Departure'),
         'transit_arrival_planned_date': fields.date('Transit Location Planned Arrival Date'),
 
         'transport2_partner_id': fields.many2one('res.partner', '2nd Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
-        'transport2_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], '2nd Transport Mode'),
+        'transport2_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], '2nd Transport Mode'),
 
         'post_transport_partner_id': fields.many2one('res.partner', 'Post Transit Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
-        'post_transport_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit Transport Mode'),
+        'post_transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit Transport Mode'),
 
         'post2_transport_partner_id': fields.many2one('res.partner', 'Post Transit 2nd Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
-        'post2_transport_mode': fields.selection([('air', 'Air'), ('air_charter', 'Air Charter'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit 2nd Transport Mode'),
+        'post2_transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit 2nd Transport Mode'),
 
         'transport_po_id': fields.many2one('purchase.order', 'Transport PO', domain=[('categ', '=', 'transport')], context={'po_from_transport': True}),
 
@@ -114,7 +393,7 @@ class transport_order(osv.osv):
         'supplier_address_id': fields.many2one('res.partner.address', 'Supplier Address', select=1, ondelete='restrict'),
 
         'transit_partner_id': fields.many2one('res.partner', 'Ships Via', select=1, ondelete='restrict', left='JOIN'),
-        'transit_address_id': fields.many2one('res.partner.address', ' Transit Address', select=1, ondelete='restrict'),
+        'transit_address_id': fields.many2one('res.partner.address', 'Transit Address', select=1, ondelete='restrict'),
 
         'customer_partner_id': fields.many2one('res.partner', 'Customer Partner', domain=[('customer', '=', True)], select=1, ondelete='restrict', left='JOIN'),
         'customer_address_id': fields.many2one('res.partner.address', 'Customer Address', select=1, ondelete='restrict'),
@@ -124,6 +403,7 @@ class transport_order(osv.osv):
         'incoterm_type': fields.many2one('stock.incoterms', 'Incoterm Type', widget='selection'),
         'incoterm_location': fields.char('Incoterm Location', size=128), # TODO m2o
         'notify_partner_id': fields.many2one('res.partner', 'Notify Partner'), # TODO ondelete
+        'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', required=1, select=1, ondelete='restrict'),
 
         'customs_regime': fields.selection([
             ('import', 'Import'),
@@ -133,10 +413,10 @@ class transport_order(osv.osv):
             ('reexport', 'Re-Export'),
             ('bondedwh', 'Bonded Warehouse'),
             ('temp', 'Temporary Importation'),
-        ], 'Customs Regime'),
+        ], 'Customs Regime', add_empty=True),
 
         'cargo_weight': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Weight [kg]', multi='_total'),
-        'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm3]', multi='_total'),
+        'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm³]', multi='_total'),
         'cargo_parcels':  fields.function(lambda self, *a: self._get_total(*a), type='integer', method=True, string='Total Number of Parcels', multi='_total'),
         'container_type': fields.selection([('dry', 'Dry'), ('reefer', 'Reefer')], 'Container Type'),
         'container_size': fields.selection([('20ft', '20 ft'), ('40ft', '40 ft')], 'Container Size'),
@@ -150,6 +430,7 @@ class transport_order(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'macroprocess_id': _get_macroprocess_id,
     }
 
     def change_line(self, cr, uid, ids, context=None):
@@ -158,6 +439,36 @@ class transport_order(osv.osv):
         d = self.read(cr, uid, ids[0], ['cargo_weight', 'cargo_volume', 'cargo_parcels'], context=context)
         del d['id']
         return {'value': d}
+
+    def onchange_macroprocess(self, cr, uid, ids, macroprocess_id, shipment_type, context=None):
+        '''
+        Check if any of the existing selected steps are not available in the newly selected macroprocess
+        '''
+        if context is None:
+            context = {}
+        res = {}
+        if not ids:
+            return res
+
+        if shipment_type not in ['in', 'out']:
+            return {}
+
+        if macroprocess_id and shipment_type:
+            new_mcrproc_step = self.pool.get('transport.macroprocess').browse(cr, uid, macroprocess_id).step_ids
+            cr.execute("SELECT step_id FROM transport_order_step WHERE transport_" + shipment_type + "_id IN %s", (tuple(ids),)) # not_a_user_entry
+            non_conform_step_ids = set([x[0] for x in cr.fetchall()]) - set([step.id for step in new_mcrproc_step])
+            if non_conform_step_ids:
+                non_conform_step = self.pool.get('transport.step').read(cr, uid, non_conform_step_ids, ['name'], context=context)
+                res.update({
+                    'value': {'macroprocess_id': self.read(cr, uid, ids[0], ['macroprocess_id'])['macroprocess_id'][0]},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The selected Macroprocess is not linked to the steps %s. Please change those steps if you want to select it')
+                        % (', '.join([step['name'] for step in non_conform_step]),),
+                    }
+                })
+
+        return res
 
     def _check_addresses(self, cr, uid, ids):
         if ids:
@@ -198,7 +509,7 @@ class transport_order(osv.osv):
         return True
 
     _constraints = [
-        (_check_addresses, 'Adress Error', [])
+        (_check_addresses, 'Address Error', [])
     ]
 
     def _clean_fields(self, cr, uid, vals, context=None):
@@ -429,7 +740,17 @@ class transport_order_in(osv.osv):
             ret[x[0]] = ','.join(x[1])
         return ret
 
-
+    def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if the ITO has lines
+        """
+        res = {}
+        for _id in ids:
+            res[_id] = True
+        cr.execute("select transport_id from transport_order_in_line where transport_id in %s group by transport_id", (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = False
+        return res
 
     _columns = {
         'line_ids': fields.one2many('transport.order.in.line', 'transport_id', 'Lines', copy=False),
@@ -444,19 +765,23 @@ class transport_order_in(osv.osv):
             ('closed', 'Closed'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=1, copy=False),
-        'transport_fees_ids': fields.one2many('transport.order.fees', 'transport_in_id', 'Fees', copy=False),
+        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'transport_in_id', 'Fees', copy=False),
+        'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'transport_in_id', 'Transport Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_in_id', 'Steps', copy=False),
         'parent_ito_id': fields.many2one('transport.order.in', 'Backorder of', readonly=True, copy=False),
         'oto_created': fields.boolean('Corresponding OTO created', readonly=True, copy=False),
         'oto_id': fields.many2one('transport.order.out', 'OTO', readonly=True, copy=False),
         'from_sync': fields.boolean('From sync', readonly=True, copy=False),
         'sync_ref': fields.char('OTO Reference', size=64, readonly=True, copy=False, select=1),
+        'select_incoming': fields.many2one('stock.picking', string='IN'),
+        'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
     }
     _defaults = {
         'shipment_type': 'in',
         'state': 'planned',
         'oto_created': False,
         'from_sync': False,
+        'no_line': lambda *a: True,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -465,6 +790,55 @@ class transport_order_in(osv.osv):
             self.generate_closure_sync_message(cr, uid, ids, context=context)
         return ret
 
+    def onchange_ship_ref(self, cr, uid, ids, ship_ref, select_incoming, context=None):
+        '''
+        Remove the selected IN when the ship_ref is removed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+        if select_incoming:
+            res['value'] = {'ship_ref': ship_ref, 'select_incoming': False}
+
+        return res
+
+    def onchange_select_incoming(self, cr, uid, ids, select_incoming, context=None):
+        '''
+        Populate the lines using the Ship Reference of the selected IN
+        '''
+        if context is None:
+            context = {}
+
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, int):
+            ids = [ids]
+
+        ship_ref = self.pool.get('stock.picking').read(cr, uid, select_incoming, context=context)['shipment_ref']
+        if ship_ref:
+            cr.execute('''SELECT id FROM stock_picking WHERE shipment_ref = %s''', (ship_ref,))
+            in_ids = cr.fetchall()
+            line_ids = []
+            for in_id in in_ids:
+                value = self.pool.get('transport.order.in.line').change_incoming(cr, uid, False, in_id, context=context)
+                if value and value.get('value'):
+                    line_vals = value.get('value')
+                    line_vals.update({'transport_id': ids[0], 'incoming_id': in_id})
+                    line_ids.append(self.pool.get('transport.order.in.line').create(cr, uid, line_vals, context=context))
+            res['value'] = {'ship_ref': ship_ref, 'line_ids': [(6, 0, line_ids)]}
+
+        return res
+
+    def onchange_line_ids(self, cr, uid, ids, lines, context=None):
+        '''
+        Change no_line if lines are changed
+        '''
+        res = {'value': {'no_line': True}}
+        if lines:
+            res = {'value': {'no_line': False}}
+
+        return res
 
     def _check_partner_consistency(self, cr, uid, ids, context=None):
         # to check at doc validation
@@ -476,6 +850,8 @@ class transport_order_in(osv.osv):
     def _process_step(self, cr, uid, ids, current_step, context=None):
         to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', current_step)], context=context)
         if to_process_ids:
+            if current_step != 'planned' and self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _('Please choose a Customs Regime before trying to process the ITO'))
             all_st = [x[0] for x in self._columns['state'].selection]
             next_st = all_st[all_st.index(current_step)+1]
             self.write(cr, uid, to_process_ids, {'state': next_st}, context=context)
@@ -811,7 +1187,8 @@ class transport_order_out(osv.osv):
             ('closed', 'Closed'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=1, copy=False),
-        'transport_fees_ids': fields.one2many('transport.order.fees', 'transport_out_id', 'Fees', copy=False),
+        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'transport_out_id', 'Fees', copy=False),
+        'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'transport_out_id', 'Transport Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_out_id', 'Steps', copy=False),
         'parent_oto_id': fields.many2one('transport.order.out', 'Backorder of', readonly=True, copy=False),
         'next_partner_id': fields.many2one('res.partner', 'Sync to', readonly=True, copy=False),
@@ -868,10 +1245,12 @@ class transport_order_out(osv.osv):
             return True
 
         sync_type = ['internal', 'section', 'intermission']
+        if self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
+            raise osv.except_osv(_('Warning'), _('Please choose a Customs Regime before trying to process the OTO'))
         if display_warning and self.search_exists(cr, uid, [('id', 'in', to_val_ids), '|', ('customer_partner_id.partner_type', 'in', sync_type), ('customer_partner_id.partner_type', 'in', sync_type)], context=context):
             msg = self.pool.get('message.action').create(cr, uid, {
                 'title':  _('Warning'),
-                'message': '<h3>%s</h3>' % (_("You're about to close an OTO that is synchronized and should be consequently closed by the other instance. Are you sure you want to force the closure at your level ? "), ),
+                'message': '<h3>%s</h3>' % (_("You're about to close an OTO that is synchronized and should be consequently closed by the other instance. Are you sure you want to force the closure at your level ?"), ),
                 'yes_action': lambda cr, uid, context: self.force_button_validate(cr, uid, ids, context=context),
                 'yes_label': _('Process Anyway'),
                 'no_label': _('Close window'),
@@ -906,7 +1285,7 @@ class transport_order_line(osv.osv):
 
         'description': fields.char('Description', size=256),
         'parcels_nb': fields.integer_null('Number of Parcels'),
-        'volume': fields.float_null('Volume [dm3]', digits=(16,2)),
+        'volume': fields.float_null('Volume [dm³]', digits=(16,2)),
         'weight': fields.float_null('Weight [kg]', digits=(16,2)),
         'amount': fields.float_null('Value', digits=(16,2)),
         'currency_id': fields.many2one('res.currency', 'Currency', domain=[('active', '=', True)]),
@@ -956,7 +1335,7 @@ class transport_order_in_line(osv.osv):
         'incoming_id': fields.many2one('stock.picking', 'Incoming', select=1, domain=[('type', '=', 'in')], join='LEFT',  context={'pick_type': 'incoming', 'from_transport': 1}),
 
         'process_parcels_nb': fields.integer_null('Number of Parcels'),
-        'process_volume': fields.float_null('Volume [dm3]', digits=(16,2)),
+        'process_volume': fields.float_null('Volume [dm³]', digits=(16,2)),
         'process_weight': fields.float_null('Weight [kg]', digits=(16,2)),
         'process_amount': fields.float('Value', digits=(16,2)),
         'process_kc': fields.boolean('CC'),
@@ -1054,15 +1433,11 @@ class transport_order_in_line(osv.osv):
                 ''', (incoming_id, ))
             x = cr.fetchone()
             if x[0]:
-                value['parcels_nb'] = x[0]
-                if x[1]:
-                    value['weight'] = round(x[1], 2)
-                else:
-                    value['weight'] = False
-                if x[2]:
-                    value['volume'] = round(x[2]/1000, 2)
-                else:
-                    value['volume'] = False
+                value.update({
+                    'parcels_nb': x[0],
+                    'weight': x[1] and round(x[1], 2) or 0,
+                    'volume': x[2] and round(x[2] / 1000, 2) or 0
+                })
 
             return {
                 'value': value
@@ -1450,18 +1825,3 @@ class shipment(osv.osv):
     }
 
 shipment()
-
-
-class transport_step(osv.osv):
-    _name = 'transport.step'
-    _description = 'Transport Steps'
-    _order = 'name, id'
-    _columns = {
-        'name': fields.char('Name', size=64, select=1, required=1),
-    }
-
-    _sql_constraints = [
-        ('unique_name', 'unique(name)', 'Name exists')
-    ]
-transport_step()
-
