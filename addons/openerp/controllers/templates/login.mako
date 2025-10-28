@@ -52,7 +52,7 @@
                                         % else:
                                             <select name="db" id="db" class="db_user_pass">
                                                 % for v in dblist:
-                                                    <option value="${v}" ${v==db and "selected" or ""}>${v}</option>
+                                                    <option value="${v}" ${db and v.lower()==db.lower() and "selected" or ""}>${v}</option>
                                                 % endfor
                                             </select>
                                         % endif
