@@ -943,7 +943,10 @@ class transport_order_in(osv.osv):
 
         res = {}
         if not ids:
-            return res
+            return {
+                'value': {'select_incoming': False},
+                'warning': {'title': _('Warning'), 'message': _('The ITO must be created before trying to select a Ship Reference')}
+            }
         if isinstance(ids, int):
             ids = [ids]
 
