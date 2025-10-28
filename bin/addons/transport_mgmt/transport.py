@@ -6,6 +6,7 @@ import time
 #import decimal_precision as dp
 from tools.translate import _
 from tools.misc import get_fake
+from lxml import etree
 from . import TRANSPORT_FEES_HELP, CUSTOMS_FEES_HELP
 
 
@@ -239,7 +240,7 @@ class transport_step(osv.osv):
 
     def onchange_is_active(self, cr, uid, ids, is_active, context=None):
         """
-        Give a warning if the step is used on an Transport Step
+        Give a warning if the step is used on a Transport Step
         """
         if not context:
             context = {}
@@ -296,6 +297,89 @@ class transport_sub_step(osv.osv):
         ('unique_name', 'unique(name)', 'A Sub-Step with the same name already exists')
     ]
 
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Prevent modification if the Sub-Step is actively used
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
+
+        t_order_step_names = self.get_doc_names_using_substeps(cr, uid, ids, context=context)
+        if t_order_step_names:
+            raise osv.except_osv(_('Warning'), _('The Sub-Step is actively used by %s and can not be modified')
+                                 % (', '.join(t_order_step_names),))
+
+        return super(transport_sub_step, self).write(cr, uid, ids, vals, context=context)
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Prevent deletion if the Sub-Step is actively used
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
+
+        t_order_step_names = self.get_doc_names_using_substeps(cr, uid, ids, context=context)
+        if t_order_step_names:
+            raise osv.except_osv(_('Warning'), _('The Sub-Step is actively used by %s and can not be deleted')
+                                 % (', '.join(t_order_step_names),))
+
+        return super(transport_sub_step, self).unlink(cr, uid, ids, context=context)
+
+    def onchange_name(self, cr, uid, ids, context=None):
+        """
+        Give a warning if the sub-step is used on a Transport Step
+        """
+        if not context:
+            context = {}
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        t_order_step_names = self.get_doc_names_using_substeps(cr, uid, ids, context=context)
+        if t_order_step_names:
+            res.update({
+                'value': {'name': self.read(cr, uid, ids[0], context=context)['name']},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('The Sub-Step is actively used by %s and can not be modified') % (', '.join(t_order_step_names),),
+                }
+            })
+
+        return res
+
+    def get_doc_names_using_substeps(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        if not ids:
+            return []
+        if isinstance(ids, int):
+            ids = [ids]
+
+        t_order_obj = self.pool.get('transport.order.step')
+        domain = [
+            ('sub_step_id', 'in', ids), '|',
+            '&', ('transport_in_id', '!=', False), ('transport_in_id.state', 'not in', ['closed', 'cancel']),
+            '&', ('transport_out_id', '!=', False), ('transport_out_id.state', 'not in', ['closed', 'cancel']),
+        ]
+        t_order_step_ids = t_order_obj.search(cr, uid, domain, context=context)
+        t_order_step_names = []
+        if t_order_step_ids:
+            ftf = ['transport_in_id', 'transport_out_id']
+            t_order_step = t_order_obj.browse(cr, uid, t_order_step_ids, fields_to_fetch=ftf, context=context)
+            t_order_step_names = [tos.transport_in_id and tos.transport_in_id.name or tos.transport_out_id.name for tos in t_order_step]
+
+        return t_order_step_names
+
 
 transport_sub_step()
 
@@ -308,8 +392,10 @@ class transport_order_step(osv.osv):
 
     _columns = {
         'name': fields.date('Start Date', required=1),
-        'step_id': fields.many2one('transport.step', 'Step', required=1, select=1),
+        'step_id': fields.many2one('transport.step', 'Step', add_empty=1, required=1, select=1),
         'sub_step_id': fields.many2one('transport.sub.step', 'Sub-Step', select=1),
+        # Keep the original name on closed/cancelled ITO/OTO even if the sub-step is modified/deleted afterwards
+        'sub_step_name': fields.related('sub_step_id', 'name', string='Sub-Step', type='char', size=128, store=True, write_relate=False),
         'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
         'comment': fields.char(size=256, string='Comment'),
@@ -322,6 +408,37 @@ class transport_order_step(osv.osv):
         ('out_order_step_unique', 'unique(transport_out_id, step_id)', 'You can not select the same Step twice !'),
     ]
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        view = super(transport_order_step, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+        if view_type == 'tree':
+            parent_obj, parent_id = False, False
+            if context.get('parent_in_id'):
+                parent_obj = self.pool.get('transport.order.in')
+                parent_id = context['parent_in_id']
+            elif context.get('parent_out_id'):
+                parent_obj = self.pool.get('transport.order.out')
+                parent_id = context['parent_out_id']
+            if parent_obj and parent_id:
+                parent = parent_obj.read(cr, uid, parent_id, ['state'], context=context)
+                if parent:
+                    tree = etree.fromstring(view['arch'])
+
+                    parent_state = parent['state']
+                    fields = tree.xpath('//field[@name="sub_step_id"]')
+                    for field in fields:
+                        field.set('invisible', parent_state in ('closed', 'cancel') and 'True' or 'False')
+                    fields = tree.xpath('//field[@name="sub_step_name"]')
+                    for field in fields:
+                        field.set('invisible', parent_state not in ('closed', 'cancel') and 'True' or 'False')
+
+                    view['arch'] = etree.tostring(tree, encoding='unicode')
+
+        return view
+
     def get_steps(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -332,8 +449,23 @@ class transport_order_step(osv.osv):
             context['lang'] = user_lang or 'en_MF'
 
         dom = [('is_active', '=', True)]
+        macroprocess_id = False
         if context.get('macroprocess_id'):
-            dom.append(('macroprocess_ids', '=', context['macroprocess_id']))
+            macroprocess_id = context['macroprocess_id']
+        if not macroprocess_id:
+            parent_obj, parent_id = False, False
+            if context.get('parent_in_id'):
+                parent_obj = self.pool.get('transport.order.in')
+                parent_id = context['parent_in_id']
+            elif context.get('parent_out_id'):
+                parent_obj = self.pool.get('transport.order.out')
+                parent_id = context['parent_out_id']
+            if parent_obj and parent_id:
+                parent = parent_obj.read(cr, uid, parent_id, ['macroprocess_id'], context=context)
+                if parent:
+                    macroprocess_id = parent['macroprocess_id'][0]
+        if macroprocess_id:
+            dom.append(('macroprocess_ids', '=', macroprocess_id))
 
         return self.pool.get('transport.step')._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
 
@@ -359,12 +491,6 @@ class transport_order(osv.osv):
                 'cargo_parcels': 0,
             }
         return res
-
-    def _get_macroprocess_id(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        macroprocess_ids = self.pool.get('transport.macroprocess').search(cr, uid, [], limit=1, context=context)
-        return macroprocess_ids and macroprocess_ids[0] or False
 
     _columns = {
         'name': fields.char('Reference', size=64, required=True, select=True, readonly=True, copy=False),
@@ -411,7 +537,7 @@ class transport_order(osv.osv):
         'incoterm_type': fields.many2one('stock.incoterms', 'Incoterm Type', widget='selection'),
         'incoterm_location': fields.char('Incoterm Location', size=128), # TODO m2o
         'notify_partner_id': fields.many2one('res.partner', 'Notify Partner'), # TODO ondelete
-        'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', required=1, select=1, ondelete='restrict'),
+        'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', add_empty=1, required=1, select=1, ondelete='restrict'),
 
         'customs_regime': fields.selection([
             ('import', 'Import'),
@@ -438,7 +564,6 @@ class transport_order(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-        'macroprocess_id': _get_macroprocess_id,
     }
 
     def change_line(self, cr, uid, ids, context=None):
@@ -1353,6 +1478,8 @@ class transport_order_in_line(osv.osv):
     def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
         if not fields:
             fields = []
+        if not ids:
+            return []
 
         single = False
         pick_details = {}

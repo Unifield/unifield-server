@@ -437,13 +437,13 @@
             <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_domestic'), ref('macroprocess_domestic')])]"/>
         </record>
 
-        <record id="step_goods_reception" model="transport.step">
+        <record id="step_goods_reception_claims" model="transport.step">
             <field name="name">Goods reception &amp; Claims</field>
             <field name="is_active">True</field>
             <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_transit'), ref('macroprocess_international_transport_temp'), ref('macroprocess_bonded_domestic'), ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international'), ref('macroprocess_motor_vehicle'), ref('macroprocess_domestic')])]"/>
         </record>
 
-        <record id="step_goods_reception" model="transport.step">
+        <record id="step_goods_reception_claims_customs" model="transport.step">
             <field name="name">Goods reception &amp; Claims (at customs bonded warehouse)</field>
             <field name="is_active">True</field>
             <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_bonded')])]"/>

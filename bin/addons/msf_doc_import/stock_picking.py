@@ -292,6 +292,7 @@ class stock_picking(osv.osv):
             })
             import_success = True
 
+            # TODO: Only when the Transportation module is active
             # Create/Update an ITO using the shipment_ref
             in_data = self.read(cr, uid, context.get('new_picking', in_id), ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
             if in_data['shipment_ref']:
