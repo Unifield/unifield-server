@@ -390,7 +390,7 @@ class transport_order_step(osv.osv):
     _name = 'transport.order.step'
     _description = 'Steps'
 
-    _order = 'name desc, id'
+    _order = 'step_id'
 
     _columns = {
         'name': fields.date('Start Date', required=1),
