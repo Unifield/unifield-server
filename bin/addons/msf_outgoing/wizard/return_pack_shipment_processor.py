@@ -38,6 +38,7 @@ class return_pack_shipment_processor(osv.osv):
             'wizard_id',
             string='Lines',
         ),
+        'error': fields.text('Error', readonly='1'),
     }
 
     def select_all(self, cr, uid, ids, context=None):
@@ -59,6 +60,7 @@ class return_pack_shipment_processor(osv.osv):
                     'return_from': family.from_pack,
                     'return_to': family.to_pack,
                 }, context=context)
+        self.write(cr, uid, ids, {'error': ''}, context=context)
 
         return {
             'type': 'ir.actions.act_window',
@@ -89,6 +91,7 @@ class return_pack_shipment_processor(osv.osv):
             for family in wiz.family_ids:
                 family_ids.append(family.id)
 
+        self.write(cr, uid, ids, {'error': ''}, context=context)
         family_obj.write(cr, uid, family_ids, {
             'return_from': 0,
             'return_to': 0,
@@ -137,10 +140,10 @@ class return_pack_shipment_processor(osv.osv):
                     break
                 if family.return_from != 0 or family.return_to != 0:
                     no_sequence = False
-                    break
 
 
             if error:
+                self.write(cr, uid, wizard.id, {'error': _('Return cannot be processed, please fix the error on the red lines')})
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': self._name,

@@ -8,8 +8,20 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Process Document">
+                    <html colspan="4">
+                        <script type="text/javascript">
+                            $(document).ready(function() {
+                                var error_txt = $('#error').val() || $('#error').text();
+                                if (error_txt) {
+                                    error_display(error_txt);
+                                }
+                            });
+                        </script>
+                    </html>
+
                     <!-- Invisible fields -->
                     <field name="date" invisible="1" />
+                    <field name="error" invisible="1" />
 
                     <button name="select_all" string="Copy all" colspan="2" type="object" icon="gtk-jump-to" />
                     <button name="deselect_all" string="Clear all" colspan="2" type="object" icon="gtk-undo" />

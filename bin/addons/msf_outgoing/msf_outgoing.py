@@ -1218,7 +1218,7 @@ class shipment(osv.osv):
                 draft_packing = family.draft_packing_id.backorder_id
                 draft_shipment_id = draft_packing.shipment_id.id
 
-                if family.return_from == 0 and family.return_to == 0:
+                if family.integrity_status != 'empty' or family.return_from == 0 or family.return_to == 0:
                     continue
 
                 counter = counter + 1
