@@ -202,7 +202,7 @@
                                         <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
                                     </group>
                                 </group>
-                                <group colspan="4" col="4" attrs="{'readonly': [('no_line', '=', False)]}">
+                                <group colspan="4" col="4" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', '!=', 'planned')]}">
                                     <separator colspan="4" string="Shipping" />
                                     <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
                                     <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
@@ -315,16 +315,7 @@
 
                         <page string="Steps">
                             <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
-                                <tree string="Steps" editable="top">
-                                    <field name="step_id" widget="selection" get_selection="get_steps" />
-                                    <field name="sub_step_id" widget="selection" />
-                                    <field name="comment" />
-                                    <field name="name" />
-                                    <field name="target_end_date" />
-                                    <field name="end_date" />
-                                </tree>
-                            </field>
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" context="{'parent_in_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
                         </page>
 
                         <page string="Notes">
@@ -631,16 +622,7 @@
 
                         <page string="Steps">
                             <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" colspan="6" context="{'macroprocess_id': macroprocess_id}">
-                                <tree string="Steps" editable="top">
-                                    <field name="step_id" widget="selection" get_selection="get_steps" />
-                                    <field name="sub_step_id" widget="selection" />
-                                    <field name="comment" />
-                                    <field name="name" />
-                                    <field name="target_end_date" />
-                                    <field name="end_date" />
-                                </tree>
-                            </field>
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" context="{'parent_out_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
                         </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" colspan="4" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
@@ -688,6 +670,24 @@
                         </child1>
                     </hpaned>
                 </form>
+            </field>
+        </record>
+
+        <record id="transport_order_step_tree" model="ir.ui.view">
+            <field name="name">transport_order_step_tree</field>
+            <field name="model">transport.order.step</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Steps" editable="top">
+                    <field name="step_id" widget="selection" get_selection="get_steps" />
+                    <field name="sub_step_id" widget="selection" />
+                    <field name="sub_step_name" readonly="1" invisible="1" />
+                    <field name="comment" />
+                    <field name="name" />
+                    <field name="target_end_date" />
+                    <field name="end_date" />
+                </tree>
             </field>
         </record>
 
@@ -828,7 +828,7 @@
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
                 <tree string="Sub-Steps" editable="top">
-                    <field name="name" />
+                    <field name="name" on_change="onchange_name()" />
                 </tree>
             </field>
         </record>
