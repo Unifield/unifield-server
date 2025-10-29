@@ -491,6 +491,7 @@ class List(TinyWidget):
                     if attrs.get('widget'):
                         if attrs['widget']=='one2many_list':
                             attrs['widget']='one2many'
+                        attrs['type2'] = fields[name]['type']
                         attrs['type'] = attrs['widget']
 
                     try:
@@ -505,6 +506,10 @@ class List(TinyWidget):
                     if kind not in CELLTYPES:
                         kind = 'char'
 
+                    if attrs.get('get_selection') and kind == 'selection' and attrs.get('type2') == 'many2one':
+                        proxy = rpc.RPCProxy(self.model)
+                        attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.ids, self.context)
+
                     fields[name].update(attrs)
 
                     cell_colors = {}
@@ -516,8 +521,7 @@ class List(TinyWidget):
 
                     try:
                         visval = fields[name].get('invisible', 'False')
-                        invisible = visval if isinstance(visval, bool) \
-                            else eval(visval, {'context': self.context})
+                        invisible = visval if isinstance(visval, bool) else eval(visval, {'context': self.context})
                     except NameError as e:
                         cherrypy.log.error(e, context='listgrid.List.parse')
                         invisible = False
@@ -557,8 +561,7 @@ class List(TinyWidget):
 
                         for color, expr in list(self.colors.items()) or list(cell_colors.items()):
                             try:
-                                if expr_eval(expr,
-                                             dict(row_value, active_id=rpc.session.active_id or False)):
+                                if expr_eval(expr, dict(row_value, active_id=rpc.session.active_id or False)):
                                     cell.color = color
                                     break
                             except:
@@ -583,6 +586,7 @@ class List(TinyWidget):
                         row[to_set].tooltip = row[set_tooltip[to_set]].widget.get_display_value()
                     else:
                         row[to_set].tooltip = row[set_tooltip[to_set]].get_display_value()
+
 
         return headers, hiddens, data, field_total, field_real_total, buttons
 
