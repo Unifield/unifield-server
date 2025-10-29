@@ -538,13 +538,19 @@ class wizard_import_in_simulation_screen(osv.osv):
                             break
                         if parcel_id:
                             if parcel_id in parcel_ids_seen:
-                                error.append(_('Line %s:  Parcel ID must be unique, %s already used') % (index, parcel_id))
+                                error.append(_('Line %s: Parcel ID must be unique, %s already used') % (index, parcel_id))
                                 break
                             parcel_ids_seen.add(parcel_id)
                         values[pack_index].setdefault('parcel_ids', {}).update({row.cells[0].data: row.cells[1].data and parcel_id})
                         continue
                     else:
                         process_parcel_id = False
+                        # In case the wrong data is put in the Parcel No.
+                        if len(row.cells) == 2 and row.cells[0] and row.cells[0].data and values.get(pack_index) and \
+                                not values[pack_index].get('parcel_ids'):
+                            error.append(_('Line %s: Parcel data %s could not be used, please ensure that the data in "Parcel No." is a number')
+                                         % (index, row.cells[0].data))
+                            break
                 # previous line was pack data so current line must be move line header / or pack ID
                 process_pack_line = False
                 process_move_line = True
@@ -826,17 +832,17 @@ Nothing has been imported because of %s. See below:
                                     pack_info[key] = float(pack_info[key]) * pack_coeff[key]
                                 if key == 'packing_list' and pack_info[key]:
                                     pack_info[key] = '%s' % pack_info[key]
-                            if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30:
+                            if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30 and not context.get('sde_flow'):
                                 values_line_errors.append(_('Packing List %s, max characters length is 30, found %s') % (pack_info.get('packing_list'), len(pack_info.get('packing_list', ''))))
                             p_from = int(pack_info.get('parcel_from', 0))
                             p_to = int(pack_info.get('parcel_to', 0))
                             if pack_info.get('parcel_ids'):
-                                if p_from <= p_to and len(pack_info.get('parcel_ids')) != p_to - p_from + 1:
+                                if p_from <= p_to and len(pack_info.get('parcel_ids')) != p_to - p_from + 1 and not context.get('sde_flow'):
                                     values_line_errors.append(_('Packing List %s, number of packs %s does not match the number of Parcel IDs %s') % (pack_info.get('packing_list'), p_to - p_from + 1, len(pack_info.get('parcel_ids'))))
                                 elif p_from <= p_to:
                                     init_pack = p_from
                                     while init_pack <= p_to:
-                                        if not pack_info['parcel_ids'].get(init_pack):
+                                        if not pack_info['parcel_ids'].get(init_pack) and not context.get('sde_flow'):
                                             values_line_errors.append(_('Packing List %s, parcel number %s not found in Parcel Id') % (pack_info.get('packing_list'), init_pack))
                                             break
                                         init_pack += 1
@@ -952,7 +958,7 @@ Nothing has been imported because of %s. See below:
                 '''
                 if pack_found:
                     self.write(cr, uid, [wiz.id], {'pack_found': True}, context=context)
-                if pack_sequences:
+                if pack_sequences and not context.get('sde_flow'):  # Check the pack data at process and not during import for SDE
                     rounding_issues = []
                     uom_ids = uom_obj.search(cr, uid, [])
                     uom_data = dict((x.id, x) for x in uom_obj.browse(cr, uid, uom_ids, fields_to_fetch=['rounding'], context=context))
@@ -972,7 +978,6 @@ Nothing has been imported because of %s. See below:
                             pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
                             for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
                                 values_header_errors.append(_("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s") % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, _(pack_error_string.get(pack_error.integrity_status))))
-
 
                     rounding_text = ""
                     if rounding_issues:
@@ -1314,7 +1319,7 @@ Nothing has been imported because of %s. See below:
 
         context['from_simu_screen'] = True
 
-        if simu_id.with_pack or context.get('do_not_import_with_thread'):
+        if not context.get('sde_flow') and (simu_id.with_pack or context.get('do_not_import_with_thread')):
             cr.commit()
             if context.get('do_not_import_with_thread'):
                 # Auto VI IN import: do not process IN
@@ -2035,7 +2040,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     }
 
             if context.get('sde_flow'):
-                vals['sde_updated_line'] = True
+                vals.update({
+                    'sde_updated_line': True,
+                    'from_pack': line.pack_info_id and line.pack_info_id.parcel_from or False,
+                    'to_pack': line.pack_info_id and line.pack_info_id.parcel_to or False,
+                    'has_pack_id': line.pack_info_id and line.pack_info_id.parcel_ids and True or False,
+                    'parcel_ids': line.pack_info_id and line.pack_info_id.parcel_ids or False,
+                })
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
             if move:
                 move_ids.append(move.id)

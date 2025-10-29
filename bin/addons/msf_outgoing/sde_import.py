@@ -126,6 +126,7 @@ class sde_import(osv.osv_memory):
                 'filename': file_path,
                 'filetype': filetype,
                 'file_to_import': base64.b64encode(file_data),
+                'with_pack': True,
             }, context=context)
 
             in_simu_obj.launch_simulate(cr, uid, [simu_id], context=context)
