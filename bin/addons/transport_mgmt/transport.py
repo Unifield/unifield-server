@@ -950,7 +950,7 @@ class transport_order_in(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        ship_ref = self.pool.get('stock.picking').read(cr, uid, select_incoming, context=context)['shipment_ref']
+        ship_ref = self.pool.get('stock.picking').read(cr, uid, select_incoming, ['shipment_ref'], context=context)['shipment_ref']
         if ship_ref:
             cr.execute('''SELECT id FROM stock_picking WHERE shipment_ref = %s''', (ship_ref,))
             in_ids = cr.fetchall()
