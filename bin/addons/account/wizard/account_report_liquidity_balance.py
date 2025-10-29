@@ -115,7 +115,10 @@ class liquidity_balance_wizard(osv.osv_memory):
                              })
 
         # get the selected instance AND its children
-        if wiz.instance_id.level == 'section':
+        curr_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+        if curr_instance and curr_instance.level == 'project':
+            data['form']['instance_ids'] = [curr_instance.id]
+        elif wiz.instance_id.level == 'section':
             data['form'].update({'instance_ids': wiz.instance_id and
                                  ([wiz.instance_id.id] + [x.id for x in wiz.instance_id.child_ids] +
                                   [y.id for x in wiz.instance_id.child_ids for y in x.child_ids]) or False})

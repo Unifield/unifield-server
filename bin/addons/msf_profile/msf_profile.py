@@ -59,6 +59,46 @@ class patch_scripts(osv.osv):
     }
 
     # UF39.0
+    def us_14182_set_journal_register_dates(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+
+        if instance:
+            if instance.level in ('project', 'coordo'):
+                instance_ids = [instance.id]
+                if instance and instance.level == 'coordo':
+                    instance_ids += [child.id for child in instance.child_ids if child and child.state == 'inactive']
+                cr.execute('''
+                    select
+                        j.id, min(p.date_start), max(p.date_stop)
+                    from
+                        account_journal j, account_bank_statement st, account_period p
+                    where
+                        j.id = st.journal_id and
+                        j.instance_id in %s and
+                        p.id = st.period_id
+                    group by
+                        j.id
+                ''', (tuple(instance_ids), ))
+
+                j_obj = self.pool.get('account.journal')
+                for x in cr.fetchall():
+                    j_obj.write(cr, uid, [x[0]], {'first_register_date': x[1] or False, 'last_register_date': x[2] or False})
+
+            else: # HQ
+                decom_coor = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo'), ('state', '=', 'inactive')])
+                if decom_coor:
+                    decom_coor += self.pool.get('msf.instance').search(cr, uid, [('parent_id', 'in', decom_coor)])
+
+                    cr.execute("""update account_journal j
+                        set
+                            first_register_date=(date_trunc('month', create_date::date))::date,
+                            last_register_date=(date_trunc('month',least(j.write_date::date, j.inactivation_date))+ interval '1 month -1 day')::date
+                        where
+                            j.type in ('cash', 'bank', 'cheque') and
+                            j.instance_id in %s
+                    """, (tuple(decom_coor), ))
+        return True
+
     def us_14605_remove_new_code_old_merge(self, cr, uid, *a, **b):
         '''
         Remove the new_code from merged products where the latest change was done before 2018
