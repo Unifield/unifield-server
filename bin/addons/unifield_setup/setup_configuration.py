@@ -63,6 +63,7 @@ class unifield_setup_configuration(osv.osv):
         'customer_commitment': fields.boolean(string='Does the system allow Customer Commitment Vouchers ?'),
         'signature': fields.boolean(string='Activate Electronic Validation ?'),
         'esc_line': fields.boolean(string='Activate International Invoices Lines ?'),
+        'transport': fields.boolean(string='Activate Transport Management ?'),
     }
 
     _defaults = {
@@ -81,6 +82,7 @@ class unifield_setup_configuration(osv.osv):
         'customer_commitment': False,
         'signature': False,
         'esc_line': False,
+        'transport': False,
     }
 
     _constraints = [
