@@ -526,7 +526,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                         except:
                             error.append(_('Line %s, column %s, float expected, found %s') % (index, nb+1, row.cells[nb].data))
             elif process_pack_line:
-                if row.cells and row.cells[0].data == _('Parcel No.'):
+                # Always check in english because VI exports are exported in english
+                if row.cells and row.cells[0].data == 'Parcel No.':
                     process_parcel_id = True
                     continue
 
