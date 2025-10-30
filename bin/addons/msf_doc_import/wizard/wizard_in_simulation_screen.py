@@ -825,7 +825,6 @@ Nothing has been imported because of %s. See below:
                     if 'parcel_from' in values[x]:
                         x += 1
                         if wiz.with_pack:
-
                             pack_info = {'wizard_id': wiz.id}
                             for key in pack_header:
                                 pack_info[key] = values[x].get(key)
@@ -850,8 +849,9 @@ Nothing has been imported because of %s. See below:
                                     else:
                                         pack_info['parcel_ids'] = ','.join([pack_info['parcel_ids'][x] for x in sorted(pack_info['parcel_ids'].keys())])
 
-                            pack_id = pack_info_obj.create(cr, uid, pack_info)
-                            pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((p_from, p_to, pack_id))
+                            if not context.get('sde_flow') or (context.get('sde_flow') and values[x]['parcel_from']):
+                                pack_id = pack_info_obj.create(cr, uid, pack_info)
+                                pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((p_from, p_to, pack_id))
                             if values[x]['parcel_from']:
                                 pack_found = True
                         x += 1
