@@ -818,6 +818,13 @@ class stock_incoming_processor(osv.osv):
                 'context': context,
             }
 
+        if sde_parcels_errors:
+            raise osv.except_osv(
+                _('Error'),
+                _('There are errors with the Parcel IDs:\n%s\n\nPlease reset this popup and fix the SDE import file before reimporting it with SDE.')
+                % ('\n'.join(sde_parcels_errors),)
+            )
+
         if rounding_issues:
             rounding_issues.sort()
 
@@ -835,13 +842,6 @@ class stock_incoming_processor(osv.osv):
                 'view_type': 'form',
                 'context': context,
             }
-
-        if sde_parcels_errors:
-            raise osv.except_osv(
-                _('Error'),
-                _('There are errors with the Parcel IDs:\n%s\n\nPlease reset this popup and fix the SDE import file before reimporting it with SDE.')
-                % ('\n'.join(sde_parcels_errors),)
-            )
 
         self.pool.get('stock.picking').do_incoming_shipment(cr, uid, ids, context=context, with_ppl=True)
         return {'type': 'ir.actions.act_window_close'}
