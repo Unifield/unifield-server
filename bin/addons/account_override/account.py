@@ -1057,6 +1057,26 @@ class account_move(osv.osv):
                 if m.date and m.period_id and m.period_id.date_start and m.date >= m.period_id.date_start and m.period_id.date_stop and m.date <= m.period_id.date_stop:
                     continue
                 raise osv.except_osv(_('Error'), _('Posting date should be include in defined Period%s.') % (m.period_id and ': ' + m.period_id.name or '',))
+        journal_restrictions_on_extra_p = self.pool.get('res.company').get_restricted_journal_type_extra_period(cr)
+        if journal_restrictions_on_extra_p:
+            # exclude done period for old JEs already created on P13,14,15
+            cr.execute('''
+                select
+                    m.name, p.name
+                from
+                    account_move m, account_period p, account_journal j
+                where
+                    m.period_id = p.id and
+                    j.id = m.journal_id and
+                    p.number in (13, 14, 15) and
+                    p.state != 'done' and
+                    m.id in %s and
+                    j.type not in %s
+                limit 5
+            ''', (tuple(ids), tuple(journal_restrictions_on_extra_p)))
+            if cr.rowcount:
+                error = cr.fetchall()
+                raise osv.except_osv(_('Error'), _('Following entries %s cannot be created on %s') % (', '.join([x[0] for x in error]), ', '.join(set([x[1] for x in error]))))
         return True
 
     def create_sequence(self, cr, uid, vals, context=None):

@@ -33,6 +33,7 @@ import xmlrpc.client
 import netsvc
 import traceback
 #import re
+import json
 
 from msf_field_access_rights.osv_override import _get_instance_level
 import io
@@ -134,6 +135,25 @@ class patch_scripts(osv.osv):
                 AND sl.name_key = 'fr' AND p.type = 'in' AND p.subtype = 'standard'
         """)
         self.log_info(cr, uid, "US-14561-14593-14656: %s 'Approved by' signature(s) were removed from INs" % (cr.rowcount,))
+        return True
+
+    def us_14217_set_journal_restriction(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+        if instance_id.level == 'section':
+            entity_obj = self.pool.get('sync.client.entity')
+            if entity_obj:
+                restrictions = {
+                    'oca': [],
+                    'ocb': ['none'],
+                    'ocg': ['none'],
+                    'ocp': ['cur_adj', 'accrual', 'hq', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
+                    'waca': [],
+                }
+                oc = entity_obj.get_entity(cr, uid).oc
+                if oc and oc in restrictions:
+                    self.pool.get('sync.trigger.something.bidir_mission').create(cr, uid, {'name': 'journal_restriction', 'args': json.dumps(restrictions[oc])})
         return True
 
     # UF38.1
@@ -7804,6 +7824,7 @@ class sync_tigger_something(osv.osv):
         if context is None:
             context = {}
         _logger = logging.getLogger('trigger')
+
         if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
 
             data_obj = self.pool.get('ir.model.data')
@@ -7997,6 +8018,9 @@ class sync_tigger_something_bidir_mission(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+        if vals.get('name') == 'journal_restriction' and vals.get('args') is not None:
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'journal_extr_p', vals['args'])
+
         if vals.get('name') == 'instance_creator_employee' and vals.get('args'):
             # populate instance_creator on hr.employee
             # triggered from sync to process sync in-pipe employee or after init sync

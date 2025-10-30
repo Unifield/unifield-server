@@ -1256,5 +1256,8 @@
             <field name="method">us_14182_set_journal_register_dates</field>
         </record>
 
+        <record id="us_14217_set_journal_restriction" model="patch.scripts">
+            <field name="method">us_14217_set_journal_restriction</field>
+        </record>
     </data>
 </openerp>
