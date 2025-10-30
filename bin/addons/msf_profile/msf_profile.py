@@ -69,21 +69,33 @@ class patch_scripts(osv.osv):
                 if instance and instance.level == 'coordo':
                     instance_ids += [child.id for child in instance.child_ids if child and child.state == 'inactive']
                 cr.execute('''
-                    select
-                        j.id, min(p.date_start), max(p.date_stop)
+                    with reg_date as (
+                        select
+                            j.id, min(p.date_start) as min_date, max(p.date_stop) as max_date
+                        from
+                            account_journal j, account_bank_statement st, account_period p
+                        where
+                            j.id = st.journal_id and
+                            j.instance_id in %s and
+                            p.id = st.period_id
+                        group by
+                            j.id
+                    )
+                    update
+                        account_journal j2
+                    set
+                            first_register_date=reg_date.min_date,
+                            last_register_date=reg_date.max_date
                     from
-                        account_journal j, account_bank_statement st, account_period p
+                        reg_date
                     where
-                        j.id = st.journal_id and
-                        j.instance_id in %s and
-                        p.id = st.period_id
-                    group by
-                        j.id
+                        j2.id = reg_date.id
+                    returning j2.id
                 ''', (tuple(instance_ids), ))
 
-                j_obj = self.pool.get('account.journal')
-                for x in cr.fetchall():
-                    j_obj.write(cr, uid, [x[0]], {'first_register_date': x[1] or False, 'last_register_date': x[2] or False})
+                to_update = [x[0] for x in cr.fetchall()]
+                if to_update:
+                    self.pool.get('account.journal').sql_touch(cr, to_update, ['first_register_date', 'last_register_date'])
 
             else: # HQ
                 decom_coor = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo'), ('state', '=', 'inactive')])
@@ -92,11 +104,14 @@ class patch_scripts(osv.osv):
 
                     cr.execute("""update account_journal j
                         set
-                            first_register_date=(date_trunc('month', create_date::date))::date,
-                            last_register_date=(date_trunc('month',least(j.write_date::date, j.inactivation_date))+ interval '1 month -1 day')::date
+                            first_register_date=(date_trunc('month', j.create_date::date))::date,
+                            last_register_date=(date_trunc('month',least(i.write_date::date, j.inactivation_date))+ interval '1 month -1 day')::date
+                        from
+                            msf_instance i
                         where
                             j.type in ('cash', 'bank', 'cheque') and
-                            j.instance_id in %s
+                            j.instance_id in %s and
+                            i.id = j.instance_id
                     """, (tuple(decom_coor), ))
         return True
 
