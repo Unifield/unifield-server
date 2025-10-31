@@ -40,11 +40,14 @@ def get_db_list():
 
     result = {
         'tz_offset':'',
-        'dblist': []
+        'dblist': [],
+        'multi_host': 0,
+        'sync_user': ''
     }
 
     try:
-        dblist = rpc.session.listdb()
+        dblist, sync_user = rpc.session.listdb_syncuser()
+        result['sync_user'] = sync_user
         result['tz_offset'] = rpc.session.gateway.execute_noauth('db', 'check_timezone')
     except:
         pass
@@ -57,11 +60,13 @@ def get_db_list():
 
         base = re.split(r'\.|:|/', host)[0]
 
+        multi_host = 0
         if dbfilter == 'EXACT':
             if dblist is None:
                 db = base
                 dblist = [db]
             else:
+                multi_host = len(dblist)
                 dblist = [d for d in dblist if d.lower() == base.lower()]
 
         elif dbfilter == 'UNDERSCORE':
@@ -70,6 +75,7 @@ def get_db_list():
                 if db and not db.startswith(base):
                     db = None
             else:
+                multi_host = len(dblist)
                 dblist = [d for d in dblist if d.startswith(base)]
 
         elif dbfilter == 'BOTH':
@@ -77,8 +83,10 @@ def get_db_list():
                 if db and db != base and not db.startswith(base + '_'):
                     db = None
             else:
+                multi_host = len(dblist)
                 dblist = [d for d in dblist if d.startswith(base + '_') or d == base]
     result['dblist'] = dblist
+    result['multi_host'] = multi_host
     return result
 
 @expose(template="/openerp/controllers/templates/login.mako")
@@ -98,7 +106,7 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     result = get_db_list()
     dblist = result['dblist']
     tz_offset = result['tz_offset']
-
+    multi_host = result.get('multi_host') or 0
     info = None
     try:
         info = rpc.session.execute_noauth('common', 'login_message') or ''
@@ -108,7 +116,8 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     if target != do_login_page:
         origArgs['target'] = target
     return dict(target=do_login_page, url=url, dblist=dblist, db=db, user=user, password=password,
-                action=action, message=message, origArgs=origArgs, info=info, tz_offset=tz_offset)
+                action=action, message=message, origArgs=origArgs, info=info, tz_offset=tz_offset,
+                multi_host=multi_host, sync_user=result.get('sync_user'))
 
 @expose(template="/openerp/controllers/templates/change_password.mako")
 def change_password(target, db=None, user=None, password=None,
