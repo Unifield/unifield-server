@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from time import strftime
+from time import strftime, strptime
 from tools.misc import flatten
 from base import currency_date
 
@@ -67,12 +67,13 @@ class account_move_line(osv.osv):
 
         acc_corr = {}
 
+        allow_extra = self.pool.get('res.company').extra_period_config(cr) in ('other', 'other_no_is')
         # Skip to next element if the line is set to False
         for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True
             acc_corr.setdefault(ml.account_id.id, ml.account_id.user_type.not_correctible)
             # False if special (or implicitly system period)
-            if ml.period_id.special:
+            if not allow_extra and ml.period_id.special or ml.period_id.number in (0, 16):
                 res[ml.id] = False
                 continue
             # False if account type is transfer
@@ -488,10 +489,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
         hq_corr_journal_id = j_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
 
         # Search attached period
-        period_obj = self.pool.get('account.period')
-        period_ids = period_obj.search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
-                                       context=context, limit=1, order='date_start, name')
-        period_number = period_ids and period_obj.browse(cr, uid, period_ids, context)[0].number or False
+        period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date, check_extra_config=True)
+        if not period_id:
+            raise osv.except_osv(_('Error'), _('No open period found for the given date: %s') % (date,))
+        is_dec = strptime(date, '%Y-%m-%d').tm_mon == 12
 
         # Browse all given move line for correct them
         for ml in self.browse(cr, uid, ids, context=context):
@@ -555,17 +556,17 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                                          'used in a closed financing contract.'))
             # (US-815) use the right period for December HQ Entries
             period_id_dec_hq_entry = False
-            if period_number == 12 and context.get('period_id_for_dec_hq_entries', False):
+            if is_dec and context.get('period_id_for_dec_hq_entries', False):
                 period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
             # Create a new move
-            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_id_dec_hq_entry or period_ids[0], 'date': date, 'document_date': ml.document_date}, context=context)
+            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_id_dec_hq_entry or period_id, 'date': date, 'document_date': ml.document_date}, context=context)
             # Prepare default value for new line
             vals = {
                 'move_id': move_id,
                 'date': date,
                 'document_date': ml.document_date,
                 'journal_id': journal_id,
-                'period_id': period_id_dec_hq_entry or period_ids[0],
+                'period_id': period_id_dec_hq_entry or period_id,
             }
             # Copy the line
             context.update({'omit_analytic_distribution': False})

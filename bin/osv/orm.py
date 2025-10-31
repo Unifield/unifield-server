@@ -1305,6 +1305,12 @@ class orm_template(object):
                     if f not in defaults:
                         defaults[f] = False
 
+        if self._name in ('shipment', 'stock.picking', 'purchase.order') and \
+                'transport_active' in fields_list and \
+                'transport_active' not in defaults:
+            defaults['transport_active'] = self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='transport')
+
+
         # get the default values set by the user and override the default
         # values defined in the object
         ir_values_obj = self.pool.get('ir.values')
@@ -1407,7 +1413,7 @@ class orm_template(object):
                     allfields.append(f)
                 if allfields and f not in allfields:
                     continue
-                res[f] = {'type': field_col._type}
+                res[f] = {'type': field_col._type, 'copy': field_col.copy}
                 if hasattr(field_col, '_with_null') and field_col._with_null:
                     res[f]['with_null'] = True
                 if hasattr(field_col, 'null_value') and field_col.null_value:
@@ -3343,7 +3349,8 @@ class orm(orm_template):
                             self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE SET NULL",
                                                 self._obj, f._fields_id, f._table)
                 elif isinstance(f, fields.many2many):
-                    if not self.pool.get(f._obj):
+                    if not self.pool.get(f._obj) or \
+                            not cr.table_exists(self.pool.get(f._obj)._table):
                         missing_m2m.setdefault(f._obj, [])
                         missing_m2m[f._obj].append((self, f))
                     else:
@@ -5172,7 +5179,7 @@ class orm(orm_template):
         fields = self.fields_get(cr, uid, context=context)
         to_read = []
         for f in fields:
-            if 'function' not in fields[f]:
+            if 'function' not in fields[f] and fields[f]['copy']:
                 to_read.append(f)
         data = self.read(cr, uid, [id,], to_read, context=context_wo_lang)
         if data:
@@ -5192,11 +5199,15 @@ class orm(orm_template):
                 if f in data:
                     del data[f]
             elif ftype == 'many2one':
+                if not fields[f]['copy']:
+                    continue
                 try:
                     data[f] = data[f] and data[f][0]
                 except:
                     pass
             elif ftype in ('one2many', 'one2one'):
+                if not fields[f]['copy']:
+                    continue
                 res = []
                 rel = self.pool.get(fields[f]['relation'])
                 if data[f]:
@@ -5213,6 +5224,8 @@ class orm(orm_template):
                             res.append((0, 0, d))
                 data[f] = res
             elif ftype == 'many2many':
+                if not fields[f]['copy']:
+                    continue
                 data[f] = [(6, 0, data[f])]
 
         del data['id']

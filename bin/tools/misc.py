@@ -2327,3 +2327,10 @@ def search_global_instance_level(self, cr, uid, obj, name, args, context=None):
 class ParsedException(Exception):
     pass
 
+def get_transport_active(self, cr, uid, ids, field_name, args, context=None):
+    res = {}
+    is_active = self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='transport')
+    for _id in ids:
+        res[_id] = is_active
+    return res
+

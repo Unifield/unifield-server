@@ -143,7 +143,7 @@ class Cursor(object):
             return params
 
     @check
-    def execute(self, query, params=None, log_exceptions=True):
+    def execute(self, query, params=None, log_exceptions=True, debug=False):
         if '%d' in query or '%f' in query:
             self.__logger.warn(query)
             self.__logger.warn("SQL queries cannot contain %d or %f anymore. "
@@ -157,6 +157,8 @@ class Cursor(object):
             params = params or None
             params = self.recursiveCastUid(params)
             before = time.time()
+            if debug:
+                self.__logger.warn(str(self._obj.mogrify(query, params), 'utf8'))
             res = self._obj.execute(query, params)
             after = time.time()
             if self._oc:

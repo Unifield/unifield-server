@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -52,7 +52,7 @@ class ir_property(osv.osv):
         'res_id': fields.reference('Resource', selection=_models_get, size=128,
                                    help="If not set, acts as a default value for new resources", select=1),
         'company_id': fields.many2one('res.company', 'Company', select=1),
-        'fields_id': fields.many2one('ir.model.fields', 'Field', ondelete='cascade', required=True, select=1),
+        'fields_id': fields.many2one('ir.model.fields', 'Field', ondelete='cascade', required=True, select=1, join=True),
 
         'value_float' : fields.float('Value'),
         'value_integer' : fields.integer_big('Value'), # will contain (int, bigint)
@@ -71,7 +71,7 @@ class ir_property(osv.osv):
                                    ('many2one', 'Many2One'),
                                    ('date', 'Date'),
                                    ('datetime', 'DateTime'),
-                                  ],
+                                   ],
                                   'Type',
                                   required=True,
                                   select=1),
