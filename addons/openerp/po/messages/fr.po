@@ -1998,3 +1998,7 @@ msgstr "Enregistrer l'adresse"
 #: controllers/templates/index.mako:268
 msgid "Do not ask again"
 msgstr "Ne plus demander"
+
+#: controllers/templates/footer.mako:12
+msgid "databases hosted"
+msgstr "bases hébergées"
