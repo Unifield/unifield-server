@@ -55,6 +55,40 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_transport_docs_customs(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns all ITO/OTO with customs fees linked to the POs
+        '''
+        res = {}
+
+        cr.execute("""
+            SELECT purchase_id, array_agg(min_id ORDER BY min_id) 
+            FROM (SELECT purchase_id, MIN(id) AS min_id FROM transport_order_customs_fees WHERE purchase_id IN %s 
+                  GROUP BY purchase_id, transport_in_id, transport_out_id) min_table
+            GROUP BY purchase_id
+        """, (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = x[1]
+
+        return res
+
+    def _get_transport_docs_transport(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns all ITO/OTO with transport fees linked to the POs
+        '''
+        res = {}
+
+        cr.execute("""
+            SELECT purchase_id, array_agg(min_id ORDER BY min_id) 
+            FROM (SELECT purchase_id, MIN(id) AS min_id FROM transport_order_transport_fees WHERE purchase_id IN %s 
+                  GROUP BY purchase_id, transport_in_id, transport_out_id) min_table
+            GROUP BY purchase_id
+        """, (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = x[1]
+
+        return res
+
     def create(self, cr, uid, vals, context=None):
         '''
         If the partner is international, set 'display_intl_transport_ok' to True
@@ -110,8 +144,8 @@ class purchase_order(osv.osv):
         'transport_order_id': fields.many2one('purchase.order', string='Linked Purchase Order', domain=[('categ', '!=', 'transport')]),
         'picking_transport_ids': fields.one2many('stock.picking', 'transport_order_id', string='Linked deliveries'),
         'shipment_transport_ids': fields.one2many('shipment', 'transport_order_id', string='Linked shipments'),
-        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'purchase_id', string='Inbound/Outbound Transport Orders for Customs Fees'),
-        'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'purchase_id', string='Inbound/Outbound Transport Orders for Transport Fees'),
+        'transport_customs_fees_ids': fields.function(_get_transport_docs_customs, method=True, type='one2many', relation='transport.order.customs.fees', string='Inbound/Outbound Transport Orders for Customs Fees'),
+        'transport_transport_fees_ids': fields.function(_get_transport_docs_transport, method=True, type='one2many', relation='transport.order.transport.fees', string='Inbound/Outbound Transport Orders for Transport Fees'),
         'transport_active': fields.function(misc.get_transport_active, method=True, type='boolean', string='Transport Management active'),
     }
 
