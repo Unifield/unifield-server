@@ -1346,6 +1346,8 @@ class transport_order_out(osv.osv):
                 line_obj.write(cr, uid, _id, vals, context=context)
 
         for oto in self.browse(cr, uid, ids, context=context):
+            if not oto.macroprocess_id:
+                raise osv.except_osv(_('Warning'), _('Please choose a Macroprocess before trying to process the Transport Object'))
             data = {'state': 'dispatched'}
             if oto.transit_partner_id and oto.transit_partner_id.partner_type in ('internal', 'section', 'intermission'):
                 data['next_partner_id'] = oto.transit_partner_id.id
