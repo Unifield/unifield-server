@@ -255,7 +255,7 @@
                 <parawrap style="Information">[[ line.comment ]]</parawrap>
             </td>
             <td>
-                <parawrap style="Information">[[ getSel(line, 'state') or '' ]]</parawrap>
+                <parawrap style="Information">[[ getSel(line, 'line_state') or '' ]]</parawrap>
             </td>
         </tr>
    </blockTable>

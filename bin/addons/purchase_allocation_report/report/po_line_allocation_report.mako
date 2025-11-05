@@ -259,7 +259,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${ o.comment or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ getSel(o , 'state') or '' |x}</Data>
+        <Data ss:Type="String">${ getSel(o , 'line_state') or '' |x}</Data>
     </Cell>
 </Row>
 
