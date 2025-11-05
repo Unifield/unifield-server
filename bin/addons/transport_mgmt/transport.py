@@ -1025,7 +1025,7 @@ class transport_order_in(osv.osv):
                 process_kc=kc,
                 process_dg=dg,
                 process_cs=cs,
-                process_amount=0,
+                process_amount=0
             where
                 transport_id = %s ''', (to_process_ids[0], )
                    )
