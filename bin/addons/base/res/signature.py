@@ -14,6 +14,9 @@ from report.render.rml2pdf import customfonts
 from PIL import Image, ImageDraw, ImageFont
 import base64
 from io import BytesIO
+import cv2
+import numpy
+from pypdf import PdfReader
 
 list_sign = {
     'purchase.order': [
@@ -60,7 +63,6 @@ list_sign = {
     'stock.picking.in': [
         ('tr', _('Received by'), True, 1),
         ('sr', _('Controlled by'), True, 2),
-        ('fr', _('Approved by'), False, 3),
     ],
     'stock.picking.int': [
         ('tr', _('Approved by'), True, 1),
@@ -1153,11 +1155,14 @@ class signature_set_user(osv.osv_memory):
         'b64_image': fields.function(_get_b64, method=1, type='text', string='New Signature'),
         'new_signature': fields.text("Draw your signature"),
         'json_signature': fields.text('Json Signature'),
+        'new_signature_import': fields.binary('Import your signature', filters='*.png, *.jpg, *.jpeg, *.pdf'),
+        'pdf_import': fields.boolean('Is the imported file PDF'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
         'user_name': fields.related('user_id', 'name', type='char', string='User', readonly=1),
         'preview': fields.boolean('Preview'),
         'legal_name': fields.char('Legal Name', size=128, required=1),
         'position': fields.selection([('top', 'Top'), ('middle', 'Middle'), ('bottom', 'Bottom')], string='Position'),
+        'sign_creation_type': fields.selection([('import', 'Importing'), ('draw', 'Drawing')], string='Type of Signature Creation', required=1),
     }
 
     #def _get_name(self, cr, uid, *a, **b):
@@ -1168,7 +1173,38 @@ class signature_set_user(osv.osv_memory):
         'preview': False,
         'position': 'bottom',
         #'legal_name': lambda self, cr, uid, *a, **b: self._get_name(cr, uid, *a, **b),
+        'pdf_import': False,
     }
+
+    def onchange_sign_creation_type(self, cr, uid, ids, sign_creation_type, context=None):
+        if not context:
+            context = {}
+        res = {}
+        if sign_creation_type == 'import':
+            # TOFIX: Doesn't clear the drawing, javascript is used for this: $('#sig_new_signature').signature('clear')
+            res.update({'value': {'new_signature': False}})
+        elif sign_creation_type == 'draw':
+            res.update({'value': {'new_signature_import': False}})
+        return res
+
+    def onchange_signature_import(self, cr, uid, ids, sign_import, context=None):
+        if not context:
+            context = {}
+        if not ids:
+            return {}
+        res = {}
+        if sign_import:
+            if not sign_import.endswith(('.png', '.jpg', '.jpeg', '.pdf')):
+                res.update({'value': {'new_signature_import': False}, 'warning': {
+                    'title': _('Warning'),
+                    'message': _('Only PNG, JPG, JPEG images, and PDFs are accepted as imported file for the signature')
+                }})
+            elif sign_import.endswith('.pdf'):
+                res.update({'value': {'pdf_import': True}})
+            else:
+                res.update({'value': {'pdf_import': False}})
+        return res
+
     def closepref(self, cr, uid, ids, context=None):
         return {'type': 'closepref'}
 
@@ -1188,32 +1224,124 @@ class signature_set_user(osv.osv_memory):
 
     def preview(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
-        if not wiz.new_signature:
+        if not wiz.new_signature and not wiz.new_signature_import:
             return {'type': 'closepref'}
 
         msg = ustr(wiz.legal_name)
+        if wiz.new_signature_import:
+            if wiz.pdf_import:
+                # Create a temporary file to use it with pypdf
+                temp_file = BytesIO()
+                img_data = None
+                try:
+                    temp_file.write(base64.b64decode(wiz.new_signature_import))
+                    reader = PdfReader(temp_file)
+                    page = reader.pages[0]
+                    # Only check what is recognized as image
+                    for image_file_object in page.images:
+                        # The TIFF (Tagged Image File Format) images are ignored
+                        if image_file_object.image.format in ('JPEG', 'PNG'):
+                            img_data = image_file_object.data
+                            break
+                finally:
+                    temp_file.close()
+                if img_data is None:
+                    raise osv.except_osv(_('Warning'), _('The signature could not be found in the file, please make sure to follow the instructions at the top of the template'))
+                imported_signature = img_data  # bytes
+            else:
+                imported_signature = base64.b64decode(wiz.new_signature_import)  # bytes
+
+            nparr = numpy.frombuffer(imported_signature, dtype=numpy.uint8)
+            img_imp = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+            # Grayscale of the imported image
+            gray_img = cv2.cvtColor(img_imp, cv2.COLOR_BGR2GRAY)
+
+            # Adding a blur to reduce the noise
+            blurred = cv2.GaussianBlur(gray_img, (5, 5), 0)
+
+            # Detect the black contours
+            edges = cv2.Canny(blurred, 50, 100)
+
+            # Find the contours in the image
+            contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            x, y, w, h = None, None, None, None
+            for cnt in contours:
+                # Create an approximative polygon with the contour
+                approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
+
+                # If it has a quadrilateral shape (4 peaks) and a good size
+                if len(approx) == 4 and cv2.contourArea(cnt) > 1000:
+                    # Check if the edges are black
+                    mask = numpy.zeros(gray_img.shape, dtype=numpy.uint8)
+                    cv2.drawContours(mask, [approx], -1, (255, 255, 255), thickness=cv2.FILLED)
+                    mean_val = cv2.mean(gray_img, mask=mask)[0]
+
+                    if mean_val < 250:  # threshold to detect darker colors, and we get the coordinates of the rectangle
+                        x, y, w, h = cv2.boundingRect(cnt)
+                        break
+
+            # get the results, "+" and "-" to remove the extra space from the cropped image
+            if x is not None and y is not None and w is not None and h is not None:
+                extra_w = int(w * 0.02)
+                extra_h = int(h * 0.07)
+                final_img = img_imp[y + extra_h: y + h - extra_h, x + extra_w: x + w - extra_w]
+            else:
+                raise osv.except_osv(_('Warning'), _('The signature could not be found in the file, please make sure to follow the instructions at the top of the template'))
+
+            # Resize if the image is too large
+            size_limit = 400
+            if final_img.shape[1] >= final_img.shape[0] and final_img.shape[1] > size_limit:
+                aspect_ratio = size_limit / final_img.shape[1]
+                new_height = int(final_img.shape[0] * aspect_ratio)
+                final_img = cv2.resize(final_img, (size_limit, new_height))
+
+            # Convert img to png
+            retval, buffer = cv2.imencode('.png', final_img)
+
+            new_signature = base64.b64decode(str(base64.b64encode(buffer), 'utf8'))
+        else:
+            new_signature = base64.b64decode(wiz.b64_image)
 
         # Add legal name to signature
-        image = Image.open(BytesIO(base64.b64decode(wiz.b64_image)))
+        # Not done with OpenCV for the import because the available fonts are limited and do not handle special characters
+        image = Image.open(BytesIO(new_signature))
         W, H = image.size
-        fit = False
+        font, fit = False, False
+        font_path = customfonts.GetFontPath('DejaVuSans.ttf')
         init_font_size = 28
         font_size = init_font_size
-        while not fit and font_size > 3:
-            font_path = customfonts.GetFontPath('DejaVuSans.ttf')
+        w_font, h_font = 0, 0
+        while not fit and font_size > 11:
             font = ImageFont.truetype(font_path, font_size)
-            left, top, w,h = font.getbbox(msg)
-            fit = w <= W
+            left, top, w_font, h_font = font.getbbox(msg)
+            fit = w_font <= W
             font_size -= 1
-        new_img = Image.new("RGBA", (W, H+init_font_size))
-        new_img.paste(image, (0, 0))
+
+        # To better center the signature and the legal name
+        if w_font > W:
+            largest_w = w_font
+            text_w_pos = 0
+            img_w_pos = int((w_font - W)/2)
+        else:
+            largest_w = W
+            text_w_pos = int((W - w_font)/2)
+            img_w_pos = 0
+
+        if wiz.new_signature_import:  # White background for import only
+            new_img = Image.new("RGBA", (largest_w, H + h_font), "white")
+        else:
+            new_img = Image.new("RGBA", (largest_w, H + h_font))
+
+        new_img.paste(image, (img_w_pos, 0))
         draw = ImageDraw.Draw(new_img)
         # H-5 to emulate anchor='md' which does not work on this PIL version
-        draw.text(((W-w)/2,H-5), msg, font=font, fill="black")
+        draw.text((text_w_pos, H-5), msg, font=font, fill="black")
         txt_img = BytesIO()
         new_img.save(txt_img, 'PNG')
-        wiz.write({'new_signature': 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')}, context=context)
 
+        wiz.write({'new_signature': 'data:image/png;base64,%s' % str(base64.b64encode(txt_img.getvalue()), 'utf8')}, context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_set_user_form_preview')
         return {
@@ -1235,13 +1363,13 @@ class signature_set_user(osv.osv_memory):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        if wiz.new_signature:
+        if wiz.new_signature or wiz.new_signature_import:
             if wiz.user_id.esignature_id:
                 self.pool.get('res.users')._archive_signature(cr, root_uid, [real_uid], context=context)
 
             new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,
-                'image': wiz.new_signature,
+                'image': wiz.new_signature or '',
                 'legal_name': wiz.legal_name,
                 'user_name': wiz.user_id.name,
                 'from_date': wiz.user_id.signature_from,
@@ -1250,6 +1378,20 @@ class signature_set_user(osv.osv_memory):
             self.pool.get('res.users').write(cr, root_uid, real_uid, {'esignature_id': new_image}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
+
+    def signature_import_template(self, cr, uid, ids, context=None):
+        '''
+        Get the PDF template for the signature import
+        '''
+        if context is None:
+            context = {}
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'signature.import.template.report',
+            'context': context,
+        }
+
 
 signature_set_user()
 

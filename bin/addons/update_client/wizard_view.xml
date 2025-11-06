@@ -15,15 +15,8 @@ Created on 9 juil. 2012
                     <field name="state" invisible="1" colspan="4"/> 
                     <field name="message" nolabel="1" colspan="4"/> 
                     <label string="" colspan="1"/>
-                    <field name="error" nolabel="1" colspan="4" attrs="{'invisible':[('error', '=', '')]}"/>
                     <field name="patch" nolabel="1" attrs="{'invisible':[('state','!=','need-provide-manually')]}" />
                     <html>
-                    <script language="javascript">
-                    var error = $('#error');
-                    if (error.val()) {
-                        error.css('color', 'red').css('font-weight', 'bold');
-                    }
-                    </script>
                     </html>
                     <button type="object" string="Download" name="download" icon="gtk-save" states="need-download"/>
                     <button type="object" string="Import" name="import_patch" icon="gtk-save" states="need-provide-manually"/>

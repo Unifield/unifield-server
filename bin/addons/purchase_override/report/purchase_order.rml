@@ -1,19 +1,19 @@
 <?xml version="1.0" ?>
 <document filename="purchase_order.pdf">
 
-    <template pageSize="(900.0,636.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
+    <template pageSize="(1000.0,707.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="15.0" y1="5.0" width="870" height="551" />
+            <frame id="first" x1="15.0" y1="5.0" width="970" height="621" />
 
         <pageGraphics>
-            <drawString x="15" y="611.0">PURCHASE ORDER [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
-            <image x="778" y="576.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <drawString x="15" y="680.0">PURCHASE ORDER [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
+            <image x="878" y="646.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
-            <drawString x="778" y="566.0">Page : <pageNumber /></drawString>
-            <drawString x="813" y="566.0">/</drawString>
-            <drawString x="818" y="566.0"><pageCount /> </drawString>
-            <drawString x="778" y="556.0">Print date: [[ time.strftime('%d/%b/%Y') ]]</drawString>
+            <drawString x="878" y="635.0">Page : <pageNumber /></drawString>
+            <drawString x="913" y="635.0">/</drawString>
+            <drawString x="918" y="635.0"><pageCount /> </drawString>
+            <drawString x="878" y="625.0">Print date: [[ time.strftime('%d/%b/%Y') ]]</drawString>
         </pageGraphics>
 
     </pageTemplate>
@@ -38,7 +38,6 @@
             <lineStyle kind="LINEABOVE" colorName="black" start="2,-4" stop="2,-4" thickness="0.5" />
             <lineStyle kind="LINEABOVE" colorName="black" start="4,-4" stop="4,-4" thickness="0.5" />
             <lineStyle kind="LINEABOVE" colorName="black" start="6,-4" stop="6,-4" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="8,-4" stop="8,-4" thickness="0.5" />
             <blockLeftPadding length="0" start="1,0" stop="1,-1"/>
             <blockRightPadding length="0" start="1,0" stop="1,-1"/>
             <blockLeftPadding length="0" start="3,0" stop="3,-1"/>
@@ -107,7 +106,7 @@
 
         <para style="Standard"></para>
 
-        <blockTable colWidths="90.0,680.0,100.0" style="Origin">
+        <blockTable colWidths="90.0,780.0,100.0" style="Origin">
             <tr>
                 <td>
                     <para style="TextInformationH">Source Document :</para>
@@ -160,7 +159,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="184.0,5.5,166.0,5.5,166.0,5.5,166.0,5.5,166.0" style="OrderInformations">
+        <blockTable colWidths="204.0,5.5,186.0,5.5,186.0,5.5,186.0,5.5,186.0" style="OrderInformations">
             <tr>
                 <td>
                     <para style="TextInformation">Project : [[ objects[0].company_id.partner_id.name ]]</para>
@@ -520,7 +519,7 @@
                     <para style="TextInformation1"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Date sent : </para>
+                    <para style="TextInformation">PO Confirmed Date : </para>
                 </td>
                 <td>
                     <para style="TextInformation1"> </para>
@@ -538,7 +537,7 @@
                     <para style="TextInformation1"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Dated before :</para>
+                    <para style="TextInformation1"> </para>
                 </td>
             </tr>
             <tr>
@@ -634,7 +633,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="870.0" style="LinesTitle">
+        <blockTable colWidths="970.0" style="LinesTitle">
             <tr>
                 <td>
                     <para style="TextInformation">Lines :</para>
@@ -643,7 +642,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="17.0,58.5,93.5,270.5,86,53.5,25.0,98.0,134.0,17,17" style="LinesTable">
+        <blockTable colWidths="17.0,58.5,93.5,270.5,186,53.5,25.0,98.0,134.0,17,17" style="LinesTable">
                          <!-- "20.0,62.5,97.5,280.5,90.0,55.5,60.0,51.0,55.0" -->
             <tr >
                 <td>
@@ -683,7 +682,7 @@
         </blockTable>
 
         <section>
-            <blockTable colWidths="17.0,58.5,93.5,270.5,86,53.5,25.0,98.0,134.0,17,17" style="LinesTable">
+            <blockTable colWidths="17.0,58.5,93.5,270.5,186,53.5,25.0,98.0,134.0,17,17" style="LinesTable">
                 [[ repeatIn(filter_lines(objects[0]), 'line') ]]
                 <tr>
                     <td>
@@ -725,7 +724,7 @@
 
         </section>
 
-        <blockTable colWidths="870.0" style="LinesTableEnd">
+        <blockTable colWidths="970.0" style="LinesTableEnd">
             <tr>
                 <td>
                     <para style="LinesBlue"> </para>
@@ -737,7 +736,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="870.0" style="RemarkTable" keepWithNext="1">
+        <blockTable colWidths="970.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
                     <para style="TextNotes">Notes : [[ objects[0].notes ]]</para>
@@ -768,7 +767,7 @@
             </tr>
         </blockTable>
  
-        <blockTable colWidths="122.0,150.0,150.0,150.0,149.0,149.0" style="StatusTable">
+        <blockTable colWidths="122.0,170.0,170.0,170.0,169.0,169.0" style="StatusTable">
             <tr>
                 <td>
                     <para style="Standard"> </para>

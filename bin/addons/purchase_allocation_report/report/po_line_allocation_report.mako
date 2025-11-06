@@ -153,7 +153,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${_('Cat.')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('O. l.')}</Data>
+        <Data ss:Type="String">${_('#')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Product')}</Data>
@@ -174,7 +174,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${_('Subtotal')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('Currency')}</Data>
+        <Data ss:Type="String">${_('Cur.')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Account')}</Data>
@@ -183,7 +183,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${_('Destination')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('Cost Center')}</Data>
+        <Data ss:Type="String">${_('C.C.')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Source Doc')}</Data>
@@ -196,6 +196,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     </Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Comment')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('PO Line Status')}</Data>
     </Cell>
 </Row>
 
@@ -254,6 +257,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     </Cell>
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${ o.comment or '' |x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${ getSel(o , 'line_state') or '' |x}</Data>
     </Cell>
 </Row>
 

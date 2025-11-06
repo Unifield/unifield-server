@@ -196,7 +196,7 @@ class wizard_update_po_line_import(osv.osv_memory):
                         line_err += _('The Unit Price must be a number. ')
                 if isinstance(price, float) or isinstance(price, int):
                     if price < 0:
-                        line_err += _('The Unit Price must be a positive. ')
+                        line_err += _('The Unit Price must be positive. ')
                     else:
                         pol_data.update({'price_unit': price})
             else:

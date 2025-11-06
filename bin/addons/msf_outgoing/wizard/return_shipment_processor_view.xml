@@ -33,7 +33,7 @@
                     hide_new_button="1"
                     hide_delete_button="1"
                     string="Pack Families"
-                    colors="red:integrity_status not in ('ok', 'empty')"
+                    colors="red:parcel_ids_error or integrity_status not in ('ok', 'empty')"
                     >
                     <field name="sale_order_id" readonly="1" />
                     <field name="ppl_id" readonly="1" />
@@ -44,6 +44,9 @@
                     <field name="volume" readonly="1" />
                     <field name="weight" readonly="1" />
                     <field name="selected_number" string="Number to return" />
+                    <field name="parcel_ids_error" invisible="1" />
+                    <field name="has_parcels_info" invisible="1" />
+                    <button name="select_parcel_ids" string="Select Parcel Ids" icon="terp-accessories-archiver-minus" type="object" attrs="{'invisible': ['|', ('selected_number', '=', 0), ('has_parcels_info', '=', False)]}" />
                     <field name="selected_weight" string="Weight to return [kg]" readonly="1" />
                     <field name="integrity_status" />
                 </tree>

@@ -235,8 +235,22 @@ class product_history_consumption(osv.osv):
                 'view_mode': 'form',
                 'target': 'dummy'}
 
-    def date_change(self, cr, uid, ids, date_from, date_to, context=None):
+    def _check_max_date_to(self, cr, uid, ids, date_to, consumption_type, context=None):
+        if date_to:
+            date_to = (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            if consumption_type in ('amc', 'rr-amc') and date_to > (datetime.now() + relativedelta(day=31)).strftime('%Y-%m-%d'):
+                return {
+                    'value': {'date_to': False},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _('With the AMC or RR-AMC consumption types, \'To Date\' can not be greater than the last day of the current month')
+                    }
+                }, date_to
+        return {}, date_to
+
+    def date_change(self, cr, uid, ids, date_from, date_to, consumption_type, context=None):
         '''
+        In AMC/RR-AMC consumption types, remove date_to if it is in a future month
         Add the list of months in the defined period
         '''
         if not context:
@@ -247,8 +261,11 @@ class product_history_consumption(osv.osv):
         if date_from:
             date_from = (datetime.strptime(date_from, '%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')
             res['value'].update({'date_from': date_from})
+
+        error_msg, date_to = self._check_max_date_to(cr, uid, ids, date_to, consumption_type, context=context)
+        if error_msg:
+            return error_msg
         if date_to:
-            date_to = (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
             res['value'].update({'date_to': date_to})
 
         # If a period is defined
@@ -256,8 +273,10 @@ class product_history_consumption(osv.osv):
             res['value'].update({'month_ids': []})
             current_date = datetime.strptime(date_from, '%Y-%m-%d') + relativedelta(day=1)
             if current_date > (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)):
-                return {'warning': {'title': _('Error'),
-                                    'message':  _('The \'To Date\' should be greater than \'From Date\'')}}
+                return {
+                    'value': {'date_to': False},
+                    'warning': {'title': _('Error'), 'message':  _('\'To Date\' should be greater than \'From Date\'')}
+                }
             # For all months in the period
             while current_date <= (datetime.strptime(date_to, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)):
                 search_ids = month_obj.search(cr, uid, [('name', '=', current_date.strftime('%m/%Y')), ('history_id', 'in', ids)], context=context)
@@ -291,6 +310,16 @@ class product_history_consumption(osv.osv):
             month_obj.unlink(cr, uid, del_months, context=context)
 
         return res
+
+    def onchange_consumption_type(self, cr, uid, ids, consumption_type, date_to, context=None):
+        '''
+        In AMC/RR-AMC consumption types, remove date_to if it is in a future month
+        '''
+        if not context:
+            context = {}
+
+        error_msg, date_to = self._check_max_date_to(cr, uid, ids, date_to, consumption_type, context=context)
+        return error_msg
 
     def get_months(self, cr, uid, ids, context=None):
         months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', ids[0])], order='date_from asc', context=context)

@@ -357,7 +357,7 @@
                                     <field name="from_wkf" invisible="1" />
                                     <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" context="{'from_button': True}" />
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
-                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply" context="{'from_button': True}"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
                                     <field name="kc_check" widget="null_boolean" />
@@ -473,7 +473,7 @@
                                 <field name="from_manage_expired" invisible="1" />
                                 <!-- <button name="return_to_state" string="Return to initial state" states="import" icon="gtk-execute" type="object" />-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object"  context="{'from_button': True}"/>
-                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', ('state', 'in', ['done', 'cancel', 'import']), '&amp;', ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
+                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', ('state', 'in', ['done', 'cancel', 'import']), '&amp;', ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" context="{'from_button': True}"/>
                                 <button name="expired_assign" states="confirmed,assigned" string="Check Expired Products' Availability" type="object" icon="gtk-find" context="{'from_button': True}" attrs="{'invisible': ['|', ('state', 'not in', ['confirmed', 'assigned']), ('from_manage_expired', '=', False)]}" />
                                 <button name="check_availability_manually" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}" attrs="{'invisible': [('from_manage_expired', '=', True)]}"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
@@ -563,13 +563,18 @@
                             <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_wkf', '=', True), ('claim', '=', True)], 'required': [('state', '=', 'draft'), ('from_wkf', '=', False), ('claim', '=', False)]}"/>
                         </group>
                         <group colspan="2" col="2">
-                            <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="min_date" string="Expected Receipt Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
-                            on_change="change_min_date()" required="1" />
+                            <group colspan="2" col="4">
+                                <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
+                                <field name="min_date" string="Expected Receipt Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
+                                    on_change="change_min_date()" required="1" />
+                            </group>
                             <field name="min_date_manually" invisible="1" />
-                            <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                            <field name="warehouse_id" widget="selection" readonly="1" invisible="1"/>
+                            <field name="transport_active" invisible="1" />
+                            <field name="oto_ref" attrs="{'invisible': [('transport_active', '=', False)]}" />
                             <field name="shipment_ref" />
                             <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="manual_ito_id" readonly="1" attrs="{'invisible': [('transport_active', '=', False)]}" />
                             <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
                         </group>
                     </group>
@@ -956,7 +961,7 @@
                                     <field name="fake_state" invisible="1"/>
                                     <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" context="{'from_button': True}"/>
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}"/>
-                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply" context="{'from_button': True}"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
                                     <field name="kc_check" widget="null_boolean" />
@@ -1082,7 +1087,7 @@
                                 <field name="claim" invisible="1"/>
                                 <!--<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object"  context="{'from_button': True}" />
-                                <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+                                <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply" context="{'from_button': True}"/>
                                 <button name="check_availability_manually" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}" />
                                 <button name="convert_to_pick" states="draft,confirmed,assigned" string="Convert to Picking Ticket" type="object" icon="gtk-convert" context="{'from_button': True}" />
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />

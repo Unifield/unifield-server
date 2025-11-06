@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 
 class hr_employee_activation(osv.osv_memory):
@@ -29,9 +30,38 @@ class hr_employee_activation(osv.osv_memory):
         'active_status': fields.boolean('Set selected employees as active'),
     }
 
+    def _get_default_status(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        emp_ids = context.get('active_ids', [])
+        if self.pool.get('hr.employee').search_exist(cr, uid,
+                                                     [('id', 'in', emp_ids), ('employee_type', '=', 'ex'), ('not_to_be_used', '=', True)],
+                                                     context=context):
+            return False
+
+        return True
+
     _defaults = {
-        'active_status': True,
+        'active_status': _get_default_status,
     }
+
+    def onchange_active(self, cr, uid, ids, active, context=None):
+        if context is None:
+            context = {}
+        if active:
+            emp_obj = self.pool.get('hr.employee')
+            not_to_be_used_ids = emp_obj.search(cr, uid,
+                                                [('id', 'in', context.get('active_ids', [])), ('employee_type', '=', 'ex'), ('not_to_be_used', '=', True), ('active', '=', False)],
+                                                context=context)
+            if not_to_be_used_ids:
+                emp_names = emp_obj.browse(cr, uid, not_to_be_used_ids[0:10], fields_to_fetch=['name'], context=context)
+                return {
+                    'warning': {
+                        'message': '%s : %s' % (_('You can not activate an employee flagged as not to be used'), '\n'.join([x.name for x in emp_names]))
+                    },
+                    'value': {'active_status': False}
+                }
+        return {}
 
     def change_employee_status(self, cr, uid, ids, context=None):
         """
@@ -43,8 +73,13 @@ class hr_employee_activation(osv.osv_memory):
             ids = [ids]
         employee_obj = self.pool.get('hr.employee')
         data = self.read(cr, uid, ids, ['active_status'], context=context)[0]
-        for employee_id in context.get('active_ids', []):
-            employee_obj.write(cr, uid, employee_id, {'active': data['active_status']}, context=context)
+        emp_ids = context.get('active_ids', [])
+        if emp_ids and data['active_status']:
+            emp_ids = employee_obj.search(cr, uid,
+                                          [('id', 'in', emp_ids), ('active', '=', False), '|', ('employee_type', '=', 'local'), ('not_to_be_used', '=', False)],
+                                          context=context)
+        if emp_ids:
+            employee_obj.write(cr, uid, emp_ids, {'active': data['active_status']}, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 

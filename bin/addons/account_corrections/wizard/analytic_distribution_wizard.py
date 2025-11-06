@@ -96,7 +96,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         orig_document_date = ml.document_date
         posting_date = wizard.date
         curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
-        working_period_id = []
+        working_period_id = False
         new_line_ids = []
         entry_seq_data = {}
 
@@ -109,7 +109,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                                                        fields_to_fetch=['period_id', 'entry_sequence', 'date'], context=context)
             # use the period / date and Entry Sequence of the reversal AJI in case its period is still open
             if biggest_reversal_aji.period_id and biggest_reversal_aji.period_id.state == 'draft':  # Open
-                working_period_id = [biggest_reversal_aji.period_id.id]
+                working_period_id = biggest_reversal_aji.period_id.id
                 posting_date = biggest_reversal_aji.date
                 entry_seq_data['sequence'] = biggest_reversal_aji.entry_sequence
 
@@ -134,10 +134,12 @@ class analytic_distribution_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No journal found for corrections!'))
         journal = journal_obj.browse(cr, uid, journal_id, context=context)
         code = journal.code
-        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date=posting_date, context=context)
-        if not period_ids:
+
+        period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date=posting_date, check_extra_config=True, context=context)
+        if not period_id:
             raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (posting_date or ''))
-        period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
+
+        period = self.pool.get('account.period').browse(cr, uid, period_id)
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
 
         # US-676: check wizard lines total matches JI amount
@@ -189,8 +191,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if original_al \
                     and original_al.move_id and \
                         original_al.move_id.journal_id.type == 'hq':
-                        # US-1343/2: flag that the chain origin is an HQ
-                        # entry: in other terms OD AJI from a HQ JI
+                    # US-1343/2: flag that the chain origin is an HQ
+                    # entry: in other terms OD AJI from a HQ JI
                     is_HQ_origin = {
                         'from_od': original_al.journal_id.type in ('correction', 'correction_hq'),
                     }
@@ -308,7 +310,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                                       source_date=curr_date, name=name, context=context)
             new_line_ids.extend(list(created_analytic_line_ids.values()))
             working_period_id = working_period_id or \
-                self.pool.get('account.period').get_period_from_date(cr, uid, date=create_date, context=context)
+                self.pool.get('account.period').get_open_period_from_date(cr, uid, date=create_date, check_extra_config=True, context=context)
             # Set right analytic correction journal to these lines
             if period_closed or is_HQ_origin:
                 sql_to_cor = ['journal_id=%s']
@@ -363,15 +365,15 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'destination_id': line.destination_id.id,
             })
             # UTP-943: Check that new ana line is on an open period
-            correction_period_ids = period_ids
-            for cp in self.pool.get('account.period').browse(cr, uid, correction_period_ids):
-                if cp.state != 'draft':
-                    raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
+            correction_period_id = period_id
+            cp = self.pool.get('account.period').browse(cr, uid, correction_period_id)
+            if cp.state != 'draft':
+                raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
             ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date,
                                                        document_date=orig_document_date, source_date=curr_date, name=name, context=context)
             new_line_ids.extend(list(ret.values()))
-            working_period_id = working_period_id or period_ids
+            working_period_id = working_period_id or period_id
             # Add link to first analytic lines
             for ret_id in ret:
                 ana_line_obj.write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
@@ -414,7 +416,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'date': aal_date,
                 'document_date': orig_document_date,
             })
-            working_period_id = working_period_id or self.pool.get('account.period').get_period_from_date(cr, uid, date=aal_date, context=context)
+            working_period_id = working_period_id or self.pool.get('account.period').get_open_period_from_date(cr, uid, date=aal_date, check_extra_config=True, context=context)
             ana_line_obj.write(cr, uid, to_override_ids, vals)
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
@@ -443,7 +445,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
             if has_generated_cor and aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
                 max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
-            elif not has_generated_cor and working_period_id and aji.period_id.id == working_period_id[0] and \
+            elif not has_generated_cor and working_period_id and aji.period_id.id == working_period_id and \
                     abs(aji.amount_currency or 0.0) > max_line['amount']:
                 max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
 

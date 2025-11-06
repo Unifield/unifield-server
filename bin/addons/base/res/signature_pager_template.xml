@@ -21,7 +21,7 @@
             type="object"
             colspan="2"
             icon="terp-personal"
-            attrs="{'readonly': ['|', '|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed'), ('signed_off_line', '=', True)]}"
+            attrs="{'readonly': ['|', '|', '|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed'), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}"
             ignore_access_error="1"
         />
         <group colspan="2" attrs="{'invisible': ['|', ('allowed_to_be_locked', '=', False), ('allowed_to_be_signed_unsigned', '=', False)]}">

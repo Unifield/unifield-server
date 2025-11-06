@@ -934,27 +934,36 @@ class purchase_order(osv.osv):
         if not ids:
             return {}
         ret = {}
+        pol_obj = self.pool.get('purchase.order.line')
         for _id in ids:
             ret[_id] = {
                 'catalogue_ratio_conform': False,
                 'catalogue_ratio_no_catalogue': False,
                 'catalogue_ratio_not_conform': False,
+                'catalogue_total_price_deviation': False,
                 'catalogue_exists': False,
                 'catalogue_display_tab': False,
                 'catalogue_exists_text': False,
                 'catalogue_ratio_text': '',
+                'catalogue_ratio_plain_text': '',
+                'catalogue_deviation_text': '',
+                'catalogue_deviation_plain_text': '',
             }
-        self.pool.get('purchase.order.line')._compute_catalog_mismatch(cr, uid, order_id=ids, context=context)
+        pol_obj._compute_catalog_mismatch(cr, uid, order_id=ids, context=context)
 
         cr.execute("""
             select
                 pol.order_id,
                 count(pol.catalog_mismatch!='' or NULL),
                 count(pol.catalog_mismatch='conform' or NULL),
-                count(pol.catalog_mismatch='na' or NULL)
+                count(pol.catalog_mismatch='na' or NULL),
+                case when exists(select tax.ord_id from purchase_order_taxe tax, purchase_order_line pol2 where pol2.id=tax.ord_id and pol2.order_id=pol.order_id) then array_agg(pol.id) else ARRAY[]::integer[] end,
+                sum(case when pol.catalog_price_unit is not null then pol.price_unit * pol.product_qty else 0 end),
+                sum(pol.catalog_price_unit * pol.product_qty)
             from
                 purchase_order_line pol, purchase_order po
             where
+                pol.order_id = po.id and
                 pol.order_id in %s and
                 po.id = pol.order_id and
                 po.catalogue_not_applicable != 't' and
@@ -976,9 +985,31 @@ class purchase_order(osv.osv):
                 if catalogue_ratio_conform != 100:
                     ret[x[0]]['catalogue_display_tab'] = True
                 ret[x[0]]['catalogue_ratio_text'] = _('<b>Catalogue Adherence Summary:</b><br />PO lines adherence: <span class="readonlyfield">%d%%</span> PO Lines Mismatch: <span class="readonlyfield">%d%%</span> of which Not in catalogue: <span class="readonlyfield">%d%%</span>') % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
+                ret[x[0]]['catalogue_ratio_plain_text'] = _('PO lines adherence: %d%% PO Lines Mismatch: %d%% of which Not in catalogue: %d%%') % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
 
             else:
                 ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">%s</h2>' % _('No valid catalogue')
+
+            if x[4]:
+                po_subtotal, catalog_po_subtotal = 0, 0
+                for pol in pol_obj.read(cr, uid, x[4], ['price_subtotal', 'catalog_subtotal'], context=context):
+                    # Add to the subtotal only if the line has a catalogue
+                    if pol['catalog_subtotal']:
+                        po_subtotal += pol['price_subtotal']
+                        catalog_po_subtotal += pol['catalog_subtotal']
+            else:
+                po_subtotal = x[5]
+                catalog_po_subtotal = x[6]
+
+            if catalog_po_subtotal:
+                catalogue_total_price_deviation = str(round(((po_subtotal - catalog_po_subtotal) / catalog_po_subtotal) * 100, 2))
+                if po_subtotal > catalog_po_subtotal:
+                    catalogue_total_price_deviation = '+' + catalogue_total_price_deviation
+                ret[x[0]].update({
+                    'catalogue_total_price_deviation': catalogue_total_price_deviation,
+                    'catalogue_deviation_text': _('%% deviation of PO subtotal vs theoretical catalogue subtotal (for catalogue lines): <span class="readonlyfield">%s%%</span>') % (catalogue_total_price_deviation,),
+                    'catalogue_deviation_plain_text': _('%% deviation of PO subtotal vs theoretical catalogue subtotal (for catalogue lines): %s%%') % (catalogue_total_price_deviation,),
+                })
         return ret
 
     def _get_catalogue_description_text(self, cr, uid, ids, name, arg, context=None):
@@ -1235,12 +1266,17 @@ class purchase_order(osv.osv):
         'catalogue_ratio_not_conform': fields.function(_get_catalogue_ratio, method=True, type='integer', string='PO Lines Mismatch', multi='catalogue'),
         'catalogue_ratio_no_catalogue': fields.function(_get_catalogue_ratio, method=True, type='integer', string='Not in Catalogue', multi='catalogue'),
         'catalogue_ratio_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Ratio', multi='catalogue'),
+        'catalogue_ratio_plain_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Ratio', multi='catalogue'),
+        'catalogue_total_price_deviation': fields.function(_get_catalogue_ratio, method=True, type='char', size=16, string='PO Total Price Deviation', multi='catalogue'),
+        'catalogue_deviation_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='PO Deviation', multi='catalogue'),
+        'catalogue_deviation_plain_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='PO Deviation', multi='catalogue'),
         'catalogue_exists': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Has a valid catalogue', multi='catalogue'),
         'catalogue_display_tab': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Display tab catalogue', multi='catalogue'),
         'catalogue_exists_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Lines Status', multi='catalogue'),
         'catalogue_description_text': fields.function(_get_catalogue_description_text,  method=True, type='char', string='Catalogue Text', multi='cat_info'),
         'catalogue_id': fields.function(_get_catalogue_description_text,  method=True, type='many2one', relation='supplier.catalogue', string='Catalogue', multi='cat_info'),
         'catalogue_not_applicable': fields.boolean('PO confirmed before pol catalogue', readonly=1),
+
     }
     _defaults = {
         'po_version': 2,
@@ -1940,7 +1976,7 @@ class purchase_order(osv.osv):
                     inv_data['journal_id'] = inkind_journal_ids[0]
                     inv_data['is_inkind_donation'] = True
                 else:
-                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
+                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)])
                     if not journal_ids:
                         raise osv.except_osv(_('Error !'),
                                              _('There is no purchase journal defined for this company: "%s" (id:%d)') % (o.company_id.name, o.company_id.id))
@@ -2301,7 +2337,7 @@ class purchase_order(osv.osv):
         # file msf_custom_settings/view/purchase_view.xml: domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', order_type),  ('check_partner_rfq', '=', tender_id)]"
         w = {}
         local_market = None
-        partner = partner_id and partner_obj.read(cr, uid, partner_id, ['partner_type']) or False
+        partner = partner_id and partner_obj.read(cr, uid, partner_id, ['partner_type', 'state']) or False
 
         if ids:
             order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
@@ -2355,6 +2391,12 @@ class purchase_order(osv.osv):
                 }
         if order_type == 'loan_return':
             return {'value': {'order_type': False}, 'warning': {'title': _('Error'), 'message': _('You can not select this Order Type manually')}}
+
+        if order_type not in ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp'] and partner and partner['state'] == 'phase_out':
+            return {
+                'value': {'partner_id': False},
+                'warning': {'title': _('Error'), 'message': _('The selected Supplier is Phase Out, please select another Supplier')},
+            }
 
         # Search the local market partner id
         data_obj = self.pool.get('ir.model.data')
@@ -2463,7 +2505,7 @@ class purchase_order(osv.osv):
 
         return {'value': v, 'warning': w}
 
-    def onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=False, context=None, *a, **b):
+    def onchange_partner_id(self, cr, uid, ids, partner_id=False, date_order=False, transport_lt=False, order_type=False, context=None, *a, **b):
         '''
         Fills the Requested and Confirmed delivery dates
         '''
@@ -2472,31 +2514,39 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        if not part:
+        if not partner_id:
             return {'value': {'partner_address_id': False, 'fiscal_position': False, 'catalogue_exists_text': '', 'catalogue_display_tab': False}}
-
-        addr = self.pool.get('res.partner').address_get(cr, uid, [part], ['default'])
-        part = self.pool.get('res.partner').browse(cr, uid, part)
-        pricelist = part.property_product_pricelist_purchase.id
-        fiscal_position = part.property_account_position and part.property_account_position.id or False
-        res = {'value': {'partner_address_id': addr['default'], 'pricelist_id': pricelist, 'fiscal_position': fiscal_position}}
 
         partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
-        partner = partner_obj.read(cr, uid, part.id, ['partner_type'])
+
+        partner = partner_obj.browse(cr, uid, partner_id)
+        if order_type not in ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp'] and partner.state == 'phase_out':
+            return {
+                'value': {'partner_id': False},
+                'warning': {
+                    'title': _('Error'),
+                    'message': _('The selected Supplier is Phase Out, please select another Supplier')}
+            }
+
+        addr = partner_obj.address_get(cr, uid, [partner_id], ['default'])
+        pricelist = partner.property_product_pricelist_purchase.id
+        fiscal_position = partner.property_account_position and partner.property_account_position.id or False
+        res = {'value': {'partner_address_id': addr['default'], 'pricelist_id': pricelist, 'fiscal_position': fiscal_position}}
+
         if ids:
             # Check the restriction of product in lines
             for order in self.browse(cr, uid, ids):
                 for line in order.order_line:
                     if line.product_id:
-                        res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part})
+                        res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': partner_id})
                         if test:
                             res.setdefault('value', {}).update({'partner_address_id': False})
                             return res
-        if partner['partner_type'] in ('internal', 'esc'):
+        if partner.partner_type in ('internal', 'esc'):
             res['value']['invoice_method'] = 'manual'
 
-        res = common_onchange_partner_id(self, cr, uid, ids, part=part.id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        res = common_onchange_partner_id(self, cr, uid, ids, part=partner_id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         # reset confirmed date
         res.setdefault('value', {}).update({'delivery_confirmed_date': False, 'catalogue_exists_text': '', 'catalogue_display_tab': False})
 
@@ -3146,7 +3196,7 @@ class purchase_order(osv.osv):
         context.update({'generate_po_from_rfq': True})
         for rfq_line in rfq.order_line:
             # Ignore cancelled lines and lines with a price of 0
-            if rfq_line.state in ('cancel', 'cancel_r') or rfq_line.rfq_line_state in ('cancel', 'cancel_r') or \
+            if rfq_line.state in ('cancel', 'cancel_r') or rfq_line.rfq_line_state != 'updated' or \
                     rfq_line.price_unit == 0.00:
                 continue
 
@@ -3457,6 +3507,20 @@ class purchase_order(osv.osv):
             'datas': {'target_filename': 'PO vs. Catalogue Mismatch%s' % (po_name,)},
             'context': context
         }
+
+    def open_ito_from_po(self, cr, uid, ids, context=None):
+
+        if context is None:
+            context = {}
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'transport_mgmt.transport_order_in_action', ['tree', 'form'], new_tab=True, context=context)
+        po_id =  context.get('active_id', 0)
+        if po_id:
+            po = self.read(cr, uid, po_id, ['name'], context=context)
+            res['name'] = _('ITOs linked to %s') % (po['name'], )
+        res['domain'] = [('line_ids.incoming_id.purchase_id', '=', po_id)]
+        return res
+
 
 
 purchase_order()

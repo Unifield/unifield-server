@@ -90,6 +90,7 @@
 						<newline />
 						<field name="priority" readonly="1" />
 						<field name="details" readonly="1" />
+						<field name="amount_total" string="Total PO amount" readonly="1" />
 						<newline />
 						<field name="date_order" readonly="1" />
 						<field name="create_uid" readonly="1" />
@@ -112,6 +113,7 @@
 							<field name="requestor" />
 							<field name="partner_doc" />
 							<field name="comment" />
+							<field name="line_state" />
 						</tree>
 					</field>
 				</form>

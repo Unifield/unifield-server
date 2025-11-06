@@ -38,6 +38,7 @@ class return_pack_shipment_processor(osv.osv):
             'wizard_id',
             string='Lines',
         ),
+        'error': fields.text('Error', readonly='1'),
     }
 
     def select_all(self, cr, uid, ids, context=None):
@@ -59,6 +60,7 @@ class return_pack_shipment_processor(osv.osv):
                     'return_from': family.from_pack,
                     'return_to': family.to_pack,
                 }, context=context)
+        self.write(cr, uid, ids, {'error': ''}, context=context)
 
         return {
             'type': 'ir.actions.act_window',
@@ -89,6 +91,7 @@ class return_pack_shipment_processor(osv.osv):
             for family in wiz.family_ids:
                 family_ids.append(family.id)
 
+        self.write(cr, uid, ids, {'error': ''}, context=context)
         family_obj.write(cr, uid, family_ids, {
             'return_from': 0,
             'return_to': 0,
@@ -112,7 +115,6 @@ class return_pack_shipment_processor(osv.osv):
         """
         # Objects
         shipment_obj = self.pool.get('shipment')
-        family_obj = self.pool.get('return.pack.shipment.family.processor')
 
         if context is None:
             context = {}
@@ -126,51 +128,22 @@ class return_pack_shipment_processor(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        to_smaller_ids = []
-        out_of_range_ids = []
-        overlap_ids = []
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            fo_family = {}
+            error = False
             no_sequence = True
 
+
             for family in wizard.family_ids:
-                fo_id = family.sale_order_id and family.sale_order_id.id or False
-                fo_family.setdefault(fo_id, [])
-                if family.return_from == 0 and family.return_to == 0:
-                    continue
-                if family.return_from > family.return_to:
-                    to_smaller_ids.append(family.id)
-                elif not (family.return_from >= family.from_pack and family.return_to <= family.to_pack):
-                    out_of_range_ids.append(family.id)
-                else:
-                    fo_family[fo_id].append((family.return_from, family.return_to, family.id))
-
-            for sequences in list(fo_family.values()):
-                sequences = sorted(sequences, key=lambda seq: seq[0])
-                if sequences:
+                if family.integrity_status != 'empty':
+                    error = True
+                    break
+                if family.return_from != 0 or family.return_to != 0:
                     no_sequence = False
-                # Go through the list of sequences applying the rules
-                for i in range(len(sequences)):
-                    seq = sequences[i]
-                    # Rule #3 applies from second element
-                    if i > 0:
-                        # previous sequence
-                        seqb = sequences[i - 1]
-                        # Rule #3: sfrom[i] > sto[i-1] for i>0 // no overlapping, unique sequence
-                        if seq[2] == seqb[2] and not (seq[0] > seqb[1]):
-                            overlap_ids.append(seq[2])
 
-            if overlap_ids:
-                family_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
 
-            if to_smaller_ids:
-                family_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
-
-            if out_of_range_ids:
-                family_obj.write(cr, uid, out_of_range_ids, {'integrity_status': 'seq_out_of_range'}, context=context)
-
-            if overlap_ids or to_smaller_ids or out_of_range_ids:
+            if error:
+                self.write(cr, uid, wizard.id, {'error': _('Return cannot be processed, please fix the error on the red lines')})
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': self._name,
@@ -199,6 +172,8 @@ class return_pack_shipment_family_processor(osv.osv):
     _inherit = 'return.shipment.family.processor'
     _description = 'Family to be returned from shipment'
     _order = 'sale_order_id, ppl_id, from_pack, id'
+
+
     def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
         """
         Set information on line with pack information
@@ -217,7 +192,29 @@ class return_pack_shipment_family_processor(osv.osv):
                 'volume': (line.length * line.width * line.height * float(num_of_packs)) / 100.0,
                 'num_of_packs': num_of_packs,
                 'selected_weight': line.weight * line.selected_number,
+                'integrity_status': 'empty',
+                'parcel_ids_error': False,
+                'has_parcels_info': False,
             }
+            selected_number = line.return_to - line.return_from + 1
+            if line.return_to and selected_number and line['parcel_ids']:
+                nb_parcel = len(line['parcel_ids'].split(','))
+                if not line['selected_parcel_ids']:
+                    nb_parcel_selected = 0
+                else:
+                    nb_parcel_selected = len(line['selected_parcel_ids'].split(','))
+
+                if nb_parcel:
+                    res[line.id]['has_parcels_info'] = True
+                if selected_number != nb_parcel and selected_number != nb_parcel_selected:
+                    res[line.id]['parcel_ids_error'] = True
+                    res[line.id]['integrity_status'] = 'parcels'
+
+            if line.return_from or line.return_to:
+                if line.return_from > line.return_to:
+                    res[line.id]['integrity_status'] = 'to_smaller_than_from'
+                elif not (line.return_from >= line.from_pack and line.return_to <= line.to_pack):
+                    res[line.id]['integrity_status'] = 'seq_out_of_range'
 
         return res
 
@@ -250,6 +247,8 @@ class return_pack_shipment_family_processor(osv.osv):
             readonly=True,
             multi='pack_info',
         ),
+        'parcel_ids_error': fields.function(_get_pack_info, method=True, type='boolean', string='Parcel Error', multi='pack_info'),
+        'has_parcels_info': fields.function(_get_pack_info, method=True, type='boolean', string='Has Parcel', multi='pack_info'),
         'selected_weight': fields.function(
             _get_pack_info,
             method=True,
@@ -263,18 +262,40 @@ class return_pack_shipment_family_processor(osv.osv):
             string='Comment',
             readonly=True,
         ),
-        'integrity_status': fields.selection(
-            string=' ',
-            selection=[
-                ('empty', ''),
-                ('ok', 'Ok'),
-                ('to_smaller_than_from', 'To value must be greater or equal to From value'),
-                ('overlap', 'The sequence overlaps previous one'),
-                ('seq_out_of_range', 'Selected Sequence is out of range'),
-            ],
-            readonly=True,
-        ),
+        'integrity_status': fields.function(_get_pack_info, method=True, type='selection',  string=' ',
+                                            selection=[
+                                                ('empty', ''),
+                                                ('ok', 'Ok'),
+                                                ('to_smaller_than_from', 'To value must be greater or equal to From value'),
+                                                ('seq_out_of_range', 'Selected Sequence is out of range'),
+                                                ('parcels', 'Selected Parcel IDs'),
+                                            ],
+                                            multi='pack_info',
+                                            ),
     }
+
+    def select_parcel_ids(self, cr, uid, ids, context=None):
+        ship_line = self.read(cr, uid, ids[0], ['parcel_ids', 'selected_parcel_ids', 'return_from', 'return_to'], context=context)
+        if not ship_line['parcel_ids']:
+            raise osv.except_osv(_('Error !'), _('Parcel list is not defined.'))
+        wiz = self.pool.get('shipment.parcel.selection').create(cr, uid, {
+            'return_shipment_line_id': ids[0],
+            'parcel_number': ship_line['return_to'] - ship_line['return_from'] + 1,
+            'selected_item_ids': ship_line['selected_parcel_ids'],
+            'available_items_ids': ship_line['parcel_ids'],
+        }, context=context)
+
+        return {
+            'name': _("Select Parcel Ids to Return from Shipment"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipment.parcel.selection',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': wiz,
+            'target': 'new',
+            'keep_open': True,
+            'context': context,
+        }
 
 return_pack_shipment_family_processor()
 

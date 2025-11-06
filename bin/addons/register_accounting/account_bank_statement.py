@@ -791,6 +791,16 @@ The starting balance will be proposed automatically and the closing balance is t
         if reg.period_id.state in ['field-closed', 'mission-closed', 'done'] or reg.period_id.special:
             raise osv.except_osv(_('Error'),
                                  _('The associated period is closed.'))
+        to_write = {}
+        if not reg.journal_id.first_register_date or reg.journal_id.first_register_date > reg.period_id.date_start:
+            to_write['first_register_date'] = reg.period_id.date_start
+
+        if not reg.journal_id.last_register_date or reg.journal_id.last_register_date < reg.period_id.date_stop:
+            to_write['last_register_date'] = reg.period_id.date_stop
+
+        if to_write:
+            self.pool.get('account.journal').write(cr, 1, [reg.journal_id.id], to_write, context=context)
+
         if reg.journal_id.type == 'cash':
             self.do_button_open_cash(cr, uid, [reg_id], context=context)
         else:

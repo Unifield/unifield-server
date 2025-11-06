@@ -204,6 +204,7 @@ class ppl_processor(osv.osv):
         # disable "save as draft":
         self.write(cr, uid, ids, {'draft_step2': False}, context=context)
 
+        parcel_ids_error = []
         for wizard in self.browse(cr, uid, ids, context=context):
             treated_moves = 0
             has_vol = 0
@@ -219,6 +220,17 @@ class ppl_processor(osv.osv):
                 if family.length+family.width+family.height != 0 and family.length*family.width*family.height == 0:
                     error_vol = True
                 treated_moves += len(family.move_ids)
+
+                if family.parcel_ids:
+                    nb_p = len(family.parcel_ids.split(','))
+                    if nb_p != family.to_pack - family.from_pack + 1:
+                        parcel_ids_error.append(_('%s - %s, %d Parcel IDs found') % (family.from_pack, family.to_pack, nb_p))
+
+            if parcel_ids_error:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _('Inconsitent Parcel IDs, click on icon box to edit Parcel IDs: %s') % ('\n'.join(parcel_ids_error),)
+                )
 
             nb_pick_moves = move_obj.search(cr, uid, [
                 ('picking_id', '=', wizard.picking_id.id),
@@ -253,6 +265,17 @@ class ppl_family_processor(osv.osv):
 
     _order = 'from_pack, id'
 
+    def _get_has_parcel(self, cr, uid, ids, name, arg, context=None):
+        ret = {}
+        for x in self.read(cr, uid, ids, ['from_pack', 'to_pack', 'parcel_ids'], context=context):
+            if not x['parcel_ids']:
+                ret[x['id']] = {'has_parcel': False, 'has_parcel_ids_error': False}
+            else:
+                nb = x['to_pack'] - x['from_pack'] + 1
+                ret[x['id']] = {'has_parcel': True, 'has_parcel_ids_error': nb != len(x['parcel_ids'].split(','))}
+
+        return ret
+
     _columns = {
         'wizard_id': fields.many2one(
             'ppl.processor',
@@ -263,6 +286,9 @@ class ppl_family_processor(osv.osv):
         ),
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
+        'parcel_ids': fields.text('Parcel Ids'),
+        'has_parcel': fields.function(_get_has_parcel, type='boolean', method=True, string='Has Parcel IDs', multi='get_all'),
+        'has_parcel_ids_error': fields.function(_get_has_parcel, type='boolean', method=True, string='Has Parcel IDs error', multi='get_all'),
         'pack_type': fields.many2one(
             'pack.type',
             string='Pack Type',
@@ -277,7 +303,7 @@ class ppl_family_processor(osv.osv):
 
     def onchange_pack_type(self, cr, uid, ids, pack_type):
         """
-        Update values of the PPL family from the stock pack selecetd
+        Update values of the PPL family from the stock pack selected
         """
         # Objects
         p_type_obj = self.pool.get('pack.type')
@@ -300,6 +326,28 @@ class ppl_family_processor(osv.osv):
             })
 
         return res
+
+    def select_parcel_ids(self, cr, uid, ids, context=None):
+        ppl_line = self.read(cr, uid, ids[0], ['parcel_ids', 'from_pack', 'to_pack'], context=context)
+        if not ppl_line['parcel_ids']:
+            raise osv.except_osv(_('Error !'), _('Parcel list is not defined.'))
+        wiz = self.pool.get('shipment.parcel.ppl.selection').create(cr, uid, {
+            'ppl_line_id': ids[0],
+            'parcel_number': ppl_line['to_pack'] - ppl_line['from_pack'] + 1,
+            'parcel_ids': '\n'.join(ppl_line['parcel_ids'].split(',')),
+        }, context=context)
+
+        return {
+            'name': _("List PPL Parcel IDs"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipment.parcel.ppl.selection',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': wiz,
+            'target': 'new',
+            'keep_open': True,
+            'context': context,
+        }
 
 ppl_family_processor()
 

@@ -425,6 +425,17 @@ class account_invoice(osv.osv):
             dom = [('date_invoice', '>=', fy.date_start), ('date_invoice', '<=', fy.date_stop)]
         return dom
 
+    def _get_customer_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Add the customer name information as it is on the PO source of the supplier invoice
+        """
+        res = {}
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['picking_id']):
+            res[inv.id] = False
+            if inv.picking_id and inv.picking_id.purchase_id and inv.picking_id.purchase_id.dest_partner_names:
+                res[inv.id] = inv.picking_id.purchase_id.dest_partner_names
+        return res
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -467,6 +478,7 @@ class account_invoice(osv.osv):
         'open_fy': fields.function(_get_fake, method=True, type='boolean', string='Open Fiscal Year', store=False,
                                    fnct_search=_search_open_fy),
         'fiscalyear_id': fields.function(_get_fiscalyear, fnct_search=_get_search_by_fiscalyear, type='many2one', obj='account.fiscalyear', method=True, store=False, string='Fiscal year', readonly=True),
+        'customers': fields.function(_get_customer_id, method=True, type='char', size=1024, string='Customers', listed_in_export=True),
     }
 
     _defaults = {
@@ -641,8 +653,15 @@ class account_invoice(osv.osv):
         Ticket utp917 - added code to avoid currency cd change if a direct invoice
         """
         res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, ctype, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
-        if is_inkind_donation and partner_id:
+        partner = False
+        if partner_id:
             partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if not from_supply and doc_type in ('di', 'si') and partner.state == 'phase_out':
+                return {
+                    'value': {'partner_id': False, 'invoice_address_id': False, 'address_invoice_id': False, 'account_id': False},
+                    'warning': {'title': _('Error'), 'message': _('The selected Supplier is Phase Out, please select another Supplier')}
+                }
+        if is_inkind_donation and partner:
             account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
             res['value']['account_id'] = account_id
         if is_intermission and partner_id:
@@ -656,18 +675,17 @@ class account_invoice(osv.osv):
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
                 res['value']['account_id'] = account_id
-        if partner_id and ctype:
-            p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+        if partner and ctype:
             ai_direct_invoice = False
             if ids: #utp917
                 ai = self.browse(cr, uid, ids)[0]
                 ai_direct_invoice = ai.is_direct_invoice
-            if p:
+            if partner:
                 c_id = False
-                if ctype in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
-                    c_id = p.property_product_pricelist_purchase.currency_id.id
-                elif ctype in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
-                    c_id = p.property_product_pricelist.currency_id.id
+                if ctype in ['in_invoice', 'out_refund'] and partner.property_product_pricelist_purchase:
+                    c_id = partner.property_product_pricelist_purchase.currency_id.id
+                elif ctype in ['out_invoice', 'in_refund'] and partner.property_product_pricelist:
+                    c_id = partner.property_product_pricelist.currency_id.id
                 # UFTP-121: regarding UTP-917, we have to change currency when changing partner, but not for direct invoices
                 if c_id and (not is_direct_invoice and not ai_direct_invoice):
                     if not res.get('value', False):
@@ -1049,6 +1067,10 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             values = {}
             curr_date = strftime('%Y-%m-%d')
+            if context.get('from_button') and inv.real_doc_type in ('di', 'si') and inv.state == 'draft' and \
+                    inv.partner_id and inv.partner_id.state == 'phase_out':
+                raise osv.except_osv(_('Error'),
+                                     _('The selected Supplier is Phase Out, please select another Supplier'))
             if inv.is_debit_note:
                 for inv_line in inv.invoice_line:
                     if inv_line.partner_id != inv.partner_id:
@@ -1174,19 +1196,29 @@ class account_invoice(osv.osv):
         # Default behaviour to add date
         res = super(account_invoice, self).action_date_assign(cr, uid, ids, args)
         # Process invoices
-        for i in self.browse(cr, uid, ids):
-            if not i.date_invoice:
-                self.write(cr, uid, i.id, {'date_invoice': strftime('%Y-%m-%d')})
-                i = self.browse(cr, uid, i.id) # This permit to refresh the browse of this element
+        for i in self.browse(cr, uid, ids, fields_to_fetch=['date_invoice', 'document_date', 'period_id', 'doc_type']):
+            to_write = {}
+            date_invoice = i.date_invoice
+            if not date_invoice:
+                date_invoice = strftime('%Y-%m-%d')
+                to_write['date_invoice'] = date_invoice
             if not i.document_date:
                 raise osv.except_osv(_('Warning'), _('Document Date is a mandatory field for validation!'))
             # UFTP-105: Search period and raise an exeception if this one is not open
-            period_ids = period_obj.get_period_from_date(cr, uid, i.date_invoice)
+            ctx = {}
+            if i.doc_type in ('ivo', 'ivi') and self.pool.get('res.company').extra_period_config(cr) == 'other':
+                ctx['extend_december'] = True
+            period_ids = period_obj.get_period_from_date(cr, uid, date_invoice, ctx)
             if not period_ids:
-                raise osv.except_osv(_('Error'), _('No period found for this posting date: %s') % (i.date_invoice))
-            for period in period_obj.browse(cr, uid, period_ids):
-                if period.state != 'draft':
-                    raise osv.except_osv(_('Warning'), _('You cannot validate this document in the given period: %s because it\'s not open. Change the date of the document or open the period.') % (period.name))
+                raise osv.except_osv(_('Error'), _('No period found for this posting date: %s') % (date_invoice))
+            draft_p_ids = period_obj.search(cr, uid, [('id', 'in', period_ids), ('state', '=', 'draft')], order='number asc')
+            if not draft_p_ids:
+                period = period_obj.browse(cr, uid, period_ids[0], fields_to_fetch=['name'])
+                raise osv.except_osv(_('Warning'), _('You cannot validate this document in the given period: %s because it\'s not open. Change the date of the document or open the period.') % (period.name, ))
+            if not i.period_id:
+                to_write['period_id'] = draft_p_ids[0]
+            if to_write:
+                self.write(cr, uid, i.id, to_write)
         # Posting date should not be done BEFORE document date
         self._check_document_date(cr, uid, ids)
         return res
@@ -1656,6 +1688,19 @@ class account_invoice_line(osv.osv):
         """
         return self.pool.get('account.invoice')._get_invoice_type_list(cr, uid, context=context)
 
+    def _get_dest_cc(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        res = {}
+
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['analytic_distribution_id', 'invoice_id'], context=context):
+            ad = line.analytic_distribution_id or line.invoice_id.analytic_distribution_id
+            res[line.id] = {'cost_centers': '', 'destinations': ''}
+            if ad and ad.funding_pool_lines:
+                res[line.id] = {
+                    'cost_centers': ';'.join([x.cost_center_id.code for x in ad.funding_pool_lines]),
+                    'destinations': ';'.join([x.destination_id.code for x in ad.funding_pool_lines]),
+                }
+        return res
+
     _columns = {
         'line_number': fields.integer(string='Line Number'),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
@@ -1682,6 +1727,8 @@ class account_invoice_line(osv.osv):
                                            relation="account.analytic.account", string='Funding Pool',
                                            states={'draft': [('readonly', False)]},
                                            help="Field used for import only"),
+        'cost_centers':fields.function(_get_dest_cc, method=True, type='char', size=1024, string='Cost Centers', listed_in_export=True, multi='get_dest_cc'),
+        'destinations': fields.function(_get_dest_cc, method=True, type='char', size=1024, string='Destinations', listed_in_export=True, multi='get_dest_cc'),
         'from_supply': fields.related('invoice_id', 'from_supply', type='boolean', string='From Supply', readonly=True, store=False),
         'synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False),
         # field "line_synced" created to be used in the views where the "synced" field at doc level is displayed
@@ -1717,6 +1764,7 @@ class account_invoice_line(osv.osv):
         ('ck_invl_account', "CHECK(account_id IS NOT NULL OR COALESCE(allow_no_account, 'f') = 't')",
          'The invoice lines must have an account.')
     ]
+
 
     def _check_on_invoice_line_big_amounts(self, cr, uid, ids, context=None):
         """

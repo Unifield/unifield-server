@@ -179,8 +179,11 @@ class stock_picking(osv.osv):
             'resourced_original_remote_line': data.get('sale_line_id', False) and data['sale_line_id'].get('resourced_original_remote_line', False) or False,
 
         }
-        for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width']:
-            result[k] = data.get(k)
+        for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width', 'parcel_ids']:
+            if not data.get(k) and data.get('shipment_line_id') and data.get('shipment_line_id', {}).get(k):
+                result[k] = data['shipment_line_id'][k]
+            else:
+                result[k] = data.get(k)
         return result
 
     def package_data_update_in(self, cr, uid, source, pick_dict, context=None):
@@ -285,10 +288,14 @@ class stock_picking(osv.osv):
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
         # prepare the shipment/OUT reference to update to IN
         shipment = pick_dict.get('shipment_id', False)
+        oto_ref = False
         if shipment:
             shipment_ref = shipment['name'] # shipment made
+            if shipment.get('manual_oto_id'):
+                oto_ref = shipment['manual_oto_id']['name']
         else:
             shipment_ref = pick_dict.get('name', False) # the case of OUT
+
         if not po_id and pick_dict.get('sale_id') and pick_dict.get('sale_id', {}).get('claim_name_goods_return'):
             po_sync_name = pick_dict.get('sale_id', {}).get('client_order_ref')
             if po_sync_name:
@@ -425,6 +432,7 @@ class stock_picking(osv.osv):
                                 'total_length': data['length'],
                                 'total_width': data['width'],
                                 'packing_list': data.get('packing_list'),
+                                'parcel_ids': data.get('parcel_ids'),
                                 'ppl_name': data.get('ppl_name'),
                             })
                         data['pack_info_id'] = pack_info_created[pack_key]
@@ -609,7 +617,7 @@ class stock_picking(osv.osv):
 
             #UFTP-332: Check if shipment/out is given
             if shipment_ref:
-                self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
+                self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref, 'oto_ref': oto_ref}, context)
             else:
                 self.write(cr, uid, new_picking, {'already_shipped': True}, context)
 
@@ -657,7 +665,7 @@ class stock_picking(osv.osv):
                 self._logger.info(message)
                 raise Exception(message)
 
-            self.write(cr, uid, in_id, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
+            self.write(cr, uid, in_id, {'already_shipped': True, 'shipment_ref': shipment_ref, 'oto_ref': oto_ref}, context)
             in_name = self.browse(cr, uid, in_id, context=context)['name']
             message = "The INcoming " + in_name + "(" + po_name + ") has already been MANUALLY processed!"
             self._logger.info(message)
@@ -1281,17 +1289,3 @@ class stock_picking(osv.osv):
 
 stock_picking()
 
-class shipment(osv.osv):
-    _inherit = "shipment"
-
-    def on_change(self, cr, uid, changes, context=None):
-        if context is None \
-           or not context.get('sync_message_execution') \
-           or context.get('no_store_function'):
-            return
-        for id, changes in list(changes.items()):
-            logger = get_sale_purchase_logger(cr, uid, self, id, \
-                                              context=context)
-            logger.is_status_modified = True
-
-shipment()

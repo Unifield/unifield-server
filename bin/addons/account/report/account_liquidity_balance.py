@@ -50,20 +50,27 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             'get_general_total': self._get_general_total,
         })
 
-    def _filter_journal_status(self, reg_data, date_to):
+    def _filter_journal_status(self, reg_data, date_from, date_to):
         """
         Applies the following changes to the reg_data:
         - adds the journal status
         - removes the lines for which the journal is inactive only if the Starting Balance, the Movements, and the Closing Balance are all 0.00
         """
-        journal_obj = self.pool.get('account.journal')
-        new_reg_data = []
+        all_ids = [x['id'] for x in reg_data]
+        inactives_at_date = self.pool.get('account.journal').search(self.cr, self.uid, [('id', 'in', all_ids), ('inactivation_date', '<', date_from)])
+
+        no_register = self.pool.get('account.journal').search(self.cr, self.uid, [('id', 'in', all_ids), '|', ('last_register_date', '<', date_from), ('first_register_date', '>', date_to)])
+
+        used_journal = []
         for reg in reg_data:
-            j_info = journal_obj.read(self.cr, self.uid, reg['id'], ['is_active', 'inactivation_date'])
-            if j_info['is_active'] or (j_info['inactivation_date'] and j_info['inactivation_date'] > date_to) or reg['opening'] or reg['calculated'] or reg['closing']:
-                reg['journal_status'] = j_info['is_active'] and _('Active') or _('Inactive')
-                new_reg_data.append(reg)
-        return new_reg_data
+            if reg['id'] in no_register and not reg['opening'] and not reg['calculated'] and not reg['closing']:
+                continue
+            if reg['id'] in inactives_at_date:
+                reg['journal_status'] = _('Inactive')
+            else:
+                reg['journal_status'] = _('Active')
+            used_journal.append(reg)
+        return used_journal
 
     def _get_register_data(self):
         """
@@ -135,7 +142,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         }
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
-        cash_bank_res = self._filter_journal_status(cash_bank_res, date_to)
+        cash_bank_res = self._filter_journal_status(cash_bank_res, date_from, date_to)
         cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, context=self.context)
         res.extend(cash_bank_res)
         # Cheque registers
@@ -171,7 +178,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         pending_chq_closing_bal_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [], [], date_to,
                                                                      aml_ids=chq_closing_bal_ids, context=self.context)
         cheque_sql = """
-                    SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, 
+                    SELECT i.code AS instance, j.code, j.id, %(period_title)s AS period, req.opening, req.calculated, req.closing, 
                     c.name AS currency
                     FROM res_currency c,
                     (
@@ -185,8 +192,8 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                                     st.journal_id = j.id
                                     AND st.period_id = p.id
                                     AND j.type = 'cheque'
-                                    AND p.date_start >= %s
-                                    AND p.date_stop <= %s
+                                    AND p.date_start >= %(date_from)s
+                                    AND p.date_stop <= %(date_to)s
                                 GROUP BY j.id, j.default_debit_account_id
                             )
                         UNION
@@ -197,23 +204,32 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                                 WHERE
                                 aml.journal_id = j.id
                                 AND j.type = 'cheque'
-                                AND aml.date >= %s
-                                AND aml.date <= %s
+                                AND aml.date >= %(date_from)s
+                                AND aml.date <= %(date_to)s
                                 AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                                 GROUP BY aml.journal_id, aml.account_id
                             )
                         UNION
                             (
+                            -- HQ
+                                SELECT j.id AS journal_id, j.default_debit_account_id  AS account_id, 0 as col1, 0 as col2, 0 as col3
+                                FROM account_journal j
+                                WHERE
+                                    (j.first_register_date, j.last_register_date) OVERLAPS (%(date_from)s, %(date_to)s)
+                                    AND j.type = 'cheque'
+                            )
+                        UNION
+                            (
                                 SELECT journal_id, account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
                                 FROM account_move_line
-                                WHERE id IN %s
+                                WHERE id IN %(starting_ids)s
                                 GROUP BY journal_id, account_id
                             )
                         UNION
                             (
                                 SELECT journal_id, account_id, 0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
                                 FROM account_move_line
-                                WHERE id IN %s
+                                WHERE id IN %(closing_ids)s
                                 GROUP BY journal_id, account_id
                             )
                         ) AS ssreq
@@ -223,15 +239,22 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                     WHERE req.journal_id = j.id
                     AND j.instance_id = i.id
                     AND j.currency = c.id
-                    AND j.instance_id IN %s;
+                    AND j.instance_id IN %(instance_ids)s
                     """
         # ensure not to have empty arrays to avoid crash at query execution...
         pending_chq_starting_bal_ids = pending_chq_starting_bal_ids or [-1]
         pending_chq_closing_bal_ids = pending_chq_closing_bal_ids or [-1]
-        cheque_params = (period_title, date_from, date_to, date_from, date_to, tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
+        cheque_params = {
+            'period_title': period_title,
+            'date_from': date_from,
+            'date_to': date_to,
+            'starting_ids': tuple(pending_chq_starting_bal_ids),
+            'closing_ids': tuple(pending_chq_closing_bal_ids),
+            'instance_ids': tuple(self.instance_ids)
+        }
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
-        cheque_res = self._filter_journal_status(cheque_res, date_to)
+        cheque_res = self._filter_journal_status(cheque_res, date_from, date_to)
         cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, context=self.context)
         res.extend(cheque_res)
         # sort result by instance code and by journal code

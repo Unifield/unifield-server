@@ -33,6 +33,7 @@ import xmlrpc.client
 import netsvc
 import traceback
 #import re
+import json
 
 from msf_field_access_rights.osv_override import _get_instance_level
 import io
@@ -57,6 +58,253 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    # UF39.0
+    def us_14182_set_journal_register_dates(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+
+        if instance:
+            if instance.level in ('project', 'coordo'):
+                instance_ids = [instance.id]
+                if instance and instance.level == 'coordo':
+                    instance_ids += [child.id for child in instance.child_ids if child and child.state == 'inactive']
+                cr.execute('''
+                    with reg_date as (
+                        select
+                            j.id, min(p.date_start) as min_date, max(p.date_stop) as max_date
+                        from
+                            account_journal j, account_bank_statement st, account_period p
+                        where
+                            j.id = st.journal_id and
+                            j.instance_id in %s and
+                            p.id = st.period_id
+                        group by
+                            j.id
+                    )
+                    update
+                        account_journal j2
+                    set
+                            first_register_date=reg_date.min_date,
+                            last_register_date=reg_date.max_date
+                    from
+                        reg_date
+                    where
+                        j2.id = reg_date.id
+                    returning j2.id
+                ''', (tuple(instance_ids), ))
+
+                to_update = [x[0] for x in cr.fetchall()]
+                if to_update:
+                    self.pool.get('account.journal').sql_touch(cr, to_update, ['first_register_date', 'last_register_date'])
+
+            else: # HQ
+                decom_coor = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo'), ('state', '=', 'inactive')])
+                if decom_coor:
+                    decom_coor += self.pool.get('msf.instance').search(cr, uid, [('parent_id', 'in', decom_coor)])
+
+                    cr.execute("""update account_journal j
+                        set
+                            first_register_date=(date_trunc('month', j.create_date::date))::date,
+                            last_register_date=(date_trunc('month',least(i.write_date::date, j.inactivation_date))+ interval '1 month -1 day')::date
+                        from
+                            msf_instance i
+                        where
+                            j.type in ('cash', 'bank', 'cheque') and
+                            j.instance_id in %s and
+                            i.id = j.instance_id
+                    """, (tuple(decom_coor), ))
+        return True
+
+    def us_14605_remove_new_code_old_merge(self, cr, uid, *a, **b):
+        '''
+        Remove the new_code from merged products where the latest change was done before 2018
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            cr.execute("""
+                SELECT p.id
+                FROM product_product p
+                    LEFT JOIN audittrail_log_line a ON p.product_tmpl_id = a.res_id
+                        AND a.object_id IN (SELECT id FROM ir_model where model IN ('product.product', 'product.template'))
+                        AND a.field_id = (SELECT id FROM ir_model_fields WHERE model = 'product.product' AND name = 'new_code' LIMIT 1)
+                    LEFT JOIN product_international_status i ON p.international_status=i.id
+                WHERE p.new_code IS NOT NULL AND i.code = 'unidata'
+                GROUP BY p.id
+                HAVING max(a.timestamp) < '2018-01-01 00:00:00'
+            """)
+
+            prod_ids = [x[0] for x in cr.fetchall()]
+            # To have the Track Change
+            self.pool.get('product.product').write(cr, uid, prod_ids, {'new_code': ''})
+            self.log_info(cr, uid, "US-14605: %d product(s) had their New Code removed" % (cr.rowcount,))
+
+        return True
+
+    def us_14561_14593_14656_remove_approved_by_signature_lines_ins(self, cr, uid, *a, **b):
+        '''
+        Removed the signature lines 'Approved by' (fr) linked to INs
+        '''
+        cr.execute("""
+            DELETE FROM signature_line sl USING signature s, stock_picking p
+            WHERE sl.signature_id = s.id AND s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' 
+                AND sl.name_key = 'fr' AND p.type = 'in' AND p.subtype = 'standard'
+        """)
+        self.log_info(cr, uid, "US-14561-14593-14656: %s 'Approved by' signature(s) were removed from INs" % (cr.rowcount,))
+        return True
+
+    def us_14217_set_journal_restriction(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+        if instance_id.level == 'section':
+            entity_obj = self.pool.get('sync.client.entity')
+            if entity_obj:
+                restrictions = {
+                    'oca': [],
+                    'ocb': ['none'],
+                    'ocg': ['none'],
+                    'ocp': ['cur_adj', 'accrual', 'hq', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
+                    'waca': [],
+                }
+                oc = entity_obj.get_entity(cr, uid).oc
+                if oc and oc in restrictions:
+                    self.pool.get('sync.trigger.something.bidir_mission').create(cr, uid, {'name': 'journal_restriction', 'args': json.dumps(restrictions[oc])})
+        return True
+
+    # UF38.1
+    def us_14880_update_parcel_comment(self, cr, uid, *a, **b):
+        '''
+        Update the parcel_comment field of Draft/Available pack_family_memory using the linked Pack's (stock_picking) description_ppl
+        '''
+        cr.execute("""
+            UPDATE pack_family_memory AS pf SET parcel_comment = p.description_ppl
+            FROM stock_picking AS p
+            WHERE pf.draft_packing_id = p.id AND pf.state IN ('draft', 'assigned')
+        """)
+        self.log_info(cr, uid, 'US-14880: The Parcel Comment of %s Pack Families have been updated' % (cr.rowcount,))
+        return True
+
+    # UF38.0
+    def us_14507_fix_ct30_mix_cold_chain(self, cr, uid, *a, **b):
+        '''
+        Update the Code and Name of the product.cold_chain CT3+
+        On HQ_OCA, set the cold_chain of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 to Mix/Check
+        '''
+        cr.execute("""
+            UPDATE product_cold_chain SET code = 'CT3+', name = 'CT3+ - Temperature Monitoring 2-40°C' 
+                WHERE id IN (SELECT res_id FROM ir_model_data WHERE name = 'product_attributes_cold_20')
+        """)
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance == 'HQ_OCA':
+            mixcheck_cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'cold_21')[1]
+            cr.execute("""
+                UPDATE product_product SET cold_chain = %s WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205')
+            """, (mixcheck_cc_id,))
+            cr.execute("""
+                UPDATE ir_model_data SET last_modification = NOW(), touched = '["cold_chain"]' 
+                    WHERE model = 'product.product' AND res_id IN (SELECT id FROM product_product WHERE default_code IN ('KMEDKNUTI3-', 'SSDTLEID6AG', 'ELAESEQT0203', 'ELAESEQT0201', 'ELAESEQT0205'))
+            """)
+            self.log_info(cr, uid, "US-14507: The Thermosensitivity of KMEDKNUTI3-, SSDTLEID6AG, ELAESEQT0203, ELAESEQT0201 and ELAESEQT0205 was set to Mix/Check")
+        return True
+
+    def us_12985_partner_state_ppl_pack_from_wkf(self, cr, uid, *a, **b):
+        '''
+        Set the partners' Status to Active for Active partners and Inactive for deactivated partners
+        Set "from_wkf" to True to all PPLs and PACKs
+        '''
+        cr.execute("""UPDATE res_partner SET state = 'active' WHERE active = 't'""")
+        self.log_info(cr, uid, "US-12985: %s active partners had their set Status set to Active" % (cr.rowcount,))
+        cr.execute("""UPDATE res_partner SET state = 'inactive' WHERE active = 'f'""")
+        self.log_info(cr, uid, "US-12985: %s deactivated partners had their set Status set to Inactive" % (cr.rowcount,))
+        cr.execute("""UPDATE stock_picking SET from_wkf = 't' WHERE type = 'out' AND subtype IN ('ppl', 'packing') AND from_wkf = 'f'""")
+        self.log_info(cr, uid, "US-12985: %s PPLs and PACKs are now considered from workflow" % (cr.rowcount,))
+        return True
+
+    def us_13980_update_new_code_on_merged(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'UD_GETALL_MERGED', '1')
+        return True
+
+    def us_9592_pack_family_to_table(self, cr, uid, *a, **b):
+        cr.execute('''
+            insert into pack_family_memory (
+                    create_uid,
+                    create_date,
+                    write_uid,
+                    write_date,
+                    shipment_id,
+                    draft_packing_id,
+                    sale_order_id,
+                    ppl_id,
+                    from_pack,
+                    to_pack,
+                    parcel_comment,
+                    pack_type,
+                    length,
+                    width,
+                    height,
+                    weight,
+                    packing_list,
+                    location_id,
+                    location_dest_id,
+                    selected_number,
+                    description_ppl,
+                    not_shipped,
+                    comment,
+                    volume_set,
+                    weight_set,
+                    quick_flow,
+                    state,
+                    tmp_previous_pf
+                )
+                (
+                    select
+                        p.create_uid,
+                        p.create_date,
+                        p.write_uid,
+                        p.write_date,
+                        pf.shipment_id,
+                        pf.draft_packing_id,
+                        pf.sale_order_id,
+                        pf.ppl_id,
+                        pf.from_pack,
+                        pf.to_pack,
+                        pf.parcel_comment,
+                        pf.pack_type,
+                        pf.length,
+                        pf.width,
+                        pf.height,
+                        pf.weight,
+                        pf.packing_list,
+                        pf.location_id,
+                        pf.location_dest_id,
+                        pf.selected_number,
+                        pf.description_ppl,
+                        pf.not_shipped,
+                        pf.comment,
+                        pf.volume_set,
+                        pf.weight_set,
+                        pf.quick_flow,
+                        pf.state,
+                        pf.id
+
+                    from
+                        pack_family_memory_old pf
+                        left join stock_picking p on p.id = pf.draft_packing_id
+                )
+        ''')
+
+        cr.execute('''
+            update stock_move m
+                set shipment_line_id = pf.id
+            from pack_family_memory pf, pack_family_memory_old old
+            where
+                old.id = pf.tmp_previous_pf and
+                m.id=ANY(old.move_lines)
+            '''
+                   )
+        return True
 
     # UF37.0
     def us_14450_sign_roles_in(self, cr, uid, *a, **b):
@@ -4190,6 +4438,8 @@ class patch_scripts(osv.osv):
         return True
 
     def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        return True
+        # patch script disabled
         cr.execute('''
             update stock_move
                 set selected_number=to_pack-from_pack+1
@@ -7589,6 +7839,7 @@ class sync_tigger_something(osv.osv):
         if context is None:
             context = {}
         _logger = logging.getLogger('trigger')
+
         if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
 
             data_obj = self.pool.get('ir.model.data')
@@ -7782,6 +8033,9 @@ class sync_tigger_something_bidir_mission(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+        if vals.get('name') == 'journal_restriction' and vals.get('args') is not None:
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'journal_extr_p', vals['args'])
+
         if vals.get('name') == 'instance_creator_employee' and vals.get('args'):
             # populate instance_creator on hr.employee
             # triggered from sync to process sync in-pipe employee or after init sync
@@ -7816,4 +8070,10 @@ class sync_tigger_something_bidir_mission(osv.osv):
 
         return super(sync_tigger_something_bidir_mission, self).create(cr, uid, vals, context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('name') == 'journal_restriction' and vals.get('args') is not None:
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'journal_extr_p', vals['args'])
+            self.pool.get('res.company')._restricted_journal_type_extra_period = None
+
+        return super(sync_tigger_something_bidir_mission, self).write(cr, uid, ids, vals, context)
 sync_tigger_something_bidir_mission()

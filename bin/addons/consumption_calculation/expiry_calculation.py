@@ -213,6 +213,7 @@ CONSUMPTION_TYPE = [
     ('fmc', 'FMC -- Forecasted Monthly Consumption'),
     ('amc', 'AMC -- Average Monthly Consumption'),
     ('rac', 'RAC -- Real Average Consumption'),
+    ('rr-amc', 'RR-AMC -- RR Average Monthly Consumption'),
 ]
 class product_likely_expire_report(osv.osv):
     _name = 'product.likely.expire.report'
@@ -250,7 +251,7 @@ class product_likely_expire_report(osv.osv):
         return res
 
     _columns = {
-        'location_id': fields.many2one('stock.location', string='Location'),
+        'location_id': fields.many2one('stock.location', string='Source Location'),
         'msf_instance': fields.char(size=64, string='Location', readonly=True),
         'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
         'date_from': fields.date(string='From', required=True, readonly=True),
@@ -278,13 +279,28 @@ class product_likely_expire_report(osv.osv):
         'status': 'draft',
     }
 
+    def on_change_consumption_type(self, cr, uid, ids, consumption_type, context=None):
+        '''
+        Empty location-related fields if the selected consumption type is 'amc'.
+        '''
+        if context is None:
+            context = {}
+
+        res = {}
+        if consumption_type == 'amc':
+            res['value'] = {'location_id': False, 'input_output_ok': False}
+        if consumption_type == 'rr-amc':
+            res['value'] = {'input_output_ok': False}
+
+        return res
+
     def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
         '''
         Get the first or last day of month
         '''
         res = {}
 
-        if consumption_type == 'amc':
+        if consumption_type in ['amc', 'rr-amc']:
             if consumption_from:
                 res.update({'consumption_from': (datetime.strptime(consumption_from,'%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')})
             if consumption_to:
@@ -313,7 +329,9 @@ class product_likely_expire_report(osv.osv):
 
         if consumption_type == 'fmc':
             res = product_obj.browse(cr, uid, product_id, context=new_context).reviewed_consumption
-        elif consumption_type == 'amc':
+        elif consumption_type in ['amc', 'rr-amc']:
+            if consumption_type == 'rr-amc' and new_context.get('location_id'):
+                new_context.update({'amc_location_ids': new_context['location_id']})
             res = product_obj.compute_amc(cr, uid, product_id, context=new_context)[product_id]
         else:
             res = product_obj.browse(cr, uid, product_id, context=new_context).monthly_consumption
@@ -339,11 +357,9 @@ class product_likely_expire_report(osv.osv):
                     return self.open_report(cr, uid, ids, context=context)
 
         import threading
-        self.write(cr, uid, ids, {'status': 'in_progress'},
-                   context=context)
+        self.write(cr, uid, ids, {'status': 'in_progress'}, context=context)
         cr.commit()
-        new_thread = threading.Thread(target=self._process_lines,
-                                      args=(cr, uid, ids, context))
+        new_thread = threading.Thread(target=self._process_lines, args=(cr, uid, ids, context))
         new_thread.start()
         new_thread.join(10.0)
         if new_thread.is_alive():
@@ -422,10 +438,10 @@ class product_likely_expire_report(osv.osv):
             if report.date_to <= report.date_from:
                 raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
 
-            if report.consumption_type in ('amc', 'rac') and report.consumption_from > report.consumption_to:
+            if report.consumption_type in ('amc', 'rac', 'rr-amc') and report.consumption_from > report.consumption_to:
                 raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
 
-            if report.consumption_type in ('amc', 'rac'):
+            if report.consumption_type in ('amc', 'rac', 'rr-amc'):
                 context.update({'from': report.consumption_from, 'to': report.consumption_to})
             else:
                 context.update({'from': report.date_from, 'to': report.date_to})

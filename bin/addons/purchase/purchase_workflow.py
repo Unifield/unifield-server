@@ -91,18 +91,20 @@ class purchase_order_line(osv.osv):
             }
 
         # Also check the Product Creators if the Partner is Intermision or Inter-section
-        partner_type = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id.partner_type
+        po = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id
+        po_order_types = ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp']
+        if context.get('from_button') and po.order_type not in po_order_types and po.partner_id.state == 'phase_out':
+            raise osv.except_osv(_('Error'), _('The selected Supplier is Phase Out, please select another Supplier'))
+        partner_type = po.partner_type
         if partner_type in ['intermission', 'section']:
             data_obj = self.pool.get('ir.model.data')
-            if partner_type == 'section':  # Non-UD products
-                creator_check = ' pp.international_status != %s AND' % data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
-            else:  # Local products
-                creator_check = ' pp.international_status = %s AND' % data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            # Local products
             cr.execute("""
                 SELECT pl.line_number, pp.default_code FROM purchase_order_line pl 
                     LEFT JOIN product_product pp ON pl.product_id = pp.id
-                WHERE""" + creator_check + """ pl.id IN %s AND pl.state = 'draft'
-                ORDER BY pl.line_number""", (tuple(ids),)) # not_a_user_entry
+                WHERE pp.international_status = %s AND pl.id IN %s AND pl.state = 'draft'
+                ORDER BY pl.line_number
+            """, (data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1], tuple(ids))) # not_a_user_entry
             lines_pb = []
             for x in cr.fetchall():
                 lines_pb.append(_('line #') + str(x[0]) + _(' product ') + x[1])
@@ -115,14 +117,9 @@ class purchase_order_line(osv.osv):
                 self.check_if_stock_take_date_with_esc_partner(cr, uid, ids_to_check, context=context)
                 self.check_unit_price(cr, uid, ids_to_check, context=context)
                 self.check_pol_tax(cr, uid, ids_to_check, context=context)
-                if partner_type == 'section':
-                    msg = _('''%s are Local/ITC/ESC product(s). These cannot be on order to an Intersectional partner. 
-Please exchange for UniData type product(s) or if none exists, add a product by nomenclature or contact your help-desk for further support''') \
-                        % (', '.join(lines_pb),)
-                else:
-                    msg = _('''%s are Local product(s) (which may not synchronise). 
+                msg = _('''%s are Local product(s) (which may not synchronise). 
 Please check if these can be switched for UniData type product(s) instead, or contact your help-desk for further support''') \
-                        % (', '.join(lines_pb),)
+                    % (', '.join(lines_pb),)
                 wiz_data = {'source': 'purchase', 'partner_type': partner_type, 'pol_ids': [(6, 0, ids)], 'message': msg}
                 wiz_id = self.pool.get('sol.pol.intermission.section.validation.wizard').create(cr, uid, wiz_data, context=context)
                 return {

@@ -27,7 +27,7 @@ import decimal_precision as dp
 
 import tools
 
-from purchase import ORDER_CATEGORY, PURCHASE_ORDER_STATE_SELECTION
+from purchase import ORDER_CATEGORY, PURCHASE_ORDER_STATE_SELECTION, PURCHASE_ORDER_LINE_STATE_SELECTION
 
 
 class purchase_order_line_allocation_report(osv.osv):
@@ -63,7 +63,7 @@ class purchase_order_line_allocation_report(osv.osv):
                                         ('purchase_list', 'Purchase List'), ('direct', 'Direct Purchase Order')],
                                        string='Type'),
         'order_category': fields.selection(ORDER_CATEGORY, string='Cat.'),
-        'line_number': fields.integer(string='O. l.'),
+        'line_number': fields.integer(string='#'),
         'product_id': fields.many2one('product.product', string='Product'),
         'product_code': fields.related(
             'product_id',
@@ -90,7 +90,7 @@ class purchase_order_line_allocation_report(osv.osv):
         'percentage': fields.float(digits=(16,2), string='%'),
         'subtotal': fields.float(digits=(16,2), string='Subtotal'),
         'currency_id': fields.many2one('res.currency', string='Cur.'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost center'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='C.C.'),
         'destination_id': fields.many2one('account.analytic.account', string='Destination'),
         #'cost_center_id': fields.many2one('cost.center.distribution.line', string='Cost center'),
         #'account_id': fields.many2one('account.account', string='Account'),
@@ -99,6 +99,7 @@ class purchase_order_line_allocation_report(osv.osv):
         'requestor': fields.char(size=128, string='Requestor'),
         'partner_doc': fields.char(size=128, string='Partner Doc.'),
         'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, string='State'),
+        'line_state': fields.selection(PURCHASE_ORDER_LINE_STATE_SELECTION, string='PO Line Status'),
         'supplier': fields.many2one('res.partner', string='Supplier'),
         'creation_date': fields.date(string='Creation date'),
         'comment': fields.char('Comment', size=1024),
@@ -129,6 +130,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     al.requestor,
                     al.supplier,
                     al.state,
+                    al.line_state,
                     al.creation_date,
                     al.partner_doc,
                     al.comment
@@ -154,6 +156,7 @@ class purchase_order_line_allocation_report(osv.osv):
                         WHEN pol.linked_sol_id IS NOT NULL THEN sop.name ELSE '' END) AS requestor,
                     po.partner_id AS supplier,
                     po.state AS state,
+                    pol.state AS line_state,
                     po.date_order AS creation_date,
                     so.client_order_ref AS partner_doc,
                     pol.comment AS comment
@@ -223,6 +226,7 @@ class purchase_order_line_allocation_report(osv.osv):
                         WHEN pol.linked_sol_id IS NOT NULL THEN sop.name ELSE '' END) AS requestor,
                     po.partner_id AS supplier,
                     po.state AS state,
+                    pol.state AS line_state,
                     po.date_order AS creation_date,
                     so.client_order_ref AS partner_doc,
                     pol.comment AS comment

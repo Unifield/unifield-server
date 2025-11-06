@@ -97,6 +97,8 @@ class return_claim(osv.osv):
         - add sequence for events
         '''
         seq_tools = self.pool.get('sequence.tools')
+        if not vals.get('name'):
+            vals['name'] = self.pool.get('ir.sequence').get(cr, uid, 'return.claim')
         seq_id = seq_tools.create_sequence(cr, uid, vals, 'Return Claim', 'return.claim', prefix='', padding=5, context=context)
         vals.update({'sequence_id_return_claim': seq_id})
         return super(return_claim, self).create(cr, uid, vals, context=context)
@@ -907,7 +909,6 @@ class return_claim(osv.osv):
 
     _defaults = {
         'creation_date_return_claim': lambda *a: time.strftime('%Y-%m-%d'),
-        'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'return.claim'),
         'default_src_location_id_return_claim': _get_default_src_loc_id,
         'state': 'draft',
         'fake_state_return_claim': 'draft',

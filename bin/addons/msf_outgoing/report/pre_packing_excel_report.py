@@ -32,6 +32,7 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
             'getShipper': self.get_shipper,
             'getPickingShipper': self.get_picking_shipper,
             'getConsignee': self.get_consignee,
+            'getPackTypes': self.get_pack_types,
         })
 
     def get_consignee(self, picking):
@@ -131,6 +132,19 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
             'shipper_phone': instance_addr.phone,
             'shipper_email': instance_addr.email,
         }
+
+    def get_pack_types(self):
+        '''
+        Get all the Pack Types
+        '''
+        pack_type_obj = self.pool.get('pack.type')
+
+        packs = []
+        pack_type_ids = pack_type_obj.search(self.cr, self.uid, [], context=self.localcontext)
+        for pack_type in pack_type_obj.read(self.cr, self.uid, pack_type_ids, [], context=self.localcontext):
+            packs.append([pack_type['name'], '%gx%gx%g' % (pack_type['width'], pack_type['length'], pack_type['height'])])
+
+        return packs, len(pack_type_ids)
 
 
 SpreadsheetReport(
