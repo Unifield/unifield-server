@@ -304,6 +304,14 @@ class RPCSession(object):
     def connection_string(self):
         return self.gateway.connection_string
 
+    def listdb_syncuser(self):
+        try:
+            return self.execute_noauth('db', 'list_syncuser')
+        except openobject.errors.TinyError as e:
+            if e.message == 'AccessDenied':
+                return None
+            raise
+
     def listdb(self):
         try:
             return self.execute_noauth('db', 'list')

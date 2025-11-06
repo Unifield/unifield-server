@@ -108,6 +108,5 @@
     </table>
                 <div style="margin-top: 10px; height: 150px">
                 </div>
-    
-    <%include file="footer.mako"/>
+    <%include file="footer.mako" args="multi_host=multi_host, sync_user=sync_user, dblen=len(dblist)"/>
 </%def>
