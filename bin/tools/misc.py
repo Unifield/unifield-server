@@ -176,7 +176,7 @@ def path_to_cygwin(path):
 
 def force_wal_generation(cr, wal_path):
 
-    if sql.is_pg14(cr):
+    if sql.is_pg1X(cr):
         cr.execute('select * from pg_walfile_name_offset(pg_switch_wal())')
     else:
         cr.execute('select * from pg_xlogfile_name_offset(pg_switch_xlog())')
@@ -234,7 +234,7 @@ def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=
     except Exception as e:
         raise e
 
-def pg_basebackup(db_name, wal_dir, is_pg14=False):
+def pg_basebackup(db_name, wal_dir, is_pg1X=False):
     if not os.path.isdir(wal_dir):
         raise Exception("Destination directory %s not found" % (wal_dir,))
     dest_dir = os.path.join(wal_dir, 'base')
@@ -247,7 +247,7 @@ def pg_basebackup(db_name, wal_dir, is_pg14=False):
         if not pg_basebackup:
             raise Exception("Couldn't find %s" % pg_basebackup)
 
-        if is_pg14:
+        if is_pg1X:
             cmd = [pg_basebackup, '--format=t', '-X', 'n', '--no-manifest', '-D', dest_dir]
         else:
             cmd = [pg_basebackup, '--format=t', '-D', dest_dir]
