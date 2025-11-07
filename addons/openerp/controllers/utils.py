@@ -54,13 +54,13 @@ def get_db_list():
         #message = _("Could not connect to server")
 
     dbfilter = cherrypy.request.app.config['openerp-web'].get('dblist.filter')
+    multi_host = 0
     if dbfilter:
         headers = cherrypy.request.headers
         host = headers.get('Host', headers.get('X-Forwarded-Host'))
 
         base = re.split(r'\.|:|/', host)[0]
 
-        multi_host = 0
         if dbfilter == 'EXACT':
             if dblist is None:
                 db = base
