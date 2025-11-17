@@ -113,7 +113,7 @@
 							<field name="requestor" />
 							<field name="partner_doc" />
 							<field name="comment" />
-							<field name="state" string="PO Line Status" />
+							<field name="line_state" />
 						</tree>
 					</field>
 				</form>

@@ -37,10 +37,10 @@ def sql_version(cr):
 
     return SQL_VERSION
 
-def is_pg14(cr):
+def is_pg1X(cr):
     version = sql_version(cr)
     if version:
-        return version.startswith('14')
+        return version.startswith('1')
 
     return False
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

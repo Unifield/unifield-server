@@ -140,7 +140,7 @@ class BackupConfig(osv.osv):
             ctx_no_write = context.copy()
             ctx_no_write['no_write_access'] = True
 
-            is_pg14 = tools.sql.is_pg14(old_cr)
+            is_pg1X = tools.sql.is_pg1X(old_cr)
             if new_cr:
                 cr = pooler.get_db(old_cr.dbname).cursor()
             else:
@@ -154,7 +154,7 @@ class BackupConfig(osv.osv):
                 raise Exception(_('%s not found') % (bk.wal_directory,))
 
 
-            tools.misc.pg_basebackup(cr.dbname, bk.wal_directory, is_pg14)
+            tools.misc.pg_basebackup(cr.dbname, bk.wal_directory, is_pg1X)
             self.write(cr, uid, [bk.id], {'basebackup_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'basebackup_error': False}, context=ctx_no_write)
             return True
         except Exception as e:

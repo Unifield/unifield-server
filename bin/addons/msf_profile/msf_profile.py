@@ -8070,4 +8070,10 @@ class sync_tigger_something_bidir_mission(osv.osv):
 
         return super(sync_tigger_something_bidir_mission, self).create(cr, uid, vals, context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('name') == 'journal_restriction' and vals.get('args') is not None:
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'journal_extr_p', vals['args'])
+            self.pool.get('res.company')._restricted_journal_type_extra_period = None
+
+        return super(sync_tigger_something_bidir_mission, self).write(cr, uid, ids, vals, context)
 sync_tigger_something_bidir_mission()

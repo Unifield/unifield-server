@@ -457,7 +457,7 @@ class transport_order_step(osv.osv):
             if parent_obj and parent_id:
                 parent = parent_obj.read(cr, uid, parent_id, ['macroprocess_id'], context=context)
                 if parent:
-                    macroprocess_id = parent['macroprocess_id'][0]
+                    macroprocess_id = parent['macroprocess_id'] and parent['macroprocess_id'][0] or False
         if macroprocess_id:
             dom.append(('macroprocess_ids', '=', macroprocess_id))
 
@@ -531,7 +531,7 @@ class transport_order(osv.osv):
         'incoterm_type': fields.many2one('stock.incoterms', 'Incoterm Type', widget='selection'),
         'incoterm_location': fields.char('Incoterm Location', size=128), # TODO m2o
         'notify_partner_id': fields.many2one('res.partner', 'Notify Partner'), # TODO ondelete
-        'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', add_empty=1, required=1, select=1, ondelete='restrict'),
+        'macroprocess_id': fields.many2one('transport.macroprocess', 'Macroprocess', add_empty=1, select=1, ondelete='restrict'),
 
         'customs_regime': fields.selection([
             ('import', 'Import'),
@@ -980,6 +980,8 @@ class transport_order_in(osv.osv):
     def _process_step(self, cr, uid, ids, current_step, context=None):
         to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', current_step)], context=context)
         if to_process_ids:
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('macroprocess_id', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _('Please choose a Macroprocess before trying to process the Transport Object'))
             if current_step != 'planned' and self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
                 raise osv.except_osv(_('Warning'), _('Please choose a Customs Regime before trying to process the ITO'))
             all_st = [x[0] for x in self._columns['state'].selection]
@@ -1023,7 +1025,7 @@ class transport_order_in(osv.osv):
                 process_kc=kc,
                 process_dg=dg,
                 process_cs=cs,
-                process_amount=0,
+                process_amount=0
             where
                 transport_id = %s ''', (to_process_ids[0], )
                    )
@@ -1344,6 +1346,8 @@ class transport_order_out(osv.osv):
                 line_obj.write(cr, uid, _id, vals, context=context)
 
         for oto in self.browse(cr, uid, ids, context=context):
+            if not oto.macroprocess_id:
+                raise osv.except_osv(_('Warning'), _('Please choose a Macroprocess before trying to process the Transport Object'))
             data = {'state': 'dispatched'}
             if oto.transit_partner_id and oto.transit_partner_id.partner_type in ('internal', 'section', 'intermission'):
                 data['next_partner_id'] = oto.transit_partner_id.id

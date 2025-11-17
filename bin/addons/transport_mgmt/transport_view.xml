@@ -314,8 +314,8 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" context="{'parent_in_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" required="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': ['|', ('macroprocess_id', '=', False), ('state', 'in', ['closed', 'cancel'])]}" context="{'parent_in_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
                         </page>
 
                         <page string="Notes">
@@ -621,8 +621,8 @@
                         </page>
 
                         <page string="Steps">
-                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" context="{'parent_out_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" required="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': ['|', ('macroprocess_id', '=', False), ('state', 'in', ['closed', 'cancel'])]}" context="{'parent_out_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
                         </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" colspan="4" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
