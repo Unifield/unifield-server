@@ -834,7 +834,7 @@ Please check if these can be switched for UniData type product(s) instead, or co
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
 
-        pol_to_invoice = {}
+        pol_to_invoice, pol_for_cv = {}, {}
 
         for pol in self.browse(cr, uid, ids):
             if not pol.confirmed_delivery_date:
@@ -923,9 +923,13 @@ Please check if these can be switched for UniData type product(s) instead, or co
             if pol.order_id.po_version == 1 and pol.order_id.invoice_method == 'order':
                 pol_to_invoice[pol.id] = True
 
+            if not pol.from_synchro_return_goods:
+                pol_for_cv[pol.id] = True
+
 
         # create or update the linked commitment voucher:
-        self.create_or_update_commitment_voucher(cr, uid, ids, context=context)
+        if pol_for_cv:
+            self.create_or_update_commitment_voucher(cr, uid, list(pol_for_cv.keys()), context=context)
         if pol_to_invoice:
             self.generate_invoice(cr, uid, list(pol_to_invoice.keys()), context=context)
 

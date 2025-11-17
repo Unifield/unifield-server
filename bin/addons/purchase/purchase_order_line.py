@@ -1543,7 +1543,7 @@ class purchase_order_line(osv.osv):
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False,
                         'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False,
                         'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False,
-                        'no_prod_nr_id': False, 'no_prod_nr_error': ''})
+                        'no_prod_nr_id': False, 'no_prod_nr_error': '', 'from_synchro_return_goods': False})
 
         if not context.get('split_line'):
             default.update({'stock_take_date': False, 'loan_line_id': False})
