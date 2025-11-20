@@ -1595,6 +1595,19 @@ price. Please set unit price on these lines or cancel them'''),
                 if view:
                     view_id = view[1]
 
+        if context.get('po_from_transport'):
+            if view_type == 'search':
+                view_id = ir_model_obj.get_object_reference(cr, uid, 'purchase', 'view_purchase_order_filter')[1]
+
+            if view_type == 'tree':
+                view_id = ir_model_obj.get_object_reference(cr, uid, 'purchase', 'purchase_order_tree')[1]
+                res = super(purchase_order, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+                root = etree.fromstring(res['arch'])
+                for field in root.xpath('//tree'):
+                    field.set('hide_new_button', '1')
+                res['arch'] = etree.tostring(root, encoding='unicode')
+                return res
+
         return super(purchase_order, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
     def rfq_closed(self, cr, uid, ids, context=None):

@@ -373,17 +373,14 @@ class analytic_line(osv.osv):
                     # UTP-943: Shoud have a correction journal on these lines
                     self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': corr_j, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
                     # UTP-943: Check that period is open
-                    correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date, context=context)
-                    if not correction_period_ids:
-                        raise osv.except_osv(_('Error'), _('No period found for this date: %s') % (date,))
-                    for p in self.pool.get('account.period').browse(cr, uid, correction_period_ids, context=context):
-                        if p.state != 'draft':
-                            raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (p.name,))
+                    correction_period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date, check_extra_config=True, context=context)
+                    if not correction_period_id:
+                        raise osv.except_osv(_('Error'), _('No open period found for this date: %s') % (date,))
                     # then create new lines
                     cor_name = self.pool.get('account.analytic.line').join_without_redundancy(aline.name, 'COR')
                     cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                                                                                               'source_date': curr_date, 'journal_id': corr_j,
-                                                                                              'name': cor_name, 'ref': aline.entry_sequence, 'real_period_id': correction_period_ids[0]}, context=context)
+                                                                                              'name': cor_name, 'ref': aline.entry_sequence, 'real_period_id': correction_period_id}, context=context)
                     self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
@@ -415,7 +412,6 @@ class analytic_line(osv.osv):
         # Prepare some value
         ad_obj = self.pool.get('analytic.distribution')
         dest_cc_link_obj = self.pool.get('dest.cc.link')
-        period_obj = self.pool.get('account.period')
         account = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category', 'date_start', 'date'], context=context)
         account_type = account and account.get('category', False) or False
         res = []
@@ -426,8 +422,8 @@ class analytic_line(osv.osv):
         date_stop = account and account.get('date', False) or False
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
         cmp_dates = {}
-        wiz_period_open = period_obj.search_exist(cr, uid, [('date_start', '<=', wiz_date), ('date_stop', '>=', wiz_date),
-                                                            ('special', '=', False), ('state', '=', 'draft')], context=context)
+        wiz_period_open = self.pool.get('account.period').get_open_period_from_date(cr, uid, wiz_date, check_extra_config=True, context=context)
+
         try:
             pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
                                                                         'analytic_account_msf_private_funds')[1]

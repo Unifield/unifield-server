@@ -235,6 +235,7 @@ class stock_picking(osv.osv):
         ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
         return ret
 
+
     _columns = {
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
@@ -255,6 +256,7 @@ class stock_picking(osv.osv):
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
         'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
         'shipment_ref': fields.char(string='Ship Reference', size=256, readonly=True),  # UF-1617: indicating the reference to the SHIP object at supplier
+        'oto_ref': fields.char('Supplier OTO ref', size=64, readonly=True),
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)], 'received': [('readonly', True)], 'delivered': [('readonly', True)]}),
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
@@ -285,6 +287,8 @@ class stock_picking(osv.osv):
         'from_pick_cancel_id': fields.many2one('stock.picking', string='Linked Picking/Out', readonly=True,
                                                help='Picking or Out that created this Internal Move after cancellation'),
         'ret_from_unit_rt': fields.function(_get_ret_from_unit_rt, method=True, type='boolean', string='Check if the Reason Type is Return from Unit', store=False),
+        'manual_ito_id': fields.many2one('transport.order.in', 'Inbound Order Transport', readonly=True, copy=False),
+        'transport_active': fields.function(tools.misc.get_transport_active, method=True, type='boolean', string='Transport Management active'),
     }
 
     _defaults = {

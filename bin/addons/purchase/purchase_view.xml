@@ -446,31 +446,56 @@
                                 <!-- default form view -->
                             </field>
                         </page>
-                        <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')]}">
-                            <separator colspan="4" string="Purchase Order"/>
-                            <field name="transport_order_id" domain="[('rfq_ok', '=', False)]"/>
+                        <page string="Linked documents" attrs="{'invisible': [('categ', 'not in', ['service', 'transport'])]}">
+                            <group attrs="{'invisible': [('categ', '!=', 'transport')]}">
+                                <separator colspan="4" string="Purchase Order"/>
+                                <field name="transport_order_id" domain="[('rfq_ok', '=', False)]"/>
+                            </group>
                             <newline/>
-                            <separator colspan="2" string="Delivery documents"/>
-                            <separator colspan="2" string="Shipment documents"/>
-                            <field name="picking_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('type', '=', 'out'), ('converted_to_standard', '=', True)]">
-                                <tree string="Delivery Orders">
-                                    <field name="name"/>
-                                    <field name="reason_type_id"/>
-                                    <field name="date"/>
-                                    <field name="min_date"/>
-                                    <field name="state"/>
-                                </tree>
-                            </field>
-                            <field name="shipment_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('parent_id', '!=', False)]">
-                                <tree string="Shipments">
-                                    <field name="name"/>
-                                    <field name="partner_id"/>
-                                    <field name="num_of_packs"/>
-                                    <field name="date"/>
-                                    <field name="date_of_departure"/>
-                                    <field name="state"/>
-                                </tree>
-                            </field>
+                            <group colspan="1" col="1" attrs="{'invisible': [('categ', '!=', 'transport')]}">
+                                <separator string="Delivery documents"/>
+                                <field name="picking_transport_ids" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('type', '=', 'out'), ('converted_to_standard', '=', True)]">
+                                    <tree string="Delivery Orders">
+                                        <field name="name"/>
+                                        <field name="reason_type_id"/>
+                                        <field name="date"/>
+                                        <field name="min_date"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            <field name="transport_active" invisible="1"/>
+                            <group colspan="1" col="1" attrs="{'invisible': ['|', ('categ', 'not in', ['service', 'transport']), ('transport_active', '=', False)]}">
+                                <separator string="Transport documents for Customs Fees"/>
+                                <field name="transport_customs_fees_ids" nolabel="1" widget="many2many" readonly="1">
+                                    <tree string="Inbound/Outbound Transport Orders">
+                                        <field name="parent_name"/>
+                                        <field name="parent_state"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            <group colspan="1" col="1" attrs="{'invisible': ['|', ('categ', 'not in', ['service', 'transport']), ('transport_active', '=', False)]}">
+                                <separator string="Transport documents for Transport Fees"/>
+                                <field name="transport_transport_fees_ids" nolabel="1" widget="many2many" readonly="1">
+                                    <tree string="Inbound/Outbound Transport Orders">
+                                        <field name="parent_name"/>
+                                        <field name="parent_state"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            <group colspan="1" col="1" attrs="{'invisible': [('categ', '!=', 'transport')]}">
+                                <separator string="Shipment documents"/>
+                                <field name="shipment_transport_ids" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('parent_id', '!=', False)]">
+                                    <tree string="Shipments">
+                                        <field name="name"/>
+                                        <field name="partner_id"/>
+                                        <field name="num_of_packs"/>
+                                        <field name="date"/>
+                                        <field name="date_of_departure"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </group>
                         </page>
                         <page string="Delivery &amp; Invoicing">
                             <group colspan="4" col="4">

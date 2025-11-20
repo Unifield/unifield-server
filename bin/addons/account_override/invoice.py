@@ -1196,19 +1196,29 @@ class account_invoice(osv.osv):
         # Default behaviour to add date
         res = super(account_invoice, self).action_date_assign(cr, uid, ids, args)
         # Process invoices
-        for i in self.browse(cr, uid, ids):
-            if not i.date_invoice:
-                self.write(cr, uid, i.id, {'date_invoice': strftime('%Y-%m-%d')})
-                i = self.browse(cr, uid, i.id) # This permit to refresh the browse of this element
+        for i in self.browse(cr, uid, ids, fields_to_fetch=['date_invoice', 'document_date', 'period_id', 'doc_type']):
+            to_write = {}
+            date_invoice = i.date_invoice
+            if not date_invoice:
+                date_invoice = strftime('%Y-%m-%d')
+                to_write['date_invoice'] = date_invoice
             if not i.document_date:
                 raise osv.except_osv(_('Warning'), _('Document Date is a mandatory field for validation!'))
             # UFTP-105: Search period and raise an exeception if this one is not open
-            period_ids = period_obj.get_period_from_date(cr, uid, i.date_invoice)
+            ctx = {}
+            if i.doc_type in ('ivo', 'ivi') and self.pool.get('res.company').extra_period_config(cr) == 'other':
+                ctx['extend_december'] = True
+            period_ids = period_obj.get_period_from_date(cr, uid, date_invoice, ctx)
             if not period_ids:
-                raise osv.except_osv(_('Error'), _('No period found for this posting date: %s') % (i.date_invoice))
-            for period in period_obj.browse(cr, uid, period_ids):
-                if period.state != 'draft':
-                    raise osv.except_osv(_('Warning'), _('You cannot validate this document in the given period: %s because it\'s not open. Change the date of the document or open the period.') % (period.name))
+                raise osv.except_osv(_('Error'), _('No period found for this posting date: %s') % (date_invoice))
+            draft_p_ids = period_obj.search(cr, uid, [('id', 'in', period_ids), ('state', '=', 'draft')], order='number asc')
+            if not draft_p_ids:
+                period = period_obj.browse(cr, uid, period_ids[0], fields_to_fetch=['name'])
+                raise osv.except_osv(_('Warning'), _('You cannot validate this document in the given period: %s because it\'s not open. Change the date of the document or open the period.') % (period.name, ))
+            if not i.period_id:
+                to_write['period_id'] = draft_p_ids[0]
+            if to_write:
+                self.write(cr, uid, i.id, to_write)
         # Posting date should not be done BEFORE document date
         self._check_document_date(cr, uid, ids)
         return res

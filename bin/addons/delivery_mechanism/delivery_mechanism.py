@@ -887,7 +887,7 @@ class stock_picking(osv.osv):
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
                     if line.pack_info_id:
-                        # we are processing auto import IN, we must register pack_info data
+                        # register pack_info data on IN lines
                         values['pack_info_id'] = line.pack_info_id.id
 
                     if not values.get('product_qty', 0.00):
@@ -1157,6 +1157,7 @@ class stock_picking(osv.osv):
                     'dpo_incoming': wizard.picking_id.dpo_incoming,
                     'physical_reception_date': wizard.physical_reception_date or False,
                     'sde_updated': wizard.sde_updated,
+                    'manual_ito_id': wizard.manual_ito_id.id or False,
                 }
 
                 if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -1326,6 +1327,8 @@ class stock_picking(osv.osv):
                     to_write.update({'shipment_ref': imp_shipment_ref})
                 if wizard.imp_filename:
                     to_write.update({'last_imported_filename': wizard.imp_filename})
+                if wizard.manual_ito_id:
+                    to_write['manual_ito_id'] = wizard.manual_ito_id.id
                 if to_write:
                     self.write(cr, uid, picking_id, to_write, context=context)
 

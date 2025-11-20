@@ -291,6 +291,14 @@ class stock_picking(osv.osv):
                 'datas': base64.b64encode(bytes(file_content, 'utf8')),
             })
             import_success = True
+
+            # Create/Update an ITO using the shipment_ref
+            if self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='transport'):
+                in_data = self.read(cr, uid, context.get('new_picking', in_id), ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
+                if in_data['shipment_ref']:
+                    in_partner_id = in_data['partner_id'] and in_data['partner_id'][0] or False
+                    self.create_update_ito(cr, uid, in_data['id'], in_data['name'], in_data['shipment_ref'],
+                                           in_partner_id, in_data['order_category'], context=context)
         except Exception as e:
             raise e
 
@@ -473,6 +481,57 @@ class stock_picking(osv.osv):
             'target': 'same',
             'context': context,
         }
+
+    def create_update_ito(self, cr, uid, upd_in_id, in_name, in_shipment_ref, in_partner_id, in_order_category, context=None):
+        '''
+        Create or update the Inbound Transport Object with the Available Updated IN as new line using the Ship Reference
+        '''
+        if context is None:
+            context = {}
+
+        ito_obj = self.pool.get('transport.order.in')
+        ito_line_obj = self.pool.get('transport.order.in.line')
+        partner_obj = self.pool.get('res.partner')
+
+        value = ito_line_obj.change_incoming(cr, uid, False, upd_in_id, context=context)
+        if in_partner_id and value and value.get('value'):
+            ito_ids = ito_obj.search(cr, uid, [('state', '=', 'planned'), ('supplier_partner_id', '=', in_partner_id),
+                                               ('ship_ref', '=', in_shipment_ref)], context=context)
+            ito_categ = in_order_category == 'medical' and 'medical' or in_order_category == 'log' and 'log' or 'mixed'
+            if not ito_ids:
+                company_partner_id = self.pool.get('res.users').get_current_company_partner_id(cr, uid)[0]
+                company_address = partner_obj.address_get(cr, uid, company_partner_id, [])
+                supplier_address = partner_obj.address_get(cr, uid, in_partner_id, [])
+                ito_data = {
+                    'supplier_partner_id': in_partner_id,
+                    'ship_ref': in_shipment_ref,
+                    'zone_type': company_address and company_address.country_id and supplier_address and supplier_address.country_id and
+                    company_address.country_id.id == supplier_address.country_id.id and 'domestic' or 'int',
+                    'cargo_category': ito_categ
+                }
+                ito_id = ito_obj.create(cr, uid, ito_data, context=context)
+                crea_upd = _('created')
+            else:
+                ito_id = ito_ids[0]
+                if ito_obj.read(cr, uid, ito_id, ['cargo_category'], context=context)['cargo_category'] != ito_categ:
+                    ito_obj.write(cr, uid, ito_id, {'cargo_category': 'mixed'}, context=context)
+                crea_upd = _('updated')
+
+            line_vals = value['value']
+            line_vals.update({'transport_id': ito_id, 'incoming_id': upd_in_id})
+            ito_line_obj.create(cr, uid, line_vals, context=context)
+
+            # Comment added to the import job report
+            ito_name = ito_obj.read(cr, uid, ito_id, ['name'], context=context)['name']
+            job_comment = context.get('job_comment', [])
+            job_comment.append({
+                'res_model': 'stock.picking',
+                'res_id': upd_in_id,
+                'msg': _('%s was %s with %s in its lines') % (ito_name, crea_upd, in_name),
+            })
+            context['job_comment'] = job_comment
+
+        return True
 
 
 stock_picking()

@@ -288,10 +288,14 @@ class stock_picking(osv.osv):
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
         # prepare the shipment/OUT reference to update to IN
         shipment = pick_dict.get('shipment_id', False)
+        oto_ref = False
         if shipment:
             shipment_ref = shipment['name'] # shipment made
+            if shipment.get('manual_oto_id'):
+                oto_ref = shipment['manual_oto_id']['name']
         else:
             shipment_ref = pick_dict.get('name', False) # the case of OUT
+
         if not po_id and pick_dict.get('sale_id') and pick_dict.get('sale_id', {}).get('claim_name_goods_return'):
             po_sync_name = pick_dict.get('sale_id', {}).get('client_order_ref')
             if po_sync_name:
@@ -613,7 +617,7 @@ class stock_picking(osv.osv):
 
             #UFTP-332: Check if shipment/out is given
             if shipment_ref:
-                self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
+                self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref, 'oto_ref': oto_ref}, context)
             else:
                 self.write(cr, uid, new_picking, {'already_shipped': True}, context)
 
@@ -661,7 +665,7 @@ class stock_picking(osv.osv):
                 self._logger.info(message)
                 raise Exception(message)
 
-            self.write(cr, uid, in_id, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
+            self.write(cr, uid, in_id, {'already_shipped': True, 'shipment_ref': shipment_ref, 'oto_ref': oto_ref}, context)
             in_name = self.browse(cr, uid, in_id, context=context)['name']
             message = "The INcoming " + in_name + "(" + po_name + ") has already been MANUALLY processed!"
             self._logger.info(message)

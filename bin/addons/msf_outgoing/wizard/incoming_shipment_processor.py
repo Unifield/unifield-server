@@ -224,6 +224,7 @@ class stock_incoming_processor(osv.osv):
         'fields_as_ro': fields.boolean('Hide split/change prod', internal=True),
         'sequence_issue': fields.boolean('Issue with To ship'),
         'physical_reception_date': fields.datetime('Physical Reception Date'),
+        'manual_ito_id': fields.many2one('transport.order.in', 'Inbound Order Transport'),
         'imp_shipment_ref': fields.char(string='Ship Reference from the IN VI import', size=256, readonly=True),
         'imp_filename': fields.char(size=128, string='Filename', readonly=True),
         'sde_updated': fields.boolean('Updated by SDE'),

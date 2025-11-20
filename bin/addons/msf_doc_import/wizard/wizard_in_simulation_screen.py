@@ -537,6 +537,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                         if parcel_id and ',' in parcel_id:
                             error.append(_('Line %s:  comma (,) is not allowed in Parcel ID') % (index,))
                             break
+
                         if parcel_id:
                             if parcel_id in parcel_ids_seen:
                                 error.append(_('Line %s: Parcel ID must be unique, %s already used') % (index, parcel_id))
