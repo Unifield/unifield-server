@@ -39,6 +39,7 @@ from xlwt import Workbook, easyxf, Borders, add_palette_colour
 import tempfile
 import shutil
 import re
+import traceback
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -232,13 +233,18 @@ class stock_mission_report(osv.osv):
         'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Moves'),
         'export_ok': fields.boolean(string='Export file possible ?'),
         'export_state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], string="Export state"),
-        'export_error_msg': fields.text('Error message', readonly=True)
+        'export_error_msg': fields.text('Error message', readonly=True),
+        'consolidated_export_ok': fields.boolean(string='Export consolidated file possible ?'),
+        'consolidated_export_state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], string="Consolidated export state"),
+        'consolidated_export_error_msg': fields.text('Error message for consolidated', readonly=True),
     }
 
     _defaults = {
         'full_view': lambda *a: False,
         'export_state': lambda *a: 'draft',
         'export_error_msg': lambda *a: False,
+        'consolidated_export_state': lambda *a: 'draft',
+        'consolidated_export_error_msg': lambda *a: False,
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -610,6 +616,8 @@ class stock_mission_report(osv.osv):
         begin = len(fixed_data)
         for inst_id in all_instances:
             max_size = begin + len(repeated_data) + len(instance_loc.get(inst_id, [])) - 1
+            if max_size > 255:
+                raise osv.except_osv(_('Error'), _('The Consolidated Mission Stock Report could not be generated because there is more than 255 columns. Please use the individual Mission Stock Reports instead'))
             sheet.write_merge(3, 3, begin, max_size, instance_dict[inst_id], style=header_styles[i])
             begin = max_size + 1
             i = 1 - i
@@ -705,6 +713,7 @@ class stock_mission_report(osv.osv):
         self.save_file(cr, uid, file_name, xls_name)
         os.remove(file_name)
         cr1.close(True)
+        self.write(cr, uid, report_id, {'consolidated_export_ok': True}, context=context)
         return True
 
     def save_file(self, cr, uid, file_name, name):
@@ -884,14 +893,16 @@ class stock_mission_report(osv.osv):
         logger = logging.getLogger('MSR')
 
         line_obj = self.pool.get('stock.mission.report.line')
-        self.write(cr, uid, report_ids, {'export_state': 'in_progress',
-                                         'export_error_msg': False}, context=context)
+        report_vals = {
+            'export_state': 'in_progress', 'export_error_msg': False,
+            'consolidated_export_state': 'in_progress', 'consolidated_export_error_msg': False
+        }
+        self.write(cr, uid, report_ids, report_vals, context=context)
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             try:
-                self.write(cr, uid, report['id'], {'report_ok': False},
-                           context=context)
+                self.write(cr, uid, report['id'], {'report_ok': False}, context=context)
 
                 # Create one line by product
                 cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
@@ -987,22 +998,32 @@ class stock_mission_report(osv.osv):
 
 
                 self._get_export(cr, uid, report['id'], product_values,
-                                 csv=csv, xls=xls,
-                                 with_valuation=with_valuation,
-                                 all_products=all_products,
-                                 display_only_in_stock=display_only_in_stock,
-                                 context=context)
+                             csv=csv, xls=xls,
+                             with_valuation=with_valuation,
+                             all_products=all_products,
+                             display_only_in_stock=display_only_in_stock,
+                             context=context)
+                # To keep the normal reports after they are generated if the Consolidated MSR returns an error
+                cr.commit()
 
 
 
-
+                consolidated_error = False
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
-                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
+                    try:
+                        self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
+                    except Exception as e:
+                        cr.rollback()
+                        consolidated_error = traceback.format_exc()
+                        logger.error('Error: %s' % (consolidated_error,), exc_info=True)
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
-                self.write(cr, uid, [report['id']], {'export_state': 'done',
-                                                     'export_error_msg': False}, context=context)
+                report_vals = {
+                    'export_state': 'done', 'export_error_msg': False,
+                    'consolidated_export_state': consolidated_error and 'error' or 'done', 'consolidated_export_error_msg': consolidated_error
+                }
+                self.write(cr, uid, [report['id']], report_vals, context=context)
 
                 logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
 
@@ -1011,10 +1032,10 @@ class stock_mission_report(osv.osv):
                 # in case of error delete previously generated attachments
                 self.delete_previous_reports_attachments(cr, uid, report['id'])
                 logger.error('Error: %s' % e, exc_info=True)
-                import traceback
+                error_msg = traceback.format_exc()
                 error_vals = {
-                    'export_state': 'error',
-                    'export_error_msg': traceback.format_exc(),
+                    'export_state': 'error', 'export_error_msg': error_msg,
+                    'consolidated_export_state': 'error', 'consolidated_export_error_msg': error_msg
                 }
                 self.write(cr, uid, [report['id']], error_vals, context=context)
             cr.commit()
@@ -1298,9 +1319,8 @@ class stock_mission_report(osv.osv):
 
     def delete_previous_reports_attachments(self, cr, uid, ids, context=None):
         '''
-        delete previously generated report attachments. That mean in case of report
-        generation failure, no report are available (instead of a not updated
-        report that could mixup things)
+        delete previously generated report attachments. That mean in case of report generation failure,
+        no report are available (instead of a not updated report that could mix up things)
         '''
         if isinstance(ids, int):
             ids = [ids]
@@ -1315,16 +1335,13 @@ class stock_mission_report(osv.osv):
                 csv_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.csv')
                 xml_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.xls')
                 file_name_list = [csv_file_name, xml_file_name, csv_file_name_in_stock, xml_file_name_in_stock]
-                attachment_ids = ir_attachment_obj.search(cr, uid,
-                                                          [('datas_fname', 'in', file_name_list)],
-                                                          context=context)
+                attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', 'in', file_name_list)], context=context)
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
                 try:
                     # in case reports are stored on file system, delete them
                     attachments_path = ir_attachment_obj.get_root_path(cr, uid)
                     for file_name in file_name_list:
-                        complete_path = os.path.join(attachments_path,
-                                                     file_name)
+                        complete_path = os.path.join(attachments_path, file_name)
                         if os.path.isfile(complete_path):
                             os.remove(complete_path)
                 except:
@@ -1357,8 +1374,7 @@ class stock_mission_report(osv.osv):
         write_attachment_in_db = False
         # for MSR reports, the migration is ignored, if the path is defined and
         # usable, it is used, migration done or not.
-        if attachment_obj.store_data_in_db(cr, uid,
-                                           ignore_migration=True):
+        if attachment_obj.store_data_in_db(cr, uid, ignore_migration=True):
             write_attachment_in_db = True
 
         for report_id in ids:
