@@ -53,8 +53,8 @@ class mission_stock_wizard(osv.osv_memory):
             st_date = msr_in_progress.browse(cr, 1, msr_ids[0], context=context).start_date
             return 'in_progress', st_date
 
-        export_state = msr_obj.read(cr, uid, report_id, ['export_state'],
-                                    context=context)['export_state']
+        export = msr_obj.read(cr, uid, report_id, ['export_state', 'consolidated_export_state'], context=context)
+        export_state = context.get('consolidated_msr') and export['consolidated_export_state'] or export['export_state']
         return export_state, None
 
     _columns = {
@@ -137,8 +137,12 @@ class mission_stock_wizard(osv.osv_memory):
             progress_state, start_date = self._get_progression_state(cr, uid, local_id[0], context=context)
             if progress_state == 'in_progress':
                 res['processed_start_date'] = start_date
-            res['export_ok'] = report.export_ok and progress_state == 'done'
-            res['export_error_msg'] = report.export_error_msg
+            if context.get('consolidated_msr'):
+                res['export_ok'] = report.consolidated_export_ok and progress_state == 'done'
+                res['export_error_msg'] = report.consolidated_export_error_msg
+            else:
+                res['export_ok'] = report.export_ok and progress_state == 'done'
+                res['export_error_msg'] =  report.export_error_msg
             res['processed_state'] = progress_state
 
         res['instance_level'] = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level

@@ -69,8 +69,7 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         if data.get('file_name') and data['file_name'] == 'consolidate_mission_stock.xls':
             file_name = 'consolidate_mission_stock.xls'
         if store_in_db:
-            attachment_ids = attachment_obj.search(cr, uid, [('datas_fname', '=', file_name)],
-                                                   context=context)
+            attachment_ids = attachment_obj.search(cr, uid, [('datas_fname', '=', file_name)], context=context)
             if not attachment_ids:
                 create_missing_report = True
         else:
@@ -78,7 +77,7 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
             if not os.path.exists(path):
                 create_missing_report = True
         if create_missing_report and file_name != 'consolidate_mission_stock.xls':
-                # if the requeted attachment don't exists, create it
+            # if the requested attachment doesn't exist, create it
             msr_obj = pool.get('stock.mission.report')
             with_valuation = False
             if field_name.startswith('s_v_vals'):
