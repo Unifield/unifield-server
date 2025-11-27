@@ -236,6 +236,7 @@
         <field name="view_type">form</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
+        <field name="context">{'consolidated_msr':True}</field>
         <field name="view_id" ref="consolidated_mission_stock_wizard_view" />
     </record>
 
