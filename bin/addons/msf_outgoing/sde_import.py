@@ -94,8 +94,10 @@ class sde_import(osv.osv_memory):
 
         out_domain = [('type', '=', 'out'), ('subtype', '=', 'standard'), ('state', '=', 'confirmed')]
         confirmed_out_ids = pick_obj.search(cr, uid, out_domain, context=context)
+        timer_start = time.time()
         pick_obj.action_assign(cr, uid, confirmed_out_ids, context=context)
-        self.infolog(cr, uid, "SDE Available OUTs list: Check Availability was ran on %s OUT(s)" % (len(confirmed_out_ids),))
+        self.infolog(cr, uid, _('SDE Available OUTs list: Check Availability was ran on %s OUT(s) in %.2f second(s)')
+                     % (len(confirmed_out_ids), time.time() - timer_start))
 
         return {
             'type': 'ir.actions.report.xml',
