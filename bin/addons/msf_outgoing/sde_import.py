@@ -83,6 +83,27 @@ class sde_import(osv.osv_memory):
             context = {}
         return self.pool.get('shipment').generate_dispatched_packing_list_report(cr, uid, context=context)
 
+    def generate_sde_available_out_report(self, cr, uid, ids, context=None):
+        '''
+        Check the availability of Not Available OUTs
+        '''
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+
+        out_domain = [('type', '=', 'out'), ('subtype', '=', 'standard'), ('state', '=', 'confirmed')]
+        confirmed_out_ids = pick_obj.search(cr, uid, out_domain, context=context)
+        pick_obj.action_assign(cr, uid, confirmed_out_ids, context=context)
+        self.infolog(cr, uid, "SDE Available OUTs list: Check Availability was ran on %s OUT(s)" % (len(confirmed_out_ids),))
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'report_available_out_export',
+            'datas': {'target_filename': _('Available OUTs Excel Export %s') % (datetime.today().strftime('%Y-%m-%d %H%M'),)},
+            'context': context
+        }
+
     def sde_file_import(self, cr, uid, file_path, file, context=None):
         '''
         Method used by the SDE script to import a file

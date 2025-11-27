@@ -875,7 +875,7 @@ class stock_picking(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        ftf = ['partner_id', 'ext_cu', 'sale_id', 'purchase_id']
+        ftf = ['partner_id', 'ext_cu', 'sale_id', 'purchase_id', 'from_wkf']
         for pick in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             if context.get('picking_type') == 'incoming_shipment' and not pick.partner_id and not pick.ext_cu:
                 raise osv.except_osv(_('Error'), _('You can not process an IN with neither Partner or Ext. C.U.'))

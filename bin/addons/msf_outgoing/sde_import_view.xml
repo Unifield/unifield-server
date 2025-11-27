@@ -22,7 +22,8 @@
                     </group>
                     <button name="wizard_sde_file_to_in" string="Import attachment" icon="gtk-execute" type="object" colspan="2" />
                     <separator colspan="4" string="Report Actions" />
-                    <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="4" context="{'from_sde_wizard': True}" />
+                    <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="2" context="{'from_sde_wizard': True}" />
+                    <button name="generate_sde_available_out_report" string="Generate Available OUT report" icon="gtk-print" type="object" colspan="2" context="{'from_sde_wizard': True}" />
                 </form>
             </field>
         </record>

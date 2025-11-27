@@ -443,6 +443,132 @@ class report_out_export_parser(XlsxReportParser):
 XlsxReport('report.report_out_export', parser=report_out_export_parser, template='addons/msf_supply_doc_export/report/report_out_export.xlsx')
 
 
+class report_available_out_export_parser(XlsxReportParser):
+
+    def add_cell(self, value=None, style='default_style', number_format=None):
+        # None value set an xls empty cell
+        # False value set the xls False()
+        new_cell = WriteOnlyCell(self.workbook.active, value=value)
+        new_cell.style = style
+        if number_format:
+            new_cell.number_format = number_format
+        self.rows.append(new_cell)
+
+    def generate(self, context=None):
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        proc_move_obj = self.pool.get('outgoing.delivery.move.processor')
+
+        sheet = self.workbook.active
+
+        self.duplicate_column_dimensions(default_width=15)
+
+        # Styles
+        line_header_style = self.create_style_from_template('line_header_style', 'A1')
+        line_style = self.create_style_from_template('line_style', 'A2')
+        date_style = self.create_style_from_template('date_style', 'O3')
+        int_style = self.create_style_from_template('int_style', 'C2')
+        float_style = self.create_style_from_template('float_style', 'K2')
+
+        sheet.title = _('Available OUT Export')
+
+        row_headers = [
+            (_('Reference')),
+            (_('Origin')),
+            (_('Item')),
+            (_('Code')),
+            (_('Description')),
+            (_('Comment')),
+            (_('Asset')),
+            (_('Kit')),
+            (_('Src. Location')),
+            (_('Dest. Location')),
+            (_('Ordered Qty')),
+            (_('Qty to Process')),
+            (_('UoM')),
+            (_('Batch')),
+            (_('Expiry Date')),
+            (_('CC')),
+            (_('DG')),
+            (_('CS')),
+        ]
+
+        # Lines data
+        row_header = []
+        for header in row_headers:
+            cell_t = WriteOnlyCell(sheet, value=header)
+            cell_t.style = line_header_style
+            row_header.append(cell_t)
+        sheet.append(row_header)
+
+        out_domain = [('type', '=', 'out'), ('subtype', '=', 'standard'), ('state', '=', 'assigned')]
+        available_out_ids = pick_obj.search(self.cr, self.uid, out_domain, context=context)
+        for out in pick_obj.browse(self.cr, self.uid, available_out_ids, context=context):
+            move_domain = [('picking_id', '=', out.id), ('state', '=', 'assigned')]
+            move_line_ids = move_obj.search(self.cr, self.uid, move_domain, context=context)
+            if move_line_ids:
+                for move in move_obj.browse(self.cr, self.uid, move_line_ids, context=context):
+                    # Check if there is any existing saved OUT processor
+                    proc_move_domain = [('wizard_id.draft', '=', True), ('move_id', '=', move.id)]
+                    prod_move_ids = proc_move_obj.search(self.cr, self.uid, proc_move_domain, context=context)
+                    if prod_move_ids:
+                        for proc_move in proc_move_obj.browse(self.cr, self.uid, prod_move_ids, context=context):
+                            self.rows = []
+
+                            self.add_cell(out.name, line_style)
+                            self.add_cell(out.origin, line_style)
+                            self.add_cell(move.line_number, int_style)
+                            self.add_cell(move.product_id and move.product_id.default_code or '', line_style)
+                            self.add_cell(move.product_id and move.product_id.name or '', line_style)
+                            self.add_cell(move.comment or '', line_style)
+                            self.add_cell(proc_move.asset_id and proc_move.asset_id.name or '', line_style)
+                            self.add_cell(proc_move.composition_list_id and proc_move.composition_list_id.composition_reference
+                                          or '', line_style)
+                            self.add_cell(move.location_id and move.location_id.name or '', line_style)
+                            self.add_cell(move.location_dest_id and move.location_dest_id.name or '', line_style)
+                            self.add_cell(proc_move.ordered_quantity, float_style)
+                            self.add_cell(proc_move.quantity or 0.00, float_style)
+                            self.add_cell(proc_move.uom_id and proc_move.uom_id.name or '', line_style)
+                            self.add_cell(proc_move.prodlot_id and proc_move.prodlot_id.name or '', line_style)
+                            self.add_cell(proc_move.expiry_date and datetime.strptime(proc_move.expiry_date, '%Y-%m-%d') or '',
+                                          date_style, number_format='DD/MM/YYYY')
+                            self.add_cell(move.kc_check and _('Yes') or _('No'), line_style)
+                            self.add_cell(move.dg_check and _('Yes') or _('No'), line_style)
+                            self.add_cell(move.np_check and _('Yes') or _('No'), line_style)
+
+                            sheet.append(self.rows)
+                    else:
+                        self.rows = []
+
+                        self.add_cell(out.name, line_style)
+                        self.add_cell(out.origin or '', line_style)
+                        self.add_cell(move.line_number, int_style)
+                        self.add_cell(move.product_id and move.product_id.default_code or '', line_style)
+                        self.add_cell(move.product_id and move.product_id.name or '', line_style)
+                        self.add_cell(move.comment or '', line_style)
+                        self.add_cell(move.asset_id and move.asset_id.name or '', line_style)
+                        self.add_cell(move.composition_list_id and move.composition_list_id.composition_reference or '', line_style)
+                        self.add_cell(move.location_id and move.location_id.name or '', line_style)
+                        self.add_cell(move.location_dest_id and move.location_dest_id.name or '', line_style)
+                        self.add_cell(move.product_qty, float_style)
+                        self.add_cell(0.00, float_style)
+                        self.add_cell(move.product_uom and move.product_uom.name or '', line_style)
+                        self.add_cell(move.prodlot_id and move.prodlot_id.name or '', line_style)
+                        self.add_cell(move.expired_date and datetime.strptime(move.expired_date, '%Y-%m-%d') or '',
+                                      date_style, number_format='DD/MM/YYYY')
+                        self.add_cell(move.kc_check and _('Yes') or _('No'), line_style)
+                        self.add_cell(move.dg_check and _('Yes') or _('No'), line_style)
+                        self.add_cell(move.np_check and _('Yes') or _('No'), line_style)
+
+                        sheet.append(self.rows)
+
+
+XlsxReport('report.report_available_out_export', parser=report_available_out_export_parser, template='addons/msf_supply_doc_export/report/report_available_out_export.xlsx')
+
+
 # PURCHASE ORDER and REQUEST FOR QUOTATION are the same object
 class purchase_order_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
