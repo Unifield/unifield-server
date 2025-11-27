@@ -917,7 +917,6 @@ Nothing has been imported because of %s. See below:
                     del file_lines[x]
                 to_del = []
 
-
                 for x, fl in file_lines.items():
                     # Search lines with same product, same UoM
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
@@ -975,12 +974,12 @@ Nothing has been imported because of %s. See below:
                     del file_lines[x]
                 to_del = []
 
-                # Search if there is one or more IN claims with lines corresponding to the remaining lines
-                if file_lines and wiz.picking_id.origin:
+                # In the VI auto import, search if there is one or more IN claims with lines corresponding to the remaining lines
+                if file_lines and wiz.picking_id.origin and context.get('auto_import_ok'):
                     simu_line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
                     for x, fl in file_lines.items():
                         cr.execute("""
-                            SELECT  m.id, m.product_id, m.product_qty, m.product_uom, m.price_unit, pt.standard_price, 
+                            SELECT m.id, m.product_id, m.product_qty, m.product_uom, m.price_unit, pt.standard_price, 
                                 m.price_currency_id, m.line_number, pl.external_ref
                             FROM stock_move m 
                                 LEFT JOIN stock_picking p ON m.picking_id = p.id

@@ -1339,7 +1339,7 @@ class stock_picking(osv.osv):
                         prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                             'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                         }, context=context)
-                        return picking_id
+                        continue
                     else:
                         # Cancel missing IN instead of processing
                         if wizard.register_a_claim and wizard.claim_type == 'missing':
