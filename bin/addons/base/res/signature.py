@@ -833,7 +833,7 @@ class signature_line(osv.osv):
         '''
         check_ur: used when sign offline by sign creator
         '''
-        sign_lines = self.browse(cr, uid, ids, fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit'], context=context)
+        sign_lines = self.browse(cr, uid, ids, fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit', 'prio'], context=context)
         sign_line = sign_lines[0]
         if check_ur:
             sign_line._check_sign_unsign(check_unsign=True, check_super_unsign=check_super_unsign, context=context)
@@ -842,6 +842,15 @@ class signature_line(osv.osv):
         value = sign_line.value
         if value is False:
             value = ''
+
+        # Check for other signed signatures with higher prios
+        to_reset_ids = []
+        if sign_line.signature_id.signature_res_model in ['']:
+            cr.execute("""
+                SELECT id FROM signature_line WHERE signature_id = %s AND signed = 't' AND prio > %s
+            """, (sign_line.signature_id.id, sign_line.prio))
+            to_reset_ids = [x[0] for x in cr.fetchall()]
+
         if len(sign_lines) > 1:
             signers = []
             for s_line in sign_lines:
@@ -1119,15 +1128,8 @@ class signature_add_user_wizard(osv.osv_memory):
             if wiz['login_%d' %x]:
                 nb_set += 1
 
-        if wiz.signature_id.signature_state == 'open' and not nb_set:
-            data['signature_state'] = False
-        elif wiz.signature_id.signature_state not in ('partial', 'signed') and nb_set:
-            data['signature_state'] = 'open'
-
-        if data:
-            previous_state = wiz.signature_id.signature_state
-            signature_obj._log_sign_state(cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, previous_state, data['signature_state'], context)
-            signature_obj.write(cr, fake_uid, wiz.signature_id.id, data, context=context)
+        # TODO: FIX
+        self.pool.get('signature')._set_signature_state(cr, fake_uid, [wiz.signature_id.id], context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
