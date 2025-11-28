@@ -119,7 +119,7 @@ class db(netsvc.ExportService):
             passwd = params[0]
             params = params[1:]
             security.check_super(passwd)
-        elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
+        elif method in [ 'db_exist', 'list', 'list_lang', 'server_version', 'list_syncuser',
                          'check_timezone', 'connected_to_prod_sync_server',
                          'check_super_password_validity', 'check_password_validity',
                          'creation_get_resume_progress']:
@@ -430,6 +430,15 @@ class db(netsvc.ExportService):
         _check_db_name(db_name)
         ## Not True: in fact, check if connection to database is possible. The database may exists
         return bool(sql_db.db_connect(db_name))
+
+    def exp_list_syncuser(self):
+        db_list = self.exp_list()
+        sync_user = ''
+        if tools.config['sync_user_login']:
+            sync_user_login = tools.config['sync_user_login'].replace('_sync-user', '')
+            if sync_user_login and sync_user_login.lower() in [x.lower() for x in db_list]:
+                sync_user = sync_user_login
+        return db_list, sync_user
 
     def exp_list(self, document=False):
         if not tools.config['list_db'] and not document:

@@ -231,7 +231,7 @@ class wizard_import_ad_line(osv.osv_memory):
                                                             'percentage': percent,
                                                             'currency_id': currency_id,
                                                         }
-                                                        if i < len(line[7]):
+                                                        if line[7] and i < len(line[7]):
                                                             fp_line_obj.write(cr, uid, line[7][i], fp_data, context=context)
                                                             if len(line[7]) > len(percentage_vals):
                                                                 fp_line_obj.unlink(cr, uid, line[7][len(percentage_vals):], context=context)
