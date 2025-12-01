@@ -1,0 +1,35 @@
+#client_string_one {
+    float: left;
+    margin: 0;
+    padding: 4px 0 4px 10px;
+    background: none;
+    color: #fff;
+    text-shadow: #111 0 1px 0;
+    font-size: 1.1em;
+}
+
+#client_string_two {
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    right: 10px;
+    top: 35px;
+    background: none;
+    color: yellow;
+    font-weight: bold;
+    text-align: center;
+    font-size: 10px;
+    line-height: 12px;
+}
+
+#grid-data-column\/time {
+    width: 10%;
+}
+
+#grid-data-column\/instance {
+    width: 15%;
+}
+
+#grid-data-column\/kind {
+    width: 15%;
+}
