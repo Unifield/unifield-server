@@ -2,6 +2,7 @@
 from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
 from tools.translate import _
+from datetime import datetime
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.drawing import image
 from PIL import Image as PILImage
@@ -108,11 +109,12 @@ class return_from_unit_parser(XlsxReportParser):
 
         sheet.append([])
 
-        cell_sd = WriteOnlyCell(sheet, value=_('Sending date:'))
+        cell_sd = WriteOnlyCell(sheet, value=_('Creation Date: %s') % (datetime.strptime(pick.date, '%Y-%m-%d %H:%M:%S').strftime("%d/%m/%Y %H:%M"),))
         cell_sd.style = default_style
-        cell_dd = WriteOnlyCell(sheet, value=_('Delivery date:'))
+        cell_dd = WriteOnlyCell(sheet, value=_('Expected Receipt Date: %s') % (datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime("%d/%m/%Y %H:%M"),))
         cell_dd.style = default_style
         sheet.append([cell_empty, cell_empty, cell_sd, cell_empty_date, cell_empty, cell_empty, cell_dd, cell_empty_date])
+        sheet.merged_cells.ranges.append("G11:H11")
 
         row_headers = [
             (_('Line')),
@@ -153,9 +155,9 @@ class return_from_unit_parser(XlsxReportParser):
         sheet.append([])
 
         sheet.row_dimensions[24].height = 25
-        cell_sng = WriteOnlyCell(sheet, value=_('Executive name and signature:'))
+        cell_sng = WriteOnlyCell(sheet, value=_('Sent by:'))
         cell_sng.style = bold_frame
-        cell_sng2 = WriteOnlyCell(sheet, value=_('Name and signature of the person in charge of the delivery:'))
+        cell_sng2 = WriteOnlyCell(sheet, value=_('Received by:'))
         cell_sng2.style = bold_frame
         cell_empty_b_frame = WriteOnlyCell(sheet)
         cell_empty_b_frame.style = bold_frame
