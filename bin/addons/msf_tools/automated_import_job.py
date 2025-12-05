@@ -513,32 +513,7 @@ class automated_import_job(osv.osv):
                                         % (job.import_id.name, job.id, job.import_id.function_id.name, job_end_time.strftime('%d/%m/%Y %H:%M:%S'))
                         email_body = _('Filename: %s\n\nError(s):\n%s') % (filename, '\n'.join(error_message))
 
-                        attempt = 1
-                        failed_attempts = 0
-                        errors = []
-                        while attempt <= 3:
-                            try:
-                                tools.email_send(False, emails, email_subject, email_body, raise_error=True)
-                                break
-                            except Exception as e:
-                                failed_attempts += 1
-                                if str(e) not in errors:
-                                    errors.append(str(e))
-                            finally:
-                                attempt += 1
-
-                        email_log_vals = {
-                            'recipients': ';'.join(emails),
-                            'subject': email_subject,
-                            'body': email_body,
-                            'state': errors and 'error' or 'success',
-                            'result': failed_attempts < 3 and _('The email was sent successfully') \
-                                      or _('Some error(s) occurred while trying to send the email: %s') % ('. '.join(errors),),
-                            'failed_attempts': failed_attempts,
-                            'sender_model_id': self.pool.get('ir.model').search(cr, uid, [('model', '=', self._name)])[0],
-                            'date_sent': time.strftime('%Y-%m-%d %H:%M:%S'),
-                        }
-                        self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+                        tools.email_send_with_logs(self, cr, uid, False, emails, email_subject, email_body, retry=2, raise_error=True)
 
                     cr.commit()
                 except Exception as e:
