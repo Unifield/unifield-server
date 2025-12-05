@@ -700,13 +700,14 @@ def email_send_with_logs(self, cr, uid, email_from, email_to, subject, body, ema
         'subject': subject,
         'body': body,
         'state': errors and 'error' or 'success',
-        'result': failed_attempts <= retry and _('The email was sent successfully') \
-                  or _('Some error(s) occurred while trying to send the email: %s') % ('. '.join(errors),),
+        'result': failed_attempts <= retry and 'The email was sent successfully' \
+                  or 'Some error(s) occurred while trying to send the email: %s' % ('. '.join(errors),),
         'failed_attempts': failed_attempts,
-        'sender_model_id': self.pool.get('ir.model').search(cr, uid, [('model', '=', self._name)])[0],
+        'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
         'date_sent': time.strftime('%Y-%m-%d %H:%M:%S'),
+        'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
     }
-    self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+    self.pool.get('email.log').create(cr, 1, email_log_vals, context=context)
 
     return email_result
 

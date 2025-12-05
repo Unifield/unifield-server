@@ -1244,6 +1244,7 @@ class email_log(osv.osv):
         'failed_attempts': fields.integer('Number of failed attempts'),
         'sender_model_id': fields.many2one('ir.model', 'Object', required=1, ondelete='set null'),
         'date_sent': fields.datetime('Date sent', required=True),
+        'user_id': fields.many2one('res.users', 'User generating the mail', required=True),
     }
 
     _defaults = {
