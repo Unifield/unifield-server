@@ -509,9 +509,12 @@ class automated_import_job(osv.osv):
                         if import_data.email3:
                             emails.append(import_data.email3)
 
-                        email_subject = _('%s: an error occurred during the import job report for the automated import ID %s (%s) at %s') \
-                                        % (job.import_id.name, job.id, job.import_id.function_id.name, job_end_time.strftime('%d/%m/%Y %H:%M:%S'))
-                        email_body = _('Filename: %s\n\nError(s):\n%s') % (filename, '\n'.join(error_message))
+                        email_subject = _('%s: Error during automated import job (ID %s) on %s at %s') % (job.import_id.name, job.id, job_end_time.strftime('%d/%m/%Y'), job_end_time.strftime('%H:%M:%S'))
+                        email_body = _("""%s: an error occurred during the import job report for the automated import ID %s (%s) at %s
+Filename: %s
+
+Error(s):
+%s""") % (job.import_id.name, job.id, job.import_id.function_id.name, job_end_time.strftime('%d/%m/%Y %H:%M:%S'), filename, '\n'.join(error_message))
 
                         tools.email_send_with_logs(self, cr, uid, False, emails, email_subject, email_body, retry=2, raise_error=True)
 
