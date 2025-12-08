@@ -1,0 +1,363 @@
+###############################################################################
+#
+#  Copyright (C) 2007-TODAY OpenERP SA. All Rights Reserved.
+#
+#  $Id$
+#
+#  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
+#
+#  The OpenERP web client is distributed under the "OpenERP Public License".
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
+#  restrictions:
+#
+#  -   All names, links and logos of OpenERP must be kept as in original
+#      distribution without any changes in all software screens, especially
+#      in start-up page and the software header, even if the application
+#      source code has been changed or updated or code has been added.
+#
+#  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
+#
+###############################################################################
+import random
+from operator import itemgetter
+import math
+import cherrypy
+
+from openerp.utils import rpc
+from openobject.i18n import format
+
+from .listgrid import List, CELLTYPES
+from .pager import Pager
+from functools import reduce
+
+
+def parse(group_by, hiddens, headers, group_level, groups):
+    if isinstance(group_by, list):
+        i = 0
+        while i < len(group_by):
+            if group_by[i] == False:
+                del group_by[i]
+            else:
+                i += 1
+
+    if isinstance(groups, str):
+        groups = groups.split(',')
+    if isinstance(group_by, str):
+        group_by = group_by.split(',')
+
+    for grp in range(len(group_by)):
+        if 'group_' in group_by[grp]:
+            if group_by[grp].count('group_') > 1:
+                group_by[grp] = 'group_' + group_by[grp].split("group_")[-1]
+            else:
+                group_by[grp] = str(group_by[grp].split("group_")[-1])
+
+    for grp_by in groups:
+        for hidden in hiddens:
+            if grp_by in hidden:
+                headers.insert(groups.index(grp_by), hidden)
+
+    for grp_by in groups:
+        for cnt, header in enumerate(headers):
+            if header[0] == grp_by:
+                headers.pop(cnt)
+                headers.insert(groups.index(grp_by), header)
+
+    return group_by, hiddens, headers
+
+def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, context, data, total_fields, fields, rounding_values=None):
+    proxy = rpc.RPCProxy(model)
+    grouped = []
+    grp_ids = []
+    for grp in grp_records:
+        inner = {}
+        for key, head in headers:
+            if not isinstance(head, int):
+                kind = head.get('type')
+                if kind == 'progressbar':
+                    inner[key] = CELLTYPES[kind](value=grp.get(key), **head)
+        grouped.append(inner)
+
+    child = len(group_by) == 0
+    digits = (16,2)
+    # custom fields - decimal_precision computation
+    computation = False
+
+    if fields:
+        for key, val in list(fields.items()):
+            if val.get('digits'):
+                digits = val['digits']
+            # custom fields - decimal_precision computation
+            if val.get('computation'):
+                computation = val['computation']
+    if isinstance(digits, str):
+        digits = eval(digits)
+    integer, digit = digits
+
+    if isinstance(computation, str):
+        computation = eval(computation)
+
+    if total_fields and group_by:
+        for sum_key, sum_val in list(total_fields.items()):
+            total_fields[sum_key][1] = 0
+            if grp_records and sum_key in grp_records[0]:
+                uom_id = set()
+                if rounding_values and fields.get(sum_key, {}).get('related_uom'):
+                    uom_id = set([x.get(fields[sum_key]['related_uom']) for x in grp_records])
+                value = sum([x[sum_key] for x in grp_records])
+                if isinstance(value, float):
+                    rounding_digit = digit
+                    if len(uom_id) == 1 and list(uom_id)[0] in rounding_values:
+                        rounding_digit = int(abs(math.log10(rounding_values[list(uom_id)[0]])))
+
+                    total_fields[sum_key][1] = format.format_decimal(value or 0.0, rounding_digit, computation=computation)
+                else:
+                    total_fields[sum_key][1] = value
+    if grp_records:
+        for rec in grp_records:
+            for key, val in list(rec.items()):
+                if isinstance(val, float):
+                    rounding_digit = digit
+                    if rounding_values and fields.get(key, {}).get('related_uom'):
+                        if isinstance(rec.get(fields.get(key, {}).get('related_uom')), tuple) and rec.get(fields.get(key, {}).get('related_uom')):
+                            uom_id = rec.get(fields.get(key, {}).get('related_uom'))[0]
+                        else:
+                            uom_id = rec.get(fields.get(key, {}).get('related_uom'))
+                        if uom_id in rounding_values:
+                            rounding_digit = int(abs(math.log10(rounding_values[uom_id])))
+                    rec[key] = format.format_decimal(val or 0.0, rounding_digit, computation=computation)
+
+            for grp_by in group_by:
+                if not rec.get(grp_by):
+                    rec[grp_by] = ''
+
+            ch_ids = []
+            if child:
+                rec_dom =  rec.get('__domain')
+                dom = [('id', 'in', ids)] + rec_dom
+                ch_ids = [d for id in proxy.search(dom, offset, limit, 0, context)
+                          for  d in data
+                          if int(str(d.get('id'))) == id] # Need to convert in String and then Int.
+            rec['child_rec'] = ch_ids
+            rec['groups_id'] = 'group_' + str(random.randrange(1, 10000))
+            if group_by:
+                rec['group_by_id'] = group_by[0]+'_'+str(grp_records.index(rec))
+
+    return grouped, grp_ids
+
+
+class ListGroup(List):
+
+    template = "/openerp/widgets/templates/listgrid/listgroup.mako"
+    params = ['grp_records', 'group_by_ctx', 'grouped', 'group_by_no_leaf']
+
+    def __init__(self, name, model, view, ids=[], domain=[], context={}, **kw):
+
+        self.context = context or {}
+        self.domain = domain or []
+        self.group_by_no_leaf = self.context.get('group_by_no_leaf', 0)
+        self.selectable = kw.get('selectable', 0)
+        self.editable = kw.get('editable', False)
+        self.pageable = kw.get('pageable', True)
+
+        self.offset = kw.get('offset', 0)
+        self.limit = kw.get('limit', 0)
+        self.count = kw.get('count', 0)
+        self.link = kw.get('nolinks')
+
+        self.rounding_values = view.get('uom_rounding', {})
+        proxy = rpc.RPCProxy(model)
+
+        # adding the piece of code to set limit as 0 to get rid of pager's negative offset error.
+        # Here, we don't change the self.limit as Pager needs -1 to treat Unlimited limit  atribute
+        terp_offset, terp_limit = self.offset, self.limit
+        if self.limit and self.limit < 0:
+            terp_offset, terp_limit = 0, 0
+
+        custom_search_domain = getattr(cherrypy.request, 'custom_search_domain', [])
+        custom_filter_domain = getattr(cherrypy.request, 'custom_filter_domain', [])
+
+        if custom_search_domain:
+            self.domain.extend(i for i in custom_search_domain if i not in domain)
+
+        elif custom_filter_domain:
+            self.domain.extend(i for i in custom_filter_domain if i not in domain)
+
+
+        if ids is None and not self.group_by_no_leaf:
+
+            ids = proxy.search(self.domain, terp_offset, terp_limit, 0, self.context)
+
+            if self.limit and len(ids) < self.limit:
+                self.count = len(ids)
+            else:
+                self.count = proxy.search_count(domain, context)
+
+        if ids and not isinstance(ids, list):
+            ids = [ids]
+
+        self.ids = ids
+
+        self.concurrency_info = None
+
+        self.group_by_ctx = kw.get('group_by_ctx', [])
+
+        if not isinstance(self.group_by_ctx, list):
+            self.group_by_ctx = self.group_by_ctx.split(',')
+
+
+        fields = view['fields']
+        self.grp_records = []
+
+        self.context.update(rpc.session.context.copy())
+
+        super(ListGroup, self).__init__(
+            name=name, model=model, view=view, ids=self.ids, domain=self.domain,
+            context=self.context, limit=self.limit, count=self.count,
+            offset=self.offset, editable=self.editable,
+            selectable=self.selectable)
+
+        if self.group_by_ctx:
+            if isinstance(self.group_by_ctx, list):
+                # change ['group_parent_id,group_category'] to ['group_parent_id', 'group_category']
+                self.group_by_ctx = reduce(lambda x,y: x+y,[x.split(',') for x in self.group_by_ctx])
+        else:
+            self.group_by_ctx = self.context.get('group_by', [])
+
+        self.group_by_ctx, self.hiddens, self.headers = parse(self.group_by_ctx, self.hiddens, self.headers, None, self.group_by_ctx)
+
+
+        limited_groupby = self.model == 'replenishment.product.list'
+        order_by = ''
+        terp_params = getattr(cherrypy.request, 'terp_params', [])
+        if terp_params.sort_key and terp_params.sort_key in self.group_by_ctx and self.group_by_ctx.index(terp_params.sort_key) == 0:
+            order_by = terp_params.sort_key
+            if terp_params.sort_order == 'desc':
+                rev = True
+                order_by += ' desc'
+            else:
+                rev = False
+                order_by += ' asc'
+
+        read_offset = 0
+        read_limit = False
+        read_groupby = False
+        if limited_groupby:
+            read_offset = terp_offset
+            read_limit = terp_limit
+            read_groupby = order_by
+            order_by = False
+
+        self.grp_records = proxy.read_group(self.context.get('__domain', []) + (self.domain or []),
+                                            list(fields.keys()), self.group_by_ctx, read_offset, read_limit, self.context, read_groupby)
+
+        if order_by:
+            self.grp_records = sorted(self.grp_records, key=itemgetter(terp_params.sort_key), reverse=rev)
+        for grp_rec in self.grp_records:
+            if not grp_rec.get('__domain'):
+                grp_rec['__domain'] = self.context.get('__domain', []) + (self.domain or [])
+            if not grp_rec.get('__context'):
+                grp_rec['__context'] = {'group_by': self.group_by_ctx}
+
+        self.grouped, grp_ids = parse_groups(self.group_by_ctx, self.grp_records, self.headers, self.ids, model, terp_offset, terp_limit, self.context, self.data, self.field_total, fields, self.rounding_values)
+
+        if self.pageable:
+            if limited_groupby:
+                self.count = proxy.read_group(self.context.get('__domain', []) + (self.domain or []), list(fields.keys()), self.group_by_ctx, 0, False, self.context, False, True)
+            else:
+                self.count = len(self.grouped)
+
+            self.pager = Pager(ids=self.ids, offset=self.offset, limit=self.limit, count=self.count)
+            self.pager._name = self.name
+
+        # Display only the lines according to pager
+        if not limited_groupby:
+            start_index = self.offset
+            end_index = self.offset + self.limit
+            self.grp_records = self.grp_records[start_index:end_index]
+
+
+class MultipleGroup(List):
+
+    template = "/openerp/widgets/templates/listgrid/multiple_group.mako"
+    params = ['grp_records', 'grp_childs', 'group_by_ctx', 'grouped', 'parent_group', 'group_level', 'group_by_no_leaf']
+
+    def __init__(self, name, model, view, ids=[], domain=[], parent_group=None, group_level=0, groups = [], context={}, **kw):
+        self.context = context or {}
+        self.domain = domain or []
+
+        self.selectable = kw.get('selectable', 0)
+        self.editable = kw.get('editable', False)
+        self.pageable = kw.get('pageable', True)
+
+        self.offset = kw.get('offset', 0)
+        self.limit = kw.get('limit', 50)
+        self.count = kw.get('count', 0)
+
+        self.link = kw.get('nolinks')
+        self.parent_group = parent_group or None
+        self.group_level = group_level or 0
+        sort_key = kw.get('sort_key') or ''
+        sort_order = kw.get('sort_order') or ''
+        proxy = rpc.RPCProxy(model)
+        self.rounding_values = view.get('uom_rounding', {})
+        if ids is None:
+            if self.limit and self.limit > 0:
+                ids = proxy.search(self.domain, self.offset, self.limit, 0, rpc.session.context.copy())
+            else:
+                ids = proxy.search(self.domain, 0, 0, 0, rpc.session.context.copy())
+
+            if self.limit and len(ids) < self.limit:
+                self.count = len(ids)
+            else:
+                self.count = proxy.search_count(domain, rpc.session.context.copy())
+
+        if ids and not isinstance(ids, list):
+            ids = [ids]
+
+        self.ids = ids
+
+        self.concurrency_info = None
+
+        self.group_by_ctx = kw.get('group_by_ctx', [])
+
+        if not isinstance(self.group_by_ctx, list):
+            self.group_by_ctx = [self.group_by_ctx]
+
+        fields = view['fields']
+
+        self.grp_records = []
+        super(MultipleGroup, self).__init__(
+            name=name, model=model, view=view, ids=self.ids, domain=self.domain,
+            parent_group=parent_group, group_level=group_level, groups=groups, context=self.context, limit=self.limit,
+            count=self.count,offset=self.offset, editable=self.editable, pageable=1,
+            selectable=self.selectable, sort_order=sort_order, sort_key=sort_key)
+
+        self.group_by_no_leaf = self.context.get('group_by_no_leaf', 0)
+
+        self.group_by_ctx, self.hiddens, self.headers = parse(self.group_by_ctx, self.hiddens, self.headers, self.group_level, groups)
+
+        if not len(self.group_by_ctx):
+            # Display RAW records (i.e non grouped)
+            # NOTE: fetching of ids and data are done by List.__init__() - based on
+            #       provided domain, offset, limit, ... params
+            self.grp_childs = [{
+                'child_rec': self.data,
+                'groups_id': 'group_' + str(random.randrange(1, 10000)),
+                'group_by_id': parent_group,
+            }]
+            return
+
+        self.grp_records = proxy.read_group(self.context.get('__domain', []),
+                                            list(fields.keys()), self.group_by_ctx, 0, False, self.context)
+
+        for grp_rec in self.grp_records:
+            grp_rec['__level'] = self.group_level
+
+        if sort_key and sort_key in self.group_by_ctx and self.group_by_ctx.index(sort_key) == 0:
+            if sort_order == 'desc':
+                rev = True
+            else:
+                rev = False
+            self.grp_records = sorted(self.grp_records, key=itemgetter(sort_key), reverse=rev)
+        self.grouped, grp_ids = parse_groups(self.group_by_ctx, self.grp_records, self.headers, self.ids, model,  self.offset, self.limit, rpc.session.context.copy(), self.data, self.field_total, fields, self.rounding_values)
