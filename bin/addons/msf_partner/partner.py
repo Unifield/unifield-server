@@ -1173,7 +1173,7 @@ class res_partner(osv.osv):
         if view_type == 'search':
             if not context or not context.get('show_button_show_inactive', False):
                 tree = etree.fromstring(view['arch'])
-                fields = tree.xpath('//filter[@name="inactive"]|//filter[@name="active"]')
+                fields = tree.xpath('//filter[@name="inactive"]|//filter[@name="phase_out"]|//filter[@name="active"]')
                 for field in fields:
                     field.set('invisible', "1")
                 view['arch'] = etree.tostring(tree, encoding='unicode')
