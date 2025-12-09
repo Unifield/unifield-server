@@ -1234,6 +1234,7 @@ job_in_progress()
 
 class email_log(osv.osv):
     _name = 'email.log'
+    _order = 'id desc'
 
     _columns = {
         'recipients': fields.char('Email Recipient(s)', size=512, required=True),
