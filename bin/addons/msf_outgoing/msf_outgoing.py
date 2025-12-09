@@ -717,14 +717,14 @@ class shipment(osv.osv):
         shadow_pack_id = picking_obj.copy(cr, uid, picking.id, shadow_pack_data, context=new_ctx)
         ###
 
-        selected_from_pack = family.to_pack - selected_number + 1
+        selected_to_pack = family.from_pack + selected_number - 1
 
         if selected_number == int(family.num_of_packs):
             initial_from_pack = 0
             initial_to_pack = 0
         else:
-            initial_from_pack = family.from_pack
-            initial_to_pack = family.to_pack - selected_number
+            initial_from_pack = family.from_pack + selected_number
+            initial_to_pack = family.to_pack
 
         dest_location = picking.warehouse_id.lot_output_id.id
         if family.draft_packing_id.sale_id and family.draft_packing_id.sale_id.procurement_request and \
@@ -734,8 +734,8 @@ class shipment(osv.osv):
         ship_line_id = self.pool.get('pack.family.memory').copy(cr, uid, family.id, {
             'move_lines': [],
             'shipment_id': new_shipment_id,
-            'from_pack': selected_from_pack,
-            'to_pack': family.to_pack,
+            'from_pack': family.from_pack,
+            'to_pack': selected_to_pack,
             'selected_number': selected_number,
             'draft_packing_id': new_packing_id,
             'location_id': picking.warehouse_id.lot_distribution_id.id,
@@ -770,7 +770,7 @@ class shipment(osv.osv):
             new_move = move_obj.copy(cr, uid, move.id, move_vals, context=context)
             move_obj.action_confirm(cr, uid, new_move, context=context)
 
-            # to move stock fro Shipment to Distrib
+            # to move stock from Shipment to Distrib
             shadow_move_vals = {
                 'picking_id': shadow_pack_id,
                 'backmove_packing_id': False,
@@ -796,11 +796,11 @@ class shipment(osv.osv):
             if job_id and nb_processed % 10 == 0:
                 self.pool.get('job.in_progress').write(cr, uid, [job_id], {'nb_processed': nb_processed})
 
-        new_max_selected = initial_to_pack - initial_from_pack + 1
+        new_max_selected = family.from_pack + selected_number - 1
         if initial_from_pack or initial_to_pack:
             self.pool.get('pack.family.memory').write(cr, uid, family.id, {
                 'from_pack': initial_from_pack,
-                'to_pack':initial_to_pack,
+                'to_pack': initial_to_pack,
                 'selected_number': min(new_max_selected, selected_number),
                 'parcel_ids': ','.join(remaining_parcels_array),
                 'select_parcel_ids': False,
