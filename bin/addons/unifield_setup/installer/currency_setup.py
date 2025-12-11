@@ -29,10 +29,10 @@ class currency_setup(osv.osv_memory):
     _inherit = 'res.config'
 
     _columns = {
-        'functional_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF')], string='Functional currency',
+        'functional_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF'), ('kes', 'KES')], string='Functional currency',
                                           required=True),
         'esc_id': fields.many2one('res.currency', string="ESC Currency", readonly=True),
-        'section_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF')], string='Section currency',
+        'section_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF'),('kes', 'KES')], string='Section currency',
                                        readonly=True),
         'second_time': fields.boolean('Config. Wizard launched for the second time'),
     }
@@ -72,12 +72,20 @@ class currency_setup(osv.osv_memory):
         Fill the delivery process field in company
         '''
         assert len(ids) == 1, "We should only get one object from the form"
+
+        rate_obj = self.pool.get('res.currency.rate')
+
         payload = self.browse(cr, uid, ids[0], context=context)
 
         if payload.functional_id == 'eur':
             cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'EUR')[1]
-        else:
+        elif payload.functional_id == 'chf':
             cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'CHF')[1]
+        elif payload.functional_id == 'kes':
+            cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'KES')[1]
+
+        if not rate_obj.search_exists(cr, uid, [('currency_id', '=', cur_id)]):
+            rate_obj.create(cr, uid, {'currency_id': cur_id, 'name': '2014-01-01', 'rate': 1})
 
         if not self.pool.get('res.currency').read(cr, uid, cur_id, ['active'], context=context)['active']:
             self.pool.get('res.currency').write(cr, uid, cur_id, {'active': True}, context=context)
@@ -105,14 +113,9 @@ class currency_setup(osv.osv_memory):
 
         # Modify the currency on some already created objects
         # product_price_type
-        price_type_ids = self.pool.get('product.price.type').search(cr, uid, [('currency_id', '=', 1)])
-        self.pool.get('product.price.type').write(cr, uid, price_type_ids, {'currency_id': cur_id})
-
+        cr.execute('update product_price_type set currency_id=%s where currency_id!=%s', (cur_id, cur_id))
         # account.analytic.account
-        analytic_ids = self.pool.get('account.analytic.account').search(cr, uid, [('currency_id', '=', 1)])
-        # use a for to avoid a recursive account error
-        for analytic_id in analytic_ids:
-            self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id}, context={'lang': 'en_MF'})
+        cr.execute('update account_analytic_account set currency_id=%s where currency_id!=%s', (cur_id, cur_id))
 
         # product.product
         # UF-1766 : Pass out the OpenObject framework to gain time on currency change with a big amount of products

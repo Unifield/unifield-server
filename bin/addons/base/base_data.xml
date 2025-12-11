@@ -1128,10 +1128,7 @@
             <field name="rate">1.3086</field>
             <field name="currency_id" ref="CHF"/>
             <field name="name">2014-01-01</field>
-		</record>
-		<record id="CHF" model="res.currency" forcecreate="0">
-            <field name="active" eval="True"/>
-		</record>
+        </record>
 
         <record id="BRL" model="res.currency" forcecreate="0">
             <field name="name">BRL</field>
