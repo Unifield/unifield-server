@@ -165,6 +165,7 @@ class patch_scripts(osv.osv):
                     'ocg': ['none'],
                     'ocp': ['cur_adj', 'accrual', 'hq', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
                     'waca': [],
+                    'ubuntu': [],
                 }
                 oc = entity_obj.get_entity(cr, uid).oc
                 if oc and oc in restrictions:
