@@ -42,9 +42,19 @@ class sde_import(osv.osv_memory):
         'pack_ref_for_in': fields.char(string='Ship/OUT reference to find the IN', size=128),
     }
 
-    def wizard_sde_file_import(self, cr, uid, ids, context=None):
+    def wizard_sde_file_import_in_updated(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the XMLRPC script
+        Method to use instead of the XMLRPC script to import a file in an Available Updated IN
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_file_import_in(cr, uid, ids, context=context, in_updated=True)
+
+    def wizard_sde_file_import_in(self, cr, uid, ids, context=None, in_updated=False):
+        '''
+        Method to use instead of the XMLRPC script to import a file in an Available/Available Shipped IN
         '''
         if context is None:
             context = {}
@@ -62,7 +72,7 @@ class sde_import(osv.osv_memory):
             msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, sde_imp['po_ref_for_in'], sde_imp['pack_ref_for_in'], context=context)
             context.pop('attach_to_in')
         else:
-            msg = self.sde_file_import(cr, uid, sde_imp['filename'], file, context=context)
+            msg = self.sde_in_import(cr, uid, sde_imp['filename'], file, in_updated, context=context)
 
         return self.write(cr, uid, ids, {'message': msg}, context=context)
 
@@ -73,7 +83,7 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
         context['attach_to_in'] = True
-        return self.wizard_sde_file_import(cr, uid, ids, context=context)
+        return self.wizard_sde_file_import_in(cr, uid, ids, context=context)
 
     def generate_sde_dispatched_packing_list_report(self, cr, uid, ids, context=None):
         '''
@@ -83,7 +93,7 @@ class sde_import(osv.osv_memory):
             context = {}
         return self.pool.get('shipment').generate_dispatched_packing_list_report(cr, uid, context=context)
 
-    def sde_file_import(self, cr, uid, file_path, file, context=None):
+    def sde_in_import(self, cr, uid, file_path, file, in_updated=False, context=None):
         '''
         Method used by the SDE script to import a file
         '''
@@ -104,7 +114,11 @@ class sde_import(osv.osv_memory):
             filetype = pick_obj.get_import_filetype(cr, uid, file_path, context=context)
 
             # get the IN with the Ship Ref or the Origin
-            in_id = self.get_incoming_id_from_file(cr, uid, file_data, filetype, context=context)
+            in_id = self.get_incoming_id_from_file(cr, uid, file_data, filetype, in_updated, context=context)
+
+            # If the IN is Available Updated reset as much data as possible, compared to the PO
+            if in_updated and self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] == 'updated':
+                self.reset_in_available_updated(cr, uid, [in_id], context=context)
 
             in_proc_ids = in_proc_obj.search(cr, uid, [('picking_id', '=', in_id), ('draft', '=', True)], context=context)
             if in_proc_ids:
@@ -202,7 +216,7 @@ class sde_import(osv.osv_memory):
 
         return msg
 
-    def get_incoming_id_from_file(self, cr, uid, file_data, filetype, context=None):
+    def get_incoming_id_from_file(self, cr, uid, file_data, filetype, in_updated, context=None):
         '''
         The Origin field is required in the file, but not the Ship Reference. If the Ship Reference is filled, only
         Available Shipped INs will be searched, Available otherwise
@@ -248,9 +262,9 @@ class sde_import(osv.osv_memory):
                 ship_ref = ship_ref.strip().upper()
 
         # Search the IN
-        return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, context=context)
+        return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, in_updated, context=context)
 
-    def get_incoming_id_from_refs(self, cr, uid, po_name, ship_ref, context=None):
+    def get_incoming_id_from_refs(self, cr, uid, po_name, ship_ref, in_updated, context=None):
         if context is None:
             context = {}
 
@@ -271,18 +285,64 @@ class sde_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
         in_domain = [('purchase_id', '=', po_id[0]), ('type', '=', 'in'), ('claim', '=', False)]
         error_msg = _('No available IN found for the given PO %s') % po_name
-        if ship_ref:
-            in_domain.extend([('shipment_ref', '=ilike', ship_ref), ('state', '=', 'shipped')])
-            error_msg = _('No available shipped IN found for the given PO %s and the given Ship Reference %s') % (po_name, ship_ref)
-            in_id = pick_obj.search(cr, uid, in_domain, context=context)
-        else:
-            in_id = pick_obj.search(cr, uid, in_domain + [('state', '=', 'assigned')], context=context)
-            if not in_id:
-                in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
+
+        in_id = False
+        # Look for Available Updated IN first
+        if in_updated:
+            in_upd_domain = in_domain + [('state', '=', 'updated')]
+            if ship_ref:
+                in_upd_domain.append(('shipment_ref', '=ilike', ship_ref))
+            in_id = pick_obj.search(cr, uid, in_upd_domain, context=context)
+
+        if not in_id:
+            if ship_ref:
+                in_domain.extend([('shipment_ref', '=ilike', ship_ref), ('state', '=', 'shipped')])
+                error_msg = _('No available shipped IN found for the given PO %s and the given Ship Reference %s') % (po_name, ship_ref)
+                in_id = pick_obj.search(cr, uid, in_domain, context=context)
+            else:
+                in_id = pick_obj.search(cr, uid, in_domain + [('state', '=', 'assigned')], context=context)
+                if not in_id:
+                    in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), error_msg)
 
         return in_id[0]
+
+    def reset_in_available_updated(self, cr, uid, ids, context=None):
+        '''
+        For each move of the Available Updated IN, reset as much data as possible:
+            - Merge the quantities of split lines and delete the splits
+            - Remove any BN/ED info
+            - Restore the product of the linked PO line
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        move_obj = self.pool.get('stock.move')
+
+        cr.execute("""
+            SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, m.product_qty, COALESCE(pl.product_id, m.product_id)
+            FROM stock_move m LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+            WHERE m.state = 'assigned' AND m.picking_id in %s and m.product_qty != 0
+            """, (tuple(ids),))
+        data = {}
+        to_del = []
+        for x in cr.fetchall():
+            key = (x[1], x[2], x[3])
+            if key not in data:
+                data[key] = {'product_id': x[5], 'product_qty': 0, 'master': x[0]}
+            else:
+                to_del.append(x[0])
+            data[key]['product_qty'] += x[4]
+        for key in data:
+            move_vals = {'product_id': data[key]['product_id'], 'product_qty': data[key]['product_qty'],
+                         'product_uos_qty': data[key]['product_qty'], 'prodlot_id': False, 'expired_date': False}
+            move_obj.write(cr, uid, data[key]['master'], move_vals, context=context)
+        move_obj.unlink(cr, uid, to_del, force=True, context=context)
+
+        return True
 
 
 sde_import()

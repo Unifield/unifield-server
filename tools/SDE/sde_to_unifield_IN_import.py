@@ -20,6 +20,10 @@ if not os.path.exists(filepath):
     print('The file "%s" does not exist' % (filepath))
     sys.exit(1)
 
+if len(sys.argv) > 2 and sys.argv[2] and sys.argv[2] not in ['normal', 'updated']:
+    print(r'The second argument should be either "normal" or "updated"')
+    sys.exit(1)
+
 lang_context = {'lang': 'en_MF'}  # or fr_MF
 
 url = 'http://%s:%s/xmlrpc/' % (host, port)
@@ -45,8 +49,11 @@ try:
     # the content of the file is read
     file_content = open(filepath, 'rb').read()
 
+    # Normal IN import or import for Available Updated INs
+    in_updated = sys.argv[2] == 'updated'
+
     # import
-    msg = sock.execute(dbname, user_id, password, 'sde.import', 'sde_file_import', filepath, file_content, lang_context)
+    msg = sock.execute(dbname, user_id, password, 'sde.import', 'sde_in_import', filepath, file_content, in_updated, lang_context)
 except Exception as e:
     msg = e
 finally:
