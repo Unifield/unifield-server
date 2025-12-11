@@ -1259,5 +1259,10 @@
         <record id="us_14217_set_journal_restriction" model="patch.scripts">
             <field name="method">us_14217_set_journal_restriction</field>
         </record>
+
+        <!-- UF40.0 -->
+        <record id="us_15170_ocb_unmerge_prod" model="patch.scripts">
+            <field name="method">us_15170_ocb_unmerge_prod</field>
+        </record>
     </data>
 </openerp>
