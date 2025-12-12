@@ -91,37 +91,49 @@
     </Style>
  </Styles>
 
-<ss:Worksheet ss:Name="${_('Reserved Products Excel Export')|x}">
+<ss:Worksheet ss:Name="${_('Reserved Product Report')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
-        ## Location
+        ## Customer/Location Requestor
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
-        ## Product code
+        ## IR/FO Reference
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        ## Customer Reference
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        ## Order Details
+        <Column ss:AutoFitWidth="1" ss:Width="200.0" />
+        ## Source Location
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        ## Product Code
         <Column ss:AutoFitWidth="1" ss:Width="145.25" />
-        ## Product description
+        ## Product Description
         <Column ss:AutoFitWidth="1" ss:Width="260.25" />
         ## UoM
         <Column ss:AutoFitWidth="1" ss:Width="58.75" />
         ## Batch
         <Column ss:AutoFitWidth="1" ss:Width="75.25" />
-        ## Exp Date
+        ## Expiry Date
         <Column ss:AutoFitWidth="1" ss:Width="75.25" />
         ## Reserved Qty
         <Column ss:AutoFitWidth="1" ss:Width="80.25" />
-        ## Document
-        <Column ss:AutoFitWidth="1" ss:Width="80.25" />
-        ## Partner
-        <Column ss:AutoFitWidth="1" ss:Width="135.25" />
-        ## Origin
-        <Column ss:AutoFitWidth="1" ss:Width="135.25" />
-        ## Total
+        ## Reserved Document
+        <Column ss:AutoFitWidth="1" ss:Width="145.25" />
+        ## Total Ordered Qty
         <Column ss:AutoFitWidth="1" ss:Width="85.0" />
+        ## Total Reserved Qty
+        <Column ss:AutoFitWidth="1" ss:Width="85.0" />
+        ## Total Reserved Value
+        <Column ss:AutoFitWidth="1" ss:Width="85.0" />
+        ## Currency
+        <Column ss:AutoFitWidth="1" ss:Width="58.75" />
+        ## PO Reference
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
 
         ## WORKSHEET HEADER
 
         ${initData()}
 
         <Row ss:Height="18">
-            <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('PRODUCT RESERVATION REPORT')|x}</Data></Cell>
+            <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('RESERVED PRODUCTS REPORT')|x}</Data></Cell>
         </Row>
 
         <Row>
@@ -151,22 +163,32 @@
         <Row></Row>
 
         <Row>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Location')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Customer/Location Requestor')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('IR/FO Reference')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Customer Reference')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Order Details')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Source Location')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Product Code')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Exp Date')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Expiry Date')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Reserved Qty')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Documents')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Partner')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Origin')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Reserved Document')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total Ordered Qty')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total Reserved Qty')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total Reserved Value')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Currency')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('PO Reference')|x}</Data></Cell>
         </Row>
 
         % for line in getLines():
             <Row ss:Height="12.0">
                 % if line['sum_line']:
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${line['loc_name']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${line['prod_name'] or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${line['prod_desc'] or ''|x}</Data></Cell>
@@ -175,10 +197,16 @@
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="Number">${line['sum_ordered_qty'] or 0.00|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="Number">${line['sum_qty'] or 0.00|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="Number">${line['sum_value'] or 0.00|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${line['currency']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
                 % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['origin'] or line['partner_name']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['so_name'] or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['customer_ref'] or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['so_details']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['loc_name']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['prod_name'] or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['prod_desc'] or ''|x}</Data></Cell>
@@ -191,9 +219,11 @@
                     % endif
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['prod_qty'] or 0.00|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['documents'] or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['partner_name'] or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['origin'] or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['currency']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['po_name']|x}</Data></Cell>
                 % endif
             </Row>
         % endfor
