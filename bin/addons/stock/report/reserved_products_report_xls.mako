@@ -96,9 +96,9 @@
         ## Customer/Location Requestor
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## IR/FO Reference
-        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="145.25" />
         ## Customer Reference
-        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="145.25" />
         ## Order Details
         <Column ss:AutoFitWidth="1" ss:Width="200.0" />
         ## Source Location
@@ -126,7 +126,7 @@
         ## Currency
         <Column ss:AutoFitWidth="1" ss:Width="58.75" />
         ## PO Reference
-        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="145.25" />
 
         ## WORKSHEET HEADER
 

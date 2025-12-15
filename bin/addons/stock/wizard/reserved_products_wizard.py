@@ -30,7 +30,7 @@ class reserved_products_wizard(osv.osv):
     _description = "Reserved Products Export"
 
     _columns = {
-        'location_id': fields.many2one('stock.location', string='Location'),
+        'location_id': fields.many2one('stock.location', string='Source Location'),
         'product_id': fields.many2one('product.product', string='Product'),
     }
 
@@ -57,9 +57,9 @@ class reserved_products_wizard(osv.osv):
 
         add_sql = ''
         if loc_id:
-            add_sql += ' AND m.location_id = %s', (loc_id,)
+            add_sql += ' AND location_id = %s' % (loc_id,)
         if prod_id:
-            add_sql += ' AND m.product_id = %s', (loc_id,)
+            add_sql += ' AND product_id = %s' % (prod_id,)
 
         cr.execute('''
             SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
@@ -164,26 +164,15 @@ class reserved_products_wizard(osv.osv):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)
-        if wiz.location_id and wiz.product_id:
-            cr.execute('''
-                SELECT COUNT(id) FROM stock_move 
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
-                    AND location_id = %s AND product_id = %s''', (wiz.location_id.id, wiz.product_id.id))
-        elif wiz.location_id and not wiz.product_id:
-            cr.execute('''
-                SELECT COUNT(id) FROM stock_move 
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND location_id = %s
-            ''', (wiz.location_id.id,))
-        elif not wiz.location_id and wiz.product_id:
-            cr.execute('''
-                SELECT COUNT(id) FROM stock_move 
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND product_id = %s
-            ''', (wiz.product_id.id,))
-        else:
-            cr.execute('''
-                SELECT COUNT(id) FROM stock_move 
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
-            ''')
+        add_sql = ''
+        if wiz.location_id:
+            add_sql += ' AND location_id = %s' % (wiz.location_id.id,)
+        if wiz.product_id:
+            add_sql += ' AND product_id = %s' % (wiz.product_id.id,)
+        cr.execute('''
+            SELECT COUNT(id) FROM stock_move
+            WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
+        ''' + add_sql)
         nb_res = cr.fetchall()
         if nb_res[0][0] == 0:
             raise osv.except_osv(_('Error'), _('No data found with these parameters'))
