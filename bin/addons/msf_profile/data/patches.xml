@@ -1259,5 +1259,9 @@
         <record id="us_14217_set_journal_restriction" model="patch.scripts">
             <field name="method">us_14217_set_journal_restriction</field>
         </record>
+
+        <record id="us_15206_remove_new_code_on_ud_prod_not_merged" model="patch.scripts">
+            <field name="method">us_15206_remove_new_code_on_ud_prod_not_merged</field>
+        </record>
     </data>
 </openerp>

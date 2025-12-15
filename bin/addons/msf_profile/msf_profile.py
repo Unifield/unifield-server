@@ -59,6 +59,29 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_15206_remove_new_code_on_ud_prod_not_merged(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            cr.execute('''
+                select p.id
+                from
+                    product_product p
+                left join audittrail_log_line l on
+                    l.object_id=(select id from ir_model where model='product.template') and
+                    l.res_id=p.product_tmpl_id and
+                    l.field_id=(select id from ir_model_fields where model='product.product' and name='new_code') and
+                    l.new_value=p.new_code
+                where
+                    coalesce(new_code, '')!='' and
+                    coalesce(golden_status,'')='Golden' and
+                    l.user_id=(select id from res_users where login='unidata_pull')
+            ''')
+
+            p_ids = [x[0] for x in cr.fetchall()]
+            if p_ids:
+                self.pool.get('product.product').write(cr, uid, p_ids, {'new_code': False})
+                self.log_info(cr, uid, "US-15206: new_code removed on %d product(s)" % (len(p_ids),))
+        return True
     # UF39.0
     def us_14182_set_journal_register_dates(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
