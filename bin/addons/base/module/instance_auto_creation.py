@@ -402,6 +402,11 @@ class instance_auto_creation(osv.osv):
             config.read(config_file_path)
             config_dict =  {x:dict(config.items(x)) for x in config.sections()}
 
+            # configure cost center for FX gain loss
+            if config.has_option('accounting', 'cost_center_code_for_fx_gain_loss') and  config_dict['accounting'].get('cost_center_code_for_fx_gain_loss'):
+                self.pool.get('ir.config_parameter').set_param(cr, 1, 'INIT_CC_FX_GAIN', config_dict['accounting'].get('cost_center_code_for_fx_gain_loss'))
+
+
             if not skip_init_sync:
                 entity_obj = self.pool.get('sync.client.entity')
                 sync_status = entity_obj.get_status(cr, uid)
@@ -700,10 +705,6 @@ class instance_auto_creation(osv.osv):
                 vals['has_book_pl_results'] = True
 
             company_obj.write(cr, uid, company_id, vals)
-
-            # configure cost center for FX gain loss
-            if config.has_option('accounting', 'cost_center_code_for_fx_gain_loss') and  config_dict['accounting'].get('cost_center_code_for_fx_gain_loss'):
-                self.pool.get('ir.config_parameter').set_param(cr, 1, 'INIT_CC_FX_GAIN', config_dict['accounting'].get('cost_center_code_for_fx_gain_loss'))
 
             cr.commit()
             # send imported data and configuration
