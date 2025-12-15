@@ -72,6 +72,7 @@ class reserved_products_wizard(osv.osv):
         lines = cr.fetchall()
         lines_data = []
         tuples = []
+        used_sol_ids = []
         line_sum = {}
         sum_ordered_qty, sum_qty, sum_value = 0.00, 0.00, 0.00
         index = 0
@@ -118,14 +119,20 @@ class reserved_products_wizard(osv.osv):
             })
             current_tuple = (loc_name, product and product.id or False, prodlot and prodlot.name or False)
             if current_tuple in tuples:
-                sum_ordered_qty += sol and sol.product_uom_qty or 0.00
+                if sol and sol.id not in used_sol_ids:
+                    sum_ordered_qty += sol.product_uom_qty or 0.00
+                    used_sol_ids.append(sol.id)
                 sum_qty += line[3]
                 sum_value += product and line[3] * product.standard_price or 0.00
                 line_sum.update({'sum_ordered_qty': sum_ordered_qty, 'sum_qty': sum_qty, 'sum_value': sum_value})
             else:
                 if line_sum:
                     lines_data.insert(index, line_sum)
-                sum_ordered_qty = sol and sol.product_uom_qty or 0
+                if sol:
+                    sum_ordered_qty = sol.product_uom_qty or 0.00
+                    used_sol_ids.append(sol.id)
+                else:
+                    sum_ordered_qty = 0.00
                 sum_qty = line[3]
                 sum_value = product and line[3] * product.standard_price or 0.00
                 line_sum = {
