@@ -72,12 +72,14 @@ class patch_scripts(osv.osv):
         # Check if there is at least one NR about SSDTHCTE014 being merged
         cr.execute("""
             SELECT id from sync_client_update_received
-            WHERE run = 'f' AND log_first_notrun LIKE '%Merged%SSDTHCTE014%' OR log LIKE 'Merged%SSDTHCTE014%'
+            WHERE run = 'f' AND log_first_notrun LIKE '%Merged products cannot be activated: SSDTHCTE014%' 
+               OR log LIKE '%Merged products cannot be activated: SSDTHCTE014%'
         """)
         upd_recv = cr.fetchone()
         if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb' and upd_recv:
             log = 1
-            p1_ids = prod_obj.search(cr, uid, [('default_code', '=', 'SSDTHCTE014'), ('active', 'in', ['t', 'f'])], limit=1)
+            p1_ids = prod_obj.search(cr, uid, [('default_code', '=', 'SSDTHCTE014'), ('active', 'in', ['t', 'f']),
+                                               ('unidata_merged', '=', True)], limit=1)
             if p1_ids:
                 cr.execute("""
                     UPDATE product_product SET kept_product_id = NULL, unidata_merged = 'f', unidata_merge_date = NULL,
