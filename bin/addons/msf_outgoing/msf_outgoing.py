@@ -4162,7 +4162,7 @@ class stock_picking(osv.osv):
             wizard_id = existing[0]
             for wiz in ppl_processor.browse(cr, uid, existing):
                 for fam in wiz.family_ids:
-                    key='f%st%s' % (fam.from_pack, fam.to_pack)
+                    key='f%st%spar%s' % (fam.from_pack, fam.to_pack, fam.parcel_ids or '')
                     existing_data[key] = {'pack_type': fam.pack_type and fam.pack_type.id or False, 'length': fam.length, 'width': fam.width, 'height': fam.height, 'weight': fam.weight, 'id': fam.id}
                     if fam.parcel_ids:
                         existing_data[key]['parcel_ids_array'] = fam.parcel_ids.split(',')
@@ -4174,7 +4174,7 @@ class stock_picking(osv.osv):
         for line in picking.move_lines:
             if line.state == 'done':
                 continue
-            key = 'f%st%s' % (line.from_pack, line.to_pack)
+            key = 'f%st%spar%s' % (line.from_pack, line.to_pack, line.pack_info_id and line.pack_info_id.parcel_ids or '')
             if key not in families_data:
                 families_data[key] =  {
                     'wizard_id': wizard_id,
