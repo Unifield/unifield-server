@@ -814,7 +814,7 @@ class purchase_order_line(osv.osv):
 
         'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'Not in Catalogue'), ('soq', 'SOQ'), ('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
         'catalog_price_unit': fields.float_null('Catalogue Unit Price', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
-        'catalog_subtotal': fields.function(_amount_line_catalog, method=True, type='float_null', string='Catalogue Subtotal', digits_compute=dp.get_precision('Purchase Price')),
+        'catalog_subtotal': fields.function(_amount_line_catalog, method=True, type='float', string='Catalogue Subtotal', with_null=True, digits_compute=dp.get_precision('Purchase Price')),
         'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
         'catalog_price_deviation': fields.function(_catalog_price_deviation, method=True, type='char', size=16, string='% PO Unit Price Deviation', help='Percentage of deviation of the PO unit price compared to the catalogue unit price'),
         'po_locked': fields.function(_check_po_locked, method=True, string='Is PO signature-locked ?', type='boolean'),
