@@ -210,6 +210,7 @@ class account_fiscalyear_state(osv.osv):
                     raise osv.except_osv(_('Error'), _("FY 'Period %d' not found") % (period_number,))
                 balance_line_domain = [('journal_id.code', '=', journal_code),
                                        ('period_id.number', '=', period_number),
+                                       ('reconcile_id', '=', False),
                                        ('period_id.fiscalyear_id', '=', fy.id),
                                        ('account_id.include_in_yearly_move', '=', True)]
                 balance_line_ids = aml_obj.search(cr, uid, balance_line_domain, context=context, order='NO_ORDER')

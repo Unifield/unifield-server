@@ -1,0 +1,18 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/hhatto/autopep8
+    rev: v2.3.2
+    hooks:
+    -   id: autopep8
+        args: ["-i", "--select=E1,W291"]
+
+-   repo: https://github.com/Unifield/prepyflakes.git
+    rev: f20c7cc83f8
+    hooks:
+    - id: prepyflakes
+
+- repo: https://github.com/Unifield/pre-sql-injection.git
+  rev: 9a187cc1b5d60
+  hooks:
+  - id: pre-sql-injection
