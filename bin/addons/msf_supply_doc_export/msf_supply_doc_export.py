@@ -865,7 +865,8 @@ class po_follow_up_mixin(object):
             self.cr.execute("""
                 SELECT pl.id, pl.state, pl.line_number, adl.id, ppr.id, ppr.default_code, COALESCE(tr.value, pt.name), 
                     uom.id, uom.name, pl.confirmed_delivery_date, pl.date_planned, pl.product_qty, pl.price_unit, 
-                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd, so.date_order, p.order_type
+                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd, so.date_order, p.order_type,
+                    pl.comment
                 FROM purchase_order_line pl
                     LEFT JOIN purchase_order p ON pl.order_id = p.id
                     LEFT JOIN analytic_distribution adl ON pl.analytic_distribution_id = adl.id
@@ -1053,6 +1054,7 @@ class po_follow_up_mixin(object):
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
+                    'comment': line[20] or '',
                     'qty_ordered': line[11] or '',
                     'uom': line[8] or '',
                     'qty_received': line[1] == 'done' and line[19] == 'direct' and line[11] or '0.00',
@@ -1103,6 +1105,7 @@ class po_follow_up_mixin(object):
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
+                    'comment': line[20] or '',
                     'qty_ordered': first_line and line[11] or '',
                     'uom': line[8] or '',
                     'qty_received': spsul.get('state') == 'done' and spsul.get('product_qty', '') or '0.00',
@@ -1163,6 +1166,7 @@ class po_follow_up_mixin(object):
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
+                    'comment': line[20] or '',
                     'qty_ordered': first_line and line[11] or '',
                     'uom': uom_obj.read(self.cr, self.uid, spl.get('product_uom'), ['name'])['name'],
                     'qty_received': spl.get('state') == 'done' and spl.get('product_qty', '') or '0.00',
@@ -1224,6 +1228,7 @@ class po_follow_up_mixin(object):
                     'item': line[2] or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',
+                    'comment': line[20] or '',
                     'qty_ordered': '',
                     'uom': uom_obj.read(self.cr, self.uid, ol.get('product_uom'), ['name'])['name'],
                     'qty_received': ol.get('state') == 'done' and ol.get('product_qty', '') or '0.00',
@@ -1325,6 +1330,7 @@ class po_follow_up_mixin(object):
             _('Line'),
             _('Product Code'),
             _('Product Description'),
+            _('Comment'),
             _('Qty ordered'),
             _('UoM'),
             _('Qty received'),
