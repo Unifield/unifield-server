@@ -814,7 +814,7 @@ class analytic_account(osv.osv):
             context = {}
         if 'date' in vals and vals['date'] is not False \
                 and 'date_start' in vals and not vals['date_start'] < vals['date']:
-                # validate that activation date
+            # validate that activation date
             raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
         if 'code' in vals and vals['code'] is not False and ';' in vals['code']:
             # to prevent issues in the draft FO/PO AD import
@@ -830,10 +830,10 @@ class analytic_account(osv.osv):
                 return True
             if parent.date and parent.date < datetime.today().strftime('%Y-%m-%d'):
                 raise osv.except_osv(_('Warning !'), _('The parent CC %s is not active, you can not create a child to this parent') % parent.code)
-            if ('date' in vals and vals['date'] and parent.date and vals['date'] > parent.date) or parent.date and ('date' not in vals or ('date' in vals and vals['date'] == False)):
-                msg += _('The sub-costcenter validity date is greater than the parent cost center validity date!') + "\n"
+            if ('date' in vals and vals['date'] and parent.date and vals['date'].split(' ')[0] > parent.date) or parent.date and ('date' not in vals or ('date' in vals and vals['date'] == False)):
+                msg += _('The sub-costcenter %s validity date is greater than the parent cost center %s validity date!') % (vals.get('code', ''), parent.code) + "\n"
             if 'date_start' in vals and vals['date_start'] and parent.date_start and vals['date_start'] < parent.date_start:
-                msg += _('The sub-costcenter activation date is lower than the parent cost center activation date!') + "\n"
+                msg += _('The sub-costcenter %s activation date is lower than the parent cost center %s activation date!') % (vals.get('code', ''), parent.code) + "\n"
 
             if msg:
                 raise osv.except_osv(_('Warning !'), msg)
