@@ -28,44 +28,66 @@ import decimal_precision as dp
 
 class account_bank_statement(osv.osv):
 
+    def _set_next_bank_balance_start(self, cr, uid, ids, vals, context=None):
+        ''' when end balance is frozen on bank, write start balance on next register '''
+
+        if 'balance_end_real' in vals or vals.get('closing_balance_frozen'):
+            if isinstance(ids, int):
+                ids = [ids]
+
+            cr.execute('''
+                select
+                    next_st.id, st.balance_end_real
+                from
+                    account_bank_statement st
+                    inner join account_journal j on j.id = st.journal_id
+                    inner join account_bank_statement next_st on next_st.prev_reg_id = st.id
+                where
+                    j.type = 'bank' and
+                    st.id = %s and
+                    st.closing_balance_frozen = 't'
+            ''', (tuple(ids), ))
+
+            ok = False
+            for next_id, balance in cr.fetchall():
+                super(account_bank_statement, self).write(cr, uid, [next_id], {'balance_start': balance}, context=context)
+                ok = True
+
+            if ok:
+                return True
+
+        return False
+
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         if context is None:
             context = {}
+        if isinstance(ids, int):
+            ids = [ids]
 
-        if context.get('sync_update_execution') and 'prev_reg_id' in vals and not vals['prev_reg_id']:
-            # do not reset prev_reg_id by sync (could be former register from coo to proj)
-            del(vals['prev_reg_id'])
+        if context.get('sync_update_execution'):
+            if 'prev_reg_id' in vals and not vals['prev_reg_id']:
+                # do not reset prev_reg_id by sync (could be former register from coo to proj)
+                del(vals['prev_reg_id'])
 
-        if not context.get('sync_update_execution'):
-            if 'balance_end_real' in vals:
-                new_vals = {'balance_start': vals['balance_end_real']}
-                # US-948/2: carry over end of month balance to next registers if
-                # the source register is not 'end of month balance' frozen
-                # note: the last carry over is processed via
-                # 'button_confirm_closing_bank_balance' button
-                to_write_id_list = []
-                for r in self.read(cr, uid, ids,
-                                   [ 'closing_balance_frozen', 'journal_id', ],
-                                   context=context):
-                    if not r['closing_balance_frozen']:
-                        if r['journal_id']:
-                            jtype = self.pool.get('account.journal').read(cr,
-                                                                          uid, [r['journal_id'][0]], ['type'],
-                                                                          context=context)[0]['type']
-                            if jtype != 'cash':
-                                args = [('prev_reg_id', '=', r['id'])]
-                                search_ids = self.search(cr, uid, args,
-                                                         context=context)
-                                if search_ids:
-                                    to_write_id_list.extend(search_ids)
-                self.write(cr, uid, to_write_id_list, new_vals, context=context)
+            if 'balance_start' in vals:
+                # do not write balance_start on bank register if prev reg exists and if end balance is not frozen
+                if vals.get('prev_reg_id'):
+                    prev_reg = self.browse(cr, uid, vals['prev_reg_id'])
+                else:
+                    prev_reg = self.browse(cr, uid, ids[0], fields_to_fetch=['prev_reg_id']).prev_reg_id
+
+                if prev_reg and prev_reg.journal_id.type == 'bank' and not prev_reg.closing_balance_frozen:
+                    del(vals['balance_start'])
 
         if not vals:
             return True
 
-        return super(account_bank_statement, self).write(cr, uid, ids, vals, context=context)
+        w =  super(account_bank_statement, self).write(cr, uid, ids, vals, context=context)
+        self._set_next_bank_balance_start(cr, uid, ids, vals, context=context)
+        return w
 
     def _default_journal_id(self, cr, uid, context=None):
         if context is None:
