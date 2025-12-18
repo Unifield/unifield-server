@@ -852,6 +852,7 @@
                                     <field name="buffer_ss_qty" />
                                     <field name="valid_rr_fmc" />
                                     <field name="real_stock" />
+                                    <field name="rr_amc" />
                                     <field name="pipeline_qty" />
                                     <field name="eta_for_next_pipeline" />
                                     <field name="reserved_stock_qty" />
@@ -867,10 +868,110 @@
                                     <field name="cost_price" />
                                     <field name="line_value" />
                                     <field name="order_qty_comment" />
+                                    <field name="rr_value_1" />
+                                    <field name="rr_value_from_1" />
+                                    <field name="rr_value_to_1" />
+                                    <field name="rr_value_2" />
+                                    <field name="rr_value_to_2" />
+                                    <field name="rr_value_3" />
+                                    <field name="rr_value_to_3" />
+                                    <field name= "list_rr_value" />
+                                    <button name="openform" special="openform" string="See 18 periods" icon="terp-go-week" context="{'active_id': active_id}" />
                                     <field name="warning_html" widget="html_text"/>
                                     <field name="mml_status" />
                                     <field name="msl_status" />
                                 </tree>
+                                <form hide_new_button="1">
+                                    <field name="segment_id" />
+                                    <field name="rule" />
+                                    <field name="product_id" />
+                                    <field name="in_main_list" />
+                                    <field name="min_max" />
+                                    <field name="auto_qty" />
+                                    <field name="buffer_ss_qty" />
+                                    <field name="valid_rr_fmc" />
+                                    <field name="real_stock" />
+                                    <field name="rr_amc" />
+                                    <field name="pipeline_qty" />
+                                    <field name="eta_for_next_pipeline" />
+                                    <field name="reserved_stock_qty" />
+                                    <field name="projected_stock_qty" />
+                                    <field name="qty_lacking" />
+                                    <field name="qty_lacking_needed_by" />
+                                    <field name="open_loan" />
+                                    <field name="open_donation" />
+                                    <field name="expired_qty_before_cons" />
+                                    <field name="expired_qty_before_eta" />
+                                    <field name="proposed_order_qty" />
+                                    <field name="agreed_order_qty" />
+                                    <field name="cost_price" />
+                                    <field name="line_value" />
+                                    <field name="order_qty_comment" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
+                                    <newline />
+                                    <field name="warning" colspan="4" />
+                                    <group colspan="4" col="4">
+                                        <separator string="RR Values" colspan="2" />
+                                        <separator string="From" colspan="1" />
+                                        <separator string="To" colspan="1" />
+                                        <newline />
+                                        <field name="rr_value_1" />
+                                        <field name="rr_value_from_1" nolabel="1" />
+                                        <field name="rr_value_to_1" nolabel="1" />
+                                        <field name="rr_value_2" />
+                                        <field name="rr_value_from_2" nolabel="1" />
+                                        <field name="rr_value_to_2" nolabel="1" />
+                                        <field name="rr_value_3" />
+                                        <field name="rr_value_from_3" nolabel="1" />
+                                        <field name="rr_value_to_3" nolabel="1" />
+                                        <field name="rr_value_4" />
+                                        <field name="rr_value_from_4" nolabel="1" />
+                                        <field name="rr_value_to_4" nolabel="1" />
+                                        <field name="rr_value_5" />
+                                        <field name="rr_value_from_5" nolabel="1" />
+                                        <field name="rr_value_to_5" nolabel="1" />
+                                        <field name="rr_value_6" />
+                                        <field name="rr_value_from_6" nolabel="1" />
+                                        <field name="rr_value_to_6" nolabel="1" />
+                                        <field name="rr_value_7" />
+                                        <field name="rr_value_from_7" nolabel="1" />
+                                        <field name="rr_value_to_7" nolabel="1" />
+                                        <field name="rr_value_8" />
+                                        <field name="rr_value_from_8" nolabel="1" />
+                                        <field name="rr_value_to_8" nolabel="1" />
+                                        <field name="rr_value_9" />
+                                        <field name="rr_value_from_9" nolabel="1" />
+                                        <field name="rr_value_to_9" nolabel="1" />
+                                        <field name="rr_value_10" />
+                                        <field name="rr_value_from_10" nolabel="1" />
+                                        <field name="rr_value_to_10" nolabel="1" />
+                                        <field name="rr_value_11" />
+                                        <field name="rr_value_from_11" nolabel="1" />
+                                        <field name="rr_value_to_11" nolabel="1" />
+                                        <field name="rr_value_12" />
+                                        <field name="rr_value_from_12" nolabel="1" />
+                                        <field name="rr_value_to_12" nolabel="1" />
+                                        <field name="rr_value_13" />
+                                        <field name="rr_value_from_13" nolabel="1" />
+                                        <field name="rr_value_to_13" nolabel="1" />
+                                        <field name="rr_value_14" />
+                                        <field name="rr_value_from_14" nolabel="1" />
+                                        <field name="rr_value_to_14" nolabel="1" />
+                                        <field name="rr_value_15" />
+                                        <field name="rr_value_from_15" nolabel="1" />
+                                        <field name="rr_value_to_15" nolabel="1" />
+                                        <field name="rr_value_16" />
+                                        <field name="rr_value_from_16" nolabel="1" />
+                                        <field name="rr_value_to_16" nolabel="1" />
+                                        <field name="rr_value_17" />
+                                        <field name="rr_value_from_17" nolabel="1" />
+                                        <field name="rr_value_to_17" nolabel="1" />
+                                        <field name="rr_value_18" />
+                                        <field name="rr_value_from_18" nolabel="1" />
+                                        <field name="rr_value_to_18" nolabel="1" />
+                                    </group>
+                                </form>
                             </field>
                         </page>
                         <page string="Location Information">
