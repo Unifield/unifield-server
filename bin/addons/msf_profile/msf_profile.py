@@ -60,6 +60,18 @@ class patch_scripts(osv.osv):
     }
 
     # UF39.0
+    def us_15159_delete_no_catalogue_deactivated_logs(self, cr, uid, *a, **b):
+        '''
+        Delete the logs having the message "There is no Phase Out Partner to deactivate" or "Il n'y a pas de Partenaire Supprimé à désactiver"
+        '''
+        cr.execute("""
+            DELETE FROM log_phase_out_partner_deactivation WHERE message IN %s
+        """, ([("There is no Phase Out Partner to deactivate", "Il n'y a pas de Partenaire Supprimé à désactiver")]))
+        self.log_info(cr, uid, "US-15159: %s Partners deactivation logs with no deactivation were deleted" % (cr.rowcount,))
+
+        return True
+
+    # UF39.0
     def us_14182_set_journal_register_dates(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
 
