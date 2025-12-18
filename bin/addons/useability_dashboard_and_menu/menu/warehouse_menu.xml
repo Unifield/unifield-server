@@ -87,7 +87,7 @@
                   id="stock.reserved_products_menu"
                   parent="stock.menu_stock_inventory_control"
                   sequence="26"
-                  action="stock.reserved_products_action" />
+                  action="stock.reserved_products_export_action" />
 
         <menuitem name="Last Product Inventories"
                   parent="stock.menu_stock_inventory_control"
