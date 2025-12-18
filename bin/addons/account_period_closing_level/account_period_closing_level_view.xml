@@ -75,7 +75,7 @@
                         <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'field-closed')]}">
                             <button name="action_reopen_field" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" colspan="1"/>
 
-                            <button name="action_close_mission" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" colspan="1"/>
+                            <button name="action_close_mission" string="Close period (Mission)" type="object" icon="gtk-go-forward" colspan="1"/>
                         </group>
                         <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'mission-closed')]}">
                             <button name="action_close_field_reopen" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" colspan="1"/>
@@ -182,7 +182,7 @@
                         <newline/>
                         <group attrs="{'invisible': [('field_process', '!=', True)]}" colspan="4" col="2">
                             <button name="action_set_created" string="Back to draft state" type="object" icon="gtk-go-back" colspan="1"/>
-                            <button name="action_close_field" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" colspan="1"/>
+                            <button name="action_close_field" states="draft" string="Close period (Field)" type="object" icon="gtk-go-forward" colspan="1"/>
                         </group>
                         <newline/>
                         <field name="field_process" invisible="1"/>
