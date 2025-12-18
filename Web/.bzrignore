@@ -1,0 +1,10 @@
+RE:lib/(?!populate.sh).*
+.*
+*.egg-info
+*.orig
+bin/
+build/
+dist/
+include/
+addons/sync_client_web/
+addons/web_livechat/
