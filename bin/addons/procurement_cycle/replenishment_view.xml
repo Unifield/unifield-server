@@ -805,6 +805,13 @@
                                 $('#msl_mml').html(alert_msl_mml);
                                 $('#msl_mml').show();
                             }
+
+                            $(document).ready(function() {
+                                $('#order_calc_line_ids_grid td span[name="list_rr_value"]').each(function() {
+                                    $(this).css('display', 'inline-block');
+                                    $(this).css('min-width', '200px');
+                                });
+                            });
                         </script>
                     </html>
                     <field name="name" />
