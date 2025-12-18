@@ -1264,5 +1264,9 @@
         <record id="us_15159_delete_no_catalogue_deactivated_logs" model="patch.scripts">
             <field name="method">us_15159_delete_no_catalogue_deactivated_logs</field>
         </record>
+
+        <record id="us_15206_remove_new_code_on_ud_prod_not_merged" model="patch.scripts">
+            <field name="method">us_15206_remove_new_code_on_ud_prod_not_merged</field>
+        </record>
     </data>
 </openerp>

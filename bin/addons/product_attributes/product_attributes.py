@@ -3924,7 +3924,7 @@ class product_pull_single_ud(osv.osv_memory):
 
         session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated, 'number_products_created': total_nb_created, 'number_products_errors': total_nb_errors}, context=context)
 
-        p_ids = self.pool.get('product.product').search(cr, uid, [('msfid', '=', x['msfid'])], context=context)
+        p_ids = self.pool.get('product.product').search(cr, uid, [('msfid', '=', x['msfid']), ('active', 'in', ['t', 'f'])], context=context)
         if p_ids:
             if len(p_ids) == 1:
                 view = act_obj.open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['form', 'tree'], context=context)
