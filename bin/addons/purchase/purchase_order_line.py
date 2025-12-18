@@ -1536,7 +1536,7 @@ class purchase_order_line(osv.osv):
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], 'cv_line_ids': [], 'dates_modified': False, 'rfq_line_state': 'draft'})
 
-        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref', 'catalog_mismatch']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref', 'catalog_mismatch', 'from_synchro_return_goods']:
             if field not in default:
                 default[field] = False
 
