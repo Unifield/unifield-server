@@ -196,24 +196,26 @@
         <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
     </Row>
     % for line in o.move_lines:
-    <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.purchase_line_id and line.purchase_line_id.external_ref or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${((line.purchase_line_id and line.purchase_line_id.price_unit) or (line.product_id and line.product_id.standard_price) or 0.00)|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.picking_id and line.picking_id.purchase_id and line.picking_id.purchase_id.pricelist_id.currency_id.name or line.company_id.currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_id and line.prodlot_id.name or '')|x}</Data></Cell>
-        % if isDate(line.expired_date):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.expired_date|n}T00:00:00.000</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line" ></Cell>
+        % if line.state != 'cancel':
+        <Row>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.purchase_line_id and line.purchase_line_id.external_ref or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.default_code or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${((line.purchase_line_id and line.purchase_line_id.price_unit) or (line.product_id and line.product_id.standard_price) or 0.00)|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.picking_id and line.picking_id.purchase_id and line.picking_id.purchase_id.pricelist_id.currency_id.name or line.company_id.currency_id.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_id and line.prodlot_id.name or '')|x}</Data></Cell>
+            % if isDate(line.expired_date):
+            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.expired_date|n}T00:00:00.000</Data></Cell>
+            % else:
+            <Cell ss:StyleID="line" ></Cell>
+            % endif
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        </Row>
         % endif
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-    </Row>
     % endfor
 </Table>
 <x:WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
