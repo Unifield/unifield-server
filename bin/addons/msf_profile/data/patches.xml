@@ -1268,5 +1268,9 @@
         <record id="us_15206_remove_new_code_on_ud_prod_not_merged" model="patch.scripts">
             <field name="method">us_15206_remove_new_code_on_ud_prod_not_merged</field>
         </record>
+
+        <record id="us_15170_ocb_unmerge_prod" model="patch.scripts">
+            <field name="method">us_15170_ocb_unmerge_prod</field>
+        </record>
     </data>
 </openerp>

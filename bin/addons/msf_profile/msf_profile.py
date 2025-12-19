@@ -59,6 +59,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF40.0
     def us_15206_remove_new_code_on_ud_prod_not_merged(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':
@@ -82,7 +83,7 @@ class patch_scripts(osv.osv):
                 self.pool.get('product.product').write(cr, uid, p_ids, {'new_code': False})
                 self.log_info(cr, uid, "US-15206: new_code removed on %d product(s)" % (len(p_ids),))
         return True
-    # UF39.0
+
     def us_15159_delete_no_catalogue_deactivated_logs(self, cr, uid, *a, **b):
         '''
         Delete the logs having the message "There is no Phase Out Partner to deactivate" or "Il n'y a pas de Partenaire Supprimé à désactiver"
@@ -92,6 +93,60 @@ class patch_scripts(osv.osv):
         """, ([("There is no Phase Out Partner to deactivate", "Il n'y a pas de Partenaire Supprimé à désactiver")]))
         self.log_info(cr, uid, "US-15159: %s Partners deactivation logs with no deactivation were deleted" % (cr.rowcount,))
 
+        return True
+
+    def us_15170_ocb_unmerge_prod(self, cr, uid, *a, **b):
+        '''
+        Un-merge the product SSDTHCTE014 on some OCB instances
+        Initial list was OCBAO101, OCBHT102, OCBJM101, OCBNG108, OCBPS109, OCBSY104, OCBSY117 and OCBUA122 the 04/12/2025
+        '''
+        entity_obj = self.pool.get('sync.client.entity')
+        prod_obj = self.pool.get('product.product')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            # Check if there is at least one NR about SSDTHCTE014 being merged
+            cr.execute("""
+                SELECT id from sync_client_update_received
+                WHERE run = 'f' AND log_first_notrun LIKE '%Merged products cannot be activated: SSDTHCTE014%' 
+                   OR log LIKE '%Merged products cannot be activated: SSDTHCTE014%'
+            """)
+            upd_recv = cr.fetchone()
+
+            if upd_recv:
+                log = 1
+                p1_ids = prod_obj.search(cr, uid, [('default_code', '=', 'SSDTHCTE014'), ('active', 'in', ['t', 'f']),
+                                                   ('unidata_merged', '=', True)], limit=1)
+                if p1_ids:
+                    cr.execute("""
+                        UPDATE product_product SET kept_product_id = NULL, unidata_merged = 'f', unidata_merge_date = NULL,
+                            kept_initial_product_id = NULL, old_code = 'SSDTHCTE014'
+                        WHERE id = %s
+                    """, (p1_ids[0],))
+                    _register_log(self, cr, uid, p1_ids[0], 'product.product', 'Merge Product kept product', 'SSDTHCTE40T1', '', 'write', {})
+
+                    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.product')], limit=1)
+                    field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.product'), ('name', '=', 'old_code')], limit=1)
+                    log_seq_ids = audit_seq_obj.search(cr, uid, [('model', '=', 'product.product'), ('res_id', '=', p1_ids[0])])
+                    if log_seq_ids:
+                        log_seq = audit_seq_obj.browse(cr, uid, log_seq_ids[0]).sequence
+                        log = log_seq.get_id(code_or_id='id')
+                    auditt_vals = {
+                        'user_id': uid,
+                        'method': 'write',
+                        'object_id': object_ids and object_ids[0] or False,
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'name': 'old_code',
+                        'res_id': p1_ids[0],
+                        'field_id': field_ids and field_ids[0] or False,
+                        'field_description': 'Old Code',
+                        'old_value': 'SSDTHCTE014,SSDTHCTE40T1',
+                        'old_value_text': 'SSDTHCTE014,SSDTHCTE40T1',
+                        'new_value': 'SSDTHCTE014',
+                        'new_value_text': 'SSDTHCTE014',
+                        'log': log,
+                    }
+                    self.pool.get('audittrail.log.line').create(cr, uid, auditt_vals)
         return True
 
     # UF39.0
