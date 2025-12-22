@@ -3907,6 +3907,8 @@ class replenishment_order_calc_line(osv.osv):
         'min_max': fields.char('Min/Max', size=128, readonly=1),
         'rr_amc': fields.float(string='RR-AMC', readonly=1, related_uom='uom_id', digits=(16, 2)),
         'list_rr_value': fields.function(_get_list_rr_value, method=1, type='char', string='more RR'),
+        'calc_state': fields.related('order_calc_id', 'state', string="Order Calculation State", type="selection",
+                                     selection=[('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancelled'), ('closed', 'Closed')], write_relate=False),
         'mml_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
         'msl_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }

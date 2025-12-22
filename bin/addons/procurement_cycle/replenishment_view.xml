@@ -805,13 +805,6 @@
                                 $('#msl_mml').html(alert_msl_mml);
                                 $('#msl_mml').show();
                             }
-
-                            $(document).ready(function() {
-                                $('#order_calc_line_ids_grid td span[name="list_rr_value"]').each(function() {
-                                    $(this).css('display', 'inline-block');
-                                    $(this).css('min-width', '200px');
-                                });
-                            });
                         </script>
                     </html>
                     <field name="name" />
@@ -889,6 +882,7 @@
                                     <field name="msl_status" />
                                 </tree>
                                 <form hide_new_button="1">
+                                    <field name="calc_state" invisible="1" />
                                     <field name="segment_id" />
                                     <field name="rule" />
                                     <field name="product_id" />
@@ -910,10 +904,10 @@
                                     <field name="expired_qty_before_cons" />
                                     <field name="expired_qty_before_eta" />
                                     <field name="proposed_order_qty" />
-                                    <field name="agreed_order_qty" />
+                                    <field name="agreed_order_qty" attrs="{'readonly':[('calc_state', '!=', 'draft')]}" />
                                     <field name="cost_price" />
                                     <field name="line_value" />
-                                    <field name="order_qty_comment" />
+                                    <field name="order_qty_comment" attrs="{'readonly':[('calc_state', '!=', 'draft')]}" />
                                     <field name="mml_status" />
                                     <field name="msl_status" />
                                     <newline />
