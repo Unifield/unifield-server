@@ -23,10 +23,23 @@ import time
 from osv import osv
 from tools.translate import _
 from report import report_sxw
+from report_webkit.webkit_report import WebKitParser
+import pooler
 
-class merged_order(report_sxw.rml_parse):
+
+def getIds(self, cr, uid, ids, context=None):
+    if context is None:
+        context = {}
+
+    if context.get('from_domain') and 'search_domain' in context:
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        ids = table_obj.search(cr, uid, context.get('search_domain'), limit=5000)
+    return ids
+
+
+class merged_order_parser(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
-        super(merged_order, self).__init__(cr, uid, name, context=context)
+        super(merged_order_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
             'to_time': self.str_to_time,
@@ -34,16 +47,6 @@ class merged_order(report_sxw.rml_parse):
             'getOrigin': self._get_origin,
             'get_merged_lines': self.get_merged_lines,
         })
-
-    def set_context(self, objects, data, ids, report_type=None):
-        '''
-        opening check
-        '''
-        for obj in objects:
-            if not obj.merged_po:
-                raise osv.except_osv(_('Warning !'), _('This PDF is only available for merged POs'))
-
-        return super(merged_order, self).set_context(objects, data, ids, report_type=report_type)
 
     def _get_origin(self, origin, number=5):
         res = []
@@ -125,7 +128,48 @@ class merged_order(report_sxw.rml_parse):
         return ''
 
 
-report_sxw.report_sxw('report.purchase.order.merged','purchase.order','addons/purchase_override/report/merged_order.rml',parser=merged_order, header=False)
+class merged_order(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(merged_order, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(merged_order, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+
+merged_order('report.purchase.order.merged', 'purchase.order', 'addons/purchase_override/report/merged_order.rml', parser=merged_order_parser, header=False)
+
+
+class wizard_purchase_order_merged_export(osv.osv_memory):
+    _name = 'wizard.purchase.order.merged.export'
+
+    def print_report_pdf(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        po_ids = context.get('active_ids', [])
+        if self.pool.get('purchase.order').search(cr, uid, [('id', 'in', po_ids), ('merged_po', '=', False)], context=context):
+            raise osv.except_osv(
+                _('Warning'),
+                _('This PDF is only available for merged POs\nFor the non-merged PO PDF, please use "Purchase Order" from the action menu'),
+            )
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'purchase.order.merged',
+            'datas': {'ids': po_ids},
+            'context': context,
+        }
+
+wizard_purchase_order_merged_export()
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
