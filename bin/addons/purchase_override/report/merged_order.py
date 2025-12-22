@@ -23,7 +23,6 @@ import time
 from osv import osv
 from tools.translate import _
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 import pooler
 
 
@@ -128,20 +127,15 @@ class merged_order_parser(report_sxw.rml_parse):
         return ''
 
 
-class merged_order(WebKitParser):
+class merged_order(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-
-    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
-        report_xml.webkit_debug = 1
-        report_xml.header = " "
-        report_xml.webkit_header.html = "${_debug or ''|n}"
-        return super(merged_order, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, context)
-        a = super(merged_order, self).create(cr, uid, ids, data, context)
-        return (a[0], 'xls')
+        ids = getIds(self, cr, uid, ids, context=context)
+        if context is None:
+            context = {}
+        return super(merged_order, self).create(cr, uid, ids, data, context=context)
 
 
 merged_order('report.purchase.order.merged', 'purchase.order', 'addons/purchase_override/report/merged_order.rml', parser=merged_order_parser, header=False)
