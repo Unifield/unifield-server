@@ -144,6 +144,9 @@ class Filter(TinyInputWidget):
 
         default_search = get_search_default(attrs, screen_context, default_domain, add_active=True)
 
+        if self.filter_status is None:
+            self.filter_status = default_search
+
         # context implemented only for group_by.
         self.group_context = None
         if filter_context:

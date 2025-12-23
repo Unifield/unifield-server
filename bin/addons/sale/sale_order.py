@@ -2483,6 +2483,17 @@ class sale_order_line(osv.osv):
             context = {}
 
         view = super(sale_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if context.get('search_default_need_sourcing'):
+            if view_type == 'search':
+                search = etree.fromstring(view['arch'])
+                filters = search.xpath('/search/filter[@name="need_sourcing"]')
+                a = 'a'
+            elif view_type == 'tree' and context.get('need_sourcing_selected'):
+                tree = etree.fromstring(view['arch'])
+                for node in tree.xpath("//field[@name='state']"):
+                    # node.set('invisible', '1')
+                    a = 'a'
+                view['arch'] = etree.tostring(tree, encoding='unicode')
         if view_type == 'form' and context.get('from_tab') != 1:
             form = etree.fromstring(view['arch'])
             for tag in form.xpath('//page[@name="nomenselection"]'):
