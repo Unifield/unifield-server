@@ -1456,7 +1456,8 @@ class purchase_order(osv.osv):
             if vals.get('pricelist_id') and partner.partner_type == 'external':
                 to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
 
-            for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line'], context=context):
+            ftf = ['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line', 'signature_id']
+            for order in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
                 line_changed = False
                 if vals['partner_id'] != order.partner_id.id:
                     if order.state != 'draft':
@@ -1494,6 +1495,15 @@ class purchase_order(osv.osv):
                         for tax_line in order.tax_line:
                             new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id, tax_line.amount, round=False)
                             tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
+
+                    # Reset signature
+                    self.pool.get('signature').write(cr, uid, order.signature_id.id, {'signed_off_line': False, 'signature_is_closed': False}, context=context)
+                    to_unsign = []
+                    for sign_line in order.signature_id.signature_line_ids:
+                        if sign_line.signed:
+                            to_unsign.append(sign_line.id)
+                    if to_unsign:
+                        self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'), check_super_unsign=True)
 
 
         return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
