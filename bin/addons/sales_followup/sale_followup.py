@@ -336,6 +336,8 @@ class sale_order_followup(osv.osv_memory):
         foup = self.browse(cr, uid, ids[0], context=context)
         if not foup or not foup.order_id or not foup.order_id.name:
             return False
+        if foup.order_id.procurement_request:
+            prefix = 'IR_Follow_Up'
         dt_now = datetime.datetime.now()
         po_name = "%s_%s_%d_%02d_%02d" % (prefix,
                                           foup.order_id.name.replace('/', '_'),

@@ -156,7 +156,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             SELECT SUM(CASE WHEN m.state = 'done' THEN m.product_qty ELSE 0 END) FROM stock_move m, stock_picking p
             WHERE m.picking_id = p.id AND m.purchase_line_id = %s AND p.type = 'in' AND m.state != 'cancel'
         ''', (pol_id,))
-        res.append(self.cr.fetchone()[0])
+        f_one = self.cr.fetchone()
+        res.append(f_one and f_one[0] or 0)
 
         return res
 

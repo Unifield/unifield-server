@@ -149,6 +149,7 @@ class deactivate_phase_out_partners(osv.osv):
             msg, cant_deactivate_msg = '', ''
             nb_cant_deactivate = 0
             to_deactivate_ids, to_deactivate_names = [], []
+            create_log = True
             try:
                 phase_out_partners_ids = partner_obj.search(cr, uid, [('active', '=', 't'), ('state', '=', 'phase_out')], context=context)
                 if phase_out_partners_ids:
@@ -177,13 +178,15 @@ class deactivate_phase_out_partners(osv.osv):
                     partner_obj.write(cr, uid, to_deactivate_ids, {'active': False}, context=context)
                 else:
                     msg = _('There is no Phase Out Partner to deactivate')
+                    create_log = False
             except Exception as e:
                 cr.rollback()
                 msg = tools.misc.get_traceback(e)
             finally:
                 # super is called to prevent the cron to be modified and have the message changed in the task
                 super(deactivate_phase_out_partners, self).write(cr, uid, task['id'], {'message': msg}, context=context)
-                log_obj.create(cr, uid, {'user_id': uid, 'date': datetime.now(), 'message': msg}, context=context)
+                if create_log:
+                    log_obj.create(cr, uid, {'user_id': uid, 'date': datetime.now(), 'message': msg}, context=context)
 
         return True
 
