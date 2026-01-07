@@ -1259,5 +1259,9 @@
         <record id="us_14217_set_journal_restriction" model="patch.scripts">
             <field name="method">us_14217_set_journal_restriction</field>
         </record>
+
+        <record id="us_15310_ocp_fxa_journal" model="patch.scripts">
+            <field name="method">us_15310_ocp_fxa_journal</field>
+        </record>
     </data>
 </openerp>

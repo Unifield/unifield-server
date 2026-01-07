@@ -59,6 +59,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_15310_ocp_fxa_journal(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocp':
+            j_id = self.pool.get('account.journal').search(cr, uid,
+                                                           [('code', '=', 'FXA'), ('is_current_instance', '=', True), ('default_credit_account_id.code', '!=', '71110')])
+            if j_id:
+                account_id = self.pool.get('account.account').search(cr, uid, [('code', '=', '71110')])
+                if account_id:
+                    self.pool.get('account.journal').write(cr, uid, j_id, {'default_credit_account_id': account_id[0]})
+        return True
     # UF39.0
     def us_14182_set_journal_register_dates(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
