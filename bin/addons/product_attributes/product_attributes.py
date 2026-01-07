@@ -1840,6 +1840,24 @@ class product_attributes(osv.osv):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             return False
 
+
+        cr.execute('''
+            select
+                p.id
+            from
+                product_product p, product_product kept
+            where
+                p.golden_status = 'Merged' and
+                p.active = 't' and
+                p.merge_to_msfid is not null and
+                p.merge_to_msfid = kept.msfid and
+                p.international_status = 'UniData' and
+                kept.active = 'f'
+        ''')
+        to_inactive = [x[0] for x in cr.fetchall()]
+        if to_inactive:
+            self.write(cr, uid, to_inactive, {'active': False}, context=context)
+
         ids = []
         products_used = set()
 

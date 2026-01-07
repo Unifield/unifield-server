@@ -531,6 +531,10 @@ class ud_sync():
                 'ud': 'mergeToCode',
                 'ignore_missing': True,
             },
+            'merge_to_msfid': {
+                'ud': 'mergeToId',
+                'ignore_missing': True,
+            },
             'sterilized': {
                 'ud': 'medical/sterile',
                 'mapping': {
@@ -936,8 +940,10 @@ class ud_sync():
         if uf_values['en_MF'].get('batch_management'):
             uf_values['en_MF']['perishable'] = True
 
-        if uf_values['en_MF'].get('golden_status') != 'Merged' and uf_values['en_MF'].get('new_code'):
-            del(uf_values['en_MF']['new_code'])
+        if uf_values['en_MF'].get('golden_status') != 'Merged':
+            for to_remove in ['new_code', 'merge_to_msfid']:
+                if uf_values['en_MF'].get(to_remove):
+                    del(uf_values['en_MF'][to_remove])
         return uf_values
 
     def update_single_nomenclature(self, nom_type, nomen_msf_id="", session_id=False):
@@ -1180,11 +1186,22 @@ class ud_sync():
                                     if x.get('state') == 'Merged' and x.get('mergeToCode'):
                                         to_write['new_code'] = x.get('mergeToCode')
                                         self.log('Write New code %s on product id: %s' % (to_write['new_code'], prod_ids[0]))
+                                    if x.get('mergeToId'):
+                                        to_write['merge_to_msfid'] = x.get('mergeToId')
                                     prod_obj.write(self.cr, self.uid, [prod_ids[0]], to_write)
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
                         self.log('%s product found %s' % (x.get('formerCodes'), prod_ids[0]))
+
+                    if x.get('state') == 'Merged' and prod_ids:
+                        # do not update Merged on both side products
+                        prod_data = prod_obj.browse(self.cr, self.uid, prod_ids[0], fields_to_fetch=['golden_status', 'merge_to_msfid'])
+                        if prod_data['golden_status'] == 'Merged':
+                            if x.get('mergeToId') and x['mergeToId'] != prod_data.merge_to_msfid:
+                                prod_obj.write(self.cr, self.uid, [prod_ids[0]], {'merge_to_msfid': x['mergeToId']})
+                            self.log('Ignore product %s with UD state Merged on UD and UF' % x.get('code'))
+                            continue
 
                     if not x.get('formerCodes'):
                         raise UDException('No formerCodes code')
@@ -1778,7 +1795,7 @@ class unidata_sync(osv.osv):
             prod_obj = self.pool.get('product.product')
             unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
 
-            not_seen_ud_ids = prod_obj.search(cr, uid, [('ud_seen', '=', False), ('international_status', '=', unidata_id), ('active', 'in', ['t', 'f'])])
+            not_seen_ud_ids = prod_obj.search(cr, uid, [('ud_seen', '=', False), ('international_status', '=', unidata_id), ('active', 'in', ['t', 'f']), ('golden_status', '!=', 'Merged')])
 
             if not_seen_ud_ids:
                 prod_obj.write(cr, uid, not_seen_ud_ids, {'golden_status': ''})

@@ -1272,5 +1272,9 @@
         <record id="us_15170_ocb_unmerge_prod" model="patch.scripts">
             <field name="method">us_15170_ocb_unmerge_prod</field>
         </record>
+
+        <record id="us_14673_populate_merge_to_msfid" model="patch.scripts">
+            <field name="method">us_13980_update_new_code_on_merged</field>
+        </record>
     </data>
 </openerp>
