@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <document filename="sale_follow_up_report.pdf">
 
-    <template pageSize="(842.0,595.0)" title="FO Follow Up" author="Medecins Sans Frontieres" allowSplitting="20">
+    <template pageSize="(842.0,595.0)" title="Order Follow Up" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="0.0" y1="10.0" width="842" height="570" />
 
@@ -80,7 +80,12 @@
                     <para style="Title"> </para>
                 </td>
                 <td>
+                    [[ objects[0].order_id and not objects[0].order_id.procurement_request or removeParentNode('td') ]]
                     <para style="Title">FIELD ORDER FOLLOW UP</para>
+                </td>
+                <td>
+                    [[ objects[0].order_id and objects[0].order_id.procurement_request or removeParentNode('td') ]]
+                    <para style="Title">INTERNAL REQUEST FOLLOW UP</para>
                 </td>
                 <td>
                     <para style="Title"> </para>

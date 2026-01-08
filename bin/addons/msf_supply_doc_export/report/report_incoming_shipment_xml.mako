@@ -25,6 +25,7 @@
             <field name="message_esc1"></field>
             <field name="message_esc2"></field>
         % for l in o.move_lines:
+            % if l.state != 'cancel':
             <record>
                 <field name="line_number">${l.line_number or ''}</field>
                 <field name="external_ref">${(l.purchase_line_id and l.purchase_line_id.external_ref or '')|x}</field>
@@ -49,6 +50,7 @@
                 <field name="message_esc1"></field>
                 <field name="message_esc2"></field>
             </record>
+            % endif
         % endfor
            </record>
         </field>

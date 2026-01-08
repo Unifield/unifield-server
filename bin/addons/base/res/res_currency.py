@@ -23,10 +23,38 @@ import datetime
 import csv
 from osv import fields, osv
 from tools.translate import _
+from tools.misc import get_fake
 
 class res_currency_table(osv.osv):
     _name = 'res.currency.table'
     _trace = True
+
+
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        new_dom = []
+        search_currency = False
+        op = False
+        for x in domain:
+            if x[0] == 'search_currency' and x[1] in ('ilike', '='):
+                op = x[1]
+                if op == 'ilike':
+                    search_currency = '%%%s%%' %x[2]
+                else:
+                    search_currency = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(res_currency_table, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+
+        if search_currency:
+            ret.tables.append('"res_currency"')
+            ret.joins.setdefault('"res_currency_table"', [])
+            ret.joins['"res_currency_table"'] += [('"res_currency"', 'id', 'currency_table_id', 'INNER JOIN')]
+            ret.where_clause.append(''' "res_currency"."name" %s %%s  ''' % op)
+            ret.where_clause_params.append(search_currency)
+
+        return ret
+
 
     _columns = {
         'name': fields.char('Currency table name', size=64, required=True),
@@ -36,6 +64,7 @@ class res_currency_table(osv.osv):
                                    ('valid','Valid'),
                                    ('closed', 'Closed')], 'State', required=True),
         'is_for_reval': fields.boolean('Is for Revaluation'),
+        'search_currency': fields.function(get_fake, method=True, type='char', string='Currency', internal=1),
     }
 
     _defaults = {
@@ -341,7 +370,7 @@ class res_currency(osv.osv):
         'base': fields.boolean('Base'),
         'currency_name': fields.char('Currency Name', size=64, required=True, translate=1),
 
-        'currency_table_id': fields.many2one('res.currency.table', 'Currency Table', ondelete='cascade', select=1),
+        'currency_table_id': fields.many2one('res.currency.table', 'Currency Table', ondelete='cascade', select=1, join='LEFT'),
         'reference_currency_id': fields.many2one('res.currency', 'Reference Currency', ondelete='cascade', select=1),
         'is_section_currency': fields.boolean(string='Functional currency',
                                               help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),

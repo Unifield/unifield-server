@@ -21,8 +21,8 @@ class message_action(osv.osv_memory):
     }
 
     _defaults = {
-        'yes_label': _('Yes'),
-        'no_label': _('No'),
+        'yes_label': lambda self, cr, uid, context: _('Yes'),
+        'no_label': lambda self, cr, uid, context: _('No'),
         'message': ' ',
         'refresh_o2m': False
     }
