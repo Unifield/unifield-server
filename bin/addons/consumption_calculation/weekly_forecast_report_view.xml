@@ -34,7 +34,7 @@
             <field name="model">weekly.forecast.report</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Periodical forecast reports">
+                <search string="Periodical Forecast Reports">
                     <field name="requestor_id" />
                     <filter domain="[('requestor_id', '=', uid)]" icon="terp-personal" help="My requests" />
                     <field name="requestor_date" />
@@ -47,7 +47,7 @@
             <field name="model">weekly.forecast.report</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Periodical forecast reports">
+                <tree string="Periodical Forecast Reports">
                     <field name="requestor_date" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <field name="requestor_id" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <field name="consumption_type" attrs="{'readonly': [('status', '!=', 'draft')]}" />
@@ -68,7 +68,7 @@
             <field name="priority" eval="16" />
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Periodical forecast report">
+                <form string="Periodical Forecast Report">
                     <separator colspan="4" string="Period of calculation" />
                     <field name="interval" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <field name="interval_type" colspan="2" nolabel="1" attrs="{'readonly': [('status', '!=', 'draft')]}" />
@@ -124,7 +124,7 @@
         </record>
 
         <record id="action_weekly_forecast_report" model="ir.actions.act_window">
-            <field name="name">Periodical forecast report</field>
+            <field name="name">Periodical Forecast Report</field>
             <field name="res_model">weekly.forecast.report</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

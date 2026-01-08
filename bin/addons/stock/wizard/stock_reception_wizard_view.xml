@@ -39,6 +39,7 @@
             id="menu_stock_reception_wizard"
             action="action_stock_reception_wizard"
             parent="stock.next_id_61"
+            sequence="7"
             />
 
     </data>

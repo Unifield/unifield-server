@@ -45,8 +45,8 @@
                   
         <menuitem action="stock_override.action_destruction_location_report" 
                   id="stock_override.menu_action_destruction_location_report" 
-                  parent="stock.menu_traceability" 
-                  sequence="4"/>
+                  parent="stock.next_id_61"
+                  sequence="12"/>
     
         <menuitem id="consumption_calculation.menu_products_to_expire"
                   action="consumption_calculation.action_products_to_expire"

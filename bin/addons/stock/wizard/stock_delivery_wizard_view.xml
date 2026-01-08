@@ -34,7 +34,7 @@
             id="menu_stock_delivery_wizard"
             action="action_stock_delivery_wizard"
             parent="stock.next_id_61"
-            sequence="10"
+            sequence="9"
             />
 
     </data>
