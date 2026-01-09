@@ -31,6 +31,7 @@ from . import _utils as utils
 from . import resources
 from openobject.i18n import _
 from openobject import ustr
+import logging
 
 __all__ = ['load_template', 'render_template', 'expose', 'register_template_vars']
 
@@ -152,7 +153,7 @@ def render_template(template, kw):
         raise
 
 
-def expose(format='html', template=None, content_type=None, allow_json=False, methods=None, mark_only=False):
+def expose(format='html', template=None, content_type=None, allow_json=False, methods=None, mark_only=False, log_level=None):
     """
     :param format: the response's format. Currently understood formats are "json" and "jsonp",
                    any other format is ignored
@@ -189,6 +190,9 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
         def func_wrapper(*args, **kw):
             if methods and cherrypy.request.method.upper() not in methods:
                 raise cherrypy.HTTPError(405)
+
+            if log_level:
+                cherrypy.serving.response.access_log_level = logging.getLevelName(log_level)
 
             res = func(*args, **kw)
             if format == 'json' or (allow_json and 'allow_json' in cherrypy.request.params):

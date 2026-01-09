@@ -350,7 +350,7 @@ class ImpEx(SecuredController):
 
         return rec(fields)
 
-    @expose(content_type="application/octet-stream")
+    @expose(content_type="application/octet-stream", log_level='WARN')
     def export_data(self, fname, fields, import_compat=False, export_format='csv', all_records=False, **kw):
 
         params, data_index = TinyDict.split(kw)
@@ -544,7 +544,7 @@ class ImpEx(SecuredController):
             return self.imp(error=dict(error, preview=csvfile.file.read(200)), **kw)
         return self.imp(records=records, **kw)
 
-    @expose()
+    @expose(log_level='WARN')
     def import_data(self, csvfile, csvsep, csvdel, csvcode, fields=None, **kw):
 
         if fields is None:

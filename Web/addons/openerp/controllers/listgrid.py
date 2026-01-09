@@ -112,7 +112,7 @@ class List(SecuredController):
 
         return dict(error_field=error_field, error=error, id=id, ids=str([int(i) for i in ids]))
 
-    @expose('json', methods=('POST',))
+    @expose('json', methods=('POST',), log_level='WARN')
     def remove(self, **kw):
         params, data = TinyDict.split(kw)
         error = None

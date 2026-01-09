@@ -254,7 +254,7 @@ class Database(BaseController):
         form = _FORMS['create']
         return dict(form=form, error=error)
 
-    @expose()
+    @expose(log_level='WARN')
     @validate(form=_FORMS['create'])
     @error_handler(create)
     def do_create(self, password, dbname, admin_password, confirm_password, demo_data=False, language=None, **kw):
@@ -758,14 +758,14 @@ class Database(BaseController):
             return self.auto_create()
         return self.auto_create_progress()
 
-    @expose(template="/openerp/controllers/templates/database.mako")
+    @expose(template="/openerp/controllers/templates/database.mako", log_level='WARN')
     def drop(self, tg_errors=None, **kw):
         form = _FORMS['drop']
         error = self.msg
         self.msg = {}
         return dict(form=form, error=error)
 
-    @expose()
+    @expose(log_level='WARN')
     @validate(form=_FORMS['drop'])
     @error_handler(drop)
     def do_drop(self, dbname, password, **kw):
@@ -792,7 +792,7 @@ class Database(BaseController):
         self.msg = {}
         return dict(form=form, error=error)
 
-    @expose()
+    @expose(log_level='WARN')
     @validate(form=_FORMS['backup'])
     @error_handler(backup)
     def do_backup(self, dbname, password, **kw):
@@ -832,7 +832,7 @@ class Database(BaseController):
         self.msg = {}
         return dict(form=form, error=error)
 
-    @expose()
+    @expose(log_level='WARN')
     @validate(form=_FORMS['restore'])
     @error_handler(restore)
     def do_restore(self, filename, password, dbname=None, **kw):
@@ -891,7 +891,7 @@ class Database(BaseController):
 
     @validate(form=_FORMS['password'])
     @error_handler(password)
-    @expose()
+    @expose(log_level='WARN')
     def do_password(self, old_password, new_password, confirm_password, **kw):
         self.msg = {}
         try:

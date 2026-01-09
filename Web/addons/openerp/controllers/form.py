@@ -799,7 +799,7 @@ class Form(SecuredController):
 
         raise redirect(self.path + '/view', **args)
 
-    @expose()
+    @expose(log_level='WARN')
     def delete(self, **kw):
         params, data = TinyDict.split(kw)
 

@@ -29,6 +29,8 @@ from openobject.i18n import _
 from openobject.tools.ast import literal_eval
 import json
 _MAXIMUM_NUMBER_WELCOME_MESSAGES = 3
+import logging
+
 
 def _cp_on_error():
     cherrypy.request.pool = openobject.pooler.get_pool()
@@ -233,7 +235,7 @@ class Root(SecuredController):
                     department_list=department_list,
                     selected_department=selected_department)
 
-    @expose()
+    @expose(log_level='WARN')
     def do_login(self, *arg, **kw):
         target = kw.get('target') or '/'
         if target.startswith('/openerp/do_login'):
@@ -241,7 +243,7 @@ class Root(SecuredController):
         rpc.session.has_logged = True
         raise redirect(target)
 
-    @expose(allow_json=True)
+    @expose(allow_json=True, log_level='WARN')
     @unsecured
     def login(self, db=None, user=None, password=None, style=None, location=None, message=None, **kw):
         location = url(location or '/', kw or {})
@@ -257,14 +259,14 @@ class Root(SecuredController):
 
         return tiny_login(target=location, db=db, user=user, password=password, action="login", message=message, auto=auto)
 
-    @expose()
+    @expose(log_level='WARN')
     def do_change_password(self, *arg, **kw):
         target = kw.get('target') or '/'
         if target.startswith('/openerp/do_change_password'):
             target = '/'
         raise redirect(target)
 
-    @expose(allow_json=True)
+    @expose(allow_json=True, log_level='WARN')
     @unsecured
     def change_password(self, db=None, user=None, password=None,
                         new_password=None, confirm_password=None, style=None,
@@ -319,4 +321,88 @@ class Root(SecuredController):
     def survey_answer(self, answer, survey_id, stat_id):
         rpc.RPCProxy('sync_client.survey.user').save_answer(answer, survey_id, stat_id)
         return True
+
+def access(self):
+    """Write to the access log (in Apache/NCSA Combined Log format).
+
+    See the
+    `apache documentation
+    <http://httpd.apache.org/docs/current/logs.html#combined>`_
+    for format details.
+
+    CherryPy calls this automatically for you. Note there are no arguments;
+    it collects the data itself from
+    :class:`cherrypy.request<cherrypy._cprequest.Request>`.
+
+    Like Apache started doing in 2.0.46, non-printable and other special
+    characters in %r (and we expand that to all parts) are escaped using
+    \\xhh sequences, where hh stands for the hexadecimal representation
+    of the raw byte. Exceptions from this rule are " and \\, which are
+    escaped by prepending a backslash, and all whitespace characters,
+    which are written in their C-style notation (\\n, \\t, etc).
+    """
+
+    #thread_log = cherrypy.thread_data.__dict__.get('access_log_level', logging.INFO)
+    thread_log = logging.INFO
+    if hasattr(cherrypy.serving.response, 'access_log_level'):
+        thread_log = cherrypy.serving.response.access_log_level
+    if thread_log < cherrypy.log.access_log.level:
+        return
+
+
+    request = cherrypy.serving.request
+    remote = request.remote
+    response = cherrypy.serving.response
+    outheaders = response.headers
+    inheaders = request.headers
+    if response.output_status is None:
+        status = '-'
+    else:
+        status = response.output_status.split(b' ', 1)[0]
+        status = status.decode('ISO-8859-1')
+
+    login = '-'
+    try:
+        if cherrypy.request.config.get('tools.sessions.on'):
+            login = rpc and rpc.session and rpc.session.loginname or '-'
+    except:
+        pass
+
+    atoms = {'h': remote.name or remote.ip,
+             'l': '-',
+             'u': login,
+             't': self.time(),
+             'r': request.request_line[0:1024],
+             's': status,
+             'b': dict.get(outheaders, 'Content-Length', '') or '-',
+             'f': dict.get(inheaders, 'Referer', ''),
+             'a': dict.get(inheaders, 'User-Agent', ''),
+             'o': dict.get(inheaders, 'Host', '-'),
+             'i': request.unique_id,
+             'z': cherrypy._cplogging.LazyRfc3339UtcTime(),
+             }
+    for k, v in atoms.items():
+        if not isinstance(v, str):
+            v = str(v)
+        v = v.replace('"', '\\"').encode('utf8')
+        # Fortunately, repr(str) escapes unprintable chars, \n, \t, etc
+        # and backslash for us. All we have to do is strip the quotes.
+        v = repr(v)[2:-1]
+
+        # in python 3.0 the repr of bytes (as returned by encode)
+        # uses double \'s.  But then the logger escapes them yet, again
+        # resulting in quadruple slashes.  Remove the extra one here.
+        v = v.replace('\\\\', '\\')
+
+        # Escape double-quote.
+        atoms[k] = v
+
+    try:
+        self.access_log.log(
+            logging.INFO, self.access_log_format.format(**atoms))
+    except Exception:
+        self(traceback=True)
+
+cherrypy._cplogging.LogManager.access = access
+
 # vim: ts=4 sts=4 sw=4 si et

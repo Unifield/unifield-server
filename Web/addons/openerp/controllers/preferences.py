@@ -128,7 +128,7 @@ class Preferences(Form):
         rpc.session.context_reload()
         raise redirect('/openerp/pref/create', saved=True)
 
-    @expose(template='/openerp/controllers/templates/preferences/password.mako')
+    @expose(template='/openerp/controllers/templates/preferences/password.mako', log_level='WARN')
     def password(self, old_password='', new_password='', confirm_password='',
                  context=None):
         if context is None:
@@ -156,7 +156,7 @@ class Preferences(Form):
             context['errors'].append(str(e))
         return context
 
-    @expose(template='/openerp/controllers/templates/preferences/password.mako')
+    @expose(template='/openerp/controllers/templates/preferences/password.mako', log_level='WARN')
     def update_password(self, old_password='', new_password='',
                         confirm_password=''):
         context = {'form': UpdatePassword(), 'errors': []}
