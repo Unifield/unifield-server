@@ -85,6 +85,8 @@ class wizard_import_rac(osv.osv_memory):
         errors = []
         if not import_rac.file:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        if import_rac.rac_id.state != 'draft':
+            raise osv.except_osv(_('Error'), _('You can only import on a Draft Real Consumption; import file is ignored'))
 
         fileobj = SpreadsheetXML(xmlstring=base64.b64decode(import_rac.file))
         # iterator on rows
