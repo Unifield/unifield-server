@@ -378,6 +378,7 @@
                                    attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                             <field name="move_id" groups="account.group_account_user"/>
                             <separator colspan="4" string="Additional Information"/>
+                            <field name="po_details"/>
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         &payment_tab;

@@ -7391,6 +7391,19 @@ class patch_scripts(osv.osv):
         cr.execute(update_name_and_code)
         cr.execute(update_translation)
 
+    def us_15072_po_detail(self, cr, uid, *a, **b):
+        """
+        Add the PO details to the invoice
+        """
+        update_invoice = """
+            UPDATE account_invoice AS ai
+            SET po_details = po.details
+            FROM purchase_order AS po
+            WHERE po.id = ai.main_purchase_id
+                AND ai.po_details IS NULL;
+        """
+        cr.execute(update_invoice)
+
     def launch_patch_scripts(self, cr, uid, *a, **b):
         ps_obj = self.pool.get('patch.scripts')
         ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
