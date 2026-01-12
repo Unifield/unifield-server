@@ -397,9 +397,45 @@ class transport_order_step(osv.osv):
         'end_date': fields.date('Actual End Date'),
     }
 
-    _sql_constraints = [
-        ('in_order_step_unique', 'unique(transport_in_id, step_id)', 'You can not select the same Step twice !'),
-        ('out_order_step_unique', 'unique(transport_out_id, step_id)', 'You can not select the same Step twice !'),
+    def _in_order_step_unique_constraint(self, cr, uid, ids, context=None):
+        '''
+        Constraint for an ITO step line, you can not have the same step + sub-step
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.transport_in_id:
+                step_domain = [('id', '!=', obj.id), ('transport_in_id', '=', obj.transport_in_id.id),
+                               ('step_id', '=', obj.step_id and obj.step_id.id or False),
+                               ('sub_step_id', '=', obj.sub_step_id and obj.sub_step_id.id or False)]
+                if self.search_exists(cr, uid, step_domain, context=context):
+                    return False
+        return True
+
+    def _out_order_step_unique_constraint(self, cr, uid, ids, context=None):
+        '''
+        Constraint for an OTO step line, you can not have the same step + sub-step
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.transport_out_id:
+                step_domain = [('id', '!=', obj.id), ('transport_out_id', '=', obj.transport_out_id.id),
+                               ('step_id', '=', obj.step_id and obj.step_id.id or False),
+                               ('sub_step_id', '=', obj.sub_step_id and obj.sub_step_id.id or False)]
+                if self.search_exists(cr, uid, step_domain, context=context):
+                    return False
+        return True
+
+    _constraints = [
+        (_in_order_step_unique_constraint, 'You can not select the same Step and Sub-Step twice !', ['transport_in_id', 'step_id', 'sub_step_id']),
+        (_out_order_step_unique_constraint, 'You can not select the same Step and Sub-Step twice !', ['transport_out_id', 'step_id', 'sub_step_id']),
     ]
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

@@ -1259,5 +1259,10 @@
         <record id="us_14217_set_journal_restriction" model="patch.scripts">
             <field name="method">us_14217_set_journal_restriction</field>
         </record>
+
+        <!-- UF39.1 -->
+        <record id="us_15318_remove_transport_step_constraint" model="patch.scripts">
+            <field name="method">us_15318_remove_transport_step_constraint</field>
+        </record>
     </data>
 </openerp>

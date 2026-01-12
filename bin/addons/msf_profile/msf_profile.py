@@ -59,6 +59,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF39.1
+    def us_15318_remove_transport_step_constraint(self, cr, uid, *a, **b):
+        cr.drop_constraint_if_exists('transport_order_step', 'transport_order_step_in_order_step_unique')
+        cr.drop_constraint_if_exists('transport_order_step', 'transport_order_step_out_order_step_unique')
+        return True
+
     # UF39.0
     def us_14182_set_journal_register_dates(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
