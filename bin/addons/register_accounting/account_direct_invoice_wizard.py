@@ -448,6 +448,24 @@ class account_direct_invoice_wizard(osv.osv_memory):
                                                                     company_id, is_inkind_donation, is_intermission, is_debit_note,
                                                                     True)
 
+    def onchange_date_invoice(self, cr, uid, ids,
+                            date_invoice=False):
+        values = {}
+
+        if date_invoice:
+            values['register_posting_date'] = date_invoice
+
+        return {'value': values}
+
+    def onchange_register_posting_date(self, cr, uid, ids,
+                            register_posting_date=False):
+        values = {}
+
+        if register_posting_date:
+            values['date_invoice'] = register_posting_date
+
+        return {'value': values}
+
 account_direct_invoice_wizard()
 
 
