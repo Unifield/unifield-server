@@ -7398,8 +7398,9 @@ class patch_scripts(osv.osv):
         update_invoice = """
             UPDATE account_invoice AS ai
             SET po_details = po.details
-            FROM purchase_order AS po
-            WHERE po.id = ai.main_purchase_id
+            FROM stock_picking AS sp
+            JOIN purchase_order po ON sp.purchase_id = po.id
+            WHERE sp.id = ai.picking_id
                 AND ai.po_details IS NULL;
         """
         cr.execute(update_invoice)
