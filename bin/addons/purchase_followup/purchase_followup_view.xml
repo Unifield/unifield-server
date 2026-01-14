@@ -36,6 +36,7 @@
         				<tree string="Followup lines" colors="orange:return_move==True">
         					<field name="line_name" />
         					<field name="line_product_id" />
+        					<field name="line_comment" />
         					<field name="line_product_qty" />
         					<field name="line_uom_id" />
         					<field name="line_confirmed_date" />
@@ -79,6 +80,7 @@
         					<field name="order_id" />
         					<field name="line_name" />
         					<field name="line_product_id" />
+        					<field name="line_comment" />
         					<field name="line_product_qty" />
         					<field name="line_uom_id" />
         					<field name="line_confirmed_date" />
