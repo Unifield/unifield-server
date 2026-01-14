@@ -227,6 +227,7 @@ class stock_incoming_processor(osv.osv):
         'manual_ito_id': fields.many2one('transport.order.in', 'Inbound Order Transport'),
         'imp_shipment_ref': fields.char(string='Ship Reference from the IN VI import', size=256, readonly=True),
         'imp_filename': fields.char(size=128, string='Filename', readonly=True),
+        'partial_process_sign_in_msg': fields.char(size=512, string='Warning for trying to partially process a signed IN', readonly=True),
     }
 
     _defaults = {
@@ -442,7 +443,11 @@ class stock_incoming_processor(osv.osv):
                         AND mp.quantity < mp.ordered_quantity LIMIT 1
                 """, (proc.picking_id.id, tuple(l_ids), proc.picking_id.id))
                 if cr.fetchone():
-                    self.write(cr, uid, proc.id, {'partial_process_sign': True, 'already_processed': False}, context=context)
+                    warning_msg = _('Warning: This IN has already been electronically validated for the full quantity. '
+                                    'Processing a partial reception will invalidate all electronic signatures on the partially received IN and on the related backorder %s. '
+                                    'All affected signatures must be re-applied. Do you want to continue ?') % (proc.picking_id.name,)
+                    self.write(cr, uid, proc.id, {'partial_process_sign': True, 'already_processed': False,
+                                                  'partial_process_sign_in_msg': warning_msg}, context=context)
                     target = not context.get('from_simu_screen') and 'new' or 'same'
                     return {
                         'type': 'ir.actions.act_window',
@@ -590,7 +595,8 @@ class stock_incoming_processor(osv.osv):
         res_id = []
         for incoming in incoming_ids:
             res_id = incoming['picking_id']['id']
-        incoming_obj.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False}, context=context)
+        incoming_obj.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False,
+                                          'partial_process_sign_in_msg': False}, context=context)
         return stock_p_obj.action_process(cr, uid, res_id, context=context)
 
     def do_save_draft(self, cr, uid, ids, context=None):
