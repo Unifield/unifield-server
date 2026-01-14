@@ -1456,7 +1456,7 @@ class purchase_order(osv.osv):
             if vals.get('pricelist_id') and partner.partner_type == 'external':
                 to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
 
-            ftf = ['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line', 'signature_id', 'partner_type']
+            ftf = ['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line', 'signature_id']
             for order in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
                 line_changed = False
                 if vals['partner_id'] != order.partner_id.id:
@@ -1496,10 +1496,9 @@ class purchase_order(osv.osv):
                             new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id, tax_line.amount, round=False)
                             tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
 
-                    # Reset signature if the partner is changed from non-external to external
-                    if order.partner_type != 'external' and partner.partner_type == 'external':
-                        self.pool.get('signature').write(cr, uid, order.signature_id.id, {'signed_off_line': False, 'signature_is_closed': False}, context=context)
-                        self.unsign_all(cr, uid, ids, context=context)
+                    # Reset signature
+                    self.pool.get('signature').write(cr, uid, order.signature_id.id, {'signed_off_line': False, 'signature_is_closed': False}, context=context)
+                    self.unsign_all(cr, uid, ids, context=context)
 
 
         return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
