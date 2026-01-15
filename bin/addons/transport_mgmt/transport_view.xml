@@ -96,6 +96,7 @@
                         <newline />
                         <field name="name" />
                         <field name="supplier_partner_id" string="Supplier" />
+                        <field name="ship_ref" />
                         <field name="customer_partner_id" string="Customer"/>
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
