@@ -18,9 +18,11 @@
                         </group>
                         <separator string="Comment" colspan="4" />
                         <field name="comment" nolabel="1" colspan="4" attrs="{'required':[('importance','!=','')]}" />
-                        <field name="patch" required="1" />
-                        <label string="" colspan="1" />
-                        <button name="add_revision" string="Add Revision" type="object" icon="gtk-go-forward" />
+                        <group colspan="4" col="6">
+                            <field name="patch" required="1" />
+                            <field name="signature" required="1" />
+                            <button name="add_revision" string="Add Revision" type="object" icon="gtk-go-forward" />
+                        </group>
                         <separator string="History of Revision" colspan="4" />
                         <field name="version_ids" colspan="4" nolabel="1">
                             <tree>

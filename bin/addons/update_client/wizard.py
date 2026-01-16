@@ -13,6 +13,11 @@ from tools import config
 import updater
 
 from .version import IMPORT_PATCH_SUCCESS, IMPORT_PATCH_INVALID, IMPORT_PATCH_UNKNOWN, IMPORT_PATCH_IGNORED
+import gnupg
+
+TRUSTED_SERVER_KEYS = {
+    "624E047CC805435DEA8DEB00C24947CA0503DD75",
+}
 
 class upgrade(osv.osv_memory):
     _name = 'sync_client.upgrade'
@@ -70,6 +75,23 @@ class upgrade(osv.osv_memory):
                     offset += len(d_patch)
             revisions.write(cr, uid, rev.id, {'patch_path': patch_name}, context=context)
 
+            proxy_sig = proxy.get_patch_signature(uuid, rev.sum)
+
+            if not proxy_sig:
+                raise osv.except_osv(
+                    _("Error!"),
+                    _("Missing signature for patch %(name)s") % rev
+                )
+
+            # XML-RPC Binary -> bytes
+            sig_b64 = proxy_sig.data
+
+            sig_name = patch_name + ".sig"
+            with open(sig_name, 'wb') as fs:
+                fs.write(sig_b64)
+
+
+
         return self.write(cr, uid, ids, {
             'message' : text,
             'state' : 'need-install',
@@ -78,6 +100,46 @@ class upgrade(osv.osv_memory):
     def restore_cleaning(self):
         self._max_count = config.get('osv_memory_count_limit')
         self._max_hours = config.get('osv_memory_age_limit')
+
+    def verify_patch_signature(self, patch_path):
+        sig_path = patch_path + ".sig"
+
+        if not os.path.exists(patch_path):
+            raise osv.except_osv(
+                _("Security error"),
+                _("Patch file missing: %s") % patch_path
+            )
+
+        if not os.path.exists(sig_path):
+            raise osv.except_osv(
+                _("Security error"),
+                _("Missing signature file for patch.")
+            )
+
+        gpg = gnupg.GPG(gnupghome="/home/odoo/.gnupg")
+
+        with open(sig_path, 'rb') as sig:
+            verify = gpg.verify_file(sig, patch_path)
+
+        if not verify:
+            raise osv.except_osv(
+                _("Security error"),
+                _("Invalid patch signature.")
+            )
+
+        if verify.fingerprint not in TRUSTED_SERVER_KEYS:
+            raise osv.except_osv(
+                _("Security error"),
+                _("Patch signed with untrusted key:\n%s") % verify.fingerprint
+            )
+
+        self._logger.info(
+            "Patch %s verified successfully (fingerprint %s)",
+            patch_path,
+            verify.fingerprint
+        )
+
+        return True
 
     def do_upgrade(self, cr, uid, ids, context=None, sync_type='manual'):
         """Actualy, prepare the upgrade to be done at server restart"""
@@ -120,6 +182,9 @@ class upgrade(osv.osv_memory):
                 self.restore_cleaning()
                 return True
         next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
+        for rev in self.pool.get('sync_client.version').browse(cr, uid, next_revisions, context=context):
+            patch_path = rev.patch_path
+            self.verify_patch_signature(patch_path)
         ## Prepare
         (status, message, values) = updater.do_prepare(cr, next_revisions)
         wiz_value = {'message':_(message)}

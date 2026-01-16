@@ -185,6 +185,25 @@ class sync_manager(osv.osv):
         self._logger.info("::::::::[%s] download patch" % (entity.name, ))
         return self.pool.get('sync_server.version')._get_zip(cr, 1, revision, offset=offset)
 
+    def get_patch_signature(self, cr, uid, uuid, checksum, context=None):
+        version_pool = self.pool.get("sync_server.version")
+
+        version_ids = version_pool.search(
+            cr, uid, [('sum', '=', checksum)], context=context
+        )
+        if not version_ids:
+            return False
+
+        version = version_pool.browse(cr, uid, version_ids[0], context=context)
+
+        patch_path = version_pool._get_patch_path(cr, uid, version.id)
+        sig_path = patch_path + ".sig"
+
+        if not os.path.exists(sig_path):
+            return False
+
+        with open(sig_path, "rb") as f:
+            return f.read()
 
 sync_manager()
 

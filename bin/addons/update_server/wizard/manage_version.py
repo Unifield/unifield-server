@@ -14,6 +14,9 @@ from base64 import b64decode
 import zipfile
 from io import BytesIO
 import mimetypes
+import hashlib
+from io import BytesIO
+from datetime import datetime
 
 mimetypes.init()
 
@@ -31,6 +34,7 @@ class manage_version(osv.osv):
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag"),
         'state' : fields.selection([('upload','Upload'), ('error', 'Error')], "State"),
         'message' : fields.text("Message"),
+        'signature': fields.text("Signature"),
     }
 
     def _get_version(self, cr, uid, context=None):
@@ -61,6 +65,20 @@ class manage_version(osv.osv):
                 return self.write(cr, uid, ids, {
                     'state' : 'error',
                     'message' : "The patch you tried to upload doesn't looks like a ZIP file! Please upload only zip files.",
+                }, context=context)
+
+            if not wiz.signature:
+                return self.write(cr, uid, ids, {
+                    'state': 'error',
+                    'message': "Missing signature.",
+                }, context=context)
+
+            try:
+                signature = b64decode(wiz.signature)
+            except Exception:
+                return self.write(cr, uid, ids, {
+                    'state': 'error',
+                    'message': "Invalid base64 signature.",
                 }, context=context)
 
             # Compute the MD5 checksum for this patch
@@ -123,10 +141,15 @@ class manage_version(osv.osv):
             f.write(patch)
             f.close()
 
+            sig_file = patch_file + ".sig"
+            fs = open(sig_file, 'wb')
+            fs.write(signature)
+            fs.close()
 
             self.write(cr, uid, [wiz.id], {'version_ids' : [(4, res_id)],
                                            'name' : False,
                                            'patch' : False,
+                                           'signature' : False,
                                            'importance' : False,
                                            'date' : fields.datetime.now(),
                                            'comment' : False},
