@@ -184,7 +184,7 @@
         
         <menuitem
              id="warehouse_consumption_menu"
-             name="Consumption reports"
+             name="Consumption Reports"
              sequence="-20"
              parent="stock.next_id_61" />
              
