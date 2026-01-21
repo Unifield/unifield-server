@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from osv import osv
 from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
 from tools.translate import _
@@ -8,110 +9,150 @@ from openpyxl.cell import WriteOnlyCell
 
 class tkc_kcl_comparison_parser(XlsxReportParser):
 
-    def add_cell(self, value=None, style='default_style'):
+    def add_cell(self, value=None, style='default_style', number_format=None):
         # None value set an xls empty cell
         # False value set the xls False()
         new_cell = WriteOnlyCell(self.workbook.active, value=value)
         new_cell.style = style
+        if number_format:
+            new_cell.number_format = number_format
         self.rows.append(new_cell)
 
     def generate(self, context=None):
-        wizard = self.pool.get('wizard.return.from.unit.import').browse(self.cr, self.uid, self.ids[0], context=context)
-        pick = wizard.picking_id
+        kcl = self.pool.get('wizard.return.from.unit.import').browse(self.cr, self.uid, self.ids[0], context=context)
+
+        if not kcl.composition_version_id:
+            raise osv.except_osv(_('Error'), _('You can only generate this report on a KCL using a Version'))
 
         sheet = self.workbook.active
-        sheet.sheet_view.showGridLines = False
-
-        # MSF logo
-        img = image.Image(PILImage.open(file_open('addons/msf_doc_import/report/images/msf-logo.png', 'rb')))
-        img.anchor = 'A1'
-        sheet.add_image(img)
-
-        sheet.column_dimensions['A'].width = 7.0
-        sheet.column_dimensions['B'].width = 20.0
-        sheet.column_dimensions['C'].width = 65.0
-        sheet.column_dimensions['D'].width = 15.0
-        sheet.column_dimensions['E'].width = 10.0
-        sheet.column_dimensions['F'].width = 20.0
-        sheet.column_dimensions['G'].width = 20.0
-        sheet.column_dimensions['H'].width = 65.0
-
-        sheet.append([])
-        sheet.append([])
-        sheet.append([])
-        sheet.append([])
-        sheet.append([])
+        self.duplicate_column_dimensions(default_width=10.75)
 
         # Styles
-        default_style = self.create_style_from_template('default_style', 'A1')
+        default_style = self.create_style_from_template('default_style', 'A3')
 
-        big_title_style = self.create_style_from_template('big_title_style', 'C6')
-        medium_title_style = self.create_style_from_template('medium_title_style', 'F6')
-        boldl_open_bottom_style = self.create_style_from_template('boldl_open_bottom_style', 'C8')
-        boldr_open_bottom_style = self.create_style_from_template('boldr_open_bottom_style', 'D8')
-        openl_top_style = self.create_style_from_template('openl_top_style', 'C9')
-        openr_top_style = self.create_style_from_template('openr_top_style', 'D9')
-        date_style = self.create_style_from_template('date_style', 'J2')
-        bold_frame = self.create_style_from_template('bold_frame', 'B24')
-        frame = self.create_style_from_template('frame', 'B27')
+        title_style = self.create_style_from_template('title_style', 'A22')
+        header_style = self.create_style_from_template('header_style', 'A1')
+        header_dark_style = self.create_style_from_template('header_dark_style', 'N29')
+        header_bold_style = self.create_style_from_template('header_bold_style', 'A4')
+        header_blue_style = self.create_style_from_template('header_blue_style', 'E29')
+        line_style = self.create_style_from_template('line_style', 'B1')
+        line_grey_style = self.create_style_from_template('line_grey_style', 'A10')
+        line_dark_grey_style = self.create_style_from_template('line_dark_grey_style', 'A30')
+        line_date_style = self.create_style_from_template('line_date_style', 'B2')
+        line_float_style = self.create_style_from_template('line_float_style', 'F31')
+        line_float_dark_grey_style = self.create_style_from_template('line_float_dark_grey_style', 'F30')
 
-        line_header_style = self.create_style_from_template('line_header_style', 'A12')
-        line_right_style = self.create_style_from_template('line_right_style', 'A13')
-        line_style = self.create_style_from_template('line_style', 'B13')
-        line_date_style = self.create_style_from_template('line_date_style', 'J3')
-        float_style = self.create_style_from_template('float_style', 'J4')
+        # Header data: 4 frames
+        cell_1_db_title = WriteOnlyCell(sheet, value=_('DB/Instance name'))
+        cell_1_db_title.style = header_style
+        instance_name = self.pool.get('res.users').browse(self.cr, self.uid, [self.uid], context=context)[0].company_id.instance_id.name
+        cell_1_db_name = WriteOnlyCell(sheet, value=instance_name or '')
+        cell_1_db_name.style = line_style
+        sheet.append([cell_1_db_title, cell_1_db_name])
+        sheet.merged_cells.ranges.append("B1:C1")
 
-        sheet.title = _('Return from Unit')
-        # Empty cells
-        cell_empty = WriteOnlyCell(sheet)
-        cell_empty.style = default_style
-        cell_empty_date = WriteOnlyCell(sheet)
-        cell_empty_date.style = date_style
-
-        # Header data
-        cell_empty_title = WriteOnlyCell(sheet)
-        cell_empty_title.style = big_title_style
-        cell_title = WriteOnlyCell(sheet, value=_('Return of Products'))
-        cell_title.style = big_title_style
-        self.apply_template_style('C6', cell_title)
-        cell_r = WriteOnlyCell(sheet, value=_('Ref:'))
-        cell_r.style = medium_title_style
-        cell_iname = WriteOnlyCell(sheet, value=pick.name)
-        cell_iname.style = default_style
-        sheet.append([cell_empty, cell_empty, cell_title, cell_empty_title, cell_empty, cell_r, cell_iname])
-        sheet.merged_cells.ranges.append("C6:D6")
+        cell_1_generated_title = WriteOnlyCell(sheet, value=_('Generated on'))
+        cell_1_db_title.style = header_style
+        cell_1_generated_name = WriteOnlyCell(sheet, value=datetime.now().strftime('%Y-%m-%d'))
+        cell_1_generated_name.style = line_date_style
+        sheet.append([cell_1_generated_title, cell_1_generated_name])
+        sheet.merged_cells.ranges.append("B2:C2")
 
         sheet.append([])
 
-        cell_ft = WriteOnlyCell(sheet, value=_('From:'))
-        cell_ft.style = boldl_open_bottom_style
-        cell_tt = WriteOnlyCell(sheet, value=_('To:'))
-        cell_tt.style = boldl_open_bottom_style
-        cell_empty_r_open_bottom = WriteOnlyCell(sheet)
-        cell_empty_r_open_bottom.style = boldr_open_bottom_style
-        sheet.append([cell_empty, cell_empty, cell_ft, cell_empty_r_open_bottom, cell_empty, cell_tt, cell_empty_r_open_bottom])
-        sheet.merged_cells.ranges.append("C8:D8")
-        sheet.merged_cells.ranges.append("F8:G8")
+        cell_2_title = WriteOnlyCell(sheet, value=_('Theoretical Kit Composition details'))
+        cell_2_title.style = header_bold_style
+        sheet.append([cell_2_title])
+        sheet.merged_cells.ranges.append("A4:C4")
 
-        sheet.row_dimensions[9].height = 70
-        cell_ext_cu = WriteOnlyCell(sheet, value=pick.ext_cu.name)
-        cell_ext_cu.style = openl_top_style
-        cell_empty_l_open_top = WriteOnlyCell(sheet)
-        cell_empty_l_open_top.style = openl_top_style
-        cell_empty_r_open_top = WriteOnlyCell(sheet)
-        cell_empty_r_open_top.style = openr_top_style
-        sheet.append([cell_empty, cell_empty, cell_ext_cu, cell_empty_r_open_top, cell_empty, cell_empty_l_open_top, cell_empty_r_open_top])
-        sheet.merged_cells.ranges.append("C9:D9")
-        sheet.merged_cells.ranges.append("F9:G9")
+        cell_2_prod_title = WriteOnlyCell(sheet, value=_('TKC/Product'))
+        cell_2_prod_title.style = header_style
+        cell_2_prod_name = WriteOnlyCell(sheet, value=kcl.composition_version_id.composition_product_id.name)
+        cell_2_prod_name.style = line_style
+        sheet.append([cell_2_prod_title, cell_2_prod_name])
+        sheet.merged_cells.ranges.append("B5:C5")
+
+        cell_2_ver_title = WriteOnlyCell(sheet, value=_('TKC/Version'))
+        cell_2_ver_title.style = header_style
+        cell_2_ver_name = WriteOnlyCell(sheet, value=kcl.composition_version_id.composition_version_txt)
+        cell_2_ver_name.style = line_style
+        sheet.append([cell_2_ver_title, cell_2_ver_name])
+        sheet.merged_cells.ranges.append("B6:C6")
+
+        cell_2_date_title = WriteOnlyCell(sheet, value=_('TKC/Creation Date'))
+        cell_2_date_title.style = header_style
+        cell_2_date_name = WriteOnlyCell(sheet, value=kcl.composition_version_id.composition_creation_date)
+        cell_2_date_name.style = line_date_style
+        sheet.append([cell_2_date_title, cell_2_date_name])
+        sheet.merged_cells.ranges.append("B7:C7")
+
+        cell_2_active_title = WriteOnlyCell(sheet, value=_('TKC/Active'))
+        cell_2_active_title.style = header_style
+        cell_2_active_name = WriteOnlyCell(sheet, value=kcl.composition_version_id.active and _('Yes') or _('No'))
+        cell_2_active_name.style = line_style
+        sheet.append([cell_2_active_title, cell_2_active_name])
+        sheet.merged_cells.ranges.append("B8:C8")
+
+        cell_notes = WriteOnlyCell(sheet, value=_('Notes'))
+        cell_notes.style = header_style
+        sheet.append([cell_notes])
+        sheet.merged_cells.ranges.append("A9:C9")
+
+        sheet.row_dimensions[9].height = 30
+        cell_notes2 = WriteOnlyCell(sheet, value='')
+        cell_notes2.style = line_grey_style
+        sheet.append([cell_notes2])
+        sheet.merged_cells.ranges.append("A10:C10")
 
         sheet.append([])
 
-        cell_sd = WriteOnlyCell(sheet, value=_('Creation Date: %s') % (datetime.strptime(pick.date, '%Y-%m-%d %H:%M:%S').strftime("%d/%m/%Y %H:%M"),))
-        cell_sd.style = default_style
-        cell_dd = WriteOnlyCell(sheet, value=_('Expected Receipt Date: %s') % (datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime("%d/%m/%Y %H:%M"),))
-        cell_dd.style = default_style
-        sheet.append([cell_empty, cell_empty, cell_sd, cell_empty_date, cell_empty, cell_empty, cell_dd, cell_empty_date])
-        sheet.merged_cells.ranges.append("G11:H11")
+        cell_3_title = WriteOnlyCell(sheet, value=_('Kit Composition List details'))
+        cell_3_title.style = header_bold_style
+        sheet.append([cell_3_title])
+        sheet.merged_cells.ranges.append("A12:C12")
+
+        cell_3_prod_title = WriteOnlyCell(sheet, value=_('KCL/Product'))
+        cell_3_prod_title.style = header_style
+        cell_3_prod_name = WriteOnlyCell(sheet, value=kcl.composition_product_id.name)
+        cell_3_prod_name.style = line_style
+        sheet.append([cell_3_prod_title, cell_3_prod_name])
+        sheet.merged_cells.ranges.append("B13:C13")
+
+        cell_3_ver_title = WriteOnlyCell(sheet, value=_('KCL/Version'))
+        cell_3_ver_title.style = header_style
+        sheet.append([cell_3_ver_title, cell_2_ver_name])
+        sheet.merged_cells.ranges.append("B14:C14")
+
+        cell_3_bn_title = WriteOnlyCell(sheet, value=_('KCL/Batch Nb'))
+        cell_3_bn_title.style = header_style
+        cell_3_bn_name = WriteOnlyCell(sheet, value=kcl.composition_lot_id and kcl.composition_lot_id.name or '')
+        cell_3_bn_name.style = line_style
+        sheet.append([cell_3_bn_title, cell_3_bn_name])
+        sheet.merged_cells.ranges.append("B15:C15")
+
+        cell_3_exp_title = WriteOnlyCell(sheet, value=_('KCL/Expiry Date'))
+        cell_3_exp_title.style = header_style
+        cell_3_exp_name = WriteOnlyCell(sheet, value=kcl.composition_exp)
+        cell_3_exp_name.style = line_date_style
+        sheet.append([cell_3_exp_title, cell_3_exp_name])
+        sheet.merged_cells.ranges.append("B16:C16")
+
+        cell_3_date_title = WriteOnlyCell(sheet, value=_('KCL/Creation Date'))
+        cell_3_date_title.style = header_style
+        cell_3_date_name = WriteOnlyCell(sheet, value=kcl.composition_creation_date)
+        cell_3_date_name.style = line_date_style
+        sheet.append([cell_3_date_title, cell_3_date_name])
+        sheet.merged_cells.ranges.append("B17:C17")
+
+        sheet.append([cell_notes])
+        sheet.merged_cells.ranges.append("A18:C18")
+
+        sheet.row_dimensions[19].height = 30
+        sheet.append([cell_notes2])
+        sheet.merged_cells.ranges.append("A19:C19")
+
+        sheet.append([])
+
 
         row_headers = [
             (_('Line')),
