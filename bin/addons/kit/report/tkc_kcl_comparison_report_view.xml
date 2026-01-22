@@ -8,9 +8,9 @@
             name="report_tkc_kcl_comparison"
             report_type="openpyxl"
             auto="False"
-            target_filename="${_('TKC KCL Comparison Report')}"
+            target_filename="${eval(_get_comparison_report_name)}"
             menu="True"
-            sequence="3"
+            sequence="4"
          />
     </data>
 </openerp>
