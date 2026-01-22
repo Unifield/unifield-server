@@ -720,6 +720,10 @@ msgstr ""
 msgid "Login"
 msgstr "Identification"
 
+#: controllers/templates/login.mako:4
+msgid "Forgotten Password"
+msgstr "Mot de passe oublié"
+
 #: controllers/templates/database.mako:64
 msgid "Password"
 msgstr "Mot de passe"

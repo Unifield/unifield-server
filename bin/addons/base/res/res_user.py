@@ -38,6 +38,9 @@ from lxml import etree
 from tools.misc import fakeUid
 from tools.misc import get_global_instance_level
 from tools.misc import search_global_instance_level
+from tools import config
+import uuid
+import time
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -597,6 +600,13 @@ class users(osv.osv):
         'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1),  # deprecated
         'reactivation_date': fields.datetime('Reactivation date', readonly=1),
         'signee_user': fields.boolean('Signee Only'),
+        'reset_password_token': fields.char(
+            'Reset Password Token',
+            size=64
+        ),
+        'reset_password_date': fields.datetime(
+            'Reset Password Date'
+        ),
     }
 
     def search_web(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -1288,6 +1298,79 @@ class users(osv.osv):
                 cr.close()
             return result
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
+
+    def send_reset_password_email(self, cr, uid, login, email, context=None):
+            context = context or {}
+
+            user_ids = self.search(cr, uid, [
+                ('login', '=', login),
+                ('active', '=', True),
+            ], context=context)
+
+            if not user_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('No user found with this login and email.')
+                )
+
+            user = self.browse(cr, uid, user_ids[0], context=context)
+
+            token = uuid.uuid4().hex
+            now = time.strftime('%Y-%m-%d %H:%M:%S')
+
+            self.write(cr, uid, [user.id], {
+                'reset_password_token': token,
+                'reset_password_date': now,
+            }, context=context)
+
+            base_url = config.get('web.base.url', 'http://0.0.0.0:8061')
+            reset_url = "%s/openerp/reset_password?token=%s&db=%s" % (
+                base_url, token, cr.dbname
+            )
+
+            body = u"""
+                Bonjour %s,
+            
+                Vous avez demandé la réinitialisation de votre mot de passe.
+            
+                Lien :
+                %s
+            
+                Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+            """ % (user.name, reset_url)
+
+            tools.email_send(email_from=None, email_to=[email],
+                             subject='Password reset',
+                             body=body)
+
+            return True
+
+    def reset_password_from_token(self, cr, uid, token, new_password, context=None):
+        context = context or {}
+
+        user_ids = self.search(cr, uid, [
+            ('reset_password_token', '=', token),
+            ('active', '=', True),
+        ], context=context)
+
+        if not user_ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('Invalid or expired reset token.')
+            )
+
+        user = self.browse(cr, uid, user_ids[0], context=context)
+
+        security.check_password_validity(self, cr, uid, '', new_password, new_password, user.login)
+        new_passwd = bcrypt.encrypt(tools.ustr(new_password))
+
+        self.write(cr, uid, [user.id], {
+            'password': new_passwd,
+            'reset_password_token': False,
+            'reset_password_date': False,
+        }, context=context)
+
+        return True
 
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
