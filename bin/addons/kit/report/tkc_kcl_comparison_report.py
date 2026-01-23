@@ -178,6 +178,7 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
         sheet.append([cell_4_art, cell_4_art_percent, cell_empty])
         sheet.merged_cells.ranges.append("B22:C22")
 
+        sheet.row_dimensions[23].height = 45
         cell_4_qty = WriteOnlyCell(sheet, value=_('KCL-TKC Quantity Deviation (%)'))
         cell_4_qty.style = header_style
         cell_4_qty_percent = WriteOnlyCell(sheet, value=deviation_data['qty_deviation'])
