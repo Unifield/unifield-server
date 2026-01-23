@@ -358,7 +358,7 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
             comparison_data[prod.id]['sum_kcl_qty'] += kit_item.item_qty
             comparison_data[prod.id]['sum_diff'] = comparison_data[prod.id]['sum_kcl_qty'] - comparison_data[prod.id]['sum_tkc_qty']
 
-        prod_deviation = round((len(kcl_prod) - len(tkc_prod) / len(tkc_prod)) * 100)
+        prod_deviation = round(((len(kcl_prod) - len(tkc_prod)) / len(tkc_prod)) * 100)
         qty_deviation = []
         for prod_id in list(set(tkc_prod + kcl_prod)):
             if comparison_data.get(prod_id):
