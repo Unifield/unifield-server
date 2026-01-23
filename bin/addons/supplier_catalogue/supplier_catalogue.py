@@ -139,15 +139,18 @@ class supplier_catalogue(osv.osv):
                     AND (COALESCE(c.period_from, '1970-01-01'), COALESCE(c.period_to, '2999-12-31'))
                         OVERLAPS (TO_DATE(%s, 'YYYY-MM-DD'), TO_DATE(%s, 'YYYY-MM-DD'))
             """, (cat.id, cat.partner_id.id, cat.currency_id.id, entity_identifier_like, period_from, period_to))
-            overlap_write = {}
-            for x in cr.fetchall():
-                new_period_to = (datetime.strptime(period_from, '%Y-%m-%d') + relativedelta(days=-1)).strftime('%Y-%m-%d')
+            overlap_data = cr.fetchall()
+            nb_overlap = len(overlap_data)
+            for x in overlap_data:
+                # In case there is more than 1 overlap, do not put the same dates on several catalogues
+                new_period_to = (datetime.strptime(period_from, '%Y-%m-%d') + relativedelta(days=-nb_overlap)).strftime('%Y-%m-%d')
                 overlap_write = {'period_to': new_period_to}
                 # Prevent having period_from > period_to
                 if x[1] > new_period_to:
                     overlap_write['period_from'] = new_period_to
                 self.write(cr, uid, [x[0]], overlap_write, context=context)
-            if overlap_write and not no_period_from:
+                nb_overlap -= 1
+            if overlap_data and not no_period_from:
                 to_write['period_from'] = period_from
 
         if to_write:
