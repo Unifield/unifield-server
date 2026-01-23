@@ -347,12 +347,12 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
                     'kcl_lines': [],
                 }
             comparison_data[prod.id]['kcl_lines'].append({
-                'kcl_module': kit_item.item_module,
+                'kcl_module': kit_item.item_module or '',
                 'kcl_qty': kit_item.item_qty,
                 'kcl_bn': kit_item.item_lot or '',
                 'kcl_exp': kit_item.item_exp or '',
                 'kcl_comment': kit_item.comment or '',
-                'kcl_asset': kit_item.item_asset_id and kit_item.item_asset_id or '',
+                'kcl_asset': kit_item.item_asset_id and kit_item.item_asset_id.name or '',
             })
             comparison_data[prod.id]['sum_kcl_qty'] += kit_item.item_qty
             comparison_data[prod.id]['sum_diff'] = comparison_data[prod.id]['sum_kcl_qty'] - comparison_data[prod.id]['sum_tkc_qty']
