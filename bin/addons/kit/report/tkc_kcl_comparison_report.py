@@ -143,7 +143,7 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
 
         cell_3_exp_title = WriteOnlyCell(sheet, value=_('KCL/Expiry Date'))
         cell_3_exp_title.style = header_style
-        cell_3_exp_name = WriteOnlyCell(sheet, value=kcl.composition_exp and datetime.strptime(tkc.composition_exp, '%Y-%m-%d') or '')
+        cell_3_exp_name = WriteOnlyCell(sheet, value=kcl.composition_exp and datetime.strptime(kcl.composition_exp, '%Y-%m-%d') or '')
         cell_3_exp_name.style = line_date_style
         sheet.append([cell_3_exp_title, cell_3_exp_name, cell_empty])
         sheet.merged_cells.ranges.append("B16:C16")
