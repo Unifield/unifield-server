@@ -141,7 +141,7 @@ class signature(osv.osv):
         '''
         Check if the document allows the management of users allowed to sign.
         By default, follow the same rules as allowed_to_be_signed_unsigned except for:
-            - IN: Only on Available/Available Shipped/Available Updated
+            - IN: Only on Available/Available Shipped/Available Updated instead of only Closed.
         '''
         if context is None:
             context = {}
