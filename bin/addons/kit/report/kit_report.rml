@@ -76,16 +76,16 @@
         </para>
 
         <!-- Header Information -->
-        <blockTable colWidths="80.0,235.0,85.0,110.0,90.0,120.0" style="HeaderInfo">
+        <blockTable colWidths="110.0,235.0,85.0,110.0,90.0,90.0" style="HeaderInfo">
             <tr>
                 <td>
-                    <para style="HeaderRight">Product :</para>
+                    <para style="HeaderRight">Kit/Product Code :</para>
                 </td>
                 <td>
                     <para style="Header">[[ o.composition_product_id and get_name('product.product', o.composition_product_id.id) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Version :</para>
+                    <para style="HeaderRight">Kit/Version :</para>
                 </td>
                 <td>
                     <para style="Header">[[ o.composition_type == 'theoretical' and o.composition_version_txt or get_name('composition.kit', o.composition_version_id.id) ]]</para>
@@ -133,7 +133,7 @@
                         <para style="LHeader">Module</para>
                     </td>
                     <td>
-                        <para style="LHeader">Product</para>
+                        <para style="LHeader">Component/Product Code</para>
                     </td>
                     <td>
                         <para style="LHeader">Comment</para>
@@ -209,7 +209,7 @@
                         <para style="LHeader">Module</para>
                     </td>
                     <td>
-                        <para style="LHeader">Product</para>
+                        <para style="LHeader">Component/Product Code</para>
                     </td>
                     <td>
                         <para style="LHeader">Comment</para>
