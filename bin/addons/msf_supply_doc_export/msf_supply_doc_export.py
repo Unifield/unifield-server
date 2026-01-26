@@ -1459,7 +1459,9 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         invoices = {}
 
         self.cr.execute('''
-            select i.picking_id as pick_id, l.order_line_id as pol_id, i.number as inv_number, i.currency_id as curr_id, sum(l.price_unit*l.quantity) as price_total, sum(l.quantity) as qty,  i.date_invoice as date, i.document_date as document_date
+            select i.picking_id as pick_id, l.order_line_id as pol_id, i.number as inv_number, i.currency_id as curr_id,
+                sum(l.price_unit*l.quantity) as price_total, sum(l.quantity) as qty,  i.date_invoice as date,
+                i.document_date as document_date, l.discount as discount
             from
                 account_invoice i, account_invoice_line l
             where
@@ -1467,7 +1469,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 l.invoice_id = i.id and
                 l.order_line_id in %s and
                 i.state != 'cancel'
-            group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice, i.document_date
+            group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice, i.document_date, l.discount
         ''', (tuple(wizard.pol_ids),)
         )
         for inv in self.cr.dictfetchall():
@@ -1567,7 +1569,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 in_unit_price = line[20] or 0.00
                 func_in_unit_price = round(curr_obj.compute(self.cr, self.uid, line[24], wizard.company_currency_id.id,
                                                             in_unit_price, round=False, context=self.localcontext), 2)
-            si_unit_price, func_si_unit_price = '-', '-'
+            si_unit_price, func_si_unit_price, si_discount_price, func_si_discount_price = '-', '-', '-', '-'
             si_ref = ''
             key = (line[26], line[0])
             if key in invoices and invoices[key]['qty']:
@@ -1579,19 +1581,26 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                                                      context={'currency_date': curr_date or time.strftime('%Y-%m-%d')})
                 func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], wizard.company_currency_id.id,
                                                             si_unit_price, round=False, context=self.localcontext), 2)
+                si_discount = invoices[key]['discount'] or 0
+                si_discount_price = si_discount and si_unit_price - si_unit_price * (si_discount/100) or si_unit_price
+                func_si_discount_price = si_discount and func_si_unit_price - func_si_unit_price * (si_discount/100) or func_si_unit_price
+
             func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, line[17], wizard.company_currency_id.id,
                                                          line[4], round=False, context=self.localcontext), 2)
 
             # Discrepancies
-            discrep_in_po, discrep_si_po, func_discrep_in_po, func_discrep_si_po = '-', '-', '-', '-'
+            discrep_in_po, discrep_si_po, discrep_si_discount = '-', '-', '-'
+            func_discrep_in_po, func_discrep_si_po, func_discrep_si_discount = '-', '-', '-'
             if in_unit_price != '-':
                 discrep_in_po = round(in_unit_price - line[4], 4)
             if si_unit_price != '-':
                 discrep_si_po = round(si_unit_price - line[4], 4)
+                discrep_si_discount = round(si_unit_price - si_discount_price, 4)
             if func_in_unit_price != '-':
                 func_discrep_in_po = round(func_in_unit_price - func_pol_unit_price, 4)
             if func_si_unit_price != '-':
                 func_discrep_si_po = round(func_si_unit_price - func_pol_unit_price, 4)
+                func_discrep_si_discount = round(func_si_unit_price - func_si_discount_price, 4)
 
             # Dates comparison and Actual Supplier Lead Time
             days_cdd_receipt, days_rdd_receipt, days_crea_receipt, act_sup_lt, discrep_lt_act_theo = '-', '-', '-', '-', '-'
@@ -1621,14 +1630,18 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 'po_unit_price': line[4],
                 'in_unit_price': in_unit_price,
                 'si_unit_price': si_unit_price,
+                'si_discount_price': si_discount_price,
                 'discrep_in_po': discrep_in_po,
                 'discrep_si_po': discrep_si_po,
+                'discrep_si_discount': discrep_si_discount,
                 'func_cat_unit_price': func_cat_unit_price,
                 'func_po_unit_price': func_pol_unit_price,
                 'func_in_unit_price': func_in_unit_price,
                 'func_si_unit_price': func_si_unit_price,
+                'func_si_discount_price': func_si_discount_price,
                 'func_discrep_in_po': func_discrep_in_po,
                 'func_discrep_si_po': func_discrep_si_po,
+                'func_discrep_si_discount': func_discrep_si_discount,
                 'po_crea_date': line[6],
                 'po_vali_date': line[7],
                 'po_conf_date': line[8],
