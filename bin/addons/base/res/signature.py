@@ -137,10 +137,40 @@ class signature(osv.osv):
             ret[_id] = available
         return ret
 
+    def _get_allowed_to_manage_user(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Check if the document allows the management of users allowed to sign.
+        By default, follow the same rules as allowed_to_be_signed_unsigned except for:
+            - IN: Only on Available/Available Shipped/Available Updated
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for sign in self.read(cr, uid, ids, ['allowed_to_be_signed_unsigned', 'signature_res_model', 'signature_res_id']):
+            allow = True
+            model_obj = self.pool.get(sign['signature_res_model'])
+            if (sign['signature_res_model'] in ('sale.order', 'purchase.order') and sign['signature_res_id'] and
+                    model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('draft', 'draft_p', 'validated', 'validated_p')) \
+                    or (sign['signature_res_model'] == 'physical.inventory' and sign['signature_res_id'] and
+                        model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('validated', 'confirmed') and
+                        not context.get('pi_cancel_reset')):
+                allow = False
+            elif sign['signature_res_model'] == 'stock.picking' and sign['signature_res_id']:
+                pick = model_obj.read(cr, uid, sign['signature_res_id'], ['type', 'subtype', 'state'])
+                if (pick['type'] == 'internal' and pick['subtype'] == 'standard' and pick['state'] not in ('confirmed', 'assigned')) \
+                        or (pick['type'] == 'in' and pick['subtype'] == 'standard' and pick['state'] not in ['assigned', 'shipped', 'updated']):
+                    allow = False
+            res[sign['id']] = allow
+        return res
+
     def _get_allowed_to_be_signed_unsigned(self, cr, uid, ids, field_name, args, context=None):
         '''
         Check if signature and un-signature is permitted on the document.
         For FO/IR/PO, only draft and validated documents. For PI, only validated and confirmed documents.
+        For IN, only closed documents.
         For INT, only non-available and available documents.
         No restrictions on others
         '''
@@ -161,7 +191,8 @@ class signature(osv.osv):
                 allow = False
             elif sign['signature_res_model'] == 'stock.picking' and sign['signature_res_id']:
                 pick = model_obj.read(cr, uid, sign['signature_res_id'], ['type', 'subtype', 'state'])
-                if pick['type'] == 'internal' and pick['subtype'] == 'standard' and pick['state'] not in ('confirmed', 'assigned'):
+                if (pick['type'] == 'internal' and pick['subtype'] == 'standard' and pick['state'] not in ('confirmed', 'assigned')) \
+                        or (pick['type'] == 'in' and pick['subtype'] == 'standard' and pick['state'] != 'done'):
                     allow = False
             res[sign['id']] = allow
         return res
@@ -229,6 +260,7 @@ class signature(osv.osv):
         'signature_available': fields.function(_get_signature_available, type='boolean', string='Signature Available', method=1),
         'signature_closed_date': fields.datetime('Date of signature closure', readonly=1),
         'signature_closed_user': fields.many2one('res.users', 'Closed by', readonly=1),
+        'allowed_to_manage_user': fields.function(_get_allowed_to_manage_user, type='boolean', string='Allowed to Manage Users allowed to sign', method=1),
         'allowed_to_be_signed_unsigned': fields.function(_get_allowed_to_be_signed_unsigned, type='boolean', string='Allowed to be signed/un-signed', method=1),
         'allowed_to_be_locked': fields.function(_get_allowed_to_be_locked, type='boolean', string='Allowed to be locked', method=1),
         'allowed_to_be_closed': fields.function(_get_allowed_to_be_closed, type='boolean', string='Allowed to be closed', method=1),

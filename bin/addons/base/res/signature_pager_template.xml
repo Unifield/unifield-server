@@ -21,7 +21,7 @@
             type="object"
             colspan="2"
             icon="terp-personal"
-            attrs="{'readonly': ['|', '|', '|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed'), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}"
+            attrs="{'readonly': ['|', '|', '|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed'), ('signed_off_line', '=', True), ('allowed_to_manage_user', '=', False)]}"
             ignore_access_error="1"
         />
         <group colspan="2" attrs="{'invisible': ['|', ('allowed_to_be_locked', '=', False), ('allowed_to_be_signed_unsigned', '=', False)]}">
@@ -38,6 +38,7 @@
             <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="4" />
         </group>
         <newline />
+        <field name="allowed_to_manage_user" invisible="1" />
         <field name="allowed_to_be_signed_unsigned" invisible="1" />
         <field name="allowed_to_be_locked" invisible="1" />
         <field name="allowed_to_be_closed" invisible="1" />
