@@ -1044,9 +1044,11 @@ class patch_scripts(osv.osv):
         entity_obj = self.pool.get('sync.client.entity')
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if entity_obj and instance and instance.level == 'section':
-            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ'):
+            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ', 'HQ_UBUNTU'):
                 ent = entity_obj.get_entity(cr, uid)
                 oc = ent.oc.upper()
+                if oc == 'UBUNTU':
+                    oc = 'OCB'
                 values_mapping = {
                     'Yes': 't',
                     'Kit/Module': 'kit',
@@ -1092,7 +1094,7 @@ class patch_scripts(osv.osv):
                                     """+cond, tuple(params)) # not_a_user_entry
                                 if not cr.rowcount:
                                     self._logger.warn('Line number %s, nomen %s not found' % (line_number, nom))
-                                    return False
+                                    continue
                                 parent_id = [x[0] for x in cr.fetchall()]
                                 level += 1
                         for n_id in parent_id:
