@@ -29,10 +29,10 @@ class currency_setup(osv.osv_memory):
     _inherit = 'res.config'
 
     _columns = {
-        'functional_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF'), ('kes', 'KES')], string='Functional currency',
+        'functional_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF')], string='Functional currency',
                                           required=True),
         'esc_id': fields.many2one('res.currency', string="ESC Currency", readonly=True),
-        'section_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF'),('kes', 'KES')], string='Section currency',
+        'section_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF')], string='Section currency',
                                        readonly=True),
         'second_time': fields.boolean('Config. Wizard launched for the second time'),
     }
@@ -72,20 +72,12 @@ class currency_setup(osv.osv_memory):
         Fill the delivery process field in company
         '''
         assert len(ids) == 1, "We should only get one object from the form"
-
-        rate_obj = self.pool.get('res.currency.rate')
-
         payload = self.browse(cr, uid, ids[0], context=context)
 
         if payload.functional_id == 'eur':
             cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'EUR')[1]
-        elif payload.functional_id == 'chf':
+        else:
             cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'CHF')[1]
-        elif payload.functional_id == 'kes':
-            cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'KES')[1]
-
-        if not rate_obj.search_exists(cr, uid, [('currency_id', '=', cur_id)]):
-            rate_obj.create(cr, uid, {'currency_id': cur_id, 'name': '2014-01-01', 'rate': 1})
 
         if not self.pool.get('res.currency').read(cr, uid, cur_id, ['active'], context=context)['active']:
             self.pool.get('res.currency').write(cr, uid, cur_id, {'active': True}, context=context)

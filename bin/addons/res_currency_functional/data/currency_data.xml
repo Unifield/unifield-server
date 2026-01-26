@@ -2,6 +2,9 @@
 <openerp>
     <data noupdate="1">
         <!-- write currencies to create pricelist -->
+        <record id="base.CHF" model="res.currency" forcecreate="0">
+            <field name="active" eval="True"/>
+        </record>
         <record id="base.EUR" model="res.currency" forcecreate="0">
             <field name="active" eval="True"/>
         </record>

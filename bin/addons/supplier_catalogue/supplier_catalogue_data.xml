@@ -15,10 +15,6 @@
         	<field name="is_section_currency" eval="True" />
         	<field name="is_esc_currency" eval="False" />
         </record>
-        <record id="base.KES" model="res.currency">
-        	<field name="is_section_currency" eval="True" />
-        	<field name="is_esc_currency" eval="False" />
-        </record>
 		
 	</data>
 </openerp>
