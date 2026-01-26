@@ -817,7 +817,57 @@ class signature_line(osv.osv):
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
-    def super_action_unsign(self, cr, uid, ids, context=None):
+    def super_unsign_confim(self, cr, uid, ids, context=None, super_unsign_wizard=False):
+        '''
+        Super-action for unsign_confirm in order to use super_action_unsign
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return False
+        if isinstance(ids, int):
+            ids = [ids]
+
+        return self.unsign_confirm(cr, uid, ids, context=context, super_unsign_wizard=True)
+
+    def unsign_confirm(self, cr, uid, ids, context=None, super_unsign_wizard=False):
+        '''
+        Show a popup displaying a different message if the signature line needs a cascade removal
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return False
+        if isinstance(ids, int):
+            ids = [ids]
+
+        sign = self.pool.get('signature.line').browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context).signature_id
+        cascade_removal = False
+        if sign.signature_res_model in ['sale.order', 'purchase.order', 'physical.inventory']:
+            cascade_removal = True
+        elif sign.signature_res_model == 'stock.picking' and sign.signature_res_id:
+            pick = self.pool.get('stock.picking').read(cr, uid, sign.signature_res_id, ['type'], context=context)
+            cascade_removal = pick['type'] != 'out'
+        wiz_vals = {
+            'signature_line_id': ids[0],
+            'super_action': super_unsign_wizard,
+            'cascade_removal': cascade_removal,
+        }
+        wiz_id = self.pool.get('signature.remove_signature.wizard').create(cr, uid, wiz_vals, context=context)
+
+        return {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': wiz_id,
+            'context': context,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'res_model': 'signature.remove_signature.wizard',
+            'height': '250px',
+            'width': '720px',
+        }
+
+    def super_action_unsign(self, cr, uid, ids, context=None, cascade_removal=False):
         '''
         To allow the users in the groups Sign_document_creator_finance and/or Sign_document_creator_supply to remove
         signatures they haven't signed
@@ -827,12 +877,20 @@ class signature_line(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        return self.action_unsign(cr, uid, ids, context=context, check_ur=True, check_super_unsign=True)
+        return self.action_unsign(cr, uid, ids, context=context, check_ur=True, check_super_unsign=True, cascade_removal=cascade_removal)
 
-    def action_unsign(self, cr, uid, ids, context=None, check_ur=True, check_super_unsign=False):
+    def action_unsign(self, cr, uid, ids, context=None, check_ur=True, check_super_unsign=False, cascade_removal=False):
         '''
         check_ur: used when sign offline by sign creator
         '''
+        # Check for other signed signatures with higher prios
+        if len(ids) == 1 and cascade_removal:
+            cr.execute("""
+                SELECT l.id FROM signature_line l LEFT JOIN signature_line l2 ON l.signature_id = l2.signature_id 
+                WHERE l2.id = %s AND l.signed = 't' AND l.prio > l2.prio 
+            """, (ids[0],))
+            ids.extend([x[0] for x in cr.fetchall()])
+
         sign_lines = self.browse(cr, uid, ids, fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit'], context=context)
         sign_line = sign_lines[0]
         if check_ur:
@@ -842,12 +900,18 @@ class signature_line(osv.osv):
         value = sign_line.value
         if value is False:
             value = ''
+
+        nb_sign_domain = [('is_active', '=', True), ('signed', '=', True), ('signature_id', '=', sign_line.signature_id.id)]
+        nb_sign = self.search(cr, uid, nb_sign_domain, count=True, context=context)
         if len(sign_lines) > 1:
             signers = []
             for s_line in sign_lines:
                 signers.append('%s (%s)' % (s_line.name, s_line.user_name))
             old = ', '.join(signers)
-            desc = 'All Signatures removed'
+            if nb_sign == len(sign_lines):
+                desc = 'All Signatures removed'
+            else:
+                desc = '%d Signatures removed' % (len(ids),)
         else:
             old = "signed by %s, %s %s" % (sign_line.user_name, value, sign_line.unit)
             desc = 'Delete signature on role %s' % (sign_line.name, )
@@ -1053,11 +1117,12 @@ class signature_add_user_wizard(osv.osv_memory):
         return view
 
     def save(self, cr, uid, ids, context=None):
-        signature_obj = self.pool.get('signature')
+        if context is None:
+            context = {}
+
         line_sign_obj = self.pool.get('signature.line')
 
         wiz = self.browse(cr, uid, ids[0], context=context)
-        data = {}
 
         fake_uid = uid
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
@@ -1119,15 +1184,7 @@ class signature_add_user_wizard(osv.osv_memory):
             if wiz['login_%d' %x]:
                 nb_set += 1
 
-        if wiz.signature_id.signature_state == 'open' and not nb_set:
-            data['signature_state'] = False
-        elif wiz.signature_id.signature_state not in ('partial', 'signed') and nb_set:
-            data['signature_state'] = 'open'
-
-        if data:
-            previous_state = wiz.signature_id.signature_state
-            signature_obj._log_sign_state(cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, previous_state, data['signature_state'], context)
-            signature_obj.write(cr, fake_uid, wiz.signature_id.id, data, context=context)
+        self.pool.get('signature')._set_signature_state(cr, fake_uid, [wiz.signature_id.id], context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -1560,3 +1617,31 @@ class signature_export_wizard(osv.osv_memory):
         }
 
 signature_export_wizard()
+
+
+class signature_remove_signature_wizard(osv.osv_memory):
+    _name = 'signature.remove_signature.wizard'
+    _description = "Signature Removal Confirmation"
+
+    _columns = {
+        'signature_line_id': fields.many2one('signature.line', 'Signature line', readonly=1),
+        'super_action': fields.boolean('Is a super-action', readonly=1),
+        'cascade_removal': fields.boolean('Does the signature require cascade removal of signatures ?', readonly=1),
+    }
+
+    def confirm(self, cr, uid, ids, context=None):
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.super_action:
+                self.pool.get('signature.line').super_action_unsign(cr, uid, [wiz.signature_line_id.id], context=context,
+                                                                    cascade_removal=wiz.cascade_removal)
+            else:
+                self.pool.get('signature.line').action_unsign(cr, uid, [wiz.signature_line_id.id],
+                                                              context=context, cascade_removal=wiz.cascade_removal)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel(self, cr, uid, ids, context=None):
+        return {'type': 'ir.actions.act_window_close'}
+
+
+signature_remove_signature_wizard()

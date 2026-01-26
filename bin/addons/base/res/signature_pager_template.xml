@@ -54,8 +54,8 @@
                 <field name="format_value" />
                 <field name="ready_to_sign" invisible="True" />
                 <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|', '|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('ready_to_sign', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False), '&amp;', ('allowed_to_be_locked', '=', True), ('doc_locked_for_sign', '=', False)]}" type="object" />
-                <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
-                <button name="super_action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', '|', ('user_id', '=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
+                <button name="unsign_confirm" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}" type="object" />
+                <button name="super_unsign_confim" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', '|', ('user_id', '=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}" type="object" />
                 <field name="backup" />
                 <field name="signed" />
             </tree>

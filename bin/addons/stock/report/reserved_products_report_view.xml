@@ -6,7 +6,7 @@
             id="report_reserved_products_xls"
             name="reserved.products.report_xls"
             model="reserved.products.wizard"
-            string="Product reservation report - excel export"
+            string="Reserved Product Report"
             file="stock/report/reserved_products_report_xls.mako"
             report_type="webkit"
             header="False"

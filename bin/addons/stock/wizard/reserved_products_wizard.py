@@ -30,7 +30,7 @@ class reserved_products_wizard(osv.osv):
     _description = "Reserved Products Export"
 
     _columns = {
-        'location_id': fields.many2one('stock.location', string='Location'),
+        'location_id': fields.many2one('stock.location', string='Source Location'),
         'product_id': fields.many2one('product.product', string='Product'),
     }
 
@@ -39,7 +39,7 @@ class reserved_products_wizard(osv.osv):
             context = {}
 
         if not ids:
-            raise osv.except_osv(_('Error'), _('An error has occured with the wizard, please reload the page'))
+            raise osv.except_osv(_('Error'), _('An error has occurred with the wizard, please reload the page'))
 
         loc_obj = self.pool.get('stock.location')
         prod_obj = self.pool.get('product.product')
@@ -55,55 +55,44 @@ class reserved_products_wizard(osv.osv):
         prod_id = wizard.product_id and wizard.product_id.id or False
         header_prod_name = wizard.product_id and wizard.product_id.default_code or False
 
-        if loc_id and prod_id:
-            cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
-                FROM stock_move
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
-                    AND location_id = %s AND product_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
-                ORDER BY location_id, product_id
-            ''', (loc_id, prod_id))
-        elif loc_id and not prod_id:
-            cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
-                FROM stock_move
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND location_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
-                ORDER BY location_id, product_id
-            ''', (loc_id,))
-        elif not loc_id and prod_id:
-            cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
-                FROM stock_move
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND product_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
-                ORDER BY location_id, product_id
-            ''', (prod_id,))
-        else:
-            cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
-                FROM stock_move
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
-                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
-                ORDER BY location_id, product_id
-            ''')
+        add_sql = ''
+        if loc_id:
+            add_sql += ' AND location_id = %s' % (loc_id,)
+        if prod_id:
+            add_sql += ' AND product_id = %s' % (prod_id,)
+
+        cr.execute('''
+            SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
+            FROM stock_move
+            WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')''' + add_sql + '''
+            GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
+            ORDER BY location_id, product_id
+        ''') # not_a_user_entry
 
         lines = cr.fetchall()
         lines_data = []
         tuples = []
+        used_sol_ids = []
         line_sum = {}
-        sum_qty = 0.00
+        sum_ordered_qty, sum_qty, sum_value = 0.00, 0.00, 0.00
         index = 0
         for i, line in enumerate(lines):
             loc_name = loc_obj.browse(cr, uid, line[0], fields_to_fetch=['name'], context=context).name
-            product = prod_obj.browse(cr, uid, line[1], fields_to_fetch=['default_code', 'name'], context=context)
+            product = prod_obj.browse(cr, uid, line[1], fields_to_fetch=['default_code', 'name', 'standard_price', 'currency_id'], context=context)
             uom_name = uom_obj.browse(cr, uid, line[2], fields_to_fetch=['name'], context=context).name
             prodlot = line[4] and lot_obj.browse(cr, uid, line[4], fields_to_fetch=['name', 'life_date'],
                                                  context=context) or False
             pick_name = pick_obj.browse(cr, uid, line[5], fields_to_fetch=['name'], context=context).name
             ship = ship_obj.browse(cr, uid, line[6], fields_to_fetch=['name'], context=context)
-            sale = so_line_obj.browse(cr, uid, line[7], fields_to_fetch=['order_id'], context=context).order_id
+            sol = so_line_obj.browse(cr, uid, line[7], fields_to_fetch=['order_id', 'product_uom_qty'], context=context)
+            sale = sol and sol.order_id
+            currency_name = product and product.currency_id and product.currency_id.name or ''
+            po_name = ''
+            if sol:
+                cr.execute('''SELECT p.name FROM purchase_order_line pl LEFT JOIN purchase_order p ON pl.order_id = p.id
+                           WHERE pl.linked_sol_id = %s''', (sol.id,))
+                res_fetch = cr.fetchone()
+                po_name = res_fetch and res_fetch[0] or ''
             docs_name = pick_name or ''
             if ship:
                 docs_name += pick_name and '/' + ship.name or ship.name
@@ -117,18 +106,35 @@ class reserved_products_wizard(osv.osv):
                 'exp_date': prodlot and prodlot.life_date or '',
                 'prod_qty': line[3],
                 'documents': docs_name,
+                'so_name': sale and sale.name or '',
                 'partner_name': sale and not sale.procurement_request and sale.partner_id and sale.partner_id.name or '',
                 'origin': sale and sale.procurement_request and sale.location_requestor_id and sale.location_requestor_id.name or '',
+                'customer_ref': sale and sale.client_order_ref and sale.client_order_ref.split('.')[-1] or '',
+                'so_details': sale and sale.details or '',
+                'sum_ordered_qty': 0.00,
                 'sum_qty': 0.00,
+                'sum_value': 0.00,
+                'currency': currency_name,
+                'po_name': po_name,
             })
             current_tuple = (loc_name, product and product.id or False, prodlot and prodlot.name or False)
             if current_tuple in tuples:
+                if sol and sol.id not in used_sol_ids:
+                    sum_ordered_qty += sol.product_uom_qty or 0.00
+                    used_sol_ids.append(sol.id)
                 sum_qty += line[3]
-                line_sum.update({'sum_qty': sum_qty})
+                sum_value += product and line[3] * product.standard_price or 0.00
+                line_sum.update({'sum_ordered_qty': sum_ordered_qty, 'sum_qty': sum_qty, 'sum_value': sum_value})
             else:
                 if line_sum:
                     lines_data.insert(index, line_sum)
+                if sol:
+                    sum_ordered_qty = sol.product_uom_qty or 0.00
+                    used_sol_ids.append(sol.id)
+                else:
+                    sum_ordered_qty = 0.00
                 sum_qty = line[3]
+                sum_value = product and line[3] * product.standard_price or 0.00
                 line_sum = {
                     'sum_line': True,
                     'loc_name': loc_name,
@@ -139,9 +145,16 @@ class reserved_products_wizard(osv.osv):
                     'exp_date': prodlot and prodlot.life_date or '',
                     'prod_qty': 0.00,
                     'documents': '',
+                    'so_name': '',
                     'partner_name': '',
                     'origin': '',
-                    'sum_qty': line[3],
+                    'customer_ref': '',
+                    'so_details': '',
+                    'sum_ordered_qty': sum_ordered_qty,
+                    'sum_qty': sum_qty,
+                    'sum_value': sum_value,
+                    'currency': currency_name,
+                    'po_name': '',
                 }
                 tuples.append(current_tuple)
                 index = len(lines_data) - 1
@@ -158,31 +171,20 @@ class reserved_products_wizard(osv.osv):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)
-        if wiz.location_id and wiz.product_id:
-            cr.execute('''
-                SELECT COUNT(id) FROM stock_move 
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
-                    AND location_id = %s AND product_id = %s''', (wiz.location_id.id, wiz.product_id.id))
-        elif wiz.location_id and not wiz.product_id:
-            cr.execute('''
-                SELECT COUNT(id) FROM stock_move 
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND location_id = %s
-            ''', (wiz.location_id.id,))
-        elif not wiz.location_id and wiz.product_id:
-            cr.execute('''
-                SELECT COUNT(id) FROM stock_move 
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND product_id = %s
-            ''', (wiz.product_id.id,))
-        else:
-            cr.execute('''
-                SELECT COUNT(id) FROM stock_move 
-                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
-            ''')
+        add_sql = ''
+        if wiz.location_id:
+            add_sql += ' AND location_id = %s' % (wiz.location_id.id,)
+        if wiz.product_id:
+            add_sql += ' AND product_id = %s' % (wiz.product_id.id,)
+        cr.execute('''
+            SELECT COUNT(id) FROM stock_move
+            WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
+        ''' + add_sql) # not_a_user_entry
         nb_res = cr.fetchall()
         if nb_res[0][0] == 0:
             raise osv.except_osv(_('Error'), _('No data found with these parameters'))
 
-        file_name = _('%s-Product reservation report - excel export') % (datetime.today().strftime('%Y%m%d'),)
+        file_name = _('Reserved_Product_Report_%s') % (datetime.today().strftime('%Y%m%d_%H_%M'),)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': file_name,

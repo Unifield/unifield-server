@@ -936,6 +936,8 @@ class ud_sync():
         if uf_values['en_MF'].get('batch_management'):
             uf_values['en_MF']['perishable'] = True
 
+        if uf_values['en_MF'].get('golden_status') != 'Merged' and uf_values['en_MF'].get('new_code'):
+            del(uf_values['en_MF']['new_code'])
         return uf_values
 
     def update_single_nomenclature(self, nom_type, nomen_msf_id="", session_id=False):
@@ -1175,7 +1177,7 @@ class ud_sync():
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
                                 if x.get('state') != 'Golden' or is_full:
                                     to_write = {'ud_seen': True, 'golden_status': x.get('state')}
-                                    if x.get('mergeToCode'):
+                                    if x.get('state') == 'Merged' and x.get('mergeToCode'):
                                         to_write['new_code'] = x.get('mergeToCode')
                                         self.log('Write New code %s on product id: %s' % (to_write['new_code'], prod_ids[0]))
                                     prod_obj.write(self.cr, self.uid, [prod_ids[0]], to_write)

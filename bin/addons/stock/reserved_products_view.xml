@@ -46,18 +46,5 @@
             <field name="domain">[]</field>
             <field name="context">{'search_default_group_by_location_id': 1, 'with_expiry': True}</field>
         </record>
-
-        <act_window id="wizard_reserved_products_export"
-            name="Export Reserved Products Report"
-            res_model="reserved.products.wizard"
-            src_model="stock.reserved.products"
-            view_mode="form"
-            view_type="form"
-            target="new"
-            view_id="wizard_reserved_products_form_view"
-            empty_ids="1"
-        />
-
-
     </data>
 </openerp>
