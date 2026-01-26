@@ -839,14 +839,7 @@ class stock_picking(osv.osv):
                 wizard.picking_id.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
                 wizard.picking_id.purchase_id.order_type != 'direct'
 
-            picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines', 'type', 'purchase_id', 'name',
-                                                                  'signature_id'], context=context)
-
-            # Unsign the signed lines in a partial reception
-            if not context.get('auto_import_ok') and wizard.partial_process_sign:
-                self.pool.get('signature').write(cr, uid, picking_dict['signature_id'][0],
-                                                 {'signed_off_line': False, 'signature_is_closed': False}, context=context)
-                self.unsign_all(cr, uid, [picking_id], context=context)
+            picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines', 'type', 'purchase_id', 'name'], context=context)
 
             picking_ids.append(picking_id)
             backordered_moves = []  # Moves that need to be put in a backorder
