@@ -1185,6 +1185,18 @@ class stock_picking(osv.osv):
                     backorder_id = self.copy(cr, uid, picking_id, initial_vals_copy, context=context)
                     backorder_name = self.read(cr, uid, backorder_id, ['name'], context=context)['name']
 
+                    # To have the same users on the new IN signature lines
+                    if wizard.picking_id.signature_id and wizard.partial_process_sign:
+                        sign_line_obj = self.pool.get('signature.line')
+                        for sign_line in wizard.picking_id.signature_id.signature_line_ids:
+                            if sign_line.user_id:
+                                sign_line_model = [('signature_id.signature_res_model', '=', 'stock.picking'),
+                                                   ('signature_id.signature_res_id', '=', backorder_id),
+                                                   ('name_key', '=', sign_line.name_key)]
+                                backorder_sign_line_ids = sign_line_obj.search(cr, uid, sign_line_model, limit=1, context=context)
+                                sign_line_vals = {'user_id': sign_line.user_id.id, 'user_name': sign_line.user_id.name}
+                                sign_line_obj.write(cr, uid, backorder_sign_line_ids, sign_line_vals, context=context)
+
                     back_order_post_copy_vals = {}
                     if usb_entity == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
                         new_name = context.get('rw_backorder_name')

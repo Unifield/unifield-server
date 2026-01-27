@@ -431,6 +431,18 @@ class stock_incoming_processor(osv.osv):
             if proc.direct_incoming and not proc.location_dest_active_ok:
                 self.write(cr, uid, [proc.id], {'direct_incoming': False}, context=context)
 
+        # The IN is partially processed and signed if there is at least 1 signee during the partial process
+        if not context.get('auto_import_ok') and proc.picking_id.signature_id and not proc.partial_process_sign:
+            cr.execute("""
+                SELECT mp.id FROM stock_move_in_processor mp LEFT JOIN stock_incoming_processor ip ON mp.wizard_id = ip.id
+                    LEFT JOIN stock_picking p ON ip.picking_id = p.id
+                    , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
+                WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s
+                    AND mp.id IN %s AND sl.user_id IS NOT NULL AND ip.picking_id = %s AND mp.quantity < mp.ordered_quantity LIMIT 1
+            """, (proc.picking_id.id, tuple(l_ids), proc.picking_id.id))
+            if cr.fetchone():
+                self.write(cr, uid, proc.id, {'partial_process_sign': True}, context=context)
+
         if to_unlink:
             in_proc_obj.unlink(cr, uid, to_unlink, context=context)
 
@@ -584,7 +596,7 @@ class stock_incoming_processor(osv.osv):
         # make sure that the current incoming proc is not already processed :
         for r in incoming_obj.read(cr, uid, ids, ['already_processed']):
             if not r['already_processed']:
-                incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
+                incoming_obj.write(cr, uid, ids, {'draft': True, 'partial_process_sign': False}, context=context)
             else:
                 raise osv.except_osv(
                     _('Error'), _('The incoming shipment has already been processed, you cannot save it as draft.')
