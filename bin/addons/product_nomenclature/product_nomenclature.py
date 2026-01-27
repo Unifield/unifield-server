@@ -491,7 +491,6 @@ class product_nomenclature(osv.osv):
 
         'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'), ('optional', 'Optional')], string='Nomenclature type', fnct_search=_search_nomen_type_s),
         'msfid': fields.char('MSFID', size=128, select=True),
-        'merge_to_msfid': fields.char('Merge to msfid', size=128, copy=False),
         'status': fields.selection([('valid', 'Valid'), ('archived', 'Archived')], 'Status', readonly=True),
     }
 

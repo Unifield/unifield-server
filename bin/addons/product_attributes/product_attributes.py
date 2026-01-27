@@ -1259,6 +1259,7 @@ class product_attributes(osv.osv):
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
 
         'incompatible_oc_default_values': fields.function(tools.misc.get_fake, method=True, type='boolean', string='Incompatible OC default', fnct_search=_search_incompatible_oc_default_values),
+        'merge_to_msfid': fields.integer('Merge to msfid', copy=False),
     }
 
 
@@ -1845,13 +1846,14 @@ class product_attributes(osv.osv):
             select
                 p.id
             from
-                product_product p, product_product kept
+                product_product p, product_product kept, product_international_status c
             where
+                c.id = p.international_status and
                 p.golden_status = 'Merged' and
                 p.active = 't' and
                 p.merge_to_msfid is not null and
                 p.merge_to_msfid = kept.msfid and
-                p.international_status = 'UniData' and
+                c.code = 'unidata' and
                 kept.active = 'f'
         ''')
         to_inactive = [x[0] for x in cr.fetchall()]
