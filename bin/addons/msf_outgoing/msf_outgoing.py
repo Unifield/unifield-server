@@ -110,6 +110,37 @@ class shipment(osv.osv):
     _name = 'shipment'
     _description = 'Shipment'
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+        overwrite to allow search on product
+        '''
+        new_dom = []
+        sale_id, product_id = False, False
+        for x in domain:
+            if x[0] == 'sale_id':
+                sale_id = x[2]
+            elif x[0] == 'product_id':
+                product_id = x[2]
+            elif x[0] == 'picking_ids':  # To allow PICK/XXXXX, PPL/XXXXX instead of just PACK/XXXXX
+                new_dom.append((x[0], x[1], x[2].split('/')[-1]))
+            else:
+                new_dom.append(x)
+
+        ret = super(shipment, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if sale_id and isinstance(sale_id, int):
+            ret.tables.append('"pack_family_memory"')
+            ret.joins.setdefault('"shipment"', [])
+            ret.joins['"shipment"'] += [('"pack_family_memory"', 'id', 'shipment_id', 'LEFT JOIN')]
+            ret.where_clause.append(''' "pack_family_memory"."sale_order_id" = %s  ''')
+            ret.where_clause_params.append(sale_id)
+        if product_id and isinstance(product_id, int):
+            ret.tables.append('"stock_move"')
+            ret.joins.setdefault('"shipment"', [])
+            ret.joins['"shipment"'] += [('"stock_move"', 'id', 'pick_shipment_id', 'LEFT JOIN')]
+            ret.where_clause.append(''' "stock_move"."product_id" = %s  ''')
+            ret.where_clause_params.append(product_id)
+        return ret
+
     def copy(self, cr, uid, copy_id, default=None, context=None):
         '''
         prevent copy
@@ -440,6 +471,8 @@ class shipment(osv.osv):
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title', internal="1"),
         'has_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Pack(s)'),
         'has_ret_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Return Pack(s)'),
+        'sale_id': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='sale.order', string='Origin', help='FO or IR to find in the Pack Families', store=False, domain=[('procurement_request', 'in', ['t', 'f'])], readonly=True),
+        'product_id': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the Pack Families', store=False, readonly=True),
         'oto_line_ids': fields.one2many('transport.order.out.line', 'shipment_id', 'OTO line'),
         'manual_oto_id': fields.many2one('transport.order.out', 'Outbound Transport Order', copy=False),
         'transport_active': fields.function(tools.misc.get_transport_active, method=True, type='boolean', string='Transport Management active'),

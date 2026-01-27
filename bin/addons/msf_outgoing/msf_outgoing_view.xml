@@ -1531,12 +1531,14 @@
 						<separator orientation="vertical"/>
 						<field name="name"/>
 						<field name="partner_id2" />
+						<field name="sale_id" />
                         <field name="picking_ids" />
                         <field name="packing_list" />
                         <field name="date" widget="date" />
                         <newline/>
                         <field name="shipment_expected_date" widget="date" />
                         <field name="shipment_actual_date" widget="date" />
+                        <field name="product_id" />
 					</group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">

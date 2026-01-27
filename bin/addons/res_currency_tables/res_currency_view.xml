@@ -2,6 +2,24 @@
 <openerp>
     <data>
     
+        <record id="view_currency_table_search" model="ir.ui.view">
+            <field name="name">res.currency.table.search</field>
+            <field name="model">res.currency.table</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <group>
+                    <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new" name="draft"/>
+                    <filter string="Validated" domain="[('state', '=', 'valid')]" icon="terp-camera_test" name="valid"/>
+                    <filter string="Closed" domain="[('state','=','closed')]" icon="terp-dialog-close" name="closed"/>
+                    </group>
+                    <field name="name" />
+                    <field name="code" />
+                    <field name="is_for_reval"/>
+                    <field name="search_currency"/>
+                </search>
+            </field>
+        </record>
         <record id="view_currency_table_tree" model="ir.ui.view">
             <field name="name">res.currency.table.tree</field>
             <field name="model">res.currency.table</field>
@@ -70,6 +88,7 @@
             <field name="name">Currency Tables</field>
             <field name="res_model">res.currency.table</field>
             <field name="view_id" ref="view_currency_table_tree"/>
+            <field name="context">{'search_default_draft': True, 'search_default_valid': True}</field>
         </record>
         
         <menuitem action="action_currency_table_form" id="menu_action_currency_table_form" parent="account.menu_finance_currency_mgmt" sequence="2"/>

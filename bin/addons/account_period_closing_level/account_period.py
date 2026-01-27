@@ -491,6 +491,53 @@ class account_period(osv.osv):
         return True
 
 
+    def _check_draft_ivi(self, cr, uid, ids, context=None):
+        msg = False
+
+        if ids:
+            cr.execute('''
+                select
+                    count(i.date_invoice), count(*)
+                from
+                    account_invoice i, account_period p
+                where
+                    p.id in %s and
+                    coalesce(i.date_invoice, p.date_stop) <= p.date_stop and
+                    i.real_doc_type = 'ivi' and
+                    i.state = 'draft'
+                ''', (tuple(ids), ))
+            if x := cr.fetchone():
+                if x[0]:
+                    msg = _('Are you sure you want to close the period while there are draft IVI ?')
+                if x[1]:
+                    msg = _('Are you sure you want to close the period while there is an IVI with an empty posting date ?')
+
+                if msg:
+                    msg_id = self.pool.get('message.action').create(cr, uid, {
+                        'res_id': ids,
+                        'yes_action': lambda cr, uid, context: self.action_set_state_confirm(cr, uid, ids, context=context),
+                        'message': '<html><h1 style="color:red; font-weight:bold;">%s</h1></html>' % msg,
+                        'title': '',
+                    }, context=context)
+
+        if not msg:
+            msg_id = self.pool.get('message.action').create(cr, uid, {
+                'res_id': ids,
+                'yes_action': lambda cr, uid, context: self.action_set_state_confirm(cr, uid, ids, context=context),
+                'message': '<html><h2>%s</h2></html>' % _('Are you sure you want to close this period?'),
+                'title': '',
+                'yes_label': _('OK'),
+                'no_label': _('Cancel'),
+            }, context=context)
+
+        return self.pool.get('message.action').pop_up(cr, uid, [msg_id], context=context)
+
+    def action_set_state_confirm(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if context.get('state') in ('field-closed', 'mission-closed'):
+            self.action_set_state(cr, uid, ids, context)
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_open_period(self, cr, uid, ids, context=None):
         if context is None:
@@ -499,19 +546,22 @@ class account_period(osv.osv):
         return self.action_set_state(cr, uid, ids, context)
 
     def action_close_field_reopen(self, cr, uid, ids, context=None):
-        return self.action_close_field(cr, uid, ids, context=context)
-
-    def action_close_field(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         context['state'] = 'field-closed'
         return self.action_set_state(cr, uid, ids, context)
 
+    def action_close_field(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'field-closed'
+        return self._check_draft_ivi(cr, uid, ids, context=context)
+
     def action_close_mission(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         context['state'] = 'mission-closed'
-        return self.action_set_state(cr, uid, ids, context)
+        return self._check_draft_ivi(cr, uid, ids, context=context)
 
     def action_close_hq(self, cr, uid, ids, context=None):
         if context is None:
