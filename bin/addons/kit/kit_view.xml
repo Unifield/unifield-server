@@ -204,8 +204,8 @@
             <field name="arch" type="xml">
             	<tree string="Kit Composition">
             		<field name="composition_type" invisible="True" />
-            		<field name="composition_product_id" />
-            		<field name="composition_version" />
+            		<field name="composition_product_id" string="Kit/Product Code" />
+            		<field name="composition_version" string="Kit/Version" />
             		<field name="composition_creation_date" />
             		<field name="composition_reference" invisible="True" />
             		<field name="composition_lot_id" invisible="True" />
@@ -222,8 +222,8 @@
             <field name="arch" type="xml">
             	<tree string="Kit Composition" hide_delete_button="True">
             		<field name="composition_type" invisible="True" />
-            		<field name="composition_product_id" />
-            		<field name="composition_version" />
+            		<field name="composition_product_id" string="Kit/Product Code" />
+            		<field name="composition_version" string="Kit/Version" />
             		<field name="composition_creation_date" />
             		<field name="composition_reference" invisible="True" />
             		<field name="composition_combined_ref_lot" />
