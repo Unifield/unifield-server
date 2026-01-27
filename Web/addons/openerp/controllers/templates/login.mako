@@ -63,10 +63,33 @@
                                     <td style="padding: 3px;"><input type="text" id="user" name="user" class="db_user_pass" value="${user}" autofocus="true" autocomplete="off"/></td>
                                 </tr>
                                 <tr>
-                                    <td class="label"><label for="show_password">${_("Password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
-                                    <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
-                                    <input type="hidden" name="password" id="password" />
+                                    <td class="label">
+                                        <label for="show_password">${_("Password:")}</label>
+                                    </td>
+                                    <td style="padding: 3px;">
+                                        <div style="position: relative; width: 100%;">
+                                            <input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown="if (event.keyCode == 13) disable_save()" style="width:100%; padding-right: 24px; box-sizing: border-box;" />
+                                            <img
+                                                src="/openerp/static/images/eye.png"
+                                                alt=""
+                                                title="${_('Hold to show password')}"
+                                                style="
+                                                    width:12px;
+                                                    height:12px;
+                                                    position:absolute;
+                                                    right:8px;
+                                                    top:50%;
+                                                    transform:translateY(-50%);
+                                                    cursor:pointer;
+                                                "
+                                                onmousedown="document.getElementById('show_password').type='text';"
+                                                onmouseup="document.getElementById('show_password').type='password';"
+                                                onmouseleave="document.getElementById('show_password').type='password';"
+                                            />
+                                        </div>
+
+                                        <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
+                                        <input type="hidden" name="password" id="password" />
                                     </td>
 
                                 </tr>
