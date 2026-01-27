@@ -2012,7 +2012,6 @@ class product_attributes(osv.osv):
                         del(vals[field])
 
 
-
         if unidata_product and not context.get('sync_update_execution'):
             if 'international_status' not in vals and 'oc_subscription' in vals:
                 if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
@@ -2044,6 +2043,9 @@ class product_attributes(osv.osv):
                     state_id = [state_id]
                 prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
 
+        if unidata_product and context.get('sync_update_execution') and vals.get('active') and 'state' not in vals and \
+                self.search_exists(cr, uid, [('id', 'in', ids), ('active', '=', False), ('standard_ok', '=', 'non_standard_local')], context=context):
+            vals['state'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'status_1')[1] # state UD = Valid
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -2188,6 +2190,8 @@ class product_attributes(osv.osv):
                     raise osv.except_osv(_('Error'), _('Product activation is not allowed on Non-Standard Local Products which are not OC Subscribed'))
                 if instance_level == 'project':
                     raise osv.except_osv(_('Error'), _('%s activation is not allowed at project') % (product.default_code,))
+                if instance_level == 'coordo':
+                    vals['state'] = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]
             if (instance_level == 'section' and (product.international_status.id in (hq_status, itc_status, esc_status) or
                                                  (product.oc_subscription and product.state_ud in ('valid', 'outdated', 'discontinued')))) or \
                     (instance_level == 'coordo' and product.international_status.id == local_status):
