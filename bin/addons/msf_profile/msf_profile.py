@@ -64,25 +64,25 @@ class patch_scripts(osv.osv):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':
             cr.execute('''
-                select p.id
-                from
-                    product_product p
-                left join audittrail_log_line l on
-                    l.object_id=(select id from ir_model where model='product.template') and
-                    l.res_id=p.product_tmpl_id and
-                    l.field_id=(select id from ir_model_fields where model='product.product' and name='new_code') and
-                    l.new_value=p.new_code
-                where
-                    coalesce(new_code, '')!='' and
-                    coalesce(golden_status,'')='Golden' and
-                    l.user_id=(select id from res_users where login='unidata_pull')
-            ''')
+                    select p.id
+                    from
+                        product_product p
+                    left join audittrail_log_line l on
+                        l.object_id=(select id from ir_model where model='product.template') and
+                        l.res_id=p.product_tmpl_id and
+                        l.field_id=(select id from ir_model_fields where model='product.product' and name='new_code') and
+                        l.new_value=p.new_code
+                    where
+                        coalesce(new_code, '')!='' and
+                        coalesce(golden_status,'')='Golden' and
+                        l.user_id=(select id from res_users where login='unidata_pull')
+                ''')
 
             p_ids = [x[0] for x in cr.fetchall()]
             if p_ids:
                 self.pool.get('product.product').write(cr, uid, p_ids, {'new_code': False})
                 self.log_info(cr, uid, "US-15206: new_code removed on %d product(s)" % (len(p_ids),))
-        return True
+            return True
 
     def us_15159_delete_no_catalogue_deactivated_logs(self, cr, uid, *a, **b):
         '''
@@ -147,6 +147,12 @@ class patch_scripts(osv.osv):
                         'log': log,
                     }
                     self.pool.get('audittrail.log.line').create(cr, uid, auditt_vals)
+        return True
+
+    # UF39.1
+    def us_15318_remove_transport_step_constraint(self, cr, uid, *a, **b):
+        cr.drop_constraint_if_exists('transport_order_step', 'transport_order_step_in_order_step_unique')
+        cr.drop_constraint_if_exists('transport_order_step', 'transport_order_step_out_order_step_unique')
         return True
 
     # UF39.0
@@ -255,6 +261,7 @@ class patch_scripts(osv.osv):
                     'ocg': ['none'],
                     'ocp': ['cur_adj', 'accrual', 'hq', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
                     'waca': [],
+                    'ubuntu': [],
                 }
                 oc = entity_obj.get_entity(cr, uid).oc
                 if oc and oc in restrictions:
@@ -1133,9 +1140,11 @@ class patch_scripts(osv.osv):
         entity_obj = self.pool.get('sync.client.entity')
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if entity_obj and instance and instance.level == 'section':
-            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ'):
+            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ', 'HQ_UBUNTU'):
                 ent = entity_obj.get_entity(cr, uid)
                 oc = ent.oc.upper()
+                if oc == 'UBUNTU':
+                    oc = 'OCB'
                 values_mapping = {
                     'Yes': 't',
                     'Kit/Module': 'kit',
@@ -1181,7 +1190,7 @@ class patch_scripts(osv.osv):
                                     """+cond, tuple(params)) # not_a_user_entry
                                 if not cr.rowcount:
                                     self._logger.warn('Line number %s, nomen %s not found' % (line_number, nom))
-                                    return False
+                                    continue
                                 parent_id = [x[0] for x in cr.fetchall()]
                                 level += 1
                         for n_id in parent_id:
