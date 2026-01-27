@@ -141,8 +141,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy SI to PO
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## SI Unit Price Discrepancy (Before vs After Discount)
-        <Column ss:AutoFitWidth="1" ss:Width="110.0" />
+        ## SI Unit Price Discounted Amount (Before vs After Discount)
+        <Column ss:AutoFitWidth="1" ss:Width="140.0" />
         ## Catalogue Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## PO Unit Price (functional)
@@ -157,8 +157,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy SI to PO (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
-        ## SI Unit Price Discrepancy (functional, Before vs After Discount)
-        <Column ss:AutoFitWidth="1" ss:Width="110.0" />
+        ## SI Unit Price Discounted Amount (Before vs After Discount) (functional)
+        <Column ss:AutoFitWidth="1" ss:Width="140.0" />
         ## PO Creation Date
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
         ## Validation Date
@@ -260,7 +260,7 @@
             _('SI Unit Price after Discount'),
             _('Discrepancy IN to PO'),
             _('Discrepancy SI to PO'),
-            _('SI Unit Price Discrepancy (Before vs After Discount)'),
+            _('SI Unit Price Discounted Amount (Before vs After Discount)'),
             _('Catalogue Unit Price (functional)'),
             _('PO Unit Price (functional)'),
             _('IN Unit Price (functional)'),
@@ -268,7 +268,7 @@
             _('SI Unit Price after Discount (functional)'),
             _('Discrepancy IN to PO (functional)'),
             _('Discrepancy SI to PO (functional)'),
-            _('SI Unit Price Discrepancy (functional, Before vs After Discount)'),
+            _('SI Unit Price Discounted Amount (Before vs After Discount) (functional)'),
             _('PO Creation Date'),
             _('Validation Date'),
             _('Confirmation Date'),
