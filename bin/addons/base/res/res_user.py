@@ -1299,10 +1299,12 @@ class users(osv.osv):
             return result
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
-    def send_reset_password_email(self, cr, uid, login, email, context=None):
+    def send_reset_password_email(self, db_name, login, email, context=None):
             context = context or {}
 
-            user_ids = self.search(cr, uid, [
+            cr = pooler.get_db(db_name).cursor()
+
+            user_ids = self.search(cr, 1, [
                 ('login', '=', login),
                 ('active', '=', True),
             ], context=context)
@@ -1313,15 +1315,16 @@ class users(osv.osv):
                     _('No user found with this login and email.')
                 )
 
-            user = self.browse(cr, uid, user_ids[0], context=context)
+            user = self.browse(cr, 1, user_ids[0], context=context)
 
             token = uuid.uuid4().hex
             now = time.strftime('%Y-%m-%d %H:%M:%S')
 
-            self.write(cr, uid, [user.id], {
+            self.write(cr, 1, user_ids[0], {
                 'reset_password_token': token,
                 'reset_password_date': now,
             }, context=context)
+            cr.commit()
 
             base_url = config.get('web.base.url', 'http://0.0.0.0:8061')
             reset_url = "%s/openerp/reset_password?token=%s&db=%s" % (
@@ -1342,13 +1345,16 @@ class users(osv.osv):
             tools.email_send(email_from=None, email_to=[email],
                              subject='Password reset',
                              body=body)
+            cr.close()
 
             return True
 
-    def reset_password_from_token(self, cr, uid, token, new_password, context=None):
+    def reset_password_from_token(self, db_name, token, new_password, context=None):
         context = context or {}
 
-        user_ids = self.search(cr, uid, [
+        cr = pooler.get_db(db_name).cursor()
+
+        user_ids = self.search(cr, 1, [
             ('reset_password_token', '=', token),
             ('active', '=', True),
         ], context=context)
@@ -1359,16 +1365,18 @@ class users(osv.osv):
                 _('Invalid or expired reset token.')
             )
 
-        user = self.browse(cr, uid, user_ids[0], context=context)
+        user = self.browse(cr, 1, user_ids[0], context=context)
 
-        security.check_password_validity(self, cr, uid, '', new_password, new_password, user.login)
+        security.check_password_validity(self, cr, 1, '', new_password, new_password, user.login)
         new_passwd = bcrypt.encrypt(tools.ustr(new_password))
 
-        self.write(cr, uid, [user.id], {
+        self.write(cr, 1, user_ids[0], {
             'password': new_passwd,
             'reset_password_token': False,
             'reset_password_date': False,
         }, context=context)
+        cr.commit()
+        cr.close()
 
         return True
 

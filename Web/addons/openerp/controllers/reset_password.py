@@ -76,23 +76,11 @@ class ResetPassword(BaseController):
             return self.index(token=token, db=db)
 
         try:
-            # 1) login technique
-            uid = session.execute_noauth('common', 'login', db, 'admin', 'admin')
-            if uid <= 0:
-                raise Exception("Technical login failed")
-
-            session._logged_as(db, uid, 'admin')
-            session.storage['open'] = True
-
-            # 2) call res.users
-            session.execute(
-                'object', 'execute',
-                'res.users',
-                'reset_password_from_token',
+            session.execute_noauth(
+                'common', 'reset_password_from_token',
+                db,
                 token, password
             )
-
-            session.logout()
 
             self.msg = {'title': _('Success'), 'message': _('Password changed successfully')}
             return self.index()

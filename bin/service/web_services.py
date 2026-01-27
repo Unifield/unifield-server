@@ -601,6 +601,45 @@ class common(_ObjectService):
                     msg = tools.ustr(e)
                 return msg
             return True
+        elif method == 'send_reset_password_email':
+            try:
+                db_name = params[0]
+                login = params[1]
+                email = params[2]
+                db, pool = pooler.get_db_and_pool(db_name)
+                cr = db.cursor()
+                try:
+                    user_obj = pool.get('res.users')
+                    result = user_obj.send_reset_password_email(db_name, login, email)
+                finally:
+                    cr.close()
+                return result
+            except Exception as e:
+                if hasattr(e, 'value'):
+                    msg = tools.ustr(e.value)
+                else:
+                    msg = tools.ustr(e)
+                return msg
+        elif method == 'reset_password_from_token':
+            try:
+                db_name = params[0]
+                token = params[1]
+                new_password = params[2]
+                db, pool = pooler.get_db_and_pool(db_name)
+                cr = db.cursor()
+                try:
+                    user_obj = pool.get('res.users')
+                    result = user_obj.reset_password_from_token(db_name, token, new_password)
+                finally:
+                    cr.close()
+                return result
+            except Exception as e:
+                if hasattr(e, 'value'):
+                    msg = tools.ustr(e.value)
+                else:
+                    msg = tools.ustr(e)
+                return msg
+
         elif method == 'logout':
             if auth:
                 auth.logout(params[1])

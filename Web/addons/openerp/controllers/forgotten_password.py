@@ -117,25 +117,10 @@ class ForgottenPassword(BaseController):
         self.msg = {}
 
         try:
-            # 1) login technique
-            uid = session.execute_noauth('common', 'login', db, 'admin', 'admin')
-            if uid <= 0:
-                raise Exception("Technical login failed")
-
-            session._logged_as(db, uid, 'admin')
-            session.storage['open'] = True
-
-            # 2) call res.users
-            session.execute(
-                'object', 'execute',
-                'res.users',
-                'send_reset_password_email',
+            session.execute_noauth(
+                'common', 'send_reset_password_email',
+                db,
                 user, email
-            )
-
-            cherrypy.engine.subscribe(
-                'after_request',
-                lambda: session.logout()
             )
 
             self.msg = {
