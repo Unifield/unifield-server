@@ -320,6 +320,8 @@ class ud_sync():
         self.oc = self.pool.get('sync.client.entity').get_entity(self.cr, self.uid, context).oc
         if self.oc == 'waca':
             self.oc = 'ocp'
+        if self.oc == 'ubuntu':
+            self.oc = 'ocb'
 
         sync_id = self.pool.get('ir.model.data').get_object_reference(self.cr, self.uid, 'product_attributes', 'unidata_sync_config')[1]
         config = self.pool.get('unidata.sync').read(self.cr, self.uid, sync_id, context=self.context)
@@ -1714,16 +1716,31 @@ class unidata_sync(osv.osv):
                 cr.commit()
 
 
+            max_ud_msfid = 100000
+            existing_done = False
+            last_tries = False # max msfid hard coded, last_tries to check if products existed after this value
             while not last_loop:
                 cr.execute('SAVEPOINT unidata_sync_log')
-                cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
-                min_id, max_id = cr.fetchone()
-                min_msfid = max_id
+                if not existing_done:
+                    cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
+                    min_id, max_id = cr.fetchone()
+                    original_min_msfid = min_msfid
+                    min_msfid = max_id or 0
+
                 if not min_id:
-                    last_loop = True
-                    cr.execute("select max(msfid) from product_product p")
-                    min_msfid = cr.fetchone()[0] or 0
-                    q_filter = "(msfIdentifier>=%s)" % min_msfid
+                    if not existing_done:
+                        existing_done = True
+                        min_msfid = original_min_msfid
+                    if last_tries:
+                        last_loop = True
+                        cr.execute("select max(msfid) from product_product p")
+                        min_msfid = cr.fetchone()[0] or 0
+                        q_filter = "(msfIdentifier>=%s)" % max_ud_msfid
+                    else:
+                        q_filter = "(msfIdentifier>=%s and msfIdentifier<%s)"%(min_msfid, min_msfid + page_size)
+                        min_msfid = min_msfid + page_size
+                        if min_msfid >= max_ud_msfid:
+                            last_tries = True
                 else:
                     if first_query:
                         min_id = 0
