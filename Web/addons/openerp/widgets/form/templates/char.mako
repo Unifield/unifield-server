@@ -29,6 +29,25 @@
         % if error:
             <span class="fielderror">${error}</span>
         % endif
+        % if password:
+            <img
+                src="/openerp/static/images/eye.png"
+                alt=""
+                title="${_('Hold to show password')}"
+                style="
+                    width:12px;
+                    height:12px;
+                    position:absolute;
+                    right:8px;
+                    top:50%;
+                    transform:translateY(-50%);
+                    cursor:pointer;
+                "
+                onmousedown="document.getElementById('${name}').type='text';"
+                onmouseup="document.getElementById('${name}').type='password';"
+                onmouseleave="document.getElementById('${name}').type='password';"
+            />
+        % endif
     </span>
 % endif
 % if not editable and not password:
