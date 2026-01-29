@@ -948,6 +948,9 @@ class users(osv.osv):
             values['signee_user'] = False
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
+        if 1 in ids and values.get('user_email'):
+            super(users, self).write(cr, uid, [1], {'user_email': False}, context=context)
+
         if values.get('never_expire'):
             self._remove_never_expire(cr, uid, ids, context=context)
         if values.get('signature_enabled') or values.get('groups_id'):
@@ -1403,6 +1406,16 @@ class users(osv.osv):
         return cr.fetchone() and True or False
 
 
+    def change_email(self, cr, uid, ids, email, context=None):
+        if ids == [1] and email:
+            return {
+                'value': {'user_email': False},
+                'warning': {
+                    'message': _('An email address cannot be set for the admin user.')
+                }
+            }
+
+        return {}
 users()
 
 class wizard_add_users_synchronized(osv.osv_memory):
