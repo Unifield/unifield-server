@@ -133,7 +133,7 @@
                                     context="{'user_preference': 0}"
                                     groups="base.group_multi_company"
                                     />
-                                <field name="address_id"/>
+                                <field name="address_id" domain="[('allowed_for_user', '=', True)]" context="{'default_name_for_creation': name}"/>
                                 <field name="user_email" widget="msf_email" on_change="change_email(user_email, context=context)"/>
                             </group>
                             <group colspan="1" col="2" groups="base.group_extended">
