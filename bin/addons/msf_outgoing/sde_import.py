@@ -25,9 +25,8 @@ from tools.translate import _
 import base64
 import time
 from datetime import datetime
-from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-import xml.etree.ElementTree as ET
 import re
+import json
 
 
 class sde_import(osv.osv_memory):
@@ -35,44 +34,37 @@ class sde_import(osv.osv_memory):
     _description = 'SDE Tools'
 
     _columns = {
-        'file': fields.binary(string='File', filters='*.xml, *.xls', required=True),
+        'json_text': fields.text(string='JSON data', help='Please put the data on a single line, with no line return'),
+        'file': fields.binary(string='File', filters='*.xml, *.xls'),
         'filename': fields.char(string='Imported filename', size=256),
         'message': fields.text(string='Message'),
         'po_ref_for_in': fields.char(string='PO reference to find the IN', size=128),
         'pack_ref_for_in': fields.char(string='Ship/OUT reference to find the IN', size=128),
     }
 
-    def wizard_sde_file_import_in_updated(self, cr, uid, ids, context=None):
+    def wizard_sde_import_in_updated(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the XMLRPC script to import a file in an Available Updated IN
-        '''
-        if context is None:
-            context = {}
-        if not ids:
-            return True
-        return self.wizard_sde_file_import_in(cr, uid, ids, context=context, in_updated=True)
-
-    def wizard_sde_file_import_in(self, cr, uid, ids, context=None, in_updated=False):
-        '''
-        Method to use instead of the XMLRPC script to import a file in an Available/Available Shipped IN
+        Method to use instead of the XMLRPC script to import data in an Available Updated IN
         '''
         if context is None:
             context = {}
         if not ids:
             return True
+        return self.wizard_sde_import_in(cr, uid, ids, context=context, in_updated=True)
 
-        sde_imp = self.read(cr, uid, ids[0], ['file', 'filename', 'po_ref_for_in', 'pack_ref_for_in'], context=context)
-        if not sde_imp['file']:
-            raise osv.except_osv(_('Warning'), _('No file to import'))
-        file = base64.b64decode(sde_imp['file'])
+    def wizard_sde_import_in(self, cr, uid, ids, context=None, in_updated=False):
+        '''
+        Method to use instead of the XMLRPC script to import data in an Available/Available Shipped IN
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
 
-        if context.get('attach_to_in'):
-            if not sde_imp['po_ref_for_in']:
-                raise osv.except_osv(_('Warning'), _('Please add at least the PO reference to find the IN'))
-            msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, sde_imp['po_ref_for_in'], sde_imp['pack_ref_for_in'], context=context)
-            context.pop('attach_to_in')
-        else:
-            msg = self.sde_in_import(cr, uid, sde_imp['filename'], file, in_updated, context=context)
+        sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
+        if not sde_imp['json_text']:
+            raise osv.except_osv(_('Warning'), _('No data to import'))
+        msg = self.sde_in_import(cr, uid, sde_imp['json_text'], in_updated, context=context)
 
         return self.write(cr, uid, ids, {'message': msg}, context=context)
 
@@ -82,8 +74,17 @@ class sde_import(osv.osv_memory):
         '''
         if context is None:
             context = {}
-        context['attach_to_in'] = True
-        return self.wizard_sde_file_import_in(cr, uid, ids, context=context)
+
+        sde_imp = self.read(cr, uid, ids[0], ['file', 'filename', 'po_ref_for_in', 'pack_ref_for_in'], context=context)
+        if not sde_imp['file']:
+            raise osv.except_osv(_('Warning'), _('No file to import'))
+        file = base64.b64decode(sde_imp['file'])
+
+        if not sde_imp['po_ref_for_in']:
+            raise osv.except_osv(_('Warning'), _('Please add at least the PO reference to find the IN'))
+        msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, sde_imp['po_ref_for_in'], sde_imp['pack_ref_for_in'], context=context)
+
+        return self.write(cr, uid, ids, {'message': msg}, context=context)
 
     def generate_sde_dispatched_packing_list_report(self, cr, uid, ids, context=None):
         '''
@@ -93,7 +94,7 @@ class sde_import(osv.osv_memory):
             context = {}
         return self.pool.get('shipment').generate_dispatched_packing_list_report(cr, uid, context=context)
 
-    def sde_in_import(self, cr, uid, file_path, file, in_updated=False, context=None):
+    def sde_in_import(self, cr, uid, json_text, in_updated=False, context=None):
         '''
         Method used by the SDE script to import a file
         '''
@@ -107,14 +108,10 @@ class sde_import(osv.osv_memory):
         context['sde_flow'] = True
         msg = False
         try:
-            if isinstance(file, bytes):
-                file_data = file
-            else:  # Binary expected
-                file_data = file.data
-            filetype = pick_obj.get_import_filetype(cr, uid, file_path, context=context)
+            json_data = json.loads(json_text)
 
             # get the IN with the Ship Ref or the Origin
-            in_id = self.get_incoming_id_from_file(cr, uid, file_data, filetype, in_updated, context=context)
+            in_id = self.get_incoming_id_from_json(cr, uid, json_data, in_updated, context=context)
 
             # If the IN is Available Updated reset as much data as possible, compared to the PO
             if in_updated and self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] == 'updated':
@@ -137,9 +134,8 @@ class sde_import(osv.osv_memory):
 
             # create simulation screen to get the simulation report:
             in_simu_obj.write(cr, uid, [simu_id], {
-                'filename': file_path,
-                'filetype': filetype,
-                'file_to_import': base64.b64encode(file_data),
+                'json_text': json_text,
+                'filetype': 'none',
                 'with_pack': True,
             }, context=context)
 
@@ -193,7 +189,7 @@ class sde_import(osv.osv_memory):
                 file_data = file.data
 
             # Get the IN with the references given
-            in_id = self.get_incoming_id_from_refs(cr, uid, po_ref, pack_ref, context=context)
+            in_id = self.get_incoming_id_from_refs(cr, uid, po_ref, pack_ref, False, context=context)
             in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
 
             # attach the simulation file to the IN
@@ -216,7 +212,7 @@ class sde_import(osv.osv_memory):
 
         return msg
 
-    def get_incoming_id_from_file(self, cr, uid, file_data, filetype, in_updated, context=None):
+    def get_incoming_id_from_json(self, cr, uid, json_data, in_updated, context=None):
         '''
         The Origin field is required in the file, but not the Ship Reference. If the Ship Reference is filled, only
         Available Shipped INs will be searched, Available otherwise
@@ -225,41 +221,13 @@ class sde_import(osv.osv_memory):
             context = {}
 
         # Search the file
-        po_name, ship_ref = False, False
-        if filetype == 'excel':
-            file_obj = SpreadsheetXML(xmlstring=file_data)
-            ship_ref_found = False
-            for index, row in enumerate(file_obj.getRows()):
-                line_header = (row.cells[0].data or '').lower()
-                if line_header == 'origin':
-                    po_name = row.cells[1].data or ''
-                    if isinstance(po_name, str):
-                        po_name = po_name.strip().upper()
-                    if not po_name:
-                        raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
-                elif line_header == 'freight':
-                    ship_ref_found = True
-                    ship_ref = row.cells[1].data or ''
-                    if isinstance(ship_ref, str):
-                        ship_ref = ship_ref.strip().upper()
-                if po_name and ship_ref_found:
-                    break
-            if not po_name:
-                raise osv.except_osv(_('Error'), _('Header field "Origin" not found in the given XLS file'))
-        elif filetype == 'xml':
-            root = ET.fromstring(file_data)
-            orig = root.findall('.//field[@name="origin"]')
-            if orig:
-                po_name = orig[0].text or ''
-                po_name = po_name.strip().upper()
-                if not po_name:
-                    raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
-            else:
-                raise osv.except_osv(_('Error'), _('No field with name "Origin" was found in the XML file'))
-            ship_ref_field = root.findall('.//field[@name="freight"]')
-            if ship_ref_field:
-                ship_ref = ship_ref_field[0].text or ''
-                ship_ref = ship_ref.strip().upper()
+        if 'origin' not in json_data:
+            raise osv.except_osv(_('Error'), _('Main key "origin" not found in the given JSON'))
+        if not json_data.get('origin'):
+            raise osv.except_osv(_('Error'), _('Main key "origin" shouldn\'t be empty'))
+
+        po_name = json_data['origin'].strip().upper()
+        ship_ref = json_data.get('freight') and json_data['freight'].strip().upper() or False
 
         # Search the IN
         return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, in_updated, context=context)
