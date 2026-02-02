@@ -384,6 +384,15 @@ class transport_order_step(osv.osv):
 
     _order = 'step_id'
 
+    def _auto_init(self, cr, context=None):
+        res = super(transport_order_step, self)._auto_init(cr, context)
+        if not cr.index_exists('transport_order_step', 'transport_order_step_in_order_step_substep_index'):
+            cr.execute("CREATE UNIQUE INDEX transport_order_step_in_order_step_substep_index ON transport_order_step (transport_in_id, step_id, COALESCE(sub_step_id, 0))")
+        if not cr.index_exists('transport_order_step', 'transport_order_step_out_order_step_substep_index'):
+            cr.execute("CREATE UNIQUE INDEX transport_order_step_out_order_step_substep_index ON transport_order_step (transport_out_id, step_id, COALESCE(sub_step_id, 0))")
+        return res
+
+
     _columns = {
         'name': fields.date('Start Date', required=1),
         'step_id': fields.many2one('transport.step', 'Step', add_empty=1, required=1, select=1),
@@ -398,8 +407,9 @@ class transport_order_step(osv.osv):
     }
 
     _sql_constraints = [
-        ('in_order_step_unique', 'unique(transport_in_id, step_id)', 'You can not select the same Step twice !'),
-        ('out_order_step_unique', 'unique(transport_out_id, step_id)', 'You can not select the same Step twice !'),
+        ('in_order_step_substep_index', '', 'You can not select the same Step and Sub-Step twice !'),
+        ('out_order_step_substep_index', '', 'You can not select the same Step and Sub-Step twice !'),
+
     ]
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
