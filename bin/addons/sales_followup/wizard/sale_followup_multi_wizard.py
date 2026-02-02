@@ -299,7 +299,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
                     sql_cond.append(' so.id = %(order_id)s ')
                 if wizard.partner_id:
                     sql_param['partner_id'] = wizard.partner_id.id
-                    sql_cond.append(' so.parner_id = %(partner_id)s ')
+                    sql_cond.append(' so.partner_id = %(partner_id)s ')
                 if wizard.start_date:
                     sql_param['start_date'] = wizard.start_date
                     sql_cond.append(' so.date_order >= %(start_date)s ')
