@@ -19,6 +19,7 @@ from msf_outgoing import INTEGRITY_STATUS_SELECTION
 from msf_outgoing import PACK_INTEGRITY_STATUS_SELECTION
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
+import json
 
 # Server imports
 # Addons imports
@@ -51,13 +52,13 @@ LINES_COLUMNS = [
 
 
 HEADER_COLUMNS = [
-    (1, _('Freight'), 'optionnal'),
-    (2, _('Picking Reference'), 'optionnal'),
-    (1, _('Origin'), 'mandatory'),
-    (4, _('Supplier'), 'optionnal'),
-    (5, _('Transport mode'), 'optionnal'),
-    (6, _('Notes'), 'optionnal'),
-    (7, _('Message ESC'), 'optionnal'),
+    (1, _('Freight'), 'freight_number', 'optionnal'),
+    (2, _('Picking Reference'), 'name', 'optionnal'),
+    (3, _('Origin'), 'origin', 'mandatory'),
+    (4, _('Supplier'), 'partner_id', 'optionnal'),
+    (5, _('Transport mode'), 'transport_type', 'optionnal'),
+    (6, _('Notes'), 'note', 'optionnal'),
+    (7, _('Message ESC'), 'message_esc', 'optionnal'),
 ]
 
 PACK_HEADER = [
@@ -108,8 +109,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Incoming shipment', required=True, readonly=True),
-        'message': fields.text(string='Import message',
-                               readonly=True),
+        'message': fields.text(string='Import message', readonly=True),
         'state': fields.selection([('draft', 'Draft'),
                                    ('simu_progress', 'Simulation in progress'),
                                    ('simu_done', 'Simulation done'),
@@ -121,19 +121,15 @@ class wizard_import_in_simulation_screen(osv.osv):
         # File information
         'file_to_import': fields.binary(string='File to import'),
         'filename': fields.char(size=64, string='Filename'),
-        'filetype': fields.selection([('excel', 'Excel file'),
-                                      ('xml', 'XML file')], string='Type of file',
-                                     required=True),
+        'filetype': fields.selection([('excel', 'Excel file'), ('xml', 'XML file')], string='Type of file', required=True),
         'error_file': fields.binary(string='File with errors'),
         'error_filename': fields.char(size=64, string='Lines with errors'),
-        'nb_file_lines': fields.integer(string='Total of file lines',
-                                        readonly=True),
+        'nb_file_lines': fields.integer(string='Total of file lines', readonly=True),
         'extra_info': fields.text('Extra Info'),
-        'nb_treated_lines': fields.integer(string='Nb treated lines',
-                                           readonly=True),
-        'percent_completed': fields.float(string='Percent completed',
-                                          readonly=True),
+        'nb_treated_lines': fields.integer(string='Nb treated lines', readonly=True),
+        'percent_completed': fields.float(string='Percent completed', readonly=True),
         'import_error_ok': fields.boolean(string='Error at import'),
+        'json_text': fields.text(string='JSON as text', help='Please put the data on a single line, with no line return'),
         # Related fields
         'origin': fields.function(_get_related_values, method=True, string='Origin',
                                   readonly=True, type='char', size=512, multi='related'),
@@ -297,24 +293,22 @@ class wizard_import_in_simulation_screen(osv.osv):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
-            if not wiz.file_to_import:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Please select a file to import !'),
-                )
-            if wiz.filetype == 'excel':
-                xml_file = base64.b64decode(wiz.file_to_import)
-                excel_file = SpreadsheetXML(xmlstring=xml_file)
-                if not excel_file.getWorksheets():
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
-            else:
-                xml_file = base64.b64decode(wiz.file_to_import)
-                try:
-                    root = ET.fromstring(xml_file)
-                except ET.ParseError:
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
-                if root.tag != 'data':
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
+            if not context.get('sde_flow'):
+                if not wiz.file_to_import:
+                    raise osv.except_osv(_('Error'), _('Please select a file to import !'))
+                if wiz.filetype == 'excel':
+                    xml_file = base64.b64decode(wiz.file_to_import)
+                    excel_file = SpreadsheetXML(xmlstring=xml_file)
+                    if not excel_file.getWorksheets():
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
+                else:
+                    xml_file = base64.b64decode(wiz.file_to_import)
+                    try:
+                        root = ET.fromstring(xml_file)
+                    except ET.ParseError:
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
+                    if root.tag != 'data':
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
 
             self.pool.get('wizard.import.in.line.simulation.screen').unlink(cr, uid, [line.id for line in wiz.line_ids],
                                                                             context=context)
@@ -327,7 +321,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
             self.populate(cr, uid, wiz.id, wiz.picking_id.id, context=context)
             cr.commit()
-            if context.get('do_not_import_with_thread'):
+            if context.get('do_not_import_with_thread') or context.get('sde_flow'):
                 self.simulate(cr.dbname, uid, ids, context=context)
             else:
                 new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
@@ -396,7 +390,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                                                 try:
                                                     parcel_nr = int(f_value)
                                                 except:
-                                                    error.append(_('parcel_ids node %s, parcel_nr %s must be interger') % (nb_pack, f_value))
+                                                    error.append(_('parcel_ids node %s, parcel_nr %s must be integer') % (nb_pack, f_value))
                                                     break
                                         elif f.attrib['name'] == 'parcel_id':
                                             parcel_id = f_value
@@ -526,7 +520,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                         except:
                             error.append(_('Line %s, column %s, float expected, found %s') % (index, nb+1, row.cells[nb].data))
             elif process_pack_line:
-                if row.cells and row.cells[0].data == _('Parcel No.'):
+                # Always check in english because VI exports are exported in english
+                if row.cells and row.cells[0].data == 'Parcel No.':
                     process_parcel_id = True
                     continue
 
@@ -539,13 +534,19 @@ class wizard_import_in_simulation_screen(osv.osv):
 
                         if parcel_id:
                             if parcel_id in parcel_ids_seen:
-                                error.append(_('Line %s:  Parcel ID must be unique, %s already used') % (index, parcel_id))
+                                error.append(_('Line %s: Parcel ID must be unique, %s already used') % (index, parcel_id))
                                 break
                             parcel_ids_seen.add(parcel_id)
                         values[pack_index].setdefault('parcel_ids', {}).update({row.cells[0].data: row.cells[1].data and parcel_id})
                         continue
                     else:
                         process_parcel_id = False
+                        # In case the wrong data is put in the Parcel No.
+                        if len(row.cells) == 2 and row.cells[0] and row.cells[0].data and values.get(pack_index) and \
+                                not values[pack_index].get('parcel_ids'):
+                            error.append(_('Line %s: Parcel data %s could not be used, please ensure that the data in "Parcel No." is a number')
+                                         % (index, row.cells[0].data))
+                            break
                 # previous line was pack data so current line must be move line header / or pack ID
                 process_pack_line = False
                 process_move_line = True
@@ -570,8 +571,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 values[index] = {}
             for cell_nb in range(len(row)):
                 try:
-                    cell_data = row.cells and row.cells[cell_nb] and \
-                        row.cells[cell_nb].data
+                    cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
                     if is_line:
                         if cell_data and LINES_COLUMNS[cell_nb][3] == 'string':
                             cell_data = '%s' % cell_data
@@ -582,10 +582,114 @@ class wizard_import_in_simulation_screen(osv.osv):
                     else:
                         values[index].append(cell_data)
                 except ValueError as e:
-                    raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
-the date has a wrong format: %s') % (index+1, str(e)))
+                    raise osv.except_osv(_('Error'), _('Line %s of the imported file, the date has a wrong format: %s') % (index+1, str(e)))
                 except IndexError:
                     raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s") % (index+1, len(row), tools.ustr(traceback.format_exc())))
+
+        return values, nb_line, error
+
+    def get_values_from_json(self, cr, uid, json_data, with_pack=False, context=None):
+        '''
+        Read the JSON data and put data in values
+        '''
+        values = {}
+
+        error = []
+        nb_pack = 0
+        nb_line = 0
+
+        # Get values per line
+        index = 0
+        pack_index = 0
+        parcel_ids_seen = set()
+
+        # Header data
+        for header in HEADER_COLUMNS:
+            index += 1
+            if header[3] == 'mandatory' and header[2] not in json_data:
+                error.append(_('The mandatory main key "%s" is missing from the JSON') % (header[2],))
+            values[index] = [header[1], json_data.get(header[2], False)]
+
+        line_headers = [line_header[1] for line_header in LINES_COLUMNS]
+
+        if 'packing_data' in json_data:
+            # From/To Pack
+            for parcel in json_data['packing_data']:
+                index += 1
+                values.setdefault(index, [])
+                values.setdefault(index + 1, {})
+                for p_header in PACK_HEADER:
+                    if p_header[1] in pack_header_mandatory and not parcel.get(p_header[1]):
+                        error.append(_('The mandatory packing_data key "%s" is missing from the JSON') % (p_header[1],))
+                    if parcel.get(p_header[1]) and p_header[3] == 'int':
+                        try:
+                            int(parcel[p_header[1]])
+                        except ValueError:
+                            error.append(_('packing_data key "%s": integer expected, found "%s"') % (p_header[1], parcel[p_header[1]],))
+                    elif parcel.get(p_header[1]) and p_header[3] == 'float':
+                        try:
+                            float(parcel[p_header[1]])
+                        except ValueError:
+                            error.append(_('packing_data key "%s": float expected, found "%s"') % (p_header[1], parcel[p_header[1]],))
+                    nb_pack += 1
+                    values[index].append(p_header[1])
+                    values[index + 1][p_header[1]] = parcel.get(p_header[1], False)
+                index += 1
+                pack_index = index
+                # Pack IDs data
+                if parcel.get('parcel_ids'):
+                    values[pack_index]['parcel_ids'] = {}
+                    for parcel_ids_line in parcel['parcel_ids']:
+                        parcel_no = parcel_ids_line.get('parcel_no')
+                        try:
+                            int(parcel_no)
+                        except:
+                            error.append(_('Parcel "%s" could not be used, please ensure that the data for "parcel_no" is a number') % (parcel_no,))
+                            break
+                        parcel_id = parcel_ids_line.get('parcel_id') and str(parcel_ids_line['parcel_id']).strip() or ''
+                        if parcel_id:
+                            if ',' in parcel_id:
+                                error.append(_('parcel_id "%s": Commas (,) are not allowed in Parcel ID') % (parcel_id,))
+                                break
+                            if parcel_id in parcel_ids_seen:
+                                error.append(_('parcel_id must be unique, "%s" already used') % (parcel_id,))
+                                break
+                        if parcel_no and parcel_id:
+                            parcel_ids_seen.add(parcel_id)
+                            values[pack_index]['parcel_ids'][parcel_no] = parcel_id
+                        index += 1
+                        values.setdefault(index, [])
+
+                # Moves data
+                index += 1
+                values[index] = line_headers
+                if parcel.get('move_lines'):
+                    for move_line in parcel['move_lines']:
+                        index += 1
+                        values[index] = {}
+                        for move_header in LINES_COLUMNS:
+                            nb_line += 1
+                            move_data = move_line.get(move_header[1], False)
+                            if move_header[2] == 'mandatory' and not move_line.get(move_header[1]):
+                                error.append(_('The mandatory move_lines key "%s" is missing from the JSON') % (move_header[1],))
+                            else:
+                                try:
+                                    if move_data and move_header[3] == 'string':
+                                        move_data = '%s' % (move_data,)
+                                    elif move_data and move_header[3] == 'integer':
+                                        int(move_data)
+                                    elif move_data and move_header[3] == 'float':
+                                        float(move_data)
+                                    elif move_data and move_header[3] == 'date':
+                                        datetime.strptime(move_data, '%Y-%m-%d')
+                                    values[index][move_header[1]] = move_data
+                                except ValueError:
+                                    raise osv.except_osv(_('Error'), _('move_lines key "%s" with the value "%s" has the wrong format, %s is expected')
+                                                         % (move_header[1], move_data, move_header[3]))
+                else:
+                    error.append(_('The mandatory packing_data key "move_lines" is missing from the JSON'))
+        else:
+            error.append(_('The mandatory main key "packing_data" is missing from the JSON'))
 
         return values, nb_line, error
 
@@ -669,10 +773,9 @@ the date has a wrong format: %s') % (index+1, str(e)))
             for wiz in self.browse(cr, uid, ids, context=context):
                 nb_treated_lines = 0
                 prodlot_cache = {}
-                # No file => Return to the simulation screen
-                if not wiz.file_to_import:
-                    self.write(cr, uid, [wiz.id], {'message': _('No file to import'),
-                                                   'state': 'draft'}, context=context)
+                # No file for normal import => Return to the simulation screen
+                if not wiz.file_to_import and not context.get('sde_flow'):
+                    self.write(cr, uid, [wiz.id], {'message': _('No file to import'), 'state': 'draft'}, context=context)
                     continue
 
                 for line in wiz.line_ids:
@@ -725,14 +828,18 @@ the date has a wrong format: %s') % (index+1, str(e)))
                 file_parse_errors = []
 
                 try:
-                    if wiz.filetype == 'excel':
-                        values, nb_file_lines, file_parse_errors = self.get_values_from_excel(cr, uid, wiz.file_to_import, with_pack=wiz.with_pack, context=context)
+                    if wiz.json_text:  # SDE import only
+                        json_data = json.loads(wiz.json_text)
+                        values, nb_file_lines, file_parse_errors = self.get_values_from_json(cr, uid, json_data, with_pack=wiz.with_pack, context=context)
                     else:
-                        values, nb_file_lines, file_parse_errors = self.get_values_from_xml(cr, uid, wiz.file_to_import, with_pack=wiz.with_pack, context=context)
+                        if wiz.filetype == 'excel':
+                            values, nb_file_lines, file_parse_errors = self.get_values_from_excel(cr, uid, wiz.file_to_import, with_pack=wiz.with_pack, context=context)
+                        else:
+                            values, nb_file_lines, file_parse_errors = self.get_values_from_xml(cr, uid, wiz.file_to_import, with_pack=wiz.with_pack, context=context)
                 except Exception as e:
                     file_parse_errors.append(str(e))
 
-                if context.get('auto_import_ok') and file_parse_errors:
+                if (context.get('auto_import_ok') or context.get('sde_flow')) and file_parse_errors:
                     raise tools.misc.ParsedException('\n'.join(file_parse_errors))
 
                 '''
@@ -742,17 +849,17 @@ the date has a wrong format: %s') % (index+1, str(e)))
                   * For the line information : 12 columns
                 '''
                 # Check number of columns on lines
-
                 if not file_parse_errors:
-
                     self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
 
                 if file_format_errors or file_parse_errors:
+                    error_type_msg = wiz.json_text and _('a JSON parse error') or \
+                            (file_format_errors and _('a bad file format') or _('a file parse error'))
                     message = _('''## IMPORT STOPPED ##
 
 Nothing has been imported because of %s. See below:
 
-    ## File errors ##\n\n''') % (file_format_errors and _('a bad file format') or _('a file parse error'))
+    ## %s errors ##\n\n''') % (error_type_msg, wiz.json_text and _('JSON') or _('File'))
                     for err in file_format_errors + file_parse_errors:
                         message += '%s\n' % err
 
@@ -761,8 +868,7 @@ Nothing has been imported because of %s. See below:
                     return res
 
                 '''
-                New, we know that the file has the good format, you can import
-                data for header.
+                Now we know that the file has the good format, you can import data for header.
                 '''
                 # Line 1: Freight
                 freight_ref = values.get(1, ['', ''])[1]
@@ -770,12 +876,18 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                if origin and wiz.purchase_id.name.lower() not in origin.lower():
-                    message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
-                        % (origin, wiz.picking_id.name, wiz.origin)
-                    self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
-                    res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                    return res
+                if origin:
+                    if not wiz.purchase_id:
+                        message = _("Import aborted, the Origin should not be filled in an Incoming Shipment from scratch.")
+                        self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
+                        res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                        return res
+                    elif wiz.purchase_id.name.lower() not in origin.lower():
+                        message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
+                            % (origin, wiz.picking_id.name, wiz.origin)
+                        self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
+                        res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                        return res
                 header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
@@ -813,7 +925,6 @@ Nothing has been imported because of %s. See below:
                     if 'parcel_from' in values[x]:
                         x += 1
                         if wiz.with_pack:
-
                             pack_info = {'wizard_id': wiz.id}
                             for key in pack_header:
                                 pack_info[key] = values[x].get(key)
@@ -821,25 +932,26 @@ Nothing has been imported because of %s. See below:
                                     pack_info[key] = float(pack_info[key]) * pack_coeff[key]
                                 if key == 'packing_list' and pack_info[key]:
                                     pack_info[key] = '%s' % pack_info[key]
-                            if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30:
+                            if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30 and not context.get('sde_flow'):
                                 values_line_errors.append(_('Packing List %s, max characters length is 30, found %s') % (pack_info.get('packing_list'), len(pack_info.get('packing_list', ''))))
                             p_from = int(pack_info.get('parcel_from', 0))
                             p_to = int(pack_info.get('parcel_to', 0))
                             if pack_info.get('parcel_ids'):
-                                if p_from <= p_to and len(pack_info.get('parcel_ids')) != p_to - p_from + 1:
+                                if p_from <= p_to and len(pack_info.get('parcel_ids')) != p_to - p_from + 1 and not context.get('sde_flow'):
                                     values_line_errors.append(_('Packing List %s, number of packs %s does not match the number of Parcel IDs %s') % (pack_info.get('packing_list'), p_to - p_from + 1, len(pack_info.get('parcel_ids'))))
                                 elif p_from <= p_to:
                                     init_pack = p_from
                                     while init_pack <= p_to:
-                                        if not pack_info['parcel_ids'].get(init_pack):
+                                        if not pack_info['parcel_ids'].get(init_pack) and not context.get('sde_flow'):
                                             values_line_errors.append(_('Packing List %s, parcel number %s not found in Parcel Id') % (pack_info.get('packing_list'), init_pack))
                                             break
                                         init_pack += 1
                                     else:
                                         pack_info['parcel_ids'] = ','.join([pack_info['parcel_ids'][x] for x in sorted(pack_info['parcel_ids'].keys())])
 
-                            pack_id = pack_info_obj.create(cr, uid, pack_info)
-                            pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((p_from, p_to, pack_id))
+                            if not context.get('sde_flow') or (context.get('sde_flow') and values[x]['parcel_from']):
+                                pack_id = pack_info_obj.create(cr, uid, pack_info)
+                                pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((p_from, p_to, pack_id))
                             if values[x]['parcel_from']:
                                 pack_found = True
                         x += 1
@@ -859,17 +971,24 @@ Nothing has been imported because of %s. See below:
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, {}).get(manda_field[1]):
                             not_ok = True
-                            err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[0], manda_field[1] == 'line_number' and ' - Line not imported' or '')
-                            err = _('Line %s of the file: %s') % (x, err1)
-                            values_line_errors.append(err)
+                            if wiz.json_text:  # SDE import only
+                                err1 = _('The move_lines data \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[1] == 'line_number' and ' - Line not imported' or '')
+                                values_line_errors.append(err1)
+                            else:
+                                err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[0], manda_field[1] == 'line_number' and ' - Line not imported' or '')
+                                err = _('Line %s of the file: %s') % (x, err1)
+                                values_line_errors.append(err)
                             file_line_error.append(err1)
 
                     if line_number and ext_ref:
                         if line_number not in LN_BY_EXT_REF[wiz.id].get(ext_ref, []):
                             not_ok = True
                             err1 = _('No line found for line number \'%s\' and ext. ref. \'%s\' - Line not imported') % (line_number, ext_ref)
-                            err = _('Line %s of the file: %s') % (x, err1)
-                            values_line_errors.append(err)
+                            if wiz.json_text:  # SDE import only
+                                values_line_errors.append(err1)
+                            else:
+                                err = _('Line %s of the file: %s') % (x, err1)
+                                values_line_errors.append(err)
                             file_line_error.append(err1)
 
                     if not line_number and ext_ref:
@@ -947,7 +1066,7 @@ Nothing has been imported because of %s. See below:
                 '''
                 if pack_found:
                     self.write(cr, uid, [wiz.id], {'pack_found': True}, context=context)
-                if pack_sequences:
+                if pack_sequences and not context.get('sde_flow'):  # Check the pack data at process and not during import for SDE
                     rounding_issues = []
                     uom_ids = uom_obj.search(cr, uid, [])
                     uom_data = dict((x.id, x) for x in uom_obj.browse(cr, uid, uom_ids, fields_to_fetch=['rounding'], context=context))
@@ -967,7 +1086,6 @@ Nothing has been imported because of %s. See below:
                             pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
                             for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
                                 values_header_errors.append(_("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s") % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, _(pack_error_string.get(pack_error.integrity_status))))
-
 
                     rounding_text = ""
                     if rounding_issues:
@@ -1102,7 +1220,7 @@ Nothing has been imported because of %s. See below:
 
                         if err_msg:
                             for err in err_msg:
-                                if wiz.filetype == 'excel':
+                                if wiz.filetype == 'excel' and not wiz.json_text:
                                     err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
@@ -1149,7 +1267,7 @@ Nothing has been imported because of %s. See below:
 
                     if err_msg:
                         for err in err_msg:
-                            if wiz.filetype == 'excel':
+                            if wiz.filetype == 'excel' and not wiz.json_text:
                                 err = _('Line %s of the Excel file: %s') % (in_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
@@ -1256,9 +1374,10 @@ Nothing has been imported because of %s. See below:
 
     def _import(self, cr, uid, ids, context=None, with_ppl=False):
         '''
-        Create memeory moves and return to the standard incoming processing wizard
+        Create memory moves and return to the standard incoming processing wizard
         '''
         line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+        inc_proc_obj = self.pool.get('stock.incoming.processor')
         mem_move_obj = self.pool.get('stock.move.in.processor')
 
         if context is None:
@@ -1270,29 +1389,45 @@ Nothing has been imported because of %s. See below:
         simu_id = self.browse(cr, uid, ids[0], context=context)
         partner = simu_id.picking_id.partner_id
 
-        context['active_id'] = simu_id.picking_id.id
-        context['active_ids'] = [simu_id.picking_id.id]
+        pick_id = simu_id.picking_id.id
+        context['active_id'] = pick_id
+        context['active_ids'] = [pick_id]
         fields_as_ro = partner.partner_type == 'esc' and simu_id.picking_id.state == 'updated'
-        to_write = {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}
+        to_write = {'picking_id': pick_id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}
         if simu_id.physical_reception_date:
             to_write['physical_reception_date'] = simu_id.physical_reception_date
         if not partner or partner.partner_type in ['external', 'esc']:
             to_write['imp_shipment_ref'] = simu_id.imp_freight_number or ''
         to_write['imp_filename'] = simu_id.filename or ''  # To put in last_imported_filename
-        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, to_write, context=context)
+
+        in_sde_partial_ids = inc_proc_obj.search(cr, uid, [('picking_id', '=', pick_id), ('draft', '=', True), ('sde_updated', '=', True)], context=context)
+        if in_sde_partial_ids:
+            partial_id = in_sde_partial_ids[0]
+            inc_proc_obj.write(cr, uid, partial_id, to_write, context=context)
+        else:
+            if context.get('sde_flow'):
+                to_write.update({'draft': True, 'sde_updated': True})
+            partial_id = inc_proc_obj.create(cr, uid, to_write, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('ign', 'error', 'new')), ('type_change', '=', False)], context=context)
 
         mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, fields_as_ro=fields_as_ro, context=context)
 
         # delete extra lines
-        del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
+        mem_move_domain = [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)]
+        if context.get('sde_flow'):
+            mem_move_domain.append(('sde_updated_line', '=', False))
+        del_lines = mem_move_obj.search(cr, uid, mem_move_domain, context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
-        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'note': simu_id.imp_notes}, context=context)
+        to_write_in = {'note': simu_id.imp_notes}
+        if context.get('sde_flow'):
+            # Add the SDE flag
+            to_write_in['sde_updated'] = True
+        self.pool.get('stock.picking').write(cr, uid, [pick_id], to_write_in, context=context)
 
         context['from_simu_screen'] = True
 
-        if simu_id.with_pack or context.get('do_not_import_with_thread'):
+        if not context.get('sde_flow') and (simu_id.with_pack or context.get('do_not_import_with_thread')):
             cr.commit()
             if context.get('do_not_import_with_thread'):
                 # Auto VI IN import: do not process IN
@@ -1737,7 +1872,11 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if line_currency:
                 write_vals['imp_currency_id'] = line_currency.id
                 if tools.ustr(currency_value.upper()) != line_currency.name.upper():
-                    err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
+                    if line.simu_id.json_text:  # SDE import only
+                        err_msg = _('The currency "%s" in the JSON is not the same as the currency of the IN line "%s" - You must have the same currency on both side - Currency of the initial line kept.') \
+                                  % (currency_value.upper(), line_currency.name.upper())
+                    else:
+                        err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
                     errors.append(err_msg)
 
             # Batch number :: data initialisation
@@ -1770,7 +1909,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                             })
             elif exp_check: # product is only ED mandatory
                 if batch_value:
-                    warnings.append(_('A batch number is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
+                    warnings.append(_('A batch number is defined on the imported %s but the product doesn\'t require batch number - Batch ignored') % (line.simu_id.json_text and _('data') or _('file'),))
                 write_vals.update({
                     'imp_batch_id': False,
                     'imp_batch_name': False,
@@ -1778,9 +1917,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 })
             else: # product is not BN or ED mandatory
                 if batch_value:
-                    warnings.append(_('A batch number is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
+                    warnings.append(_('A batch number is defined on the imported %s but the product doesn\'t require batch number - Batch ignored') % (line.simu_id.json_text and _('data') or _('file'),))
                 if exp_value:
-                    warnings.append(_('An expired date is defined on the imported file but the product doesn\'t require expired date - Expired date ignored'))
+                    warnings.append(_('An expired date is defined on the imported %s but the product doesn\'t require expired date - Expired date ignored') % (line.simu_id.json_text and _('data') or _('file'),))
                 write_vals.update({
                     'imp_batch_id': False,
                     'imp_batch_name': False,
@@ -1829,7 +1968,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if write_vals.get('imp_external_ref'):
                     errors.append(_('No original IN lines with external ref \'%s\' found.') % write_vals['imp_external_ref'])
                 else:
-                    errors.append(_('IN Line %s does not correspond to original IN') % (line.line_number or '',))
+                    if line.simu_id.json_text:
+                        errors.append(_('Product %s\'s line_number and/or external_ref does not correspond to original IN') % (values.get('product_code', ''),))
+                    else:
+                        errors.append(_('IN Line %s does not correspond to original IN') % (line.line_number or '',))
 
             error_msg = line.error_msg or ''
             for err in errors:
@@ -1860,7 +2002,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
-                pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid,  values['pack_info_id'], ['parcel_from', 'parcel_to', 'packing_list'])
+                pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid, values['pack_info_id'], ['parcel_from', 'parcel_to', 'packing_list'])
                 if not pack_info_data['packing_list']:
                     pack_info_data['packing_list'] = ''
                 write_vals['imp_packing_list'] = '%(packing_list)s %(parcel_from)d-%(parcel_to)d' % pack_info_data
@@ -1977,7 +2119,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if line.type_change in ('ign', 'error', 'new'):
                 continue
 
-            move = False
             if line.type_change == 'split':
                 move = line.parent_line_id.move_id
             else:
@@ -2004,8 +2145,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'initial_move_id': move.id,
                     'split_move_ok': line.type_change == 'split',
                     'prodlot_id': batch_id,
-                    'product_id': line.imp_product_id.id,
-                    'uom_id': line.imp_uom_id.id,
+                    'product_id': line.imp_product_id and line.imp_product_id.id or line.move_product_id.id,
+                    'uom_id': line.imp_uom_id and line.imp_uom_id.id or line.move_uom_id.id,
                     'ordered_quantity': move.product_qty,
                     'quantity': line.imp_product_qty,
                     'wizard_id': partial_id,
@@ -2013,6 +2154,14 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'cost_as_ro': fields_as_ro,
                     }
 
+            if context.get('sde_flow'):
+                vals.update({
+                    'sde_updated_line': True,
+                    'from_pack': line.pack_info_id and line.pack_info_id.parcel_from or False,
+                    'to_pack': line.pack_info_id and line.pack_info_id.parcel_to or False,
+                    'has_pack_id': line.pack_info_id and line.pack_info_id.parcel_ids and True or False,
+                    'parcel_ids': line.pack_info_id and line.pack_info_id.parcel_ids or False,
+                })
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
             if move:
                 move_ids.append(move.id)

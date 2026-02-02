@@ -31,8 +31,10 @@ from msf_partner import PARTNER_TYPE
 from dateutil.relativedelta import relativedelta
 import tools
 import time
+import base64
 from lxml import etree
 from tools.sql import drop_view_if_exists
+from service.web_services import report_spool
 
 
 class stock_warehouse(osv.osv):
@@ -1936,6 +1938,39 @@ class shipment(osv.osv):
             update pack_family_memory set selected_number = 0 where id in %s
             ''', (tuple(context.get('button_selected_ids')), ))
         return True
+
+    def generate_dispatched_packing_list_report(self, cr, uid, context=None):
+        '''
+        Method used by the SDE script to export the file
+        Generate a Dispatched Packing List report for Dispatched sub-Ships having an Internal, Intermission,
+        Inter-section or External Customer
+        '''
+        if context is None:
+            context = {}
+
+        ship_domain = [('parent_id', '!=', False), ('state', '=', 'done'), ('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])]
+        ship_ids = self.search(cr, uid, ship_domain, context=context)
+        if not ship_ids:
+            raise osv.except_osv(_('Error'), _('There is no Dispatched Shipment having an Internal, Intermission, Inter-section or External Customer'))
+        datas = {'ids': ship_ids}
+        if not context.get('from_sde_wizard'):
+            rp_spool = report_spool()
+            result = rp_spool.exp_report(cr.dbname, uid, 'dispatched.packing.list.xls', ship_ids, datas, context=context)
+            file_res = {'state': False}
+            while not file_res.get('state'):
+                file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+                time.sleep(0.5)
+
+            return file_res.get('result') and base64.b64decode(file_res['result']).decode('utf-8') or False
+        else:
+            # When the report is generated with a button
+            datas['target_filename'] = 'dispatched_packing_list_%s' % (time.strftime('%Y_%m_%d_%H_%M'),)
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'dispatched.packing.list.xls',
+                'datas': datas,
+                'context': context,
+            }
 
 
 shipment()

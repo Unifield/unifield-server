@@ -1156,6 +1156,7 @@ class stock_picking(osv.osv):
                     'in_dpo': context.get('for_dpo', False), # TODO used ?
                     'dpo_incoming': wizard.picking_id.dpo_incoming,
                     'physical_reception_date': wizard.physical_reception_date or False,
+                    'sde_updated': wizard.sde_updated,
                     'manual_ito_id': wizard.manual_ito_id.id or False,
                 }
 
@@ -1276,7 +1277,11 @@ class stock_picking(osv.osv):
                     }, context=context)
                     return backorder_id
 
-                self.write(cr, uid, [picking_id], {'backorder_id': backorder_id}, context=context)
+                orig_in_vals = {'backorder_id': backorder_id}
+                # The non-processed part should not stay SDE updated
+                if wizard.sde_updated:
+                    orig_in_vals['sde_updated'] = False
+                self.write(cr, uid, [picking_id], orig_in_vals, context=context)
 
                 # Claim specific code
                 current_backorder = picking_obj.read(cr, uid, backorder_id, ['backorder_id'], context=context)
