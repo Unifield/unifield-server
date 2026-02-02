@@ -138,6 +138,7 @@ class supplier_catalogue(osv.osv):
                     AND c.currency_id = %s and d.name LIKE %s
                     AND (COALESCE(c.period_from, '1970-01-01'), COALESCE(c.period_to, '2999-12-31'))
                         OVERLAPS (TO_DATE(%s, 'YYYY-MM-DD'), TO_DATE(%s, 'YYYY-MM-DD'))
+                ORDER BY c.period_from, c.id
             """, (cat.id, cat.partner_id.id, cat.currency_id.id, entity_identifier_like, period_from, period_to))
             overlap_data = cr.fetchall()
             nb_overlap = len(overlap_data)
