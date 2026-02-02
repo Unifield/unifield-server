@@ -133,11 +133,7 @@ class sde_import(osv.osv_memory):
             simu_id = context.get('simu_id')
 
             # create simulation screen to get the simulation report:
-            in_simu_obj.write(cr, uid, [simu_id], {
-                'json_text': json_text,
-                'filetype': 'none',
-                'with_pack': True,
-            }, context=context)
+            in_simu_obj.write(cr, uid, [simu_id], {'json_text': json_text, 'with_pack': True}, context=context)
 
             in_simu_obj.launch_simulate(cr, uid, [simu_id], context=context)
             file_res = pick_obj.generate_simulation_screen_report(cr, uid, simu_id, context=context)

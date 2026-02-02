@@ -121,7 +121,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         # File information
         'file_to_import': fields.binary(string='File to import'),
         'filename': fields.char(size=64, string='Filename'),
-        'filetype': fields.selection([('excel', 'Excel file'), ('xml', 'XML file'), ('none', 'No file')], string='Type of file', required=True),
+        'filetype': fields.selection([('excel', 'Excel file'), ('xml', 'XML file')], string='Type of file', required=True),
         'error_file': fields.binary(string='File with errors'),
         'error_filename': fields.char(size=64, string='Lines with errors'),
         'nb_file_lines': fields.integer(string='Total of file lines', readonly=True),
@@ -600,6 +600,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         # Get values per line
         index = 0
+        pack_index = 0
         parcel_ids_seen = set()
 
         # Header data
@@ -611,55 +612,53 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         line_headers = [line_header[1] for line_header in LINES_COLUMNS]
 
-        if 'parcel_data' in json_data:
+        if 'packing_data' in json_data:
             # From/To Pack
-            for parcel in json_data['parcel_data']:
+            for parcel in json_data['packing_data']:
                 index += 1
                 values.setdefault(index, [])
                 values.setdefault(index + 1, {})
-                for pack_header in PACK_HEADER:
-                    if pack_header[1] == 'mandatory' and not parcel.get(pack_header[1]):
-                        error.append(_('The mandatory parcel_data key "%s" is missing from the JSON') % (pack_header[1],))
-                    if parcel.get(pack_header[1]) and pack_header[3] == 'int':
+                for p_header in PACK_HEADER:
+                    if p_header[1] in pack_header_mandatory and not parcel.get(p_header[1]):
+                        error.append(_('The mandatory packing_data key "%s" is missing from the JSON') % (p_header[1],))
+                    if parcel.get(p_header[1]) and p_header[3] == 'int':
                         try:
-                            int(parcel[pack_header[1]])
+                            int(parcel[p_header[1]])
                         except ValueError:
-                            error.append(_('parcel_data key "%s": integer expected, found "%s"') % (pack_header[1], parcel[pack_header[1]],))
-                    elif parcel.get(pack_header[1]) and pack_header[3] == 'float':
+                            error.append(_('packing_data key "%s": integer expected, found "%s"') % (p_header[1], parcel[p_header[1]],))
+                    elif parcel.get(p_header[1]) and p_header[3] == 'float':
                         try:
-                            float(parcel[pack_header[1]])
+                            float(parcel[p_header[1]])
                         except ValueError:
-                            error.append(_('parcel_data key "%s": float expected, found "%s"') % (pack_header[1], parcel[pack_header[1]],))
+                            error.append(_('packing_data key "%s": float expected, found "%s"') % (p_header[1], parcel[p_header[1]],))
                     nb_pack += 1
-                    values[index].append(pack_header[1])
-                    values[index + 1][pack_header[1]] = parcel.get(pack_header[1], False)
+                    values[index].append(p_header[1])
+                    values[index + 1][p_header[1]] = parcel.get(p_header[1], False)
                 index += 1
+                pack_index = index
                 # Pack IDs data
-                if parcel.get('parcel_list'):
-                    index += 1
-                    values[index] = [_('Parcel No.'), _('Parcel ID')]
-                    for parcel_list_line in parcel['parcel_list']:
-                        parcel_no = parcel_list_line.get('parcel_no')
+                if parcel.get('parcel_ids'):
+                    values[pack_index]['parcel_ids'] = {}
+                    for parcel_ids_line in parcel['parcel_ids']:
+                        parcel_no = parcel_ids_line.get('parcel_no')
                         try:
                             int(parcel_no)
                         except:
-                            error.append(_('Parcel %s could not be used, please ensure that the data for "parcel_no" is a number') % (parcel_no,))
+                            error.append(_('Parcel "%s" could not be used, please ensure that the data for "parcel_no" is a number') % (parcel_no,))
                             break
-                        parcel_id = parcel_list_line.get('parcel_id') and str(parcel_list_line['parcel_id']).strip() or ''
+                        parcel_id = parcel_ids_line.get('parcel_id') and str(parcel_ids_line['parcel_id']).strip() or ''
                         if parcel_id:
                             if ',' in parcel_id:
-                                error.append(_('parcel_id %s: Commas (,) are not allowed in Parcel ID') % (parcel_id,))
+                                error.append(_('parcel_id "%s": Commas (,) are not allowed in Parcel ID') % (parcel_id,))
                                 break
                             if parcel_id in parcel_ids_seen:
-                                error.append(_('parcel_id must be unique, %s already used') % (parcel_id,))
+                                error.append(_('parcel_id must be unique, "%s" already used') % (parcel_id,))
                                 break
                         if parcel_no and parcel_id:
                             parcel_ids_seen.add(parcel_id)
-                            index += 1
-                            values[index] = [parcel_no, parcel_id]
-                else:
-                    index += 1
-                    values.setdefault(index, [])
+                            values[pack_index]['parcel_ids'][parcel_no] = parcel_id
+                        index += 1
+                        values.setdefault(index, [])
 
                 # Moves data
                 index += 1
@@ -688,9 +687,9 @@ class wizard_import_in_simulation_screen(osv.osv):
                                     raise osv.except_osv(_('Error'), _('move_lines key "%s" with the value "%s" has the wrong format, %s is expected')
                                                          % (move_header[1], move_data, move_header[3]))
                 else:
-                    error.append(_('The mandatory parcel_data key "move_lines" is missing from the JSON'))
+                    error.append(_('The mandatory packing_data key "move_lines" is missing from the JSON'))
         else:
-            error.append(_('The mandatory main key "parcel_data" is missing from the JSON'))
+            error.append(_('The mandatory main key "packing_data" is missing from the JSON'))
 
         return values, nb_line, error
 
@@ -840,7 +839,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 except Exception as e:
                     file_parse_errors.append(str(e))
 
-                if context.get('auto_import_ok') and file_parse_errors:
+                if (context.get('auto_import_ok') or context.get('sde_flow')) and file_parse_errors:
                     raise tools.misc.ParsedException('\n'.join(file_parse_errors))
 
                 '''
@@ -972,7 +971,7 @@ Nothing has been imported because of %s. See below:
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, {}).get(manda_field[1]):
                             not_ok = True
-                            if wiz.filetype == 'none':
+                            if wiz.json_text:  # SDE import only
                                 err1 = _('The move_lines data \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[1] == 'line_number' and ' - Line not imported' or '')
                                 values_line_errors.append(err1)
                             else:
@@ -985,7 +984,7 @@ Nothing has been imported because of %s. See below:
                         if line_number not in LN_BY_EXT_REF[wiz.id].get(ext_ref, []):
                             not_ok = True
                             err1 = _('No line found for line number \'%s\' and ext. ref. \'%s\' - Line not imported') % (line_number, ext_ref)
-                            if wiz.filetype == 'none':
+                            if wiz.json_text:  # SDE import only
                                 values_line_errors.append(err1)
                             else:
                                 err = _('Line %s of the file: %s') % (x, err1)
@@ -1221,7 +1220,7 @@ Nothing has been imported because of %s. See below:
 
                         if err_msg:
                             for err in err_msg:
-                                if wiz.filetype == 'excel':
+                                if wiz.filetype == 'excel' and not wiz.json_text:
                                     err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
@@ -1268,7 +1267,7 @@ Nothing has been imported because of %s. See below:
 
                     if err_msg:
                         for err in err_msg:
-                            if wiz.filetype == 'excel':
+                            if wiz.filetype == 'excel' and not wiz.json_text:
                                 err = _('Line %s of the Excel file: %s') % (in_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
@@ -1873,8 +1872,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if line_currency:
                 write_vals['imp_currency_id'] = line_currency.id
                 if tools.ustr(currency_value.upper()) != line_currency.name.upper():
-                    if line.simu_id.filetype == 'none':
-                        err_msg = _('The currency %s in the JSON is not the same as the currency of the IN line %s - You must have the same currency on both side - Currency of the initial line kept.') \
+                    if line.simu_id.json_text:  # SDE import only
+                        err_msg = _('The currency "%s" in the JSON is not the same as the currency of the IN line "%s" - You must have the same currency on both side - Currency of the initial line kept.') \
                                   % (currency_value.upper(), line_currency.name.upper())
                     else:
                         err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
@@ -1910,7 +1909,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                             })
             elif exp_check: # product is only ED mandatory
                 if batch_value:
-                    warnings.append(_('A batch number is defined on the imported %s but the product doesn\'t require batch number - Batch ignored') % (line.simu_id.filetype == 'none' and _('data') or _('file'),))
+                    warnings.append(_('A batch number is defined on the imported %s but the product doesn\'t require batch number - Batch ignored') % (line.simu_id.json_text and _('data') or _('file'),))
                 write_vals.update({
                     'imp_batch_id': False,
                     'imp_batch_name': False,
@@ -1918,9 +1917,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 })
             else: # product is not BN or ED mandatory
                 if batch_value:
-                    warnings.append(_('A batch number is defined on the imported %s but the product doesn\'t require batch number - Batch ignored') % (line.simu_id.filetype == 'none' and _('data') or _('file'),))
+                    warnings.append(_('A batch number is defined on the imported %s but the product doesn\'t require batch number - Batch ignored') % (line.simu_id.json_text and _('data') or _('file'),))
                 if exp_value:
-                    warnings.append(_('An expired date is defined on the imported %s but the product doesn\'t require expired date - Expired date ignored') % (line.simu_id.filetype == 'none' and _('data') or _('file'),))
+                    warnings.append(_('An expired date is defined on the imported %s but the product doesn\'t require expired date - Expired date ignored') % (line.simu_id.json_text and _('data') or _('file'),))
                 write_vals.update({
                     'imp_batch_id': False,
                     'imp_batch_name': False,
