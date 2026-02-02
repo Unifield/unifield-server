@@ -32,7 +32,7 @@
         
         <menuitem action="action_stock_move_tracking_wizard"
                   id="menu_stock_move_tracking"
-                  sequence="-3"
+                  sequence="5"
                   parent="stock.menu_traceability" />
     
     </data>
