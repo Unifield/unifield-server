@@ -1230,3 +1230,27 @@ class job_in_progress(osv.osv_memory):
                 new_cr.commit()
                 new_cr.close(True)
 job_in_progress()
+
+
+class email_log(osv.osv):
+    _name = 'email.log'
+    _order = 'id desc'
+
+    _columns = {
+        'recipients': fields.char('Email Recipient(s)', size=512, required=True),
+        'subject': fields.char('Email Subject', size=256, required=True),
+        'body': fields.text('Email Body', required=True),
+        'state': fields.selection([('error', 'Error'), ('success', 'Success')], 'State', required=True),
+        'result': fields.text('Final result', required=True),
+        'failed_attempts': fields.integer('Number of failed attempts'),
+        'sender_model_id': fields.many2one('ir.model', 'Object', required=1, ondelete='set null'),
+        'date_sent': fields.datetime('Date sent', required=True),
+        'user_id': fields.many2one('res.users', 'User generating the mail', required=True),
+    }
+
+    _defaults = {
+        'failed_attempts': 0
+    }
+
+
+email_log()

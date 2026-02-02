@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="email_log_search_view" model="ir.ui.view">
+            <field name="name">email.log.search.view</field>
+            <field name="model">email.log</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Email logs">
+                    <filter icon="terp-check" name="success" string="Success" domain="[('state', '=', 'success')]" separator="1"/>
+                    <filter icon="gtk-cancel" name="Error" string="Error" domain="[('state', '=', 'error')]" separator="1"/>
+                    <field name="recipients" />
+                    <field name="sender_model_id" />
+                    <field name="date_sent" />
+                </search>
+            </field>
+        </record>
+
+        <record id="email_log_tree_view" model="ir.ui.view">
+            <field name="name">email.log.tree.view</field>
+            <field name="model">email.log</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Email logs" hide_delete_button="1" hide_new_button="1">
+                    <field name="recipients" />
+                    <field name="sender_model_id" />
+                    <field name="failed_attempts" />
+                    <field name="result" truncate="250" />
+                    <field name="date_sent" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="email_log_form_view" model="ir.ui.view">
+            <field name="name">email.log.form.view</field>
+            <field name="model">email.log</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Email logs" noteditable="1" hide_delete_button="1" hide_new_button="1" hide_duplicate_button="1">
+                    <group colspan="4" col="4">
+                        <field name="recipients" />
+                        <field name="sender_model_id" />
+                        <field name="date_sent" />
+                        <field name="state" />
+                        <field name="failed_attempts" />
+                        <field name="result" colspan="8" />
+                        <field name="subject" colspan="8" />
+                        <field name="body" colspan="8" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <menuitem id="email_log_menu" name="Email logs" parent="object_query.menu_preferences" sequence="56" />
+
+        <record id="action_auto_import_email_log" model="ir.actions.act_window">
+            <field name="name">Auto-import email logs</field>
+            <field name="res_model">email.log</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_type">form</field>
+            <field name="domain">[('sender_model_id.model', '=', 'automated.import.job')]</field>
+        </record>
+
+        <menuitem id="auot_import_email_log_menu" name="Auto-import email logs" action="action_auto_import_email_log"
+                  parent="email_log_menu" sequence="1" />
+    </data>
+</openerp>
