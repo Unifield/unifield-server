@@ -1875,6 +1875,8 @@ class replenishment_segment(osv.osv):
         seg = self.browse(cr, uid, ids[0],  context=context)
         if not seg.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        if seg.state != 'draft':
+            return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message=_('You can only import on a Draft Replenishment Segment; import file is ignored'))
 
         try:
             file_data = SpreadsheetXML(xmlstring=base64.b64decode(seg.file_to_import))
