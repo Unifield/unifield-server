@@ -438,7 +438,11 @@
     <% i = 0 %>
     <% styles = ['s143', 's149'] %>
     % for fmc in range(1, 19):
+    % if objects[0].rule == 'cycle':
+    <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR FMC %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    % else:
     <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR Value %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    % endif
     % if fmc == 1:
         <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % endif

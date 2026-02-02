@@ -1511,9 +1511,18 @@ class replenishment_segment(osv.osv):
                 ss_stock = 0
                 warnings = []
                 warnings_html = []
+                rr_data = {}
                 qty_lacking_needed_by = False
                 proposed_order_qty = 0
                 if seg.rule == 'cycle':
+                    for fmc_d in range(1, 19):
+                        rr_value = getattr(line, 'rr_fmc_%d' % fmc_d)
+                        rr_data.update({
+                            'rr_value_%d' % fmc_d: rr_value and round(rr_value) or False,
+                            'rr_value_from_%d' % fmc_d: getattr(line, 'rr_fmc_from_%d' % fmc_d),
+                            'rr_value_to_%d' % fmc_d: getattr(line, 'rr_fmc_to_%d' % fmc_d),
+                        })
+
                     if calc_id and total_month_oc:
                         # in cas of replacing total_fmc_oc and total_month_oc start from SODate
                         ss_stock = seg.safety_stock_month * total_fmc_oc / total_month_oc
@@ -1561,6 +1570,13 @@ class replenishment_segment(osv.osv):
                         to_fmc = getattr(line, 'rr_fmc_to_%d'%fmc_d)
                         min_x = getattr(line, 'rr_fmc_%d'%fmc_d)
                         max_x = getattr(line, 'rr_max_%d'%fmc_d)
+
+                        rr_data.update({
+                            'rr_value_%d' % fmc_d: max_x and getattr(line, 'rr_min_max_%d' % fmc_d) or False,
+                            'rr_value_from_%d' % fmc_d: from_fmc,
+                            'rr_value_to_%d' % fmc_d: to_fmc,
+                        })
+
                         if from_fmc and to_fmc:
                             from_fmc = datetime.strptime(from_fmc, '%Y-%m-%d')
                             to_fmc = datetime.strptime(to_fmc, '%Y-%m-%d')
@@ -1601,6 +1617,13 @@ class replenishment_segment(osv.osv):
                         from_fmc = getattr(line, 'rr_fmc_from_%d'%fmc_d)
                         to_fmc = getattr(line, 'rr_fmc_to_%d'%fmc_d)
                         auto_x = getattr(line, 'rr_fmc_%d'%fmc_d)
+
+                        rr_data.update({
+                            'rr_value_%d' % fmc_d: auto_x and round(auto_x) or False,
+                            'rr_value_from_%d' % fmc_d: from_fmc,
+                            'rr_value_to_%d' % fmc_d: to_fmc,
+                        })
+
                         if from_fmc and to_fmc:
                             from_fmc = datetime.strptime(from_fmc, '%Y-%m-%d')
                             to_fmc = datetime.strptime(to_fmc, '%Y-%m-%d')
@@ -1648,6 +1671,7 @@ class replenishment_segment(osv.osv):
                     'product_id': line.product_id.id,
                     'uom_id': line.uom_id.id,
                     'real_stock': round(sum_line.get(line.id, {}).get('real_stock',0)),
+                    'rr_amc': line.rr_amc,
                     'pipeline_qty': round(line.pipeline_before_rdd or 0),
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
@@ -1677,7 +1701,7 @@ class replenishment_segment(osv.osv):
                             min_max_list.append('%d'%v)
                     line_data['min_max'] = ' / '.join(min_max_list)
 
-                # order_cacl
+                # order_calc
                 if not review_id:
                     if warnings_html:
                         line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
@@ -1692,6 +1716,9 @@ class replenishment_segment(osv.osv):
                         'projected_stock_qty': round(pas),
                         'cost_price': line.product_id.standard_price,
                     })
+
+                    # Auto-Supply/Min-Max/FMC data for Order Calc line
+                    line_data.update(rr_data)
 
                     order_calc_line.create(cr, uid, line_data, context=context)
 
@@ -1734,7 +1761,6 @@ class replenishment_segment(osv.osv):
                         'review_id': review_id,
                         'segment_ref_name': not seg.hidden and "%s / %s" % (seg.name_seg, seg.description_seg),
                         'rr_fmc_avg': False if seg.rule !='cycle' else total_month and total_fmc/total_month,
-                        'rr_amc': line.rr_amc,
                         'total_expired_qty': sum_line.get(line.id, {}).get('total_expiry_nocons_qty', 0),
                         'unit_of_supply_amc': False if seg.rule !='cycle' and not seg.hidden else line.rr_amc and (round(sum_line.get(line.id, {}).get('real_stock',0)) - round(sum_line.get(line.id, {}).get('expired_before_rdd',0))) * coeff / line.rr_amc,
                         'unit_of_supply_fmc': False if seg.rule !='cycle' else month_of_supply * coeff,
@@ -3780,6 +3806,13 @@ class replenishment_order_calc_line(osv.osv):
     _order = 'product_id, segment_id, order_calc_id'
 
     def __init__(self, pool, cr):
+        for x in range(1, 19):
+            self._columns.update({
+                'rr_value_%d' % x: fields.char(string="RR Value %d" % x, size=64, readonly=1, nodrop=1),
+                'rr_value_from_%d' % x: fields.date(string="From %d" % x, readonly=1, nodrop=1),
+                'rr_value_to_%d' % x: fields.date(string="To %d" % x, readonly=1, nodrop=1),
+            })
+
         super(replenishment_order_calc_line, self).__init__(pool, cr)
         cr.execute('select cur.name from res_company comp, res_currency cur where cur.id=comp.currency_id limit 1')
         cur = cr.fetchone()
@@ -3794,6 +3827,32 @@ class replenishment_order_calc_line(osv.osv):
         for x in cr.fetchall():
             ret[x[0]] = x[1]
 
+        return ret
+
+    def _get_list_rr_value(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for id in ids:
+            ret[id] = ""
+        for line in self.browse(cr, uid, ids, context=context):
+            add = []
+            for x in range(4, 19):
+                rr_value = getattr(line, 'rr_value_%d'%x)
+                rr_from = getattr(line, 'rr_value_from_%d'%x)
+                rr_to = getattr(line, 'rr_value_to_%d'%x)
+                if rr_value is not None and rr_value is not False and rr_from and rr_to:
+                    rr_from_dt = datetime.strptime(rr_from, '%Y-%m-%d')
+                    rr_to_dt = datetime.strptime(rr_to, '%Y-%m-%d')
+                    if rr_from_dt.year == rr_to_dt.year:
+                        if rr_from_dt.month == rr_to_dt.month:
+                            date_txt = '%s' % (misc.month_abbr[rr_from_dt.month])
+                        else:
+                            date_txt = '%s - %s' % (misc.month_abbr[rr_from_dt.month], misc.month_abbr[rr_to_dt.month])
+                    else:
+                        date_txt = '%s/%s - %s/%s' % (misc.month_abbr[rr_from_dt.month], rr_from_dt.year, misc.month_abbr[rr_to_dt.month], rr_to_dt.year)
+                    add.append("%s: %s" % (date_txt, rr_value))
+                else:
+                    break
+            ret[line.id] = ' | '.join(add)
         return ret
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -3848,6 +3907,10 @@ class replenishment_order_calc_line(osv.osv):
         'buffer_ss_qty': fields.char('Buffer / SS Qty', size=128, readonly=1),
         'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', readonly=1, digits=(16, 2)),
         'min_max': fields.char('Min/Max', size=128, readonly=1),
+        'rr_amc': fields.float(string='RR-AMC', readonly=1, related_uom='uom_id', digits=(16, 2)),
+        'list_rr_value': fields.function(_get_list_rr_value, method=1, type='char', string='more RR'),
+        'calc_state': fields.related('order_calc_id', 'state', string="Order Calculation State", type="selection",
+                                     selection=[('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancelled'), ('closed', 'Closed')], write_relate=False),
         'mml_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
         'msl_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
