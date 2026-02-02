@@ -99,7 +99,7 @@ class patch_scripts(osv.osv):
             if add_id and u_id:
                 user_to_fix.add(u_id)
             if cmp.partner_id.id != partner_id:
-                new_add_id = addr_obj.copy(cr, uid, add_id, {'partner_id': False})
+                new_add_id = addr_obj.copy(cr, uid, add_id, {'partner_id': False, 'name': False})
                 users_obj.write(cr, uid, [u_id], {'address_id': new_add_id})
 
         cr.execute('''
