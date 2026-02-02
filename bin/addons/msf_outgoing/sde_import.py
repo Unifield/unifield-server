@@ -96,66 +96,156 @@ class sde_import(osv.osv_memory):
 
     def sde_in_import(self, cr, uid, json_text, in_updated=False, context=None):
         '''
-        Method used by the SDE script to import a file
+        Method used by the SDE script to import JSON data.
+        A pagination system has been added to the import to allow users to import several JSONs for the same document
+        before trying to process the data. The keys sde_pagination_id, sde_import_page and sde_import_type are necessary
+        to allow the pagination.
         '''
         if context is None:
             context = {}
 
+        pagi_obj = self.pool.get('sde.import.pagination')
         pick_obj = self.pool.get('stock.picking')
         in_proc_obj = self.pool.get('stock.incoming.processor')
         in_simu_obj = self.pool.get('wizard.import.in.simulation.screen')
 
         context['sde_flow'] = True
-        msg = False
+        msg, pagi_msg, sde_pagi_end_msg = False, False, False
         try:
             json_data = json.loads(json_text)
 
-            # get the IN with the Ship Ref or the Origin
-            in_id = self.get_incoming_id_from_json(cr, uid, json_data, in_updated, context=context)
+            sde_pagi_state, sde_pagi_error = False, False
+            if json_data.get('sde_pagination_id'):
+                if 'sde_pagination_page' not in json_data or 'sde_pagination_type' not in json_data:
+                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_type are mandatory to use the pagination in the SDE import')
+                else:
+                    sde_pagi_end_msg = json_data['sde_pagination_type'] == 'end' and _(' and finished') or ''
+                    sde_pagi_page = json_data['sde_pagination_page']
+                    try:
+                        sde_pagi_page = int(sde_pagi_page)
+                    except ValueError:
+                        sde_pagi_error = _('The page number must be an integer')
+                    sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    if sde_pagi_ids:
+                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_ids[0], context=context)
+                        if sde_pagi['state'] == 'done':
+                            sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
+                        elif sde_pagi_page - sde_pagi['page'] != 1:
+                            sde_pagi_error = _('The page number must be in sequential order without gaps: last page imported %s, imported page %s') \
+                                             % (sde_pagi['page'], json_data['sde_pagination_page'])
+                        else:
+                            # Update the existing JSON with the new data in the key packing_data
+                            # Use from_pack, to_pack and parcel_ids to see is the pack already exist
+                            pagi_json_data = json.loads(sde_pagi['pagination_json_text'])
+                            parcel_keys = sde_pagi['pagination_parcel_keys'].split(',')
+                            for pack_data in json_data.get('packing_data', []):
+                                parcels = []
+                                for parcel in pack_data.get('parcel_ids', []):
+                                    if parcel.get('parcel_id'):
+                                        parcel_id = str(parcel['parcel_id']).strip()
+                                        if ',' in parcel_id:
+                                            raise osv.except_osv(_('Warning'), _('parcel_id "%s": Commas (,) are not allowed in Parcel ID')
+                                                                 % (parcel_id,))
+                                        parcels.append(parcel_id)
+                                parcel_key = 'f%st%spar%s' % (pack_data.get('parcel_from', 0),
+                                                              pack_data.get('parcel_to', 0), ''.join(parcels))
+                                if parcel_key in parcel_keys:
+                                    if pagi_json_data['packing_data'].get('move_lines'):
+                                        pagi_json_data['packing_data']['move_lines'].extend(pack_data['move_lines'])
+                                    else:
+                                        pagi_json_data['packing_data']['move_lines'] = pack_data.get('move_lines', [])
+                                else:
+                                    pagi_json_data['packing_data'].append(pack_data)
+                                    parcel_keys.append(parcel_key)
 
-            # If the IN is Available Updated reset as much data as possible, compared to the PO
-            if in_updated and self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] == 'updated':
-                self.reset_in_available_updated(cr, uid, [in_id], context=context)
+                            pagi_vals = {
+                                'pagination_json_text': json.dumps(pagi_json_data),
+                                'pagination_parcel_keys': ','.join(parcel_keys),
+                                'page': sde_pagi_page,
+                            }
+                            if sde_pagi_end_msg:
+                                pagi_vals['state'] = 'done'
+                            pagi_obj.write(cr, uid, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s updated%s with page %s') \
+                                       % (json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
+                    else:
+                        if sde_pagi_page != 1:
+                            sde_pagi_error = _('The first page of a paginated SDE import must be 1')
+                        else:
+                            parcel_keys = []
+                            for pack_data in json_data.get('packing_data', []):
+                                parcels = []
+                                for parcel in pack_data.get('parcel_ids', []):
+                                    if parcel.get('parcel_id'):
+                                        parcel_id = str(parcel['parcel_id']).strip()
+                                        if ',' in parcel_id:
+                                            raise osv.except_osv(_('Warning'), _('parcel_id "%s": Commas (,) are not allowed in Parcel ID')
+                                                                 % (parcel_id,))
+                                        parcels.append(parcel_id)
+                                parcel_keys.append('f%st%spar%s' % (pack_data.get('parcel_from', 0),
+                                                                    pack_data.get('parcel_to', 0), ''.join(parcels)))
+                            sde_pagi_vals = {
+                                'state': json_data['sde_pagination_type'] == 'end' and 'done' or 'progress',
+                                'pagination_json_id': json_data['sde_pagination_id'],
+                                'pagination_json_text': json_text,
+                                'pagination_parcel_keys': ','.join(parcel_keys),
+                                'page': 1,
+                            }
+                            pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
 
-            in_proc_ids = in_proc_obj.search(cr, uid, [('picking_id', '=', in_id), ('draft', '=', True)], context=context)
-            if in_proc_ids:
-                in_processor = in_proc_ids[0]
-                if not in_proc_obj.read(cr, uid, in_processor, ['sde_updated'], context=context)['sde_updated']:
-                    in_proc_obj.write(cr, uid, in_processor, {'sde_updated': True}, context=context)
+            if sde_pagi_error:
+                raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
+                                     % (json_data.get('sde_pagination_id'), sde_pagi_error))
+            elif not json_data.get('sde_pagination_id') or sde_pagi_end_msg:
+                # get the IN with the Ship Ref or the Origin
+                in_id = self.get_incoming_id_from_json(cr, uid, json_data, in_updated, context=context)
+
+                # If the IN is Available Updated reset as much data as possible, compared to the PO
+                if in_updated and self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] == 'updated':
+                    self.reset_in_available_updated(cr, uid, [in_id], context=context)
+
+                in_proc_ids = in_proc_obj.search(cr, uid, [('picking_id', '=', in_id), ('draft', '=', True)], context=context)
+                if in_proc_ids:
+                    in_processor = in_proc_ids[0]
+                    if not in_proc_obj.read(cr, uid, in_processor, ['sde_updated'], context=context)['sde_updated']:
+                        in_proc_obj.write(cr, uid, in_processor, {'sde_updated': True}, context=context)
+                else:
+                    # create stock.incoming.processor and its stock.move.in.processor
+                    in_processor = in_proc_obj.create(cr, uid, {'picking_id': in_id, 'sde_updated': True}, context=context)
+                    # import all lines and set qty to zero
+                    in_proc_obj.create_lines(cr, uid, in_processor, context=context)
+
+                in_proc_obj.launch_simulation(cr, uid, in_processor, context=context)
+
+                simu_id = context.get('simu_id')
+
+                # create simulation screen to get the simulation report:
+                in_simu_obj.write(cr, uid, [simu_id], {'json_text': json_text, 'with_pack': True}, context=context)
+
+                in_simu_obj.launch_simulate(cr, uid, [simu_id], context=context)
+                file_res = pick_obj.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+
+                simu_data = in_simu_obj.read(cr, uid, simu_id, ['import_error_ok', 'message'], context=context)
+                msg = simu_data['message'] or pagi_msg or 'Done'
+                # Only import when all the data is correct
+                if not simu_data['import_error_ok']:
+                    in_simu_obj.launch_import(cr, uid, [simu_id], context=context)
+                    # Log the update
+                    in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
+                    self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
+
+                # attach the simulation report to the IN
+                self.pool.get('ir.attachment').create(cr, uid, {
+                    'name': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                    'datas_fname': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                    'description': 'IN simulation screen',
+                    'res_model': 'stock.picking',
+                    'res_id': in_id,
+                    'datas': file_res.get('result'),
+                })
             else:
-                # create stock.incoming.processor and its stock.move.in.processor
-                in_processor = in_proc_obj.create(cr, uid, {'picking_id': in_id, 'sde_updated': True}, context=context)
-                # import all lines and set qty to zero
-                in_proc_obj.create_lines(cr, uid, in_processor, context=context)
-
-            in_proc_obj.launch_simulation(cr, uid, in_processor, context=context)
-
-            simu_id = context.get('simu_id')
-
-            # create simulation screen to get the simulation report:
-            in_simu_obj.write(cr, uid, [simu_id], {'json_text': json_text, 'with_pack': True}, context=context)
-
-            in_simu_obj.launch_simulate(cr, uid, [simu_id], context=context)
-            file_res = pick_obj.generate_simulation_screen_report(cr, uid, simu_id, context=context)
-
-            simu_data = in_simu_obj.read(cr, uid, simu_id, ['import_error_ok', 'message'], context=context)
-            msg = simu_data['message'] or 'Done'
-            # Only import when all the data is correct
-            if not simu_data['import_error_ok']:
-                in_simu_obj.launch_import(cr, uid, [simu_id], context=context)
-                # Log the update
-                in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
-                self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
-
-            # attach the simulation report to the IN
-            self.pool.get('ir.attachment').create(cr, uid, {
-                'name': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-                'datas_fname': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-                'description': 'IN simulation screen',
-                'res_model': 'stock.picking',
-                'res_id': in_id,
-                'datas': file_res.get('result'),
-            })
+                msg = pagi_msg or 'Done'
         except Exception as e:
             # Rejection message to send back
             if isinstance(e, osv.except_osv):
@@ -325,3 +415,24 @@ class sde_update_log(osv.osv):
 
 
 sde_update_log()
+
+
+class sde_import_pagination(osv.osv):
+    _name = 'sde.import.pagination'
+    _description = 'SDE Import Pagination'
+    _order = 'id desc'
+
+    _columns = {
+        'state': fields.selection(string='State', selection=[('progress', 'In progress'), ('done', 'Done')], readonly=True),
+        'pagination_json_id': fields.char(string='Pagination JSON ID', size=16, required=True, readonly=True),
+        'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
+        'pagination_parcel_keys': fields.text(string='Pagination parcels keys', required=True, readonly=True),
+        'page': fields.integer(string='SDE import page', required=True, readonly=True),
+    }
+
+    _defaults = {
+        'state': 'progress',
+    }
+
+
+sde_import_pagination()

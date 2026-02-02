@@ -28,14 +28,14 @@ lang_context = {'lang': 'en_MF'}  # or fr_MF
 url = 'http://%s:%s/xmlrpc/' % (host, port)
 
 # retrieve the user id : http://<host>:<xmlrpcport>/xmlrpc/common
-sock = xmlrpc.client.ServerProxy(url + 'common')
+sock = xmlrpc.client.ServerProxy(url + 'common', verbose=True)
 user_id = sock.login(dbname, user, password)
 if not user_id:
     print('Wrong %s password on %s:%s db: %s' % (user, host, port, dbname))
     sys.exit(1)
 
 # to query the server: http://<host>:<xmlrpcport>/xmlrpc/object
-sock = xmlrpc.client.ServerProxy(url + 'object', allow_none=True)
+sock = xmlrpc.client.ServerProxy(url + 'object', allow_none=True, verbose=True)
 
 # set connection timeout (240s)
 transport = xmlrpc.client.Transport()
