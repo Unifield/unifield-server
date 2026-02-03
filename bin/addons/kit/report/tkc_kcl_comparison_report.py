@@ -38,6 +38,8 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
         header_dark_style = self.create_style_from_template('header_dark_style', 'N25')
         header_bold_style = self.create_style_from_template('header_bold_style', 'A4')
         header_blue_style = self.create_style_from_template('header_blue_style', 'D25')
+        header_green_style = self.create_style_from_template('header_green_style', 'G25')
+        art_deviation_style = self.create_style_from_template('art_deviation_style', 'B22')
         line_style = self.create_style_from_template('line_style', 'A27')
         line_grey_style = self.create_style_from_template('line_grey_style', 'A10')
         line_dark_grey_style = self.create_style_from_template('line_dark_grey_style', 'A26')
@@ -174,7 +176,7 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
         cell_4_art = WriteOnlyCell(sheet, value=_('KCL-TKC Article Deviation (%)'))
         cell_4_art.style = header_style
         cell_4_art_percent = WriteOnlyCell(sheet, value=deviation_data['prod_deviation'])
-        cell_4_art_percent.style = line_style
+        cell_4_art_percent.style = art_deviation_style
         sheet.append([cell_4_art, cell_4_art_percent, cell_empty])
         sheet.merged_cells.ranges.append("B22:C22")
 
@@ -196,13 +198,13 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
             (_('TKC Module'), header_blue_style),
             (_('TKC Total Quantity'), header_blue_style),
             (_('TKC Comment'), header_blue_style),
-            (_('KCL Module'), line_grey_style),
-            (_('KCL Total Quantity'), line_grey_style),
-            (_('KCL Quantity'), line_grey_style),
-            (_('KCL Batch Number'), line_grey_style),
-            (_('KCL Expiry Date'), line_grey_style),
-            (_('KCL Comment'), line_grey_style),
-            (_('KCL Asset'), line_grey_style),
+            (_('KCL Module'), header_green_style),
+            (_('KCL Total Quantity'), header_green_style),
+            (_('KCL Quantity'), header_green_style),
+            (_('KCL Batch Number'), header_green_style),
+            (_('KCL Expiry Date'), header_green_style),
+            (_('KCL Comment'), header_green_style),
+            (_('KCL Asset'), header_green_style),
             (_('Difference between TKC and KCL'), header_dark_style),
             (_('B. Num mandatory'), line_dark_grey_style),
             (_('Exp. Date mandatory'), line_dark_grey_style),
@@ -297,7 +299,8 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
                 LEFT JOIN product_uom u ON k.item_uom_id=u.id
             WHERE item_kit_id = %s
             GROUP BY k.item_product_id, p.default_code, t.name, u.name, p.batch_management, p.perishable, p.is_kc, 
-                p.is_dg, p.is_cs, u.name
+                p.is_dg, p.is_cs, u.name, k.id
+            ORDER BY k.id
         """, (kcl.composition_version_id.id,))
         tkc_prod, kcl_prod = [], []
         deviation_data, comparison_data = {}, {}
@@ -358,7 +361,7 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
             comparison_data[prod.id]['sum_kcl_qty'] += kit_item.item_qty
             comparison_data[prod.id]['sum_diff'] = comparison_data[prod.id]['sum_kcl_qty'] - comparison_data[prod.id]['sum_tkc_qty']
 
-        prod_deviation = round(((len(kcl_prod) - len(tkc_prod)) / len(tkc_prod)) * 100)
+        prod_deviation = round((len(kcl_prod) - len(tkc_prod)) / len(tkc_prod), 2)  # Kept like this for the Excel cell format
         qty_deviation = []
         for prod_id in list(set(tkc_prod + kcl_prod)):
             if comparison_data.get(prod_id):
@@ -367,10 +370,11 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
                     qty_deviation_percent = round((comp_data['sum_diff'] / comp_data['sum_tkc_qty']) * 100)
                 else:
                     qty_deviation_percent = 100
-                qty_deviation.append('%s: %s%s%%' % (comp_data['prod_name'], qty_deviation_percent > 0 and '+' or '', qty_deviation_percent))
+                if qty_deviation_percent != 0:
+                    qty_deviation.append('%s: %s%s%%' % (comp_data['prod_name'], qty_deviation_percent > 0 and '+' or '', qty_deviation_percent))
         deviation_data.update({
-            'prod_deviation': '%s%s%%' % (prod_deviation > 0 and '+' or '', prod_deviation),
-            'qty_deviation': ', '.join(qty_deviation),
+            'prod_deviation': prod_deviation,
+            'qty_deviation': '; '.join(qty_deviation),
         })
 
         return deviation_data, comparison_data
