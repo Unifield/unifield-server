@@ -300,7 +300,7 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
             WHERE item_kit_id = %s
             GROUP BY k.item_product_id, p.default_code, t.name, u.name, p.batch_management, p.perishable, p.is_kc, 
                 p.is_dg, p.is_cs, u.name, k.id
-            ORDER BY k.id
+            ORDER BY k.item_module, k.id
         """, (kcl.composition_version_id.id,))
         tkc_prod, kcl_prod = [], []
         deviation_data, comparison_data = {}, {}
