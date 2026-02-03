@@ -8,6 +8,7 @@ from tools.translate import _
 from tools.misc import get_fake
 from lxml import etree
 from . import TRANSPORT_FEES_HELP, CUSTOMS_FEES_HELP
+from purchase import PURCHASE_ORDER_STATE_SELECTION
 
 
 class transport_order_fees_type(osv.osv):
@@ -39,9 +40,8 @@ class transport_order_customs_fees(osv.osv):
             ids = [ids]
 
         res = {}
-        ftf = ['purchase_id', 'transport_in_id', 'transport_out_id', 'name']
+        ftf = ['transport_in_id', 'transport_out_id', 'name']
         for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
-            po = fees.purchase_id
             parent = fees.transport_in_id or fees.transport_out_id or False
             name_help = fees.name and fees.name.code or ''
             for sel_help in CUSTOMS_FEES_HELP:
@@ -49,7 +49,6 @@ class transport_order_customs_fees(osv.osv):
                     name_help = _(sel_help[1])
                     break
             res[fees.id] = {
-                'purchase_details': po and po.details or '',
                 'parent_name': parent and parent.name or '',
                 'parent_state': parent and parent.state or '',
                 'name_help': name_help,
@@ -67,8 +66,9 @@ class transport_order_customs_fees(osv.osv):
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
         'purchase_id': fields.many2one('purchase.order', 'Custom Fees', domain=[('categ', 'in', ['service', 'transport']), ('tender_id', '=', False), ('rfq_ok', '=', False)],
                                        context={'po_from_transport': True, 'search_default_draft': 1, 'search_default_validated': 1, 'search_default_sourced': 1, 'search_default_confirmed': 1, 'search_default_done': 1}, select=1),
-        'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
-                                            store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
+        'purchase_supplier': fields.related('purchase_id', 'partner_id', type='many2one', string='Supplier', relation='res.partner', readonly=True, store=False, select=1),
+        'purchase_state': fields.related('purchase_id', 'state', type='selection', string='PO Status', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True, store=False, select=1),
+        'purchase_details': fields.related('purchase_id', 'details', type='char', string='PO Details', size=86, readonly=True, store=False, select=1),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
                                         selection=[('planned', 'Planned'),
@@ -90,13 +90,20 @@ class transport_order_customs_fees(osv.osv):
     def onchange_purchase_id(self, cr, uid, ids, purchase_id):
         res = {}
         if purchase_id:
-            po = self.pool.get('purchase.order').browse(cr, uid, purchase_id, fields_to_fetch=['details', 'pricelist_id'])
-            res['value'] = {'purchase_details': po.details, 'currency_id': po.pricelist_id.currency_id.id}
+            ftf = ['partner_id', 'state', 'details', 'pricelist_id']
+            po = self.pool.get('purchase.order').browse(cr, uid, purchase_id, fields_to_fetch=ftf)
+            res['value'] = {'purchase_supplier': po.partner_id.id or False, 'purchase_state': po.state,
+                            'purchase_details': po.details, 'currency_id': po.pricelist_id.currency_id.id}
         else:
-            res['value'] = {'purchase_details': '', 'currency_id': False}
+            res['value'] = {'purchase_supplier': False, 'purchase_state': '', 'purchase_details': '', 'currency_id': False}
         return res
 
     def button_validate_fees(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if self.search_exists(cr, uid, [('id', 'in', ids), ('value', '<=', 0)], context=context):
+            raise osv.except_osv(_('Error'), _('You can not have a cost with a negative or zero value'))
         self.write(cr, uid, ids, {'validated': True}, context=context)
         return True
 
@@ -121,9 +128,8 @@ class transport_order_transport_fees(osv.osv):
             ids = [ids]
 
         res = {}
-        ftf = ['purchase_id', 'transport_in_id', 'transport_out_id', 'name']
+        ftf = ['transport_in_id', 'transport_out_id', 'name']
         for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
-            po = fees.purchase_id
             parent = fees.transport_in_id or fees.transport_out_id or False
             name_help = fees.name and fees.name.code or ''
             for sel_help in TRANSPORT_FEES_HELP:
@@ -131,7 +137,6 @@ class transport_order_transport_fees(osv.osv):
                     name_help = _(sel_help[1])
                     break
             res[fees.id] = {
-                'purchase_details': po and po.details or '',
                 'parent_name': parent and parent.name or '',
                 'parent_state': parent and parent.state or '',
                 'name_help': name_help,
@@ -149,8 +154,9 @@ class transport_order_transport_fees(osv.osv):
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
         'purchase_id': fields.many2one('purchase.order', 'Transport Fees', domain=[('categ', 'in', ['service', 'transport']), ('tender_id', '=', False), ('rfq_ok', '=', False)],
                                        context={'po_from_transport': True, 'search_default_draft': 1, 'search_default_validated': 1, 'search_default_sourced': 1, 'search_default_confirmed': 1, 'search_default_done': 1}, select=1),
-        'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
-                                            store={'transport.order.transport.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
+        'purchase_supplier': fields.related('purchase_id', 'partner_id', type='many2one', string='Supplier', relation='res.partner', readonly=True, store=False, select=1),
+        'purchase_state': fields.related('purchase_id', 'state', type='selection', string='PO Status', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True, store=False, select=1),
+        'purchase_details': fields.related('purchase_id', 'details', type='char', string='PO Details', size=86, readonly=True, store=False, select=1),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
                                         selection=[('planned', 'Planned'),
@@ -172,13 +178,20 @@ class transport_order_transport_fees(osv.osv):
     def onchange_purchase_id(self, cr, uid, ids, purchase_id):
         res = {}
         if purchase_id:
-            po = self.pool.get('purchase.order').browse(cr, uid, purchase_id, fields_to_fetch=['details', 'pricelist_id'])
-            res['value'] = {'purchase_details': po.details, 'currency_id': po.pricelist_id.currency_id.id}
+            ftf = ['partner_id', 'state', 'details', 'pricelist_id']
+            po = self.pool.get('purchase.order').browse(cr, uid, purchase_id, fields_to_fetch=ftf)
+            res['value'] = {'purchase_supplier': po.partner_id.id or False, 'purchase_state': po.state,
+                            'purchase_details': po.details, 'currency_id': po.pricelist_id.currency_id.id}
         else:
-            res['value'] = {'purchase_details': '', 'currency_id': False}
+            res['value'] = {'purchase_supplier': False, 'purchase_state': '', 'purchase_details': '', 'currency_id': False}
         return res
 
     def button_validate_fees(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if self.search_exists(cr, uid, [('id', 'in', ids), ('value', '<=', 0)], context=context):
+            raise osv.except_osv(_('Error'), _('You can not have a cost with a negative or zero value'))
         self.write(cr, uid, ids, {'validated': True}, context=context)
         return True
 
