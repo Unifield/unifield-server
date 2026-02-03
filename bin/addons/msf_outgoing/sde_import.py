@@ -110,7 +110,7 @@ class sde_import(osv.osv_memory):
         in_simu_obj = self.pool.get('wizard.import.in.simulation.screen')
 
         context['sde_flow'] = True
-        msg, pagi_msg, sde_pagi_end_msg = False, False, False
+        msg, pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False, False
         try:
             json_data = json.loads(json_text)
 
@@ -127,7 +127,8 @@ class sde_import(osv.osv_memory):
                         sde_pagi_error = _('The page number must be an integer')
                     sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
                     if sde_pagi_ids:
-                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_ids[0], context=context)
+                        sde_pagi_id = sde_pagi_ids[0]
+                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, context=context)
                         if sde_pagi['state'] == 'done':
                             sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
                         elif sde_pagi_page - sde_pagi['page'] != 1:
@@ -191,13 +192,18 @@ class sde_import(osv.osv_memory):
                                 'pagination_parcel_keys': ','.join(parcel_keys),
                                 'page': 1,
                             }
-                            pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
                             pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
 
             if sde_pagi_error:
                 raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
                                      % (json_data.get('sde_pagination_id'), sde_pagi_error))
-            elif not json_data.get('sde_pagination_id') or sde_pagi_end_msg:
+            elif not json_data.get('sde_pagination_id') or sde_pagi_id:
+                # Get the correct JSON data if the pagination has been used
+                if sde_pagi_id:
+                    sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, ['pagination_json_text'], context=context)
+                    json_data = json.loads(sde_pagi['pagination_json_text'])
+
                 # get the IN with the Ship Ref or the Origin
                 in_id = self.get_incoming_id_from_json(cr, uid, json_data, in_updated, context=context)
 
