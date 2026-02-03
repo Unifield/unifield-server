@@ -135,10 +135,14 @@
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## SI Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## SI Unit Price after Discount
+        <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy IN to PO
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy SI to PO
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## SI Unit Price Discounted Amount (Before vs After Discount)
+        <Column ss:AutoFitWidth="1" ss:Width="140.0" />
         ## Catalogue Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## PO Unit Price (functional)
@@ -147,10 +151,14 @@
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## SI Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## SI Unit Price after Discount (functional)
+        <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy IN to PO (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy SI to PO (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## SI Unit Price Discounted Amount (Before vs After Discount) (functional)
+        <Column ss:AutoFitWidth="1" ss:Width="140.0" />
         ## PO Creation Date
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
         ## Validation Date
@@ -249,14 +257,18 @@
             _('PO Unit Price'),
             _('IN Unit Price'),
             _('SI Unit Price'),
+            _('SI Unit Price after Discount'),
             _('Discrepancy IN to PO'),
             _('Discrepancy SI to PO'),
+            _('SI Unit Price Discounted Amount (Before vs After Discount)'),
             _('Catalogue Unit Price (functional)'),
             _('PO Unit Price (functional)'),
             _('IN Unit Price (functional)'),
             _('SI Unit Price (functional)'),
+            _('SI Unit Price after Discount (functional)'),
             _('Discrepancy IN to PO (functional)'),
             _('Discrepancy SI to PO (functional)'),
+            _('SI Unit Price Discounted Amount (Before vs After Discount) (functional)'),
             _('PO Creation Date'),
             _('Validation Date'),
             _('Confirmation Date'),
@@ -311,7 +323,9 @@
                 % endif
                 % if line['si_unit_price'] != '-':
                 <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['si_unit_price'] or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['si_discount_price'] or 0|x}</Data></Cell>
                 % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['discrep_in_po'] != '-':
@@ -321,6 +335,11 @@
                 % endif
                 % if line['discrep_si_po'] != '-':
                 <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['discrep_si_po'] or 0|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
+                % endif
+                % if line['discrep_si_discount'] != '-':
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['discrep_si_discount'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
@@ -339,7 +358,9 @@
                 % endif
                 % if line['func_si_unit_price'] != '-':
                 <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_si_unit_price'] or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_si_discount_price'] or 0|x}</Data></Cell>
                 % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['func_discrep_in_po'] != '-':
@@ -349,6 +370,11 @@
                 % endif
                 % if line['func_discrep_si_po'] != '-':
                 <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_discrep_si_po'] or 0|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
+                % endif
+                % if line['func_discrep_si_discount'] != '-':
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_discrep_si_discount'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
