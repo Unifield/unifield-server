@@ -1281,5 +1281,9 @@
         <record id="us_15310_ocp_fxa_journal" model="patch.scripts">
             <field name="method">us_15310_ocp_fxa_journal</field>
         </record>
+
+        <record id="us_15152_unsign_non_closed_cancelled_ins" model="patch.scripts">
+            <field name="method">us_15152_unsign_non_closed_cancelled_ins</field>
+        </record>
     </data>
 </openerp>

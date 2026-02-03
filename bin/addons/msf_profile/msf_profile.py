@@ -60,6 +60,32 @@ class patch_scripts(osv.osv):
     }
 
     # UF40.0
+    def us_15152_unsign_non_closed_cancelled_ins(self, cr, uid, *a, **b):
+        '''
+        Remove the signatures of all INs that are not Closed or Cancelled
+        '''
+        cr.execute("""
+            SELECT s.id, p.id FROM signature s LEFT JOIN stock_picking p ON s.signature_res_id=p.id
+            WHERE (s.signature_state IN ('partial', 'signed') OR s.signed_off_line='t') 
+                AND s.signature_res_model = 'stock.picking' AND p.type = 'in' AND p.state NOT IN ('done', 'cancel')
+        """)
+        signature_ids, in_ids = [], []
+        for x in cr.fetchall():
+            signature_ids.append(x[0])
+            in_ids.append(x[1])
+
+        self.pool.get('signature').write(cr, uid, signature_ids, {'signed_off_line': False, 'signature_is_closed': False})
+        to_unsign = []
+        for doc in self.pool.get('stock.picking').browse(cr, uid, in_ids, fields_to_fetch=['signature_line_ids']):
+            for line in doc.signature_line_ids:
+                if line.signed:
+                    to_unsign.append(line.id)
+        if to_unsign:
+            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, check_ur=False)
+        self.log_info(cr, uid, "US-15152: The signatures of %s non-closed/cancelled INs were removed" % (len(in_ids),))
+
+        return True
+
     def us_15206_remove_new_code_on_ud_prod_not_merged(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':

@@ -839,10 +839,7 @@ class stock_picking(osv.osv):
                 wizard.picking_id.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
                 wizard.picking_id.purchase_id.order_type != 'direct'
 
-            picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
-                                                                  'type',
-                                                                  'purchase_id',
-                                                                  'name'], context=context)
+            picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines', 'type', 'purchase_id', 'name'], context=context)
 
             picking_ids.append(picking_id)
             backordered_moves = []  # Moves that need to be put in a backorder
@@ -852,8 +849,7 @@ class stock_picking(osv.osv):
             processed_out_moves_by_exp = {}
             track_changes_to_create = [] # list of dict that contains data on track changes to create at the method's end
 
-            picking_move_lines = move_obj.browse(cr, uid, picking_dict['move_lines'],
-                                                 context=context)
+            picking_move_lines = move_obj.browse(cr, uid, picking_dict['move_lines'], context=context)
 
             total_moves = len(picking_move_lines)
             move_done = 0
@@ -1188,6 +1184,22 @@ class stock_picking(osv.osv):
                 if not backorder_id:
                     backorder_id = self.copy(cr, uid, picking_id, initial_vals_copy, context=context)
                     backorder_name = self.read(cr, uid, backorder_id, ['name'], context=context)['name']
+
+                    # To have the same users on the new IN signature lines
+                    if wizard.picking_id.signature_id and wizard.partial_process_sign:
+                        sign_obj = self.pool.get('signature')
+                        sign_line_obj = self.pool.get('signature.line')
+                        backorder_sign_ids = sign_obj.search(cr, uid, [('signature_res_model', '=', 'stock.picking'),
+                                                                       ('signature_res_id', '=', backorder_id)], limit=1, context=context)
+                        sign_obj.write(cr, uid, backorder_sign_ids, {'signature_state': wizard.picking_id.signature_id.signature_state}, context=context)
+                        for sign_line in wizard.picking_id.signature_id.signature_line_ids:
+                            if sign_line.user_id:
+                                sign_line_model = [('signature_id.signature_res_model', '=', 'stock.picking'),
+                                                   ('signature_id.signature_res_id', '=', backorder_id),
+                                                   ('name_key', '=', sign_line.name_key)]
+                                backorder_sign_line_ids = sign_line_obj.search(cr, uid, sign_line_model, limit=1, context=context)
+                                sign_line_vals = {'user_id': sign_line.user_id.id, 'user_name': sign_line.user_id.name}
+                                sign_line_obj.write(cr, uid, backorder_sign_line_ids, sign_line_vals, context=context)
 
                     back_order_post_copy_vals = {}
                     if usb_entity == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
