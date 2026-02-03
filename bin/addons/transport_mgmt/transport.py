@@ -40,9 +40,8 @@ class transport_order_customs_fees(osv.osv):
             ids = [ids]
 
         res = {}
-        ftf = ['purchase_id', 'transport_in_id', 'transport_out_id', 'name']
+        ftf = ['transport_in_id', 'transport_out_id', 'name']
         for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
-            po = fees.purchase_id
             parent = fees.transport_in_id or fees.transport_out_id or False
             name_help = fees.name and fees.name.code or ''
             for sel_help in CUSTOMS_FEES_HELP:
@@ -50,9 +49,6 @@ class transport_order_customs_fees(osv.osv):
                     name_help = _(sel_help[1])
                     break
             res[fees.id] = {
-                'purchase_supplier': po and po.partner_id.id or False,
-                'purchase_state': po and po.state or '',
-                'purchase_details': po and po.details or '',
                 'parent_name': parent and parent.name or '',
                 'parent_state': parent and parent.state or '',
                 'name_help': name_help,
@@ -70,12 +66,9 @@ class transport_order_customs_fees(osv.osv):
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
         'purchase_id': fields.many2one('purchase.order', 'Custom Fees', domain=[('categ', 'in', ['service', 'transport']), ('tender_id', '=', False), ('rfq_ok', '=', False)],
                                        context={'po_from_transport': True, 'search_default_draft': 1, 'search_default_validated': 1, 'search_default_sourced': 1, 'search_default_confirmed': 1, 'search_default_done': 1}, select=1),
-        'purchase_supplier': fields.function(_get_vals, method=True, string='Supplier', type='many2one', relation='res.partner', multi='get_vals',
-                                            store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
-        'purchase_state': fields.function(_get_vals, method=True, string='PO Status', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, multi='get_vals',
-                                            store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
-        'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
-                                            store={'transport.order.customs.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
+        'purchase_supplier': fields.related('purchase_id', 'partner_id', type='many2one', string='Supplier', relation='res.partner', readonly=True, store=False, select=1),
+        'purchase_state': fields.related('purchase_id', 'state', type='selection', string='PO Status', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True, store=False, select=1),
+        'purchase_details': fields.related('purchase_id', 'details', type='char', string='PO Details', size=86, readonly=True, store=False, select=1),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
                                         selection=[('planned', 'Planned'),
@@ -135,9 +128,8 @@ class transport_order_transport_fees(osv.osv):
             ids = [ids]
 
         res = {}
-        ftf = ['purchase_id', 'transport_in_id', 'transport_out_id', 'name']
+        ftf = ['transport_in_id', 'transport_out_id', 'name']
         for fees in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
-            po = fees.purchase_id
             parent = fees.transport_in_id or fees.transport_out_id or False
             name_help = fees.name and fees.name.code or ''
             for sel_help in TRANSPORT_FEES_HELP:
@@ -145,9 +137,6 @@ class transport_order_transport_fees(osv.osv):
                     name_help = _(sel_help[1])
                     break
             res[fees.id] = {
-                'purchase_supplier': po and po.partner_id.id or False,
-                'purchase_state': po and po.state or '',
-                'purchase_details': po and po.details or '',
                 'parent_name': parent and parent.name or '',
                 'parent_state': parent and parent.state or '',
                 'name_help': name_help,
@@ -165,12 +154,9 @@ class transport_order_transport_fees(osv.osv):
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
         'purchase_id': fields.many2one('purchase.order', 'Transport Fees', domain=[('categ', 'in', ['service', 'transport']), ('tender_id', '=', False), ('rfq_ok', '=', False)],
                                        context={'po_from_transport': True, 'search_default_draft': 1, 'search_default_validated': 1, 'search_default_sourced': 1, 'search_default_confirmed': 1, 'search_default_done': 1}, select=1),
-        'purchase_supplier': fields.function(_get_vals, method=True, string='Supplier', type='many2one', relation='res.partner', multi='get_vals',
-                                             store={'transport.order.transport.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
-        'purchase_state': fields.function(_get_vals, method=True, string='PO Status', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, multi='get_vals',
-                                          store={'transport.order.transport.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
-        'purchase_details': fields.function(_get_vals, method=True, string='PO Details', type='char', size=86, multi='get_vals',
-                                            store={'transport.order.transport.fees': (lambda self, cr, uid, ids, c=None: ids, ['purchase_id'], 20),}),
+        'purchase_supplier': fields.related('purchase_id', 'partner_id', type='many2one', string='Supplier', relation='res.partner', readonly=True, store=False, select=1),
+        'purchase_state': fields.related('purchase_id', 'state', type='selection', string='PO Status', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True, store=False, select=1),
+        'purchase_details': fields.related('purchase_id', 'details', type='char', string='PO Details', size=86, readonly=True, store=False, select=1),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
                                         selection=[('planned', 'Planned'),
