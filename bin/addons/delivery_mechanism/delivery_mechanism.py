@@ -1187,7 +1187,11 @@ class stock_picking(osv.osv):
 
                     # To have the same users on the new IN signature lines
                     if wizard.picking_id.signature_id and wizard.partial_process_sign:
+                        sign_obj = self.pool.get('signature')
                         sign_line_obj = self.pool.get('signature.line')
+                        backorder_sign_ids = sign_obj.search(cr, uid, [('signature_res_model', '=', 'stock.picking'),
+                                                                       ('signature_res_id', '=', backorder_id)], limit=1, context=context)
+                        sign_obj.write(cr, uid, backorder_sign_ids, {'signature_state': wizard.picking_id.signature_id.signature_state}, context=context)
                         for sign_line in wizard.picking_id.signature_id.signature_line_ids:
                             if sign_line.user_id:
                                 sign_line_model = [('signature_id.signature_res_model', '=', 'stock.picking'),

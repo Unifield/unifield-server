@@ -232,6 +232,10 @@ class signature(osv.osv):
             if sign['signature_res_model'] == 'physical.inventory' and sign['signature_res_id'] and \
                     model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('confirmed', 'closed'):
                 allow = False
+            if sign['signature_res_model'] == 'stock.picking' and sign['signature_res_id']:
+                pick = self.pool.get(sign['signature_res_model']).read(cr, uid, sign['signature_res_id'], ['type', 'subtype', 'state'], context=context)
+                if pick['type'] == 'in' and pick['subtype'] == 'standard' and pick['state'] != 'done':
+                    allow = False
             res[sign['id']] = allow
         return res
 
