@@ -1715,7 +1715,7 @@ class ir_values(osv.osv):
                     if v[2].get('report_name', False) == 'kit.report':
                         v[2]['name'] = _('Theoretical Kit')
                     new_act.append(v)
-                elif context.get('composition_type')=='real' and v[2].get('report_name', False) in ('real.composition.kit.xls', 'kit.report'):
+                elif context.get('composition_type')=='real' and v[2].get('report_name', False) in ('real.composition.kit.xls', 'kit.report', 'report_tkc_kcl_comparison'):
                     if v[2].get('report_name', False) == 'kit.report':
                         v[2]['name'] = _('Kit Composition')
                     new_act.append(v)

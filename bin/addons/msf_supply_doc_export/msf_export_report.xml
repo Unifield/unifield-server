@@ -156,6 +156,7 @@
             header="False"
             auto="False"
             menu="True"
+            sequence="1"
             />
 
     <!-- KIT REAL COMPOSITION LIST -->
@@ -170,6 +171,7 @@
             header="False"
             auto="False"
             menu="True"
+            sequence="2"
             />
 
     <!-- INTERNAL MOVE -->

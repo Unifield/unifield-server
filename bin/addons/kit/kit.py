@@ -1068,6 +1068,23 @@ class composition_kit(osv.osv):
             'context': {'composition_type': 'theoretical'},
         }
 
+    def _get_comparison_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
+
+        ftf = ['composition_version_id', 'composition_product_id', 'composition_lot_id', 'composition_reference']
+        kcl = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
+        if not kcl.composition_version_id:
+            raise osv.except_osv(_('Error'), _('This report is only available for KCLs using a Version'))
+
+        return (_('TKC_KCL_%s_%s_Comparison_Report_%s') % (kcl.composition_product_id.default_code,
+                                                           (kcl.composition_lot_id and kcl.composition_lot_id.name or kcl.composition_reference).replace('/', '_'),
+                                                           time.strftime('%Y_%m_%d_%H_%M')))
+
 
 composition_kit()
 
@@ -1077,7 +1094,7 @@ class composition_item(osv.osv):
     kit composition items representing kit parts
     '''
     _name = 'composition.item'
-    _order = 'item_module'
+    _order = 'item_module, id'
 
     def _common_update(self, cr, uid, vals, context=None):
         '''
