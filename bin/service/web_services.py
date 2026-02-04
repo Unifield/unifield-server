@@ -576,7 +576,8 @@ class common(_ObjectService):
         _ObjectService.__init__(self,name)
         self.joinGroup("web-services")
 
-    def dispatch(self, method, auth, params):
+    def dispatch(self, method, auth, params, protocol=None):
+        self._current_protocol = protocol
         logger = netsvc.Logger()
         if method in [ 'ir_set','ir_del', 'ir_get' ]:
             return self.common_dispatch(method,auth,params)
