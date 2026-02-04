@@ -312,7 +312,7 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,Http
     def _dispatch(self, method, params):
         try:
             service_name = self.path.split("/")[-1]
-            return self.dispatch(service_name, method, params, "xmlrpc")
+            return self.dispatch(service_name, method, params)
         except netsvc.OpenERPDispatcherException as e:
             raise xmlrpc.client.Fault(tools.exception_to_unicode(e.exception), e.traceback)
 
@@ -399,7 +399,7 @@ class JSONRPCRequestHandler(
 
     def _dispatch(self, method, params):
         service_name = self.path.rstrip("/").split("/")[-1]
-        return self.dispatch(service_name, method, params, "jsonrpc")
+        return self.dispatch(service_name, method, params)
 
 def init_jsonrpc():
     reg_http_service(websrv_lib.HTTPDir('/jsonrpc/', JSONRPCRequestHandler))
