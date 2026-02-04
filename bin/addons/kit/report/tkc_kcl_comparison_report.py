@@ -366,8 +366,9 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
         qty_deviation = []
         # Fetch the product ids in the same order as TKC and KCL
         cr.execute("""
-            SELECT i.item_product_id,MIN(i.id) FROM composition_item i LEFT JOIN composition_kit k ON i.item_kit_id=k.id 
-            WHERE i.item_kit_id IN (%s, %s) GROUP BY i.item_product_id ORDER BY MIN(i.id);
+            SELECT i.item_product_id, string_agg(DISTINCT(i.item_module), ';'), MIN(i.id) 
+            FROM composition_item i LEFT JOIN composition_kit k ON i.item_kit_id=k.id 
+            WHERE i.item_kit_id IN (%s, %s) GROUP BY i.item_product_id ORDER BY string_agg(DISTINCT(i.item_module), ';'), MIN(i.id)
         """, (kcl.composition_version_id.id, kcl.id))
         for prod_id in [x[0] for x in cr.fetchall()]:
             if comparison_data.get(prod_id):
