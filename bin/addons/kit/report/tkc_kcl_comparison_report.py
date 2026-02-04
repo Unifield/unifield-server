@@ -324,7 +324,7 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
                 'tkc_comment': x[10],
                 'sum_tkc_qty': x[11],
                 'sum_kcl_qty': 0,
-                'sum_diff': x[11],
+                'sum_diff': -x[11],  # Will be negative in case the KCL doesn't have the TKC product
                 'kcl_lines': [],
             }
 
@@ -364,7 +364,12 @@ class tkc_kcl_comparison_parser(XlsxReportParser):
 
         prod_deviation = round((len(kcl_prod) - len(tkc_prod)) / len(tkc_prod), 2)  # Kept like this for the Excel cell format
         qty_deviation = []
-        for prod_id in list(set(tkc_prod + kcl_prod)):
+        # Fetch the product ids in the same order as TKC and KCL
+        cr.execute("""
+            SELECT i.item_product_id,MIN(i.id) FROM composition_item i LEFT JOIN composition_kit k ON i.item_kit_id=k.id 
+            WHERE i.item_kit_id IN (%s, %s) GROUP BY i.item_product_id ORDER BY MIN(i.id);
+        """, (kcl.composition_version_id.id, kcl.id))
+        for prod_id in [x[0] for x in cr.fetchall()]:
             if comparison_data.get(prod_id):
                 comp_data = comparison_data[prod_id]
                 if comp_data['sum_tkc_qty'] != 0:
