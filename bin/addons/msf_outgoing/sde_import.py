@@ -326,13 +326,13 @@ class sde_import(osv.osv_memory):
             context = {}
 
         # Search the file
-        if 'origin' not in json_data and 'partner_fo_ref' not in json_data:
-            raise osv.except_osv(_('Error'), _('Either the main key "origin" or the main key "partner_fo_ref" are required but none were not found in the given JSON'))
+        if 'origin' not in json_data:
+            raise osv.except_osv(_('Error'), _('Main key "origin" not found in the given JSON'))
         if not json_data.get('origin') and not json_data.get('partner_fo_ref'):
             raise osv.except_osv(_('Error'), _('Either the main key "origin" or the main key "partner_fo_ref" shouldn\'t be empty'))
 
-        po_name = json_data['origin'].strip().upper()
-        partner_fo_ref = json_data['partner_fo_ref'].strip().upper()
+        po_name = json_data.get('origin') and json_data['origin'].strip().upper() or False
+        partner_fo_ref = json_data.get('partner_fo_ref') and json_data['partner_fo_ref'].strip().upper() or False
         ship_ref = json_data.get('freight') and json_data['freight'].strip().upper() or False
 
         # Search the IN
