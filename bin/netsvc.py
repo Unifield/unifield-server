@@ -553,6 +553,9 @@ def replace_request_password(args):
 
 class OpenERPDispatcher:
 
+    def __init__(self):
+        self._current_protocol = None
+
     def log(self, title, msg, channel=logging.DEBUG_RPC, depth=None):
         logger = logging.getLogger(title)
         if hasattr(self, 'get_uid_list2log') and title == 'params' and len(msg) > 1 and tools.config.get('log_user_xmlrpc_path', False):
@@ -566,8 +569,34 @@ class OpenERPDispatcher:
             for line in pformat(msg, depth=depth).split('\n'):
                 logger.log(channel, line)
 
-    def dispatch(self, service_name, method, params):
+    def dispatch(self, service_name, method, params, protocol=None):
+        from tools.rpc_decorators import JSONRPC_ALLOWED, JSONRPC_ORM_ALLOWED
+
+        current_thread = threading.current_thread()
+        current_thread.rpc_protocol = protocol
         try:
+            self._current_protocol = protocol
+            for item in JSONRPC_ALLOWED:
+                print("JSONRPC_ALLOWED item:", repr(item))
+            for item in JSONRPC_ORM_ALLOWED:
+                print("JSONRPC_ORM_ALLOWED item:", repr(item))
+            if protocol == "jsonrpc":
+                allowed = False
+                # méthode simple exposée
+                if (service_name, method) in JSONRPC_ALLOWED:
+                    allowed = True
+                # méthode ORM via object.execute
+                elif service_name == "object" and method == "execute":
+                    model = params[3]
+                    orm_method = params[4]
+                    if (model, orm_method) in JSONRPC_ORM_ALLOWED:
+                        allowed = True
+
+                if not allowed:
+                    raise Exception(
+                        "Method '%s.%s' not allowed via JSON-RPC" % (service_name, method)
+                    )
+
             logger = logging.getLogger('result')
             self.log('service', service_name)
             self.log('method', method)

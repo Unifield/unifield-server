@@ -48,8 +48,10 @@ import pooler
 import xmlrpc.server
 import http.server
 from xmlrpc.server import SimpleXMLRPCDispatcher
+from http.server import BaseHTTPRequestHandler
 
 import json
+import traceback
 
 try:
     import fcntl
@@ -342,14 +344,13 @@ class JSONRPCRequestHandler(
     netsvc.OpenERPDispatcher,
     websrv_lib.FixSendError,
     HttpLogHandler,
-    xmlrpc.server.SimpleXMLRPCRequestHandler
+    BaseHTTPRequestHandler
 ):
     protocol_version = 'HTTP/1.1'
     _logger = logging.getLogger('jsonrpc')
 
     def __init__(self, conn, addr, svr):
-        xmlrpc.server.SimpleXMLRPCRequestHandler.__init__(self, conn, addr, svr)
-        self.encode_threshold = 0
+        BaseHTTPRequestHandler.__init__(self, conn, addr, svr)
 
     def setup(self):
         self.connection = websrv_lib.dummyconn()
@@ -365,6 +366,7 @@ class JSONRPCRequestHandler(
         pass
 
     def do_POST(self):
+        req = {}
         try:
             length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(length)
@@ -381,13 +383,22 @@ class JSONRPCRequestHandler(
                 "id": req.get("id"),
             }
         except Exception as e:
+            if isinstance(e, netsvc.OpenERPDispatcherException):
+                error = {
+                    'code': -1,
+                    'message': str(e.exception),
+                    'traceback': e.traceback
+                }
+            else:
+               error = {
+                    'code': -2,
+                    'message': e.args and str(e.args[0]) or str(e),
+                    'traceback': ''.join(traceback.format_exception(e)),
+               }
             response = {
                 "jsonrpc": "2.0",
-                "error": {
-                    "code": -32603,
-                    "message": str(e),
-                },
-                "id": req.get("id") if 'req' in locals() else None,
+                "error": error,
+                "id": req and req.get("id") or None,
             }
 
         resp = json.dumps(response).encode("utf-8")
@@ -399,7 +410,7 @@ class JSONRPCRequestHandler(
 
     def _dispatch(self, method, params):
         service_name = self.path.rstrip("/").split("/")[-1]
-        return self.dispatch(service_name, method, params)
+        return self.dispatch(service_name, method, params, "jsonrpc")
 
 def init_jsonrpc():
     reg_http_service(websrv_lib.HTTPDir('/jsonrpc/', JSONRPCRequestHandler))

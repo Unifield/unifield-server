@@ -38,6 +38,7 @@ from lxml import etree
 from tools.misc import fakeUid
 from tools.misc import get_global_instance_level
 from tools.misc import search_global_instance_level
+from tools.rpc_decorators import jsonrpc_orm_exposed
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -861,6 +862,7 @@ class users(osv.osv):
             if not values['user_email'].endswith('msf.org'):
                 raise osv.except_osv(_('Warning'), _('User email must end with "msf.org"'))
 
+    @jsonrpc_orm_exposed('res.users', 'create')
     def create(self, cr, uid, values, context=None):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
@@ -885,6 +887,7 @@ class users(osv.osv):
             self._remove_never_expire(cr, uid, user_id, context=context)
         return user_id
 
+    @jsonrpc_orm_exposed('res.users', 'write')
     def write(self, cr, uid, ids, values, context=None):
         if not ids:
             return True
@@ -987,6 +990,7 @@ class users(osv.osv):
 
         return res
 
+    @jsonrpc_orm_exposed('res.users', 'unlink')
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
