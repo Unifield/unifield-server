@@ -1257,6 +1257,7 @@ class purchase_order(osv.osv):
         'show_default_msg': fields.boolean(string='Show PO Default Message'),
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
+        'merged_po': fields.boolean('PO is merged', readonly=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
         'ad_lines_message_nr': fields.function(_get_ad_lines_message_nr, type='char', size=1024, method=1, string='Line number of NR message for missing AD'),
         'ad_lines_missing_message': fields.function(_get_ad_lines_missing_message, type='char', size=1024, method=1, string='Line number of lines missing AD'),
@@ -1312,6 +1313,7 @@ class purchase_order(osv.osv):
         'show_default_msg': False,
         'not_beyond_validated': True,
         'catalogue_not_applicable': False,
+        'merged_po': False,
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
@@ -1456,7 +1458,8 @@ class purchase_order(osv.osv):
             if vals.get('pricelist_id') and partner.partner_type == 'external':
                 to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
 
-            for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line'], context=context):
+            ftf = ['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line', 'signature_id']
+            for order in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
                 line_changed = False
                 if vals['partner_id'] != order.partner_id.id:
                     if order.state != 'draft':
@@ -1494,6 +1497,10 @@ class purchase_order(osv.osv):
                         for tax_line in order.tax_line:
                             new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id, tax_line.amount, round=False)
                             tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
+
+                    # Reset signature
+                    self.pool.get('signature').write(cr, uid, order.signature_id.id, {'signed_off_line': False, 'signature_is_closed': False}, context=context)
+                    self.unsign_all(cr, uid, ids, context=context)
 
 
         return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
@@ -1751,7 +1758,7 @@ class purchase_order(osv.osv):
             default.update({'is_a_counterpart': False})
         default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False,
                         'po_confirmed': False, 'split_during_sll_mig': False, 'dest_partner_ids': False, 'order_line_mismatch': False,
-                        'catalogue_not_applicable': False})
+                        'catalogue_not_applicable': False, 'merged_po': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 
@@ -2204,6 +2211,7 @@ class purchase_order(osv.osv):
                     'order_line': [],
                     'notes': '%s' % (porder.notes or '',),
                     'fiscal_position': porder.fiscal_position and porder.fiscal_position.id or False,
+                    'merged_po': True,
                 })
             else:
                 if porder.notes:

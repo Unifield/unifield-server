@@ -54,7 +54,7 @@
             id="menu_products_situation_report"
             action="action_products_situation_report"
             parent="stock.next_id_61"
-            sequence="12"
+            sequence="13"
             />
 
         <report

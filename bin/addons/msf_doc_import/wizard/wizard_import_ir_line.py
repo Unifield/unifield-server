@@ -110,8 +110,7 @@ class wizard_import_ir_line(osv.osv_memory):
             rows = file_obj.getRows()
             next(rows)  # skip header line
             try:
-                lines_to_correct = check_line.check_lines_currency(rows,
-                                                                   currency_index, order_currency_code)
+                lines_to_correct = check_line.check_lines_currency(rows, currency_index, order_currency_code)
             except Exception as e:
                 lines_to_correct = -1
                 msg = _("An error occurred when the system was checking the currency value of data. Error raised: %s") % str(e)
@@ -309,19 +308,21 @@ Importation completed in %s!
         """
         wiz_common_import = self.pool.get('wiz.common.import')
         sale_obj = self.pool.get('sale.order')
-        for wiz_read in self.read(cr, uid, ids, ['fo_id', 'file']):
-            fo_id = wiz_read['fo_id']
-            if not wiz_read['file']:
+        for wiz_read in self.browse(cr, uid, ids, fields_to_fetch=['fo_id', 'file'], context=context):
+            fo = wiz_read.fo_id
+            if not wiz_read.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
+            if fo.state != 'draft':
+                return self.write(cr, uid, ids, {'state': 'done', 'message': _("You can only import on a Draft IR; import file is ignored")}, context=context)
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read.file))
                 # iterator on rows
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'fo_id': fo_id, 'header_index': header_index})
+                context.update({'fo_id': fo.id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_ir_line_import)
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
@@ -330,8 +331,8 @@ Importation completed in %s!
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
-            # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            sale_obj.write(cr, uid, fo_id, {'state': 'done', 'import_in_progress': True}, context)
+            # we close the IR only during the import process so that the user can't update the IR in the same time (all fields are readonly)
+            sale_obj.write(cr, uid, fo.id, {'state': 'done', 'import_in_progress': True}, context)
         thread = threading.Thread(target=self._import_internal_req, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.

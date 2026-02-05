@@ -181,7 +181,7 @@ WHITE_LIST_MODEL = [
     'account.export.mapping',
 ]
 
-OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP', 'WACA']
+OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP', 'WACA', 'UBUNTU']
 OC_LIST_TUPLE = list(zip([x.lower() for x in OC_LIST], OC_LIST))
 
 def xmlid_to_sdref(xmlid):
@@ -225,7 +225,6 @@ def sync_log(obj, message=None, level='debug', ids=None, data=None, tb=False):
 
 __re_fancy_integer_field_name = re.compile(r'^fancy_(.+)')
 def fancy_integer(self, cr, uid, ids, name, arg, context=None):
-    global __re_fancy_integer_field_name
     re_match = __re_fancy_integer_field_name.match(name)
     assert re_match is not None, "Invalid field detection for fancy integer display"
     target_field = re_match.group(1)

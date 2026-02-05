@@ -91,6 +91,7 @@
             <field name="method_to_call">auto_import_purchase_order</field>
             <field name="startswith">POV_</field>
             <field name="multiple" eval="True" />
+            <field name="email_notification" eval="True" />
         </record>
 
         <record id="auto_import_fnct_confirmed_purchase_order" model="automated.import.function">
@@ -99,6 +100,7 @@
             <field name="method_to_call">auto_import_confirmed_purchase_order</field>
             <field name="startswith">POV_</field>
             <field name="multiple" eval="True" />
+            <field name="email_notification" eval="True" />
         </record>
 
         <record id="auto_import_fnct_product_categories" model="automated.import.function">

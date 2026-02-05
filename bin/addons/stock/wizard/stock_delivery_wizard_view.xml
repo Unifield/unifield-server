@@ -12,7 +12,7 @@
                     <separator colspan="4" string="Request parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
-                    <field name="partner_id" />
+                    <field name="partner_id" context="{'show_button_show_inactive': True}" />
                     <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection" />
                     <field name="location_id" domain="[('usage', '=', 'internal')]" />
                     <field name="location_dest_id" domain="[('usage', '!=', 'view')]"/>
@@ -34,7 +34,7 @@
             id="menu_stock_delivery_wizard"
             action="action_stock_delivery_wizard"
             parent="stock.next_id_61"
-            sequence="10"
+            sequence="9"
             />
 
     </data>

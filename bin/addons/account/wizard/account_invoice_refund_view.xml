@@ -12,8 +12,8 @@
                     <group colspan="4" >
                          <field name="description"/>
                          <field name="journal_id" required="1" attrs="{'readonly': [('is_intermission', '=', True)]}"/>
+                         <field name="document_date"/>
                          <field name="date" required="1"/>
-                         <field name="period"/>
                          <field name="filter_refund" attrs="{'readonly': [('is_isi', '=', True)]}"/>
                          <field name="is_intermission" invisible="1"/>
                          <field name="is_stv" invisible="1"/>

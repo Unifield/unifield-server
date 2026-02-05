@@ -96,6 +96,7 @@
                         <newline />
                         <field name="name" />
                         <field name="supplier_partner_id" string="Supplier" />
+                        <field name="ship_ref" />
                         <field name="customer_partner_id" string="Customer"/>
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
@@ -117,6 +118,7 @@
                 <tree string="Inbound Transport Object" hide_delete_button="1">
                     <field name="name" />
                     <field name="supplier_partner_id" string="Supplier" />
+                    <field name="ship_ref" />
                     <field name="customer_partner_id" string="Customer"/>
                     <field name="transport_partner_id" />
                     <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
@@ -173,12 +175,14 @@
                     </html>
                     <newline/>
                     <field name="name" />
-                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <newline/>
                     <field name="shipment_type"  />
-                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <group colspan="2" col="3" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                         <field name="no_line" invisible="1"/>
                         <field name="ship_ref" on_change="onchange_ship_ref(ship_ref, select_incoming)"/>
@@ -187,10 +191,18 @@
                                attrs="{'invisible': ['|', ('no_line', '=', False), ('ship_ref', '!=', False)]}"
                                context="{'pick_type': 'incoming', 'transport_object': True}" />
                     </group>
-                    <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <group colspan="2" col="4" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', '!=', 'planned')]}">
+                        <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
+                        <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
+                    </group>
                     <field name="sync_ref" />
                     <field name="from_sync" invisible="1" />
                     <notebook colspan="4">
+                        <page string="Steps">
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" required="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': ['|', ('macroprocess_id', '=', False), ('state', 'in', ['closed', 'cancel'])]}" context="{'parent_in_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
+                        </page>
+
                         <page string="Transport Object">
                             <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                                 <group colspan="4" col="4">
@@ -202,11 +214,7 @@
                                         <field name="transit_departure_date" attrs="{'invisible': [('transit_partner_id', '=', False)]}"/>
                                     </group>
                                 </group>
-                                <group colspan="4" col="4" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', '!=', 'planned')]}">
-                                    <separator colspan="4" string="Shipping" />
-                                    <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
-                                    <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
-                                </group>
+                                <newline/>
                                 <group colspan="4" col="4">
                                     <separator colspan="4" string="Transporter" />
                                     <field name="transport_partner_id" />
@@ -223,7 +231,6 @@
                                         <field name="arrival_planned_date" />
                                         <field name="departure_date" />
                                     </group>
-                                    <field name="transport_po_id" />
                                     <field name="notify_partner_id" />
                                 </group>
                                 <group colspan="4" col="4">
@@ -280,6 +287,8 @@
                                     <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_supplier" readonly="1" />
+                                    <field name="purchase_state" readonly="1" />
                                     <field name="purchase_details" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
@@ -302,6 +311,8 @@
                                     <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_supplier" readonly="1" />
+                                    <field name="purchase_state" readonly="1" />
                                     <field name="purchase_details" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
@@ -311,11 +322,6 @@
                                     <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
-                        </page>
-
-                        <page string="Steps">
-                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" required="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': ['|', ('macroprocess_id', '=', False), ('state', 'in', ['closed', 'cancel'])]}" context="{'parent_in_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
                         </page>
 
                         <page string="Notes">
@@ -483,17 +489,27 @@
                     </html>
                     <newline/>
                     <field name="name" />
-                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <newline/>
                     <field name="shipment_type" />
-                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <group colspan="2" col="4">
+                        <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
+                        <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
+                    </group>
                     <field name="ito_ref" />
                     <field name="supplier_partner_id" readonly="1" invisible="1"/>
                     <notebook colspan="4">
+                        <page string="Steps">
+                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" required="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': ['|', ('macroprocess_id', '=', False), ('state', 'in', ['closed', 'cancel'])]}" context="{'parent_out_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
+                        </page>
+
                         <page string="Transport Object">
                             <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                                 <group colspan="4" col="4">
@@ -509,7 +525,6 @@
                                     <separator colspan="4" string="Shipping" />
                                     <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id),('partner_id', '!=', False)]" colspan="2"/>
                                 </group>
-
                                 <group colspan="4" col="4">
                                     <separator colspan="4" string="Transporter" />
                                     <field name="transport_partner_id" />
@@ -526,13 +541,10 @@
                                         <field name="departure_date" />
                                         <field name="arrival_planned_date" />
                                     </group>
-                                    <field name="transport_po_id" />
                                     <field name="notify_partner_id" />
                                 </group>
                                 <group colspan="4" col="4">
                                     <separator colspan="4" string="Customer" />
-                                    <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
-                                    <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
                                     <field name="incoterm_type" />
                                     <field name="incoterm_location" />
                                 </group>
@@ -587,6 +599,8 @@
                                     <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_supplier" readonly="1" />
+                                    <field name="purchase_state" readonly="1" />
                                     <field name="purchase_details" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
@@ -609,6 +623,8 @@
                                     <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
                                     <field name="purchase_id" on_change="onchange_purchase_id(purchase_id)" />
+                                    <field name="purchase_supplier" readonly="1" />
+                                    <field name="purchase_state" readonly="1" />
                                     <field name="purchase_details" readonly="1" />
                                     <field name="value" />
                                     <field name="currency_id" />
@@ -620,10 +636,6 @@
                             </field>
                         </page>
 
-                        <page string="Steps">
-                            <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" required="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
-                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': ['|', ('macroprocess_id', '=', False), ('state', 'in', ['closed', 'cancel'])]}" context="{'parent_out_id': active_id, 'macroprocess_id': macroprocess_id}" colspan="6" />
-                        </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" colspan="4" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                         </page>

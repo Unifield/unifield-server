@@ -49,6 +49,8 @@ class stock_cost_reevaluation(osv.osv):
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        if obj.state != 'draft':
+            raise osv.except_osv(_('Error'), _('You can only import on a Draft Product Cost Revaluation; import file is ignored'))
 
         # get company default currency
         comp_currency_name = ''

@@ -35,8 +35,8 @@
 
         <menuitem
             id="menu_unconsistent_stock_report"
-            sequence="-4"
-            parent="stock.menu_traceability"
+            sequence="3"
+            parent="stock.menu_action_bn_management"
             action="action_unconsistent_stock_report" />
 
         <!-- Make a cron to remove lines from old reports -->

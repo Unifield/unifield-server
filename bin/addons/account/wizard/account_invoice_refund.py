@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 import netsvc
+import time
 
 class account_invoice_refund(osv.osv_memory):
 
@@ -44,18 +45,142 @@ class account_invoice_refund(osv.osv_memory):
             refund_types = [('cancel', 'Cancel')]
         return refund_types
 
+    def _get_journal(self, cr, uid, context=None):
+        """
+        WARNING: This method has been taken from account module from OpenERP
+        """
+        obj_journal = self.pool.get('account.journal')
+        obj_inv = self.pool.get('account.invoice')
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        if context is None:
+            context = {}
+        args = [('type', '=', 'sale_refund')]
+        # in case of a DI refund from a register line use the dir_invoice_id in context
+        doc_to_refund_id = context.get('dir_invoice_id', False) or (context.get('active_ids') and context['active_ids'][0])
+        if doc_to_refund_id:
+            source = obj_inv.read(cr, uid, doc_to_refund_id, ['type', 'is_intermission', 'doc_type', 'journal_id'], context=context)
+            if source['doc_type'] == 'stv':
+                if source['journal_id']:
+                    # by default use the same journal for the refund
+                    args = [('id', '=', source['journal_id'][0])]
+                else:
+                    args = [('type', '=', 'sale')]
+            elif source['doc_type'] == 'isi':
+                args = [('type', '=', 'purchase'), ('code', '=', 'ISI')]
+            elif source['is_intermission']:
+                args = [('type', '=', 'intermission')]
+            elif source['type'] in ('in_invoice', 'in_refund'):
+                args = [('type', '=', 'purchase_refund')]
+        if user.company_id.instance_id:
+            args.append(('is_current_instance','=',True))
+        args.append(('is_active', '=', True))
+        # get the first journal created matching with the defined criteria
+        journal = obj_journal.search(cr, uid, args, order='id', limit=1, context=context)
+        return journal and journal[0] or False
+
+    def _get_document_date(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        invoice_id = context.get('dir_invoice_id') or (context.get('active_ids') and context['active_ids'][0])
+        if invoice_id:
+            invoice_module = self.pool.get('account.invoice')
+            doc_date = invoice_module.read(cr, uid, invoice_id, ['document_date'],
+                                           context=context)['document_date']
+            return doc_date
+        return time.strftime('%Y-%m-%d')
+
+
     _columns = {
-        'date': fields.date('Operation date', help='This date will be used as the invoice date for Refund Invoice and Period will be chosen accordingly!'),
+        'date': fields.date('Posting date'),
         'period': fields.many2one('account.period', 'Force period'),
         'journal_id': fields.many2one('account.journal', 'Refund Journal', hide_default_menu=True,
                                       help='You can select here the journal to use for the refund invoice that will be created. If you leave that field empty, it will use the same journal as the current invoice.'),
         'description': fields.char('Description', size=128, required=True),
         'filter_refund': fields.selection(_get_filter_refund, "Refund Type", required=True, help='Refund invoice based on this type. You can not Modify and Cancel if the invoice is already reconciled'),
+        'document_date': fields.date('Document Date', required=True),
+        'is_intermission': fields.boolean("Wizard opened from an Intermission Voucher", readonly=True),
+        'is_stv': fields.boolean("Wizard opened from a Stock Transfer Voucher", readonly=True),
+        'is_isi': fields.boolean("Wizard opened from an Intersection Supplier Invoice", readonly=True),
     }
 
+    def _get_refund(self, cr, uid, context=None):
+        """
+        Returns the default value for the 'filter_refund' field depending on the context
+        """
+        if context is None:
+            context = {}
+        if context.get('is_intermission', False) or context.get('doc_type', '') == 'stv':
+            return 'modify'
+        elif context.get('doc_type', '') == 'isi':
+            return 'cancel'
+        return 'refund'  # note that only the "Refund" option is available in DI
+
+    def _get_is_intermission(self, cr, uid, context=None):
+        """
+        Returns True if the wizard has been opened from an Intermission Voucher
+        """
+        if context is None:
+            context = {}
+        return context.get('is_intermission', False)
+
+    def _get_is_stv(self, cr, uid, context=None):
+        """
+        Returns True if the wizard has been opened from a Stock Transfer Voucher
+        """
+        if context is None:
+            context = {}
+        return context.get('doc_type', '') == 'stv'
+
+    def _get_is_isi(self, cr, uid, context=None):
+        """
+        Returns True if the wizard has been opened from an Intersection Supplier Invoice
+        """
+        if context is None:
+            context = {}
+        return context.get('doc_type', '') == 'isi'
+
     _defaults = {
-        'filter_refund': 'modify',
+        'document_date': _get_document_date,
+        'filter_refund': _get_refund,
+        'journal_id': _get_journal,  # US-193
+        'is_intermission': _get_is_intermission,
+        'is_stv': _get_is_stv,
+        'is_isi': _get_is_isi,
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if context.get('doc_type', '') in ('ivo', 'ivi'):
+            # only the first Intermission journal created (INT, always active because it is one of the default journals created)
+            int_journal_id = self.pool.get('account.invoice')._get_int_journal_for_current_instance(cr, uid, context=context)
+            journal_domain = [('id', '=', int_journal_id)]
+        else:
+            if context.get('doc_type', '') == 'stv':
+                jtype = 'sale'
+            elif context.get('doc_type', '') == 'isi':
+                jtype = 'purchase'
+            else:
+                jtype = 'sale_refund'
+                if context.get('journal_type'):
+                    jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
+                if jtype in ('sale', 'sale_refund'):
+                    jtype = 'sale_refund'
+                else:
+                    jtype = 'purchase_refund'
+            journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True), ('is_active', '=', True)]
+        if context.get('doc_type', '') == 'isi':
+            journal_domain.append(('code', '=', 'ISI'))
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        for field in res['fields']:
+            if field == 'journal_id' and user.company_id.instance_id:
+                journal_select = journal_obj._name_search(cr, uid, '', journal_domain, context=context, limit=None, name_get_uid=1)
+                res['fields'][field]['selection'] = journal_select
+                res['fields'][field]['domain'] = journal_domain
+        return res
+
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
         """
@@ -63,14 +188,14 @@ class account_invoice_refund(osv.osv_memory):
         """
         res = ['name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id',
                'partner_insite', 'partner_contact', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line',
-               'journal_id', 'period_id']
+               'journal_id', 'period_id', 'analytic_distribution_id']
         return res
 
     def _hook_fields_m2o_for_modify_refund(self, cr, uid, *args):
         """
         Permits to change values for m2o fields taken from initial values to new invoice(s)
         """
-        res = ['address_contact_id', 'address_invoice_id', 'partner_id', 'account_id', 'currency_id', 'payment_term', 'journal_id']
+        res = ['address_contact_id', 'address_invoice_id', 'partner_id', 'account_id', 'currency_id', 'payment_term', 'journal_id', 'analytic_distribution_id']
         return res
 
     def _get_invoice_context(self, context):
@@ -89,6 +214,10 @@ class account_invoice_refund(osv.osv_memory):
         """
         Permits to adapt invoice creation
         """
+        if form.get('document_date', False) and form.get('date', False):
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                                                               form['document_date'], form['date'])
+            data.update({'document_date': form['document_date']})
         inv_context = self._get_invoice_context(context)
         res = self.pool.get('account.invoice').create(cr, uid, data, context=inv_context)
         return res
@@ -97,13 +226,23 @@ class account_invoice_refund(osv.osv_memory):
         """
         Permits to adapt refund creation
         """
+        if form.get('document_date', False):
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                                                               form['document_date'], date)
+            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, form['document_date'], context=context)
+
         return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, context=context)
 
     def _hook_get_period_from_date(self, cr, uid, invoice_id, date=False, period=False):
         """
-        Permit to change date regarding other constraints
+        Get period regarding given date
         """
-        return period
+        res = period
+        if date:
+            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date)
+            if period_ids and isinstance(period_ids, list):
+                res = period_ids[0]
+        return res
 
     def _get_reconcilable_amls(self, aml_list, to_reconcile_dict):
         """
@@ -123,6 +262,14 @@ class account_invoice_refund(osv.osv_memory):
         @param ids: the account invoice refund’s ID or list of IDs
 
         """
+        if mode == 'modify' or mode == 'cancel':
+            invoice_obj = self.pool.get('account.invoice')
+            inv_ids = context.get('dir_invoice_id') and [context['dir_invoice_id']] or context.get('active_ids', [])
+            invoices = invoice_obj.browse(cr, uid, inv_ids, context=context)
+            for invoice in invoices:
+                if invoice.imported_state == 'partial':
+                    raise osv.except_osv(_('Error !'), _('You can not refund-modify nor refund-cancel an invoice partially imported in a register.'))
+
         inv_obj = self.pool.get('account.invoice')
         reconcile_obj = self.pool.get('account.move.reconcile')
         account_m_line_obj = self.pool.get('account.move.line')

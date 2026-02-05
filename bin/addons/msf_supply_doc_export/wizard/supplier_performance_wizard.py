@@ -53,6 +53,7 @@ class supplier_performance_wizard(osv.osv_memory):
         'po_type_direct': fields.boolean(string='Direct Purchase Order'),
         'pol_ids': fields.text(string='Order Lines', readonly=True),
         'order_id': fields.many2one('purchase.order.line', string='Order Line'),
+        'include_inactive_partners': fields.boolean(string='Include inactive partners'),
     }
 
     _defaults = {
@@ -139,36 +140,48 @@ class supplier_performance_wizard(osv.osv_memory):
         if isinstance(ids, int):
             ids = [ids]
 
-        pol_obj = self.pool.get('purchase.order.line')
-
         for wizard in self.browse(cr, uid, ids, context=context):
             vals = {}
-            pol_domain = [
-                ('state', 'in', ['done', 'cancel', 'cancel_r']),
-                ('partner_id.supplier', '=', True),
-            ]
+            sql_param = {}
+            sql_cond = ["pol.state IN ('done', 'cancel', 'cancel_r')", "pa.supplier = 't'"]
 
             if wizard.date_from:
-                pol_domain.append(('create_date', '>=', wizard.date_from))
+                sql_param['date_from'] = wizard.date_from
+                sql_cond.append(' pol.create_date >= %(date_from)s ')
 
             if wizard.date_to:
-                pol_domain.append(('create_date', '<=', wizard.date_to))
+                sql_param['date_to'] = wizard.date_to
+                sql_cond.append(' pol.create_date <= %(date_to)s ')
 
             if wizard.partner_id:
-                pol_domain.append(('partner_id', '=', wizard.partner_id.id))
+                sql_param['partner_id'] = wizard.partner_id.id
+                sql_cond.append(' pa.id = %(partner_id)s ')
+            elif not wizard.include_inactive_partners:
+                sql_cond.append(" pa.active = 't' ")
 
             partner_types, pt_text = self._get_partner_types(cr, uid, wizard, context=context)
             if partner_types:
-                pol_domain.append(('partner_id.partner_type', 'in', partner_types))
+                sql_param['partner_types'] = tuple(partner_types)
+                sql_cond.append(' pa.partner_type IN %(partner_types)s ')
                 vals.update({'pt_text': pt_text})
 
             order_types, ot_text = self._get_order_types(cr, uid, wizard, context=context)
             if order_types:
-                pol_domain.append(('order_id.order_type', 'in', order_types))
+                sql_param['order_types'] = tuple(order_types)
+                sql_cond.append(' po.order_type IN %(order_types)s ')
                 vals.update({'ot_text': ot_text})
 
+            cr.execute("""
+                SELECT pol.id FROM purchase_order_line pol
+                    LEFT JOIN purchase_order po ON pol.order_id = po.id
+                    LEFT JOIN res_partner pa ON pol.partner_id = pa.id
+                WHERE
+            """ + ' AND '.join(sql_cond) + """
+                ORDER BY po.id DESC, pol.line_number ASC
+            """, sql_param) # not_a_user_entry
+
             vals.update({
-                'pol_ids': pol_obj.search(cr, uid, pol_domain, order='order_id desc, line_number asc', context=context)
+                'pol_ids': [x[0] for x in cr.fetchall()]
             })
 
             if not vals.get('pol_ids'):
