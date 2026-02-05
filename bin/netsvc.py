@@ -576,10 +576,6 @@ class OpenERPDispatcher:
         current_thread.rpc_protocol = protocol
         try:
             self._current_protocol = protocol
-            for item in JSONRPC_ALLOWED:
-                print("JSONRPC_ALLOWED item:", repr(item))
-            for item in JSONRPC_ORM_ALLOWED:
-                print("JSONRPC_ORM_ALLOWED item:", repr(item))
             if protocol == "jsonrpc":
                 allowed = False
                 # méthode simple exposée
