@@ -1290,5 +1290,8 @@
             <field name="method">us_13980_update_new_code_on_merged</field>
         </record>
 
+        <record id="us_15079_user_email" model="patch.scripts">
+            <field name="method">us_15079_user_email</field>
+        </record>
     </data>
 </openerp>
