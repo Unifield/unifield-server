@@ -40,6 +40,7 @@ class sde_import(osv.osv_memory):
         'message': fields.text(string='Message'),
         'po_ref_for_in': fields.char(string='PO reference to find the IN', size=128),
         'pack_ref_for_in': fields.char(string='Ship/OUT reference to find the IN', size=128),
+        'partner_fo_ref_for_in': fields.char(string='Supplier FO reference to find the IN', size=128),
     }
 
     def wizard_sde_import_in_updated(self, cr, uid, ids, context=None):
@@ -75,14 +76,15 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        sde_imp = self.read(cr, uid, ids[0], ['file', 'filename', 'po_ref_for_in', 'pack_ref_for_in'], context=context)
+        sde_imp = self.read(cr, uid, ids[0], ['file', 'filename', 'po_ref_for_in', 'pack_ref_for_in', 'partner_fo_ref_for_in'], context=context)
         if not sde_imp['file']:
             raise osv.except_osv(_('Warning'), _('No file to import'))
         file = base64.b64decode(sde_imp['file'])
 
-        if not sde_imp['po_ref_for_in']:
-            raise osv.except_osv(_('Warning'), _('Please add at least the PO reference to find the IN'))
-        msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, sde_imp['po_ref_for_in'], sde_imp['pack_ref_for_in'], context=context)
+        if not sde_imp['po_ref_for_in'] and not sde_imp['partner_fo_ref_for_in']:
+            raise osv.except_osv(_('Warning'), _('Please add at least the PO reference or the Supplier FO reference to find the IN'))
+        msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, sde_imp['po_ref_for_in'],
+                                  sde_imp['pack_ref_for_in'], sde_imp['partner_fo_ref_for_in'], context=context)
 
         return self.write(cr, uid, ids, {'message': msg}, context=context)
 
@@ -111,6 +113,8 @@ class sde_import(osv.osv_memory):
 
         context['sde_flow'] = True
         msg, pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False, False
+        pagi_json_text = ''
+        pagi_json_data = []
         try:
             json_data = json.loads(json_text)
 
@@ -137,7 +141,8 @@ class sde_import(osv.osv_memory):
                         else:
                             # Update the existing JSON with the new data in the key packing_data
                             # Use from_pack, to_pack and parcel_ids to see is the pack already exist
-                            pagi_json_data = json.loads(sde_pagi['pagination_json_text'])
+                            pagi_json_text = sde_pagi['pagination_json_text']
+                            pagi_json_data = json.loads(pagi_json_text)
                             parcel_keys = sde_pagi['pagination_parcel_keys'].split(',')
                             for pack_data in json_data.get('packing_data', []):
                                 parcels = []
@@ -148,19 +153,27 @@ class sde_import(osv.osv_memory):
                                             raise osv.except_osv(_('Warning'), _('parcel_id "%s": Commas (,) are not allowed in Parcel ID')
                                                                  % (parcel_id,))
                                         parcels.append(parcel_id)
-                                parcel_key = 'f%st%spar%s' % (pack_data.get('parcel_from', 0),
-                                                              pack_data.get('parcel_to', 0), ''.join(parcels))
+                                parcel_key = 'f%st%spl%spar%s' % (pack_data.get('parcel_from', 0), pack_data.get('parcel_to', 0),
+                                                                  pack_data.get('packing_list', ''), ''.join(parcels))
                                 if parcel_key in parcel_keys:
-                                    if pagi_json_data['packing_data'].get('move_lines'):
-                                        pagi_json_data['packing_data']['move_lines'].extend(pack_data['move_lines'])
-                                    else:
-                                        pagi_json_data['packing_data']['move_lines'] = pack_data.get('move_lines', [])
+                                    # Find the correct existing packing_data to update in
+                                    for pagi_pack_data in pagi_json_data.get('packing_data', []):
+                                        pagi_parcels = []
+                                        for pagi_parcel in pagi_pack_data.get('parcel_ids', []):
+                                            if pagi_parcel.get('parcel_id'):
+                                                pagi_parcels.append(str(pagi_parcel['parcel_id']).strip())
+                                        pagi_parcel_key = 'f%st%spl%spar%s' % (pagi_pack_data.get('parcel_from', 0), pagi_pack_data.get('parcel_to', 0),
+                                                                               pagi_pack_data.get('packing_list', ''), ''.join(pagi_parcels))
+                                        if pagi_parcel_key == parcel_key:
+                                            pagi_json_data['packing_data'][pagi_json_data['packing_data'].index(pagi_pack_data)]['move_lines'].extend(pack_data['move_lines'])
+                                            break
                                 else:
                                     pagi_json_data['packing_data'].append(pack_data)
                                     parcel_keys.append(parcel_key)
 
+                            pagi_json_text = json.dumps(pagi_json_data)
                             pagi_vals = {
-                                'pagination_json_text': json.dumps(pagi_json_data),
+                                'pagination_json_text': pagi_json_text,
                                 'pagination_parcel_keys': ','.join(parcel_keys),
                                 'page': sde_pagi_page,
                             }
@@ -183,8 +196,8 @@ class sde_import(osv.osv_memory):
                                             raise osv.except_osv(_('Warning'), _('parcel_id "%s": Commas (,) are not allowed in Parcel ID')
                                                                  % (parcel_id,))
                                         parcels.append(parcel_id)
-                                parcel_keys.append('f%st%spar%s' % (pack_data.get('parcel_from', 0),
-                                                                    pack_data.get('parcel_to', 0), ''.join(parcels)))
+                                parcel_keys.append('f%st%spl%spar%s' % (pack_data.get('parcel_from', 0), pack_data.get('parcel_to', 0),
+                                                                        pack_data.get('packing_list', ''), ''.join(parcels)))
                             sde_pagi_vals = {
                                 'state': json_data['sde_pagination_type'] == 'end' and 'done' or 'progress',
                                 'pagination_json_id': json_data['sde_pagination_id'],
@@ -198,11 +211,11 @@ class sde_import(osv.osv_memory):
             if sde_pagi_error:
                 raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
                                      % (json_data.get('sde_pagination_id'), sde_pagi_error))
-            elif not json_data.get('sde_pagination_id') or sde_pagi_id:
+            elif not json_data.get('sde_pagination_id') or (sde_pagi_end_msg and sde_pagi_id):
                 # Get the correct JSON data if the pagination has been used
-                if sde_pagi_id:
-                    sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, ['pagination_json_text'], context=context)
-                    json_data = json.loads(sde_pagi['pagination_json_text'])
+                if sde_pagi_id and pagi_json_text and pagi_json_data:
+                    json_text = pagi_json_text
+                    json_data = pagi_json_data
 
                 # get the IN with the Ship Ref or the Origin
                 in_id = self.get_incoming_id_from_json(cr, uid, json_data, in_updated, context=context)
@@ -264,7 +277,7 @@ class sde_import(osv.osv_memory):
 
         return msg
 
-    def sde_file_to_in(self, cr, uid, file_path, file, po_ref, pack_ref, context=None):
+    def sde_file_to_in(self, cr, uid, file_path, file, po_ref, pack_ref, partner_fo_ref, context=None):
         '''
         Method used by the SDE script to attach a file to an IN
         '''
@@ -281,7 +294,7 @@ class sde_import(osv.osv_memory):
                 file_data = file.data
 
             # Get the IN with the references given
-            in_id = self.get_incoming_id_from_refs(cr, uid, po_ref, pack_ref, False, context=context)
+            in_id = self.get_incoming_id_from_refs(cr, uid, po_ref, pack_ref, partner_fo_ref, False, context=context)
             in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
 
             # attach the simulation file to the IN
@@ -313,36 +326,47 @@ class sde_import(osv.osv_memory):
             context = {}
 
         # Search the file
-        if 'origin' not in json_data:
-            raise osv.except_osv(_('Error'), _('Main key "origin" not found in the given JSON'))
-        if not json_data.get('origin'):
-            raise osv.except_osv(_('Error'), _('Main key "origin" shouldn\'t be empty'))
+        if 'origin' not in json_data and 'partner_fo_ref' not in json_data:
+            raise osv.except_osv(_('Error'), _('Either the main key "origin" or the main key "partner_fo_ref" are required but none were not found in the given JSON'))
+        if not json_data.get('origin') and not json_data.get('partner_fo_ref'):
+            raise osv.except_osv(_('Error'), _('Either the main key "origin" or the main key "partner_fo_ref" shouldn\'t be empty'))
 
         po_name = json_data['origin'].strip().upper()
+        partner_fo_ref = json_data['partner_fo_ref'].strip().upper()
         ship_ref = json_data.get('freight') and json_data['freight'].strip().upper() or False
 
         # Search the IN
-        return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, in_updated, context=context)
+        return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, partner_fo_ref, in_updated, context=context)
 
-    def get_incoming_id_from_refs(self, cr, uid, po_name, ship_ref, in_updated, context=None):
+    def get_incoming_id_from_refs(self, cr, uid, po_name, ship_ref, partner_fo_ref, in_updated, context=None):
         if context is None:
             context = {}
 
-        if not po_name:
-            raise osv.except_osv(_('Error'), _('The PO Reference must not be empty'))
+        if not po_name and not partner_fo_ref:
+            raise osv.except_osv(_('Error'), _('Both the PO Reference and the Supplier FO Reference must not be empty'))
 
-        if po_name.find(':') != -1:
-            for part in po_name.split(':'):
-                re_res = re.findall(r'PO[0-9]+$', part, re.I)
-                if re_res:
-                    po_name = part
-                    break
+        po_obj = self.pool.get('purchase.order')
+        pick_obj = self.pool.get('stock.picking')
+
+        po_id = False
+        if po_name:
+            if po_name.find(':') != -1:
+                for part in po_name.split(':'):
+                    re_res = re.findall(r'PO[0-9]+$', part, re.I)
+                    if re_res:
+                        po_name = part
+                        break
+            po_id = po_obj.search(cr, uid, [('name', '=ilike', po_name)], context=context)
+            if not po_id:
+                raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
+        if not po_id and partner_fo_ref:
+            po_id = po_obj.search(cr, uid, [('partner_ref', 'ilike', partner_fo_ref)], context=context)
+            if not po_id:
+                raise osv.except_osv(_('Error'), _('PO with Supplier FO reference %s not found') % partner_fo_ref)
 
         # Search the IN
-        pick_obj = self.pool.get('stock.picking')
-        po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=ilike', po_name)], context=context)
         if not po_id:
-            raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
+            raise osv.except_osv(_('Error'), _('PO was not found with the given references'))
         in_domain = [('purchase_id', '=', po_id[0]), ('type', '=', 'in'), ('claim', '=', False)]
         error_msg = _('No available IN found for the given PO %s') % po_name
 

@@ -14,15 +14,16 @@
                     <button name="wizard_sde_import_in" string="Import IN" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_import_in_updated" string="Import IN Updated" icon="gtk-execute" type="object" colspan="2" />
                     <separator colspan="4" string="Add attachment to an IN" />
-                    <group colspan="2">
+                    <group colspan="4" col="6">
                         <field name="po_ref_for_in" />
                         <field name="pack_ref_for_in" />
+                        <field name="partner_fo_ref_for_in" />
                     </group>
-                    <group colspan="1">
+                    <group colspan="4">
                         <field name="file" filename="filename" />
                         <field name="filename" invisible="1" />
+                        <button name="wizard_sde_file_to_in" string="Import attachment" icon="gtk-execute" type="object" colspan="1" />
                     </group>
-                    <button name="wizard_sde_file_to_in" string="Import attachment" icon="gtk-execute" type="object" colspan="1" />
                     <separator colspan="4" string="Report Actions" />
                     <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="4" context="{'from_sde_wizard': True}" />
                 </form>

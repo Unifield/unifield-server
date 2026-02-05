@@ -663,8 +663,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                 # Moves data
                 index += 1
                 values[index] = line_headers
-                if parcel.get('move_lines'):
-                    for move_line in parcel['move_lines']:
+                if 'move_lines' in parcel:
+                    for move_line in parcel.get('move_lines', []):
                         index += 1
                         values[index] = {}
                         for move_header in LINES_COLUMNS:
