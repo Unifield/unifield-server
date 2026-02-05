@@ -574,7 +574,7 @@ class stock_incoming_processor(osv.osv):
         res_id = []
         for incoming in incoming_ids:
             res_id = incoming['picking_id']['id']
-        incoming_obj.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False, 'sde_updated': False}, context=context)
+        incoming_obj.write(cr, uid, ids, {'draft': False, 'sde_updated': False}, context=context)
 
         # Remove the SDE flag
         stock_p_obj.write(cr, uid, res_id, {'sde_updated': False}, context=context)
