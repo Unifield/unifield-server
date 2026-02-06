@@ -35,6 +35,7 @@ import base64
 from lxml import etree
 from tools.sql import drop_view_if_exists
 from service.web_services import report_spool
+from tools.rpc_decorators import jsonrpc_orm_exposed
 
 
 class stock_warehouse(osv.osv):
@@ -1939,6 +1940,7 @@ class shipment(osv.osv):
             ''', (tuple(context.get('button_selected_ids')), ))
         return True
 
+    @jsonrpc_orm_exposed('shipment', 'generate_dispatched_packing_list_report')
     def generate_dispatched_packing_list_report(self, cr, uid, context=None):
         '''
         Method used by the SDE script to export the file

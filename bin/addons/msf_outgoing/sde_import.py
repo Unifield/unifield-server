@@ -27,6 +27,7 @@ import time
 from datetime import datetime
 import re
 import json
+from tools.rpc_decorators import jsonrpc_orm_exposed
 
 
 class sde_import(osv.osv_memory):
@@ -96,6 +97,7 @@ class sde_import(osv.osv_memory):
             context = {}
         return self.pool.get('shipment').generate_dispatched_packing_list_report(cr, uid, context=context)
 
+    @jsonrpc_orm_exposed('sde.import', 'sde_in_import')
     def sde_in_import(self, cr, uid, json_text, in_updated=False, context=None):
         '''
         Method used by the SDE script to import JSON data.
@@ -279,6 +281,7 @@ class sde_import(osv.osv_memory):
 
         return msg
 
+    @jsonrpc_orm_exposed('sde.import', 'sde_file_to_in')
     def sde_file_to_in(self, cr, uid, file_path, file, po_ref, pack_ref, partner_fo_ref, context=None):
         '''
         Method used by the SDE script to attach a file to an IN
@@ -292,6 +295,8 @@ class sde_import(osv.osv_memory):
         try:
             if isinstance(file, bytes):
                 file_data = file
+            elif isinstance(file, str):
+                file_data = file.encode('utf-8')
             else:  # Binary expected
                 file_data = file.data
 
