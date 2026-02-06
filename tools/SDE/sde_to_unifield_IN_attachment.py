@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 # -*- encoding: utf-8 -*-
-import xmlrpc.client
 import sys
 import os
 import urllib.request
+import urllib.error
 import json
 import random
 
@@ -13,7 +13,7 @@ password = 'my_password'
 host = 'my_host'
 port = 8069  # json-rpc port, 8069 on prod instance
 
-def json_rpc(url, method, params):
+def json_rpc(url, method, params, timeout=None):
     data = {
         "jsonrpc": "2.0",
         "method": method,
@@ -25,9 +25,16 @@ def json_rpc(url, method, params):
         data=json.dumps(data).encode("utf-8"),
         headers={"Content-Type": "application/json"},
     )
-    reply = json.loads(urllib.request.urlopen(req).read().decode("utf-8"))
+
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            reply = json.loads(response.read().decode("utf-8"))
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"JSON-RPC request failed: {e}")
+
     if reply.get("error"):
-        raise Exception(reply["error"])
+        raise RuntimeError(reply["error"])
+
     return reply["result"]
 
 if len(sys.argv) < 3:

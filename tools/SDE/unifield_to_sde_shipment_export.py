@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 # -*- encoding: utf-8 -*-
-import xmlrpc.client
 import sys
-import base64
+import urllib.request
+import urllib.error
+import json
+import random
 import os
 import time
 
@@ -10,7 +12,31 @@ dbname = 'my_db'
 user = 'my_user'
 password = 'my_password'
 host = 'my_host'
-port = 8069  # xml-rpc port, 8069 on prod instance
+port = 8069  # json-rpc port, 8069 on prod instance
+
+def json_rpc(url, method, params, timeout=None):
+    data = {
+        "jsonrpc": "2.0",
+        "method": method,
+        "params": params,
+        "id": random.randint(0, 1000000000),
+    }
+    req = urllib.request.Request(
+        url=url,
+        data=json.dumps(data).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            reply = json.loads(response.read().decode("utf-8"))
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"JSON-RPC request failed: {e}")
+
+    if reply.get("error"):
+        raise RuntimeError(reply["error"])
+
+    return reply["result"]
 
 path = 'C:\\path\\to\\your\\directory'
 if not os.path.exists(path):
@@ -19,21 +45,18 @@ if not os.path.exists(path):
 
 lang_context = {'lang': 'en_MF'}  # or fr_MF
 
-url = 'http://%s:%s/xmlrpc/' % (host, port)
+url_object = f"http://{host}:{port}/jsonrpc/object"
+url = f"http://{host}:{port}/jsonrpc/common"
 
-# retrieve the user id : http://<host>:<xmlrpcport>/xmlrpc/common
-sock = xmlrpc.client.ServerProxy(url + 'common')
-user_id = sock.login(dbname, user, password)
+# retrieve the user id
+user_id = json_rpc(url, "login", [dbname, user, password])
 if not user_id:
     print('Wrong %s password on %s:%s db: %s' % (user, host, port, dbname))
     sys.exit(1)
 
-# to query the server: http://<host>:<xmlrpcport>/xmlrpc/object
-sock = xmlrpc.client.ServerProxy(url + 'object', allow_none=True)
-
 try:
     # get the report
-    file_res = sock.execute(dbname, user_id, password, 'shipment', 'generate_dispatched_packing_list_report', lang_context)
+    file_res = json_rpc(url_object, "execute", [dbname, user_id, password, 'shipment', 'generate_dispatched_packing_list_report', lang_context])
     if not file_res:
         raise Exception('The Dispatched Shipments report could not be retrieved')
 
