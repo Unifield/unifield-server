@@ -1,29 +1,10 @@
-import json
-import random
-import urllib.request
+from bin.jsonrpc import json_rpc
 
 HOST = 'localhost'
 PORT = 8069
 DB = 'se_HQ1'
 USER = 'admin'
 PASS = 'admin'
-
-def json_rpc(url, method, params):
-    data = {
-        "jsonrpc": "2.0",
-        "method": method,
-        "params": params,
-        "id": random.randint(0, 1000000000),
-    }
-    req = urllib.request.Request(
-        url=url,
-        data=json.dumps(data).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-    )
-    reply = json.loads(urllib.request.urlopen(req).read().decode("utf-8"))
-    if reply.get("error"):
-        raise Exception(reply["error"])
-    return reply["result"]
 
 URL_OBJECT = f"http://{HOST}:{PORT}/jsonrpc/object"
 URL_COMMON = f"http://{HOST}:{PORT}/jsonrpc/common"
@@ -45,7 +26,7 @@ new_user_id = json_rpc(URL_OBJECT, "execute", [
     'res.users',
     'create',
     new_user_data
-])
+], 100)
 print("Created user ID:", new_user_id)
 
 # --- 3. SEARCH ---
@@ -56,7 +37,7 @@ user_ids = json_rpc(URL_OBJECT, "execute", [
     'res.users',
     'search',
     [['login', '=', 'testuser123']]
-])
+], 100)
 print("Search result:", user_ids)
 
 # --- 4. READ ---
