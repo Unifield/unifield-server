@@ -176,6 +176,7 @@ class sde_import(osv.osv_memory):
                                 'pagination_json_text': pagi_json_text,
                                 'pagination_parcel_keys': ','.join(parcel_keys),
                                 'page': sde_pagi_page,
+                                'last_modification': datetime.now(),
                             }
                             if sde_pagi_end_msg:
                                 pagi_vals['state'] = 'done'
@@ -204,6 +205,7 @@ class sde_import(osv.osv_memory):
                                 'pagination_json_text': json_text,
                                 'pagination_parcel_keys': ','.join(parcel_keys),
                                 'page': 1,
+                                'last_modification': datetime.now(),
                             }
                             sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
                             pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
@@ -449,7 +451,7 @@ sde_update_log()
 
 class sde_import_pagination(osv.osv):
     _name = 'sde.import.pagination'
-    _description = 'SDE Import Pagination'
+    _description = 'SDE Paginated Imports'
     _order = 'id desc'
 
     _columns = {
@@ -458,6 +460,7 @@ class sde_import_pagination(osv.osv):
         'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
         'pagination_parcel_keys': fields.text(string='Pagination parcels keys', required=True, readonly=True),
         'page': fields.integer(string='SDE import page', required=True, readonly=True),
+        'last_modification': fields.datetime(string='Last modification', readonly=True),
     }
 
     _defaults = {

@@ -59,6 +59,26 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF41.0
+    def us_14587_15419_hide_sde_menu(self, cr, uid, *a, **b):
+        '''
+        Hide the 3 Single Data Entry menus used for manual actions
+        Then menus will need be manually activated if someone want to test SDE from Unifield
+        '''
+        menu_obj = self.pool.get('ir.ui.menu')
+
+        sde_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_main_menu')[1]
+        sde_tools_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_menu')[1]
+        sde_pagi_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_import_menu')[1]
+
+        menu_obj.write(cr, uid, sde_menu_id, {'active': False}, context={})
+        menu_obj.write(cr, uid, [sde_tools_menu_id, sde_pagi_menu_id], {'active': False}, context={})
+
+        # SQL request to activate the menus, then restart the server
+        # UPDATE ir_ui_menu SET active = 't' WHERE id IN (SELECT res_id FROM ir_model_data WHERE name IN ('sde_import_menu', 'sde_import_main_menu', 'sde_paginated_import_menu'));
+
+        return True
+
     # UF40.0
     def us_15152_unsign_non_closed_cancelled_ins(self, cr, uid, *a, **b):
         '''

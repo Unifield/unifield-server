@@ -40,6 +40,58 @@
         </record>
         <menuitem name="SDE Tools" action="action_sde_import" id="sde_import_menu" parent="sde_import_main_menu" />
 
+        <record id="sde_import_pagination_search_view" model="ir.ui.view">
+            <field name="name">sde.import.pagination.search.view</field>
+            <field name="model">sde.import.pagination</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="SDE Update Logs">
+                    <filter string="In Progress" icon="terp-stock_effects-object-colorize" domain="[('state', '=', 'in_progress')]" />
+                    <filter string="Done" icon="gtk-close" domain="[('state','=','done')]" />
+                    <separator orientation="vertical"/>
+                    <field name="pagination_json_id" />
+                </search>
+            </field>
+        </record>
+
+        <record id="sde_import_pagination_tree_view" model="ir.ui.view">
+            <field name="name">sde.import.pagination.tree.view</field>
+            <field name="model">sde.import.pagination</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="SDE Paginated imports" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                    <field name="pagination_json_id"/>
+                    <field name="last_modification"/>
+                    <field name="state"/>
+                    <field name="page"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="sde_import_pagination_form_view" model="ir.ui.view">
+            <field name="name">sde.import.pagination.form.view</field>
+            <field name="model">sde.import.pagination</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="SDE Paginated import" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                    <field name="pagination_json_id"/>
+                    <field name="last_modification"/>
+                    <field name="state"/>
+                    <field name="page"/>
+                    <field name="pagination_json_text" colspan="4"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sde_paginated_import" model="ir.actions.act_window">
+            <field name="name">SDE Paginated imports</field>
+            <field name="res_model">sde.import.pagination</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem name="SDE Paginated imports" action="action_sde_paginated_import" id="sde_paginated_import_menu" parent="sde_import_main_menu" sequence="11" />
+
         <record id="sde_update_log_search_view" model="ir.ui.view">
             <field name="name">sde.update.log.search.view</field>
             <field name="model">sde.update.log</field>
@@ -49,7 +101,7 @@
                     <field name="date" />
                     <field name="doc_type" select="1" />
                     <field name="doc_ref" />
-              	</search>
+                </search>
             </field>
         </record>
 
