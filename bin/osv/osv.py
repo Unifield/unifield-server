@@ -34,6 +34,8 @@ from tools.translate import translate
 import time
 import random
 from threading import RLock
+import threading
+from tools.rpc_decorators import JSONRPC_ORM_ALLOWED
 
 module_list = []
 module_class_list = {}

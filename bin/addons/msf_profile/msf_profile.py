@@ -106,6 +106,71 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_15079_user_email(self, cr, uid, *a, **b):
+        cmp = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if not cmp.instance_id or not cmp.partner_id:
+            return True
+
+        addr_obj = self.pool.get('res.partner.address')
+        users_obj = self.pool.get('res.users')
+
+        cr.execute('''
+            update
+                res_users u set user_email=a.email
+            from
+                res_partner_address a
+            where
+                u.address_id = a.id and
+                u.id != 1
+        ''')
+
+        cr.execute('''
+            select
+                add.id, u.id, add.partner_id
+            from
+                res_partner_address add, res_users u
+            where
+                u.address_id = add.id and
+                add.partner_id is not null
+        ''')
+
+        wrong_add_user = cr.fetchall()
+
+        add_ids = [x[0] for x in wrong_add_user]
+        if add_ids:
+            addr_obj.write(cr, uid, add_ids, {'email': False})
+
+        user_to_fix = set()
+        for add_id, u_id, partner_id in wrong_add_user:
+            if add_id and u_id:
+                user_to_fix.add(u_id)
+            if cmp.partner_id.id != partner_id:
+                new_add_id = addr_obj.copy(cr, uid, add_id, {'partner_id': False, 'name': False})
+                users_obj.write(cr, uid, [u_id], {'address_id': new_add_id})
+
+        cr.execute('''
+            select
+                distinct on (res_id) res_id, new_value
+            from
+                audittrail_log_line
+            where
+                name = 'user_email' and
+                object_id = (select id from ir_model where model='res.users') and
+                res_id in %s
+            order by
+                res_id, id desc
+        ''', (tuple(user_to_fix), ))
+
+        for user_id, email in cr.fetchall():
+            if user_id and user_id != 1:
+                user_to_fix.remove(user_id)
+                users_obj.write(cr, uid, [user_id], {'user_email': email or False})
+
+        if user_to_fix:
+            users_obj.write(cr, uid, list(user_to_fix), {'user_email': False})
+
+        return True
+
     def us_15206_remove_new_code_on_ud_prod_not_merged(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':
