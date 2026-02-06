@@ -7661,6 +7661,16 @@ class ir_model_data(osv.osv):
             os.rename(fp.name, "%sold" % fp.name)
             logger.warn('Set US-268 as executed')
 
+    def us_15432_fix_currencies_rounding(self, cr, uid, *a, **b):
+        """
+        Set the currencies rounding to 0.010000
+        """
+        update_currencies = """
+            UPDATE res_currency rc
+            SET rounding = 0.010000
+                WHERE rc.rounding = 0
+        """
+        cr.execute(update_currencies)
 
 ir_model_data()
 
