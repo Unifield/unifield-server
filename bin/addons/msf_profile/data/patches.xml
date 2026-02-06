@@ -1293,5 +1293,10 @@
         <record id="us_15079_user_email" model="patch.scripts">
             <field name="method">us_15079_user_email</field>
         </record>
+        
+        <!-- UF41.0 -->
+        <record id="us_14587_15419_hide_sde_menu" model="patch.scripts">
+            <field name="method">us_14587_15419_hide_sde_menu</field>
+        </record>
     </data>
 </openerp>
