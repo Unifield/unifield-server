@@ -336,32 +336,6 @@ class users(osv.osv):
                                 body=self.get_welcome_mail_body(
                                     cr, uid, context=context) % user)
 
-    def _email_get(self, cr, uid, ids, name, arg, context=None):
-        # perform this as superuser because the current user is allowed to read users, and that includes
-        # the email, even without any direct read access on the res_partner_address object.
-        return dict([(user.id, user.address_id.email) for user in self.browse(cr, 1, ids)]) # no context to avoid potential security issues as superuser
-
-    def _search_email(self, cr, uid, obj, name, args, context=None):
-        res = []
-        for arg in args:
-            if len(arg) > 2 and arg[0] == 'user_email':
-                res.append(('address_id.email', arg[1], arg[2]))
-        return res
-
-    def _email_set(self, cr, uid, ids, name, value, arg, context=None):
-        if not isinstance(ids,list):
-            ids = [ids]
-        address_obj = self.pool.get('res.partner.address')
-        for user in self.browse(cr, uid, ids, context=context):
-            # perform this as superuser because the current user is allowed to write to the user, and that includes
-            # the email even without any direct write access on the res_partner_address object.
-            if user.address_id:
-                address_obj.write(cr, 1, user.address_id.id, {'email': value or None}) # no context to avoid potential security issues as superuser
-            else:
-                address_id = address_obj.create(cr, 1, {'name': user.name, 'email': value or None}) # no context to avoid potential security issues as superuser
-                self.write(cr, uid, ids, {'address_id': address_id}, context)
-        return True
-
     def _set_new_password(self, cr, uid, id, name, value, args, context=None):
         login = self.read(cr, uid, id, ['login'])['login']
         if value is False:
@@ -576,7 +550,7 @@ class users(osv.osv):
                                        "between the server and the client."),
         'view': fields.selection([('simple','Simplified'),('extended','Extended')],
                                  string='Interface', help="Choose between the simplified interface and the extended one"),
-        'user_email': fields.function(_email_get, method=True, fnct_search=_search_email, fnct_inv=_email_set, string='Email', type="char", size=240),
+        'user_email': fields.char('Email', type="char", size=240, copy=False),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'last_authentication': fields.function(_get_last_authentication, method=1, type='datetime', string='Last Authentication'),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
@@ -974,6 +948,9 @@ class users(osv.osv):
             values['signee_user'] = False
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
+        if 1 in ids and values.get('user_email'):
+            super(users, self).write(cr, uid, [1], {'user_email': False}, context=context)
+
         if values.get('never_expire'):
             self._remove_never_expire(cr, uid, ids, context=context)
         if values.get('signature_enabled') or values.get('groups_id'):
@@ -1429,6 +1406,16 @@ class users(osv.osv):
         return cr.fetchone() and True or False
 
 
+    def change_email(self, cr, uid, ids, email, context=None):
+        if ids == [1] and email:
+            return {
+                'value': {'user_email': False},
+                'warning': {
+                    'message': _('An email address cannot be set for the admin user.')
+                }
+            }
+
+        return {}
 users()
 
 class wizard_add_users_synchronized(osv.osv_memory):
