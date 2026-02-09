@@ -1293,5 +1293,9 @@
         <record id="us_15079_user_email" model="patch.scripts">
             <field name="method">us_15079_user_email</field>
         </record>
+
+        <record id="us_15433_delete_WACA_2025_fiscal_year" model="patch.scripts">
+            <field name="method">us_15433_delete_WACA_2025_fiscal_year</field>
+        </record>
     </data>
 </openerp>
