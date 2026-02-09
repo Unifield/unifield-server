@@ -657,6 +657,10 @@ class wizard_import_in_simulation_screen(osv.osv):
                         if parcel_no and parcel_id:
                             parcel_ids_seen.add(parcel_id)
                             values[pack_index]['parcel_ids'][parcel_no] = parcel_id
+                        else:
+                            error.append(_('Both "parcel_no" (%s) and "parcel_id" (%s) are mandatory if you want to use Parcel ID')
+                                         % (parcel_no or _('None'), parcel_id or _('None')))
+                            break
                         index += 1
                         values.setdefault(index, [])
 
