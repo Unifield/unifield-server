@@ -338,11 +338,7 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
-                % if line['discrep_si_discount'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['discrep_si_discount'] or 0|x}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
-                % endif
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${line['discrep_si_discount'] != '-' and line['discrep_si_discount'] or ''|x}</Data></Cell>
 
                 ## Functional Prices
                 % if line['func_cat_unit_price'] != '-':
@@ -373,11 +369,7 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
-                % if line['func_discrep_si_discount'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_discrep_si_discount'] or 0|x}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
-                % endif
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${line['func_discrep_si_discount'] != '-' and line['func_discrep_si_discount'] or ''|x}</Data></Cell>
 
                 ## Dates
                 % if line['po_crea_date'] and isDateTime(line['po_crea_date']):
