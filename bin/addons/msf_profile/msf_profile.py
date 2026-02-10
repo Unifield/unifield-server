@@ -7502,6 +7502,19 @@ class patch_scripts(osv.osv):
         cr.execute(update_name_and_code)
         cr.execute(update_translation)
 
+    def us_15433_delete_WACA_2025_fiscal_year(self, cr, uid, *a, **b):
+        cr.execute("SELECT current_database();")
+        dbname = cr.fetchone()[0]
+
+        if "WACA" not in dbname.upper():
+            self._logger.info("Skipping patch us_15433 on DB %s (not a WACA DB", dbname)
+            return
+        update_fiscal_year = """
+            DELETE FROM account_fiscalyear af
+                WHERE af.code = 'FY2025';
+        """
+        cr.execute(update_fiscal_year)
+
     def launch_patch_scripts(self, cr, uid, *a, **b):
         ps_obj = self.pool.get('patch.scripts')
         ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
