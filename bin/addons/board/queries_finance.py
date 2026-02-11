@@ -140,4 +140,19 @@ s.model in ('account.bank.statement.line', 'account.move','account.move.line','a
 %s
 order by s.model;"""
     },
+    {
+        'ref': 'aji_duplicated',
+        'title': _('Analytic Journal Items possibly duplicated'),
+        'headers': [_('Analytic Journal Item Name'), _('Instance Name')],
+        'query': """SELECT
+    aal.name,
+    STRING_AGG(DISTINCT mi.name, ', ' ORDER BY mi.name) AS instance_names
+FROM account_analytic_line aal
+JOIN msf_instance mi
+    ON aal.instance_id = mi.id
+%s
+GROUP BY aal.name
+HAVING COUNT(DISTINCT aal.instance_id) > 1
+ORDER BY aal.name;"""
+    },
 ]
