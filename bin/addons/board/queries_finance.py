@@ -145,15 +145,25 @@ order by s.model;"""
         'title': _('Analytic Journal Items possibly duplicated'),
         'headers': [_('Analytic Journal Item Name'), _('Instance Name')],
         'query': """SELECT
+    sub.name,
+    STRING_AGG(
+        sub.instance_name || ' (' || sub.call_count || ')',
+        ', ' ORDER BY sub.instance_name
+    ) AS instance_details
+FROM (
+    SELECT
         aal.name,
-        STRING_AGG(DISTINCT mi.name, ', ' ORDER BY mi.name) AS instance_names
+        mi.name AS instance_name,
+        COUNT(*) AS call_count
     FROM account_analytic_line aal
     JOIN msf_instance mi
         ON aal.instance_id = mi.id
-    WHERE aal.name ~ '^(COR[0-9]|REV)'
     %s
-    GROUP BY aal.name
-    HAVING COUNT(DISTINCT aal.instance_id) > 1
-    ORDER BY aal.name;"""
+    WHERE aal.name ~ '^(COR[0-9]|REV)'
+    GROUP BY aal.name, mi.name
+) sub
+GROUP BY sub.name
+HAVING COUNT(*) > 1
+ORDER BY sub.name;"""
     },
 ]
