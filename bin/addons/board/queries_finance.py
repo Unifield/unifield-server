@@ -150,8 +150,8 @@ order by s.model;"""
     FROM account_analytic_line aal
     JOIN msf_instance mi
         ON aal.instance_id = mi.id
-    WHERE (aal.name LIKE ANY (ARRAY['COR%', 'REV%']))
-    {0}
+    WHERE (aal.name LIKE 'COR%%' OR aal.name LIKE 'REV%%')
+    %s
     GROUP BY aal.name
     HAVING COUNT(DISTINCT aal.instance_id) > 1
     ORDER BY aal.name;"""
