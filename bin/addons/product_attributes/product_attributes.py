@@ -2711,6 +2711,10 @@ class product_attributes(osv.osv):
                        local_merged_product=False,
                        )
         copydef.update(default)
+
+        if 'type' not in copydef or copydef['type'] != 'service_recep':
+            copydef['transport_ok'] = False
+
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
 
     def onchange_code(self, cr, uid, ids, default_code, nomen_manda_2, international_status, context=None):
@@ -2757,6 +2761,8 @@ class product_attributes(osv.osv):
 
         if type in ('consu', 'service', 'service_recep'):
             res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
+        if type != 'service_recep':
+            res.update({'value': {'transport_ok': False}})
         return res
 
     def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, context=None):

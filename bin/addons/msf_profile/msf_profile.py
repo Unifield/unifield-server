@@ -60,6 +60,22 @@ class patch_scripts(osv.osv):
     }
 
     # UF40.0
+    def us_15252_non_service_prod_transport_flag(self, cr, uid, *a, **b):
+        '''
+        At HQ level, change the transport_ok flag to False on non-service UD products having it at True and sync down the change
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            prod_ids_sql = """SELECT p.id FROM product_product p LEFT JOIN product_template t on p.product_tmpl_id=t.id
+                                                                 LEFT JOIN product_international_status i ON p.international_status=i.id
+                              WHERE i.code='unidata' AND t.type!='service_recep' AND p.transport_ok='t'"""
+            cr.execute("""UPDATE ir_model_data SET last_modification = NOW(), touched = '["transport_ok"]'
+                WHERE model = 'product.product' AND res_id IN (""" + prod_ids_sql + """)""")
+            cr.execute("UPDATE product_product SET transport_ok = 'f' WHERE id IN (" + prod_ids_sql + ")")
+            self.log_info(cr, uid, "US-15252: %d product(s) had their Transport flag set to False" % (cr.rowcount,))
+
+        return True
+
     def us_15152_unsign_non_closed_cancelled_ins(self, cr, uid, *a, **b):
         '''
         Remove the signatures of all INs that are not Closed or Cancelled
