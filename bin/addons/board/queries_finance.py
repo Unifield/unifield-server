@@ -146,13 +146,20 @@ order by s.model;"""
         'headers': [_('Analytic Journal Item Name'), _('Instance Name'), _('Period')],
         'query': """SELECT
     sub.name,
-    STRING_AGG(DISTINCT sub.instance_name, ', ' ORDER BY sub.instance_name) AS instance_details,
-    STRING_AGG(DISTINCT sub.period_name, ', ' ORDER BY sub.period_name) AS periods
+    STRING_AGG(
+        sub.instance_name || ' (' || sub.call_count || ')',
+        ', ' ORDER BY sub.instance_name
+    ) AS instance_details,
+    STRING_AGG(
+        DISTINCT sub.period_name,
+        ', ' ORDER BY sub.period_name
+    ) AS periods
 FROM (
     SELECT
         aal.name,
         mi.name AS instance_name,
-        ap.name AS period_name
+        ap.name AS period_name,
+        COUNT(*) AS call_count
     FROM account_analytic_line aal
     JOIN msf_instance mi
         ON aal.instance_id = mi.id
