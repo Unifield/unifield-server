@@ -143,21 +143,21 @@ order by s.model;"""
     {
         'ref': 'aji_duplicated',
         'title': _('Analytic Journal Items possibly duplicated'),
-        'headers': [_('Analytic Journal Item Name'), _('Instance Name')],
+        'headers': [_('Analytic Journal Item Name'), _('Instance Name'), _('Period')],
         'query': """SELECT
     sub.name,
-    STRING_AGG(
-        sub.instance_name || ' (' || sub.call_count || ')',
-        ', ' ORDER BY sub.instance_name
-    ) AS instance_details
+    STRING_AGG(DISTINCT sub.instance_name, ', ' ORDER BY sub.instance_name) AS instance_details,
+    STRING_AGG(DISTINCT sub.period_name, ', ' ORDER BY sub.period_name) AS periods
 FROM (
     SELECT
         aal.name,
         mi.name AS instance_name,
-        COUNT(*) AS call_count
+        ap.name AS period_name
     FROM account_analytic_line aal
     JOIN msf_instance mi
         ON aal.instance_id = mi.id
+    LEFT JOIN account_period ap
+        ON aal.real_period_id = ap.id
     %s
     WHERE aal.name ~ '^(COR[0-9]|REV)'
       AND (
@@ -177,7 +177,7 @@ FROM (
                 HAVING COUNT(*) > 1
             )
       )
-    GROUP BY aal.name, mi.name
+    GROUP BY aal.name, mi.name, ap.name
 ) sub
 GROUP BY sub.name
 HAVING COUNT(DISTINCT sub.instance_name) > 1
