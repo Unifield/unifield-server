@@ -160,10 +160,27 @@ FROM (
         ON aal.instance_id = mi.id
     %s
     WHERE aal.name ~ '^(COR[0-9]|REV)'
+      AND (
+            aal.last_corrected_id IN (
+                SELECT last_corrected_id
+                FROM account_analytic_line
+                WHERE last_corrected_id IS NOT NULL
+                GROUP BY last_corrected_id
+                HAVING COUNT(*) > 1
+            )
+         OR
+            aal.reversal_origin IN (
+                SELECT reversal_origin
+                FROM account_analytic_line
+                WHERE reversal_origin IS NOT NULL
+                GROUP BY reversal_origin
+                HAVING COUNT(*) > 1
+            )
+      )
     GROUP BY aal.name, mi.name
 ) sub
 GROUP BY sub.name
-HAVING COUNT(*) > 1
+HAVING COUNT(DISTINCT sub.instance_name) > 1
 ORDER BY sub.name;"""
     },
 ]
