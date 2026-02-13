@@ -1595,8 +1595,9 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                                                          line[4], round=False, context=self.localcontext), 2)
 
             # Discrepancies
-            discrep_in_po, discrep_si_po, discrep_si_discount = '-', '-', '-'
-            func_discrep_in_po, func_discrep_si_po, func_discrep_si_discount = '-', '-', '-'
+            discrep_in_po, discrep_si_po = '-', '-'
+            func_discrep_in_po, func_discrep_si_po = '-', '-'
+            discrep_si_discount, func_discrep_si_discount = 0, 0
             if in_unit_price != '-':
                 discrep_in_po = round(in_unit_price - line[4], 4)
             if si_unit_price != '-':
