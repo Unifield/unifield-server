@@ -88,6 +88,16 @@
         </Borders>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
+    <Style ss:ID="line_right_nb_plus_minus">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1" />
+         <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <NumberFormat ss:Format="\+0.####;\-0.####;0.00"/>
+    </Style>
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1" />
         <Borders>
@@ -338,7 +348,7 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_right"><Data ss:Type="String">${line['discrep_si_discount'] != '-' and line['discrep_si_discount'] or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb_plus_minus"><Data ss:Type="Number">${line['discrep_si_discount'] or 0|x}</Data></Cell>
 
                 ## Functional Prices
                 % if line['func_cat_unit_price'] != '-':
@@ -369,7 +379,7 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_right"><Data ss:Type="String">${line['func_discrep_si_discount'] != '-' and line['func_discrep_si_discount'] or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb_plus_minus"><Data ss:Type="Number">${line['func_discrep_si_discount'] or 0|x}</Data></Cell>
 
                 ## Dates
                 % if line['po_crea_date'] and isDateTime(line['po_crea_date']):
