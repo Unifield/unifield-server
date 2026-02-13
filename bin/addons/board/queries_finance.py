@@ -143,18 +143,20 @@ order by s.model;"""
     {
         'ref': 'aji_duplicated',
         'title': _('Analytic Journal Items possibly duplicated'),
-        'headers': [_('Analytic Journal Item Name'), _('Instance Name'), _('Period'), _('Ref')],
+        'headers': [_('Analytic Journal Item Name'), _('Instance Name'), _('Period'), _('Ref'), _('Entry Sequence')],
         'query': """SELECT
     sub.name,
     STRING_AGG(DISTINCT sub.instance_name, ', ' ORDER BY sub.instance_name) AS instance_details,
     STRING_AGG(DISTINCT sub.period_name, ', ' ORDER BY sub.period_name) AS periods,
-    STRING_AGG(DISTINCT sub.ref, ', ' ORDER BY sub.ref) AS refs
+    STRING_AGG(DISTINCT sub.ref, ', ' ORDER BY sub.ref) AS refs,
+    STRING_AGG(DISTINCT sub.entry_sequence, ', ' ORDER BY sub.entry_sequence) AS sequences
 FROM (
     SELECT
         aal.name,
         mi.name AS instance_name,
         ap.name AS period_name,
-        aal.ref
+        aal.ref,
+        aal.entry_sequence
     FROM account_analytic_line aal
     JOIN msf_instance mi
         ON aal.instance_id = mi.id
