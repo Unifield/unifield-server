@@ -1293,5 +1293,9 @@
         <record id="us_15079_user_email" model="patch.scripts">
             <field name="method">us_15079_user_email</field>
         </record>
+
+        <record id="us_15252_non_service_prod_transport_flag" model="patch.scripts">
+            <field name="method">us_15252_non_service_prod_transport_flag</field>
+        </record>
     </data>
 </openerp>
