@@ -817,7 +817,8 @@ class stock_picking(osv.osv):
         return True
 
     def get_min_max_date(self, cr, uid, ids, field_name, arg, context=None):
-        """ Finds minimum and maximum dates for picking.
+        """
+        Finds minimum and maximum dates for picking. If the picking is not cancelled, ignore cancelled lines
         @return: Dictionary of values
         """
         res = {}
@@ -825,16 +826,11 @@ class stock_picking(osv.osv):
             res[id] = {'min_date': False, 'max_date': False}
         if not ids:
             return res
-        cr.execute("""select
-                picking_id,
-                min(date_expected),
-                max(date_expected)
-            from
-                stock_move
-            where
-                picking_id IN %s
-            group by
-                picking_id""",(tuple(ids),))
+        cr.execute("""
+            SELECT p.id, MIN(m.date_expected), MAX(m.date_expected) 
+            FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id=p.id 
+            WHERE p.id IN %s AND ((p.state != 'cancel' AND m.state != 'cancel') OR p.state = 'cancel') GROUP BY p.id
+        """,(tuple(ids),))
         for pick, dt1, dt2 in cr.fetchall():
             res[pick]['min_date'] = dt1
             res[pick]['max_date'] = dt2
