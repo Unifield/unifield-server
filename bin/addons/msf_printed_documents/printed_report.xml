@@ -3,9 +3,9 @@
     <data>
         <report auto="False" id="sale.report_sale_order" model="sale.order" name="msf.sale.order" rml="msf_printed_documents/report/sale_order.rml" string="Field Order" view_ids="sale.view_order_form,sale.view_order_tree"/>
 
-        <report auto="False" id="sale.report_reception_in" model="stock.picking" name="msf.report_reception_in" rml="msf_printed_documents/report/report_reception.rml" string="Reception" view_ids="stock.view_picking_in_tree,stock.view_picking_in_form"/>
+        <report auto="False" id="sale.report_reception_in" model="stock.picking" name="msf.report_reception_in" rml="msf_printed_documents/report/report_reception.rml" string="Reception" view_ids="stock.view_picking_in_tree,stock.view_picking_in_form" target_filename='${eval(_get_stock_picking_report_name)}'/>
 
-        <report auto="False" id="sale.consumption_report" model="real.average.consumption" name="msf.consumption_report" rml="msf_printed_documents/report/consumption_report.rml" string="Consumption Report" />
+        <report auto="False" id="sale.consumption_report" model="real.average.consumption" name="msf.consumption_report" rml="msf_printed_documents/report/consumption_report.rml" string="Consumption Report" target_filename='${eval(_get_report_name)}' />
 
         <report auto="False" id="sale.product_list_report" model="product.list" name="msf.product_list" rml="msf_printed_documents/report/product_list.rml" string="Product List / Sub-List" />
 

@@ -56,7 +56,7 @@
                     <field name="location_id" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <field name="progress" widget="progressbar" />
                     <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
-                    <button name="print_report" type="object" icon="gtk-print" string="Print report" attrs="{'invisible': [('status', '!=', 'ready')]}" />
+                    <button name="open_report" type="object" icon="gtk-print" string="Print report" attrs="{'invisible': [('status', '!=', 'ready')]}" />
                     <field name="status" />
                 </tree>
             </field>

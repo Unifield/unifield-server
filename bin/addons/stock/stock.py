@@ -2343,6 +2343,26 @@ class stock_picking(osv.osv):
 
         return True
 
+    def _get_stock_picking_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name', 'type', 'subtype'], context=context)
+
+        doc_type = _('PT')
+        if obj['type'] == 'in':
+            doc_type = _('Incoming Shipments')
+        elif obj['type'] == 'internal':
+            doc_type = _('INT')
+        elif obj['type'] == 'out' and obj['subtype'] == 'standard':
+            doc_type = _('DO')
+        elif obj['type'] == 'out' and obj['subtype'] == 'ppl':
+            doc_type = _('PPL')
+
+        return _('%s_%s_%s') % (doc_type, obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
+
 
 stock_picking()
 

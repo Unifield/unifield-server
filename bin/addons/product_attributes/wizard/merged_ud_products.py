@@ -4,6 +4,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+import time
+
 
 class merged_ud_products(osv.osv_memory):
     _name = 'merged_ud_products'
@@ -70,7 +72,7 @@ class merged_ud_products(osv.osv_memory):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'report_merged_ud_products',
-            'datas': {'ids': ids},
+            'datas': {'ids': ids, 'target_filename': _('Merged UD Products Report_%s') % (time.strftime('%Y%m%d_%H_%M'),)},
             'context': context,
         }
 

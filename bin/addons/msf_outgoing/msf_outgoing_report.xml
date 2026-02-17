@@ -9,6 +9,7 @@
                 header="False"
                 rml="addons/msf_outgoing/report/freight_manifest.rml"
                 string="Freight Manifest"
+                target_filename='${eval(_get_freight_manifest_report_name)}'
                 sequence="1" />
 
         <report auto="False"
@@ -19,6 +20,7 @@
                 rml="msf_outgoing/report/freight_manifest_xls.mako"
                 report_type="webkit"
                 string="Freight Manifest (xls)"
+                target_filename='${eval(_get_freight_manifest_report_name)}'
                 sequence="2" />
 
         <report auto="False" 
@@ -55,6 +57,7 @@
                 header="False"
                 rml="addons/msf_outgoing/report/packing_list.rml"
                 string="Packing List"
+                target_filename='${eval(_get_packing_list_report_name)}'
                 sequence="6" />
 
         <report auto="False"
@@ -65,6 +68,7 @@
                 report_type="webkit"
                 file="msf_outgoing/report/packing_list_xls.mako"
                 string="Packing List (xls)"
+                target_filename='${eval(_get_packing_list_report_name)}'
                 sequence="7" />
 
         <!-- The rest is in addons/stock/wizard/loan_certificate_wizard.xml -->
@@ -88,6 +92,7 @@
                 rml="addons/msf_outgoing/report/picking_ticket.rml"
                 string="Picking Ticket"
                 view_ids="msf_outgoing.view_picking_ticket_tree,msf_outgoing.view_picking_ticket_form"
+                target_filename='${eval(_get_stock_picking_report_name)}'
                 />
 
         <report auto="False"
@@ -98,6 +103,7 @@
                 rml="addons/msf_outgoing/report/empty_picking_ticket.rml"
                 string="Pre-Packing List"
                 view_ids="msf_outgoing.view_ppl_tree,msf_outgoing.view_ppl_form"
+                target_filename='${eval(_get_stock_picking_report_name)}'
                 />
 
         <report id="pre_packing_excel_export"

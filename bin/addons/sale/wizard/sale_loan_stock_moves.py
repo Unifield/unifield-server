@@ -24,6 +24,8 @@ from osv import fields
 from tools.translate import _
 from msf_partner import PARTNER_TYPE
 
+import time
+
 
 class sale_loan_stock_moves(osv.osv_memory):
     _name = 'sale.loan.stock.moves'
@@ -170,7 +172,7 @@ class sale_loan_stock_moves(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 3
 
-        data = {'ids': ids, 'context': context}
+        data = {'ids': ids, 'context': context, 'target_filename': _('Loan Report_%s') % (time.strftime('%Y%m%d_%H_%M'),)}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'sale.loan.stock.moves.report_xls',

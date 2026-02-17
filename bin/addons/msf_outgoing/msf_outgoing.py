@@ -1937,6 +1937,26 @@ class shipment(osv.osv):
             ''', (tuple(context.get('button_selected_ids')), ))
         return True
 
+    def _get_freight_manifest_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name'], context=context)
+
+        return _('FM_%s_%s') % (obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
+
+    def _get_packing_list_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name'], context=context)
+
+        return _('PL_%s_%s') % (obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
+
 
 shipment()
 

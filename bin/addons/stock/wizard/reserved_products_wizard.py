@@ -184,7 +184,7 @@ class reserved_products_wizard(osv.osv):
         if nb_res[0][0] == 0:
             raise osv.except_osv(_('Error'), _('No data found with these parameters'))
 
-        file_name = _('Reserved_Product_Report_%s') % (datetime.today().strftime('%Y%m%d_%H_%M'),)
+        file_name = _('Product Reservation Report_%s') % (datetime.today().strftime('%Y%m%d_%H_%M'),)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': file_name,

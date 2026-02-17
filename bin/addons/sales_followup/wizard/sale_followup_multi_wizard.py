@@ -423,6 +423,9 @@ class sale_followup_multi_wizard(osv.osv_memory):
 
         self.get_values(cr, uid, ids, context=context)
 
+        wizard = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context)
+        fo_name = wizard.order_id and wizard.order_id.name or ''
+
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': 'FO followup',
             'report_name': 'sales.follow.up.multi.report_xls',
@@ -430,11 +433,14 @@ class sale_followup_multi_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 3
 
-        data = {'ids': ids, 'context': context}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'sales.follow.up.multi.report_xls',
-            'datas': data,
+            'datas': {
+                'ids': ids,
+                'context': context,
+                'target_filename': _('FO Follow up_%s_%s') % (fo_name, time.strftime('%Y%m%d_%H_%M'))
+            },
             'context': context,
         }
 
@@ -451,6 +457,9 @@ class sale_followup_multi_wizard(osv.osv_memory):
 
         self.get_values(cr, uid, ids, context=context)
 
+        wizard = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context)
+        fo_name = wizard.order_id and wizard.order_id.name or ''
+
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': 'FO followup',
             'report_name': 'sales.follow.up.multi.report_pdf',
@@ -458,11 +467,14 @@ class sale_followup_multi_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 3
 
-        data = {'ids': ids, 'context': context}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'sales.follow.up.multi.report_pdf',
-            'datas': data,
+            'datas': {
+                'ids': ids,
+                'context': context,
+                'target_filename': _('FO Follow up_%s_%s') % (fo_name, time.strftime('%Y%m%d_%H_%M'))
+            },
             'context': context,
         }
 

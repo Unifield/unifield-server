@@ -182,6 +182,7 @@
            model="stock.picking"
            name="internal.move.xls"
            file="msf_supply_doc_export/report/report_internal_move_xls.mako"
+           target_filename='${eval(_get_stock_picking_report_name)}'
            report_type="webkit"
            header="False"
            auto="False"
