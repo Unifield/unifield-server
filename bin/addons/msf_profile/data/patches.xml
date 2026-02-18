@@ -1290,5 +1290,9 @@
             <field name="method">us_13980_update_new_code_on_merged</field>
         </record>
 
+        <record id="us_15432_fix_currencies_rounding" model="patch.scripts">
+            <field name="method">us_15432_fix_currencies_rounding</field>
+        </record>
+
     </data>
 </openerp>

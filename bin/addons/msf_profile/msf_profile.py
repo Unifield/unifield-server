@@ -7437,6 +7437,32 @@ class patch_scripts(osv.osv):
         cr.execute(update_name_and_code)
         cr.execute(update_translation)
 
+    def us_15432_fix_currencies_rounding(self, cr, uid, *a, **b):
+        """
+        Set the currencies rounding to 0.010000
+        """
+        cr.execute("SELECT current_database()")
+        db_name = cr.fetchone()[0]
+
+        if 'HQ' in db_name:
+            currency_obj = self.pool.get('res.currency')
+
+            currency_ids = currency_obj.search(cr, uid, [
+                ('rounding', '=', 0)
+            ], context=None)
+
+            if currency_ids:
+                currency_obj.write(cr, uid, currency_ids, {
+                    'rounding': 0.01
+                }, context=None)
+
+        update_currencies = """
+            UPDATE res_currency rc
+            SET rounding = 0.010000
+                WHERE rc.rounding = 0
+        """
+        cr.execute(update_currencies)
+
     def launch_patch_scripts(self, cr, uid, *a, **b):
         ps_obj = self.pool.get('patch.scripts')
         ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
@@ -7595,17 +7621,6 @@ class ir_model_data(osv.osv):
                                                  )
             os.rename(fp.name, "%sold" % fp.name)
             logger.warn('Set US-268 as executed')
-
-    def us_15432_fix_currencies_rounding(self, cr, uid, *a, **b):
-        """
-        Set the currencies rounding to 0.010000
-        """
-        update_currencies = """
-            UPDATE res_currency rc
-            SET rounding = 0.010000
-                WHERE rc.rounding = 0
-        """
-        cr.execute(update_currencies)
 
 ir_model_data()
 
