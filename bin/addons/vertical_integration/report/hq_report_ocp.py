@@ -988,7 +988,6 @@ class hq_report_ocp_workday(hq_report_ocp):
             'include_period_opening': tuple(include_period_opening),
             'exclude_period_closing': tuple(exclude_period_closing),
             'fiscalyear_id': period.fiscalyear_id.id,
-            'hq_instance': '%OCP_HQ%'
         }
 
 
