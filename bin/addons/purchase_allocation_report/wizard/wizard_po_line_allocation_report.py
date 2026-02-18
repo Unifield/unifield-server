@@ -23,6 +23,8 @@
 from osv import osv
 from osv import fields
 
+import time
+
 
 class wizard_po_line_allocation_report(osv.osv_memory):
     _name = 'wizard.po.line.allocation.report'
@@ -47,6 +49,7 @@ class wizard_po_line_allocation_report(osv.osv_memory):
             'ids': context.get('active_ids', []),
             'model': context.get('active_model', 'ir.ui.menu'),
             'context': context,
+            'target_filename': 'Allocation Report_%s' % (time.strftime('%Y%m%d_%H_%M'),),
         }
         if wiz_data.get('export_type', '') == 'excel':
             report = {
