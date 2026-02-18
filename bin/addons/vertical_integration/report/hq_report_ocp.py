@@ -708,7 +708,7 @@ class hq_report_ocp_workday(hq_report_ocp):
 
         mi_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
-        excluded_journal_types = ['hq', 'migration', 'inkind', 'extra', 'engagement']  # journal types that should not be used to take lines
+        excluded_journal_types = ['migration', 'inkind', 'extra', 'engagement']  # journal types that should not be used to take lines
 
         form = data.get('form')
         period_id = form.get('period_id', False)
@@ -988,6 +988,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             'include_period_opening': tuple(include_period_opening),
             'exclude_period_closing': tuple(exclude_period_closing),
             'fiscalyear_id': period.fiscalyear_id.id,
+            'hq_instance': '%OCP_HQ%'
         }
 
 
@@ -1170,6 +1171,11 @@ class hq_report_ocp_workday(hq_report_ocp):
         writer = csv.writer(lines_file, quoting=csv.QUOTE_ALL, delimiter=",")
         writer.writerow(col_header)
 
+        extra_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
+        extra_file_name = extra_file.name
+        extra_writer = csv.writer(extra_file, quoting=csv.QUOTE_ALL, delimiter=",")
+        extra_writer.writerow(col_header)
+
         if debug:
             tot_book = 0
             tot_book_round = 0
@@ -1254,36 +1260,40 @@ class hq_report_ocp_workday(hq_report_ocp):
                     if fx_budget_rate.get(row['booking_currency']):
                         budget_amount = round(budget_amount / fx_budget_rate.get(row['booking_currency']), 2)
 
-                    writer.writerow([
-                        finance_archive._get_hash(new_cr, uid, ids='%s'%row['id'], model=obj), # DB-ID
-                        row['instance'], # Instance
-                        row['entry_sequence'], # Entry Sequence
-                        'Company_Reference_ID', # Valeur fixe
-                        'EUR', # Func. Currency
-                        datetime.strptime(row['posting_date'], '%Y-%m-%d').strftime('%d/%m/%Y'), # Posting date
-                        journal_type.get(row['journal_type'], row['journal_type']), # Journal Type
-                        row['book_debit'], # Booking Debit
-                        row['book_credit'], # Booking Credit
+                    line = [
+                        finance_archive._get_hash(new_cr, uid, ids='%s' % row['id'], model=obj),  # DB-ID
+                        row['instance'],
+                        row['entry_sequence'],
+                        'Company_Reference_ID',
+                        'EUR',
+                        datetime.strptime(row['posting_date'], '%Y-%m-%d').strftime('%d/%m/%Y'),
+                        journal_type.get(row['journal_type'], row['journal_type']),
+                        row['book_debit'],
+                        row['book_credit'],
                         book_debit_round,
                         book_credit_round,
                         ecart,
-                        row['booking_currency'], # Book. Currency
-                        row['func_debit'], # Func. Debit
-                        row['func_credit'], # Func. Credit
-                        row['description'], # Description
-                        row['ref'], # Reference
-                        datetime.strptime(row['document_date'], '%Y-%m-%d').strftime('%d/%m/%Y'), # Document Date
-                        row['cost_center'] or '',# Cost Center
-                        local_employee and row['emplid'] or row['partner_id'] or '', # Partner DB ID
-                        row['journal_code'] if row['journal_type'] == 'cash' else '', # Journal Cash
-                        row['journal_code'] if row['journal_type'] in ('bank', 'cheque') else '', # Journal Cash
-                        row['account_code'], # G/L Account,
-                        not local_employee and row['emplid'] or '', # EMPLID
-                        row['entry_sequence'][0:3], # 3 digits seq.
+                        row['booking_currency'],
+                        row['func_debit'],
+                        row['func_credit'],
+                        row['description'],
+                        row['ref'],
+                        datetime.strptime(row['document_date'], '%Y-%m-%d').strftime('%d/%m/%Y'),
+                        row['cost_center'] or '',
+                        local_employee and row['emplid'] or row['partner_id'] or '',
+                        row['journal_code'] if row['journal_type'] == 'cash' else '',
+                        row['journal_code'] if row['journal_type'] in ('bank', 'cheque') else '',
+                        row['account_code'],
+                        not local_employee and row['emplid'] or '',
+                        row['entry_sequence'][0:3],
                         row.get('destination_code') or '',
                         budget_amount,
                         row.get('partner_txt') or '',
-                    ])
+                    ]
+
+                    extra_writer.writerow(line)
+                    if row['journal_type'] != 'hq':
+                        writer.writerow(line)
                 if ajis:
                     new_cr.execute("update account_analytic_line set exported='t' where id in %s", (tuple(ajis), ))
                 if amls:
@@ -1418,6 +1428,8 @@ class hq_report_ocp_workday(hq_report_ocp):
         balances_file.close()
         self.update_percent(cr, uid, 0.75)
 
+        extra_file.close()
+
         if data.get('output_file'):
             tmpzipname = data['output_file']
         else:
@@ -1441,8 +1453,10 @@ class hq_report_ocp_workday(hq_report_ocp):
         current_time = time.strftime('%d%m%y%H%M%S')
         lines_file_zip_name = '%s_%s_%s_Monthly_Export.csv' % (prefix, period_yyyymm, current_time)
         balances_file_zip_name = '%s_%s_%s_Account_Balances.csv' % (prefix, selected_period, current_time)
+        extra_file_zip_name = '%s_%s_%s_Monthly_Export_With_HQ.csv' % (prefix, period_yyyymm, current_time)
         zf.write(lines_file_name, lines_file_zip_name)
         zf.write(balances_file_name, balances_file_zip_name)
+        zf.write(extra_file_name, extra_file_zip_name)
         zf.close()
 
         if not data.get('output_file'):
