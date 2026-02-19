@@ -387,7 +387,7 @@ class product_mass_update(osv.osv):
 
             if not not_deactivated and not not_activated:
                 prod_obj.write(cr, uid, [prod.id for prod in p_mass_upd.product_ids], vals, context=context)
-                user_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).id
+                real_user = hasattr(uid, 'realUid') and uid.realUid or uid
 
                 # Unlink existing errors
                 errors_ids = upd_errors_obj.search(cr, uid, [('p_mass_upd_id', '=', p_mass_upd.id)], context=context)
@@ -397,7 +397,7 @@ class product_mass_update(osv.osv):
                     'has_not_deactivable': False,
                     'has_not_activable': False,
                     'date_done': time.strftime('%Y-%m-%d %H:%M'),
-                    'user_id': user_id,
+                    'user_id': real_user,
                     'state': 'done',
                     'message': '',
                 }
