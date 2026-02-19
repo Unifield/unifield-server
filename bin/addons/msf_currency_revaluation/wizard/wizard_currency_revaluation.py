@@ -217,6 +217,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 _("No revaluation journal found!"))
         res['journal_id'] = journal_ids and journal_ids[0] or False
         # Book revaluation account check
+        print(cp.revaluation_default_account)
         revaluation_account = cp.revaluation_default_account
         if not revaluation_account:
             raise osv.except_osv(_('Settings Error!'),
@@ -647,7 +648,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # get coordo projects...
         projects = [
             p for p in company.instance_id.child_ids
-            if p.level == 'project' and p.state != 'inactive'
+            if p.level == 'project' and p.state not in  ('draft', 'inactive')
         ]
         if projects:
             project_ids = [p.id for p in projects]
