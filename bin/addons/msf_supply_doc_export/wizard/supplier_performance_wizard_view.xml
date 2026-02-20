@@ -11,7 +11,8 @@
                     <separator colspan="4" string="Request parameters" />
                     <field name="date_from" required="1" />
                     <field name="date_to" required="1" />
-                    <field name="partner_id" domain="[('active', '=', 't'), ('supplier', '=', 't')]" />
+                    <field name="partner_id" domain="[('supplier', '=', 't')]" context="{'show_button_show_inactive': True}" />
+                    <field name="include_inactive_partners" />
                     <separator colspan="4" string="Supplier Type" />
                     <group colspan="4" col="8">
                         <field name="partner_type_internal" />

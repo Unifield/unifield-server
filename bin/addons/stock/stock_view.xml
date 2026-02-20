@@ -1217,7 +1217,7 @@
             <field name="context">{'search_default_Available':1}</field>
             <field name="help">This menu gives you the full traceability of inventory operations on a specific product. You can filter on the product to see all the past or future movements for the product.</field>
         </record>
-        <menuitem action="action_move_form2" id="menu_action_move_form2" parent="menu_traceability" sequence="3"/>
+        <menuitem action="action_move_form2" id="menu_action_move_form2" parent="menu_traceability" sequence="1"/>
 
         <record id="view_move_tree_sysint" model="ir.ui.view">
             <field name="name">stock.move.tree</field>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="report_tkc_kcl_comparison"
+            string="TKC KCL Comparison Report"
+            model="composition.kit"
+            name="report_tkc_kcl_comparison"
+            report_type="openpyxl"
+            auto="False"
+            target_filename="${eval(_get_comparison_report_name)}"
+            menu="True"
+            sequence="4"
+         />
+    </data>
+</openerp>

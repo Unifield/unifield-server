@@ -60,6 +60,113 @@ class patch_scripts(osv.osv):
     }
 
     # UF40.0
+    def us_15252_non_service_prod_transport_flag(self, cr, uid, *a, **b):
+        '''
+        At HQ level, change the transport_ok flag to False on non-service UD products having it at True and sync down the change
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            prod_ids_sql = """SELECT p.id FROM product_product p LEFT JOIN product_template t on p.product_tmpl_id=t.id
+                                                                 LEFT JOIN product_international_status i ON p.international_status=i.id
+                              WHERE i.code='unidata' AND t.type!='service_recep' AND p.transport_ok='t'"""
+            cr.execute("""UPDATE ir_model_data SET last_modification = NOW(), touched = '["transport_ok"]'
+                WHERE model = 'product.product' AND res_id IN (""" + prod_ids_sql + """)""") # not_a_user_entry
+            cr.execute("UPDATE product_product SET transport_ok = 'f' WHERE id IN (" + prod_ids_sql + ")") # not_a_user_entry
+            self.log_info(cr, uid, "US-15252: %d product(s) had their Transport flag set to False" % (cr.rowcount,))
+
+        return True
+
+    def us_15152_unsign_non_closed_cancelled_ins(self, cr, uid, *a, **b):
+        '''
+        Remove the signatures of all INs that are not Closed or Cancelled
+        '''
+        cr.execute("""
+            SELECT s.id, p.id FROM signature s LEFT JOIN stock_picking p ON s.signature_res_id=p.id
+            WHERE (s.signature_state IN ('partial', 'signed') OR s.signed_off_line='t') 
+                AND s.signature_res_model = 'stock.picking' AND p.type = 'in' AND p.state NOT IN ('done', 'cancel')
+        """)
+        signature_ids, in_ids = [], []
+        for x in cr.fetchall():
+            signature_ids.append(x[0])
+            in_ids.append(x[1])
+
+        self.pool.get('signature').write(cr, uid, signature_ids, {'signed_off_line': False, 'signature_is_closed': False})
+        to_unsign = []
+        for doc in self.pool.get('stock.picking').browse(cr, uid, in_ids, fields_to_fetch=['signature_line_ids']):
+            for line in doc.signature_line_ids:
+                if line.signed:
+                    to_unsign.append(line.id)
+        if to_unsign:
+            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, check_ur=False)
+        self.log_info(cr, uid, "US-15152: The signatures of %s non-closed/cancelled INs were removed" % (len(in_ids),))
+
+        return True
+
+    def us_15079_user_email(self, cr, uid, *a, **b):
+        cmp = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if not cmp.instance_id or not cmp.partner_id:
+            return True
+
+        addr_obj = self.pool.get('res.partner.address')
+        users_obj = self.pool.get('res.users')
+
+        cr.execute('''
+            update
+                res_users u set user_email=a.email
+            from
+                res_partner_address a
+            where
+                u.address_id = a.id and
+                u.id != 1
+        ''')
+
+        cr.execute('''
+            select
+                add.id, u.id, add.partner_id
+            from
+                res_partner_address add, res_users u
+            where
+                u.address_id = add.id and
+                add.partner_id is not null
+        ''')
+
+        wrong_add_user = cr.fetchall()
+
+        add_ids = [x[0] for x in wrong_add_user]
+        if add_ids:
+            addr_obj.write(cr, uid, add_ids, {'email': False})
+
+        user_to_fix = set()
+        for add_id, u_id, partner_id in wrong_add_user:
+            if add_id and u_id:
+                user_to_fix.add(u_id)
+            if cmp.partner_id.id != partner_id:
+                new_add_id = addr_obj.copy(cr, uid, add_id, {'partner_id': False, 'name': False})
+                users_obj.write(cr, uid, [u_id], {'address_id': new_add_id})
+
+        cr.execute('''
+            select
+                distinct on (res_id) res_id, new_value
+            from
+                audittrail_log_line
+            where
+                name = 'user_email' and
+                object_id = (select id from ir_model where model='res.users') and
+                res_id in %s
+            order by
+                res_id, id desc
+        ''', (tuple(user_to_fix), ))
+
+        for user_id, email in cr.fetchall():
+            if user_id and user_id != 1:
+                user_to_fix.remove(user_id)
+                users_obj.write(cr, uid, [user_id], {'user_email': email or False})
+
+        if user_to_fix:
+            users_obj.write(cr, uid, list(user_to_fix), {'user_email': False})
+
+        return True
+
     def us_15206_remove_new_code_on_ud_prod_not_merged(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':
@@ -147,6 +254,23 @@ class patch_scripts(osv.osv):
                         'log': log,
                     }
                     self.pool.get('audittrail.log.line').create(cr, uid, auditt_vals)
+        return True
+
+    def us_15310_ocp_fxa_journal(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocp':
+            j_id = self.pool.get('account.journal').search(cr, uid,
+                                                           [('code', '=', 'FXA'), ('is_current_instance', '=', True), ('default_credit_account_id.code', '!=', '71110')])
+            if j_id:
+                account_id = self.pool.get('account.account').search(cr, uid, [('code', '=', '71110')])
+                if account_id:
+                    self.pool.get('account.journal').write(cr, uid, j_id, {'default_credit_account_id': account_id[0]})
+        return True
+
+    # UF39.1
+    def us_15318_remove_transport_step_constraint(self, cr, uid, *a, **b):
+        cr.drop_constraint_if_exists('transport_order_step', 'transport_order_step_in_order_step_unique')
+        cr.drop_constraint_if_exists('transport_order_step', 'transport_order_step_out_order_step_unique')
         return True
 
     # UF39.0
@@ -255,6 +379,7 @@ class patch_scripts(osv.osv):
                     'ocg': ['none'],
                     'ocp': ['cur_adj', 'accrual', 'hq', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
                     'waca': [],
+                    'ubuntu': [],
                 }
                 oc = entity_obj.get_entity(cr, uid).oc
                 if oc and oc in restrictions:
@@ -1133,9 +1258,11 @@ class patch_scripts(osv.osv):
         entity_obj = self.pool.get('sync.client.entity')
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if entity_obj and instance and instance.level == 'section':
-            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ'):
+            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ', 'HQ_UBUNTU'):
                 ent = entity_obj.get_entity(cr, uid)
                 oc = ent.oc.upper()
+                if oc == 'UBUNTU':
+                    oc = 'OCB'
                 values_mapping = {
                     'Yes': 't',
                     'Kit/Module': 'kit',
@@ -1181,7 +1308,7 @@ class patch_scripts(osv.osv):
                                     """+cond, tuple(params)) # not_a_user_entry
                                 if not cr.rowcount:
                                     self._logger.warn('Line number %s, nomen %s not found' % (line_number, nom))
-                                    return False
+                                    continue
                                 parent_id = [x[0] for x in cr.fetchall()]
                                 level += 1
                         for n_id in parent_id:

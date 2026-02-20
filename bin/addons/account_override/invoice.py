@@ -806,11 +806,17 @@ class account_invoice(osv.osv):
         if context is None:
             context = {}
         context.update({'from_copy_web': True})
-        inv = self.browse(cr, uid, inv_id, fields_to_fetch=['partner_id', 'doc_type'], context=context)
+        inv = self.browse(cr, uid, inv_id, fields_to_fetch=['partner_id', 'doc_type', 'from_supply'], context=context)
         if inv.partner_id.partner_type == 'section' and inv.doc_type in ('si', 'sr'):
             new_doc_type = inv.doc_type == 'si' and _("an Intersection Supplier Invoice") or _("an Intersection Supplier Refund")
             raise osv.except_osv(_('Warning'), _("This invoice can't be duplicated because it has an Intersection partner: "
                                                  "please create %s instead.") % new_doc_type)
+        if inv.from_supply:
+            default.update({
+                'origin': False,
+                'name': False,
+                'copied_from_supply': True,
+            })
         return super(account_invoice, self).copy_web(cr, uid, inv_id, default, context=context)
 
     def copy(self, cr, uid, inv_id, default=None, context=None):
@@ -831,6 +837,9 @@ class account_invoice(osv.osv):
             'partner_move_line': False,
             'imported_invoices': False,
         })
+        if 'copied_from_supply' not in default:
+            default['copied_from_supply'] = False
+
         inv = self.browse(cr, uid, inv_id, fields_to_fetch=['state', 'from_supply', 'journal_id'], context=context)
         if not inv.journal_id.is_active:
             raise osv.except_osv(_('Warning'), _("The journal %s is inactive.") % inv.journal_id.code)
@@ -1714,7 +1723,9 @@ class account_invoice_line(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'reversed_invoice_line_id': fields.many2one('account.invoice.line', string='Reversed Invoice Line',
                                                     help='Invoice line that has been reversed by this one through a '
-                                                         '"refund cancel" or "refund modify"'),
+                                                         '"refund cancel" or "refund modify"'),  # use to tag JI
+        'original_invoice_line_id': fields.many2one('account.invoice.line', string='In case of refund, original line id', readonly=1, copy=False),
+        'original_line_qty': fields.float('Refund: original quantity', readonly=True, copy=False),
         'cost_center_id': fields.function(_get_fake_m2o, method=True, type='many2one', store=False,
                                           states={'draft': [('readonly', False)]},  # see def detect_data in unifield-web/addons/openerp/controllers/impex.py
                                           relation="account.analytic.account", string='Cost Center',
@@ -1956,6 +1967,9 @@ class account_invoice_line(osv.osv):
         # (display a specific error message instead of the SQL error)
         if context.get('from_copy_web') and not self.read(cr, uid, invl_id, ['account_id'], context=context)['account_id']:
             raise osv.except_osv(_('Warning'), _("Duplication not allowed. Please set an account on all lines first."))
+        if context.get('from_copy_web'):
+            default['product_id'] = False
+
         default.update({'move_lines': False,
                         'reversed_invoice_line_id': False,
                         'merged_line': False,

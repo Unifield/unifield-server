@@ -63,23 +63,20 @@
                             <field name="from_supply" invisible="1"/>
                             <field name="line_synced" invisible="1"/>
                             <field name="partner_type" invisible="1"/>
-                            <field name="product_id"
-                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
-                                   default_focus="1"
-                                   attrs="{'readonly': ['|',
-                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
-                                                        '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))],
-                                            'required': [('is_asset', '=', True)]}"
-                            />
+                            <field name="product_id" readonly="1" />
+                            <field name="original_invoice_line_id" invisible="1" />
+                            <field name="original_line_qty" invisible="1" />
                             <field name="uos_id"
                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
-                                   attrs="{'readonly': ['|',
+                                   attrs="{'readonly': ['|', '|',
+                                                        ('original_invoice_line_id', '!=', False),
                                                         '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                         '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
                             <field name="quantity" attrs="{'readonly': ['|',
                                                            '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                            '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
+                                on_change="change_refund_quantity(quantity, original_invoice_line_id, original_line_qty, context)"
                             />
                             <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field name="discount" groups="base.group_extended"
@@ -251,13 +248,7 @@
                                     <field name="line_number" displayon="noteditable"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
-                                    <field name="product_id"
-                                           attrs="{'readonly': ['|',
-                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
-                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))],
-                                                   'required': [('is_asset', '=', True)]}"
-                                           on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
-                                    />
+                                    <field name="product_id" readonly="1" />
                                     <field name="account_id"
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines'), ('asset_for_product', '=', [is_asset, product_id])]"
                                            required="1"
@@ -269,8 +260,9 @@
                                     <field name="have_analytic_distribution_from_header" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="is_allocatable" invisible="1"/>
-
-                                    <field name="quantity"
+                                    <field name="original_invoice_line_id" invisible="1" />
+                                    <field name="original_line_qty" invisible="1" />
+                                    <field name="quantity" on_change="change_refund_quantity(quantity, original_invoice_line_id, original_line_qty, context)"
                                            attrs="{'readonly': ['|',
                                                                 '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True),('from_supply', '=', True),
                                                                 '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
@@ -278,7 +270,7 @@
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"
                                     />
-                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="context.get('type')=='in_refund' or not context.get('is_asset_activated')" />
+                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="context.get('type')=='in_refund' or not context.get('is_asset_activated')" attrs="{'invisible': [('product_id', '=', False)]}"/>
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
@@ -368,10 +360,12 @@
                                                        '&amp;', '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True), ('from_supply', '=', True)]}"/>
                             <newline/>
                             <field name="refunded_invoice_id" invisible="1"/>
-                            <field name="origin" groups="base.group_extended"
-                                   attrs="{'readonly': ['|', '|',
+                            <field name="copied_from_supply" invisible="1" />
+                            <field name="origin"
+                                   attrs="{'readonly': ['|', '|', '|',
                                                         ('state', '!=', 'draft'),
                                                         ('refunded_invoice_id', '!=', False),
+                                                        ('copied_from_supply', '=', True),
                                                         '&amp;', ('type', '=', 'in_invoice'), ('from_supply', '=', True)]}"/>
                             <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" groups="base.group_extended"/>
                             <field name="user_id"
@@ -491,12 +485,7 @@
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object"
                                             icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="inactive_product" invisible="1"/>
-                                    <field name="product_id"
-                                           on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
-                                           attrs="{'readonly': ['|',
-                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
-                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
-                                    />
+                                    <field name="product_id" readonly="1" />
                                     <field name="account_id"
                                            domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
                                            required="1"
@@ -595,9 +584,11 @@
                             <field domain="[('partner_id.ref_companies', 'in', [company_id])]" name="partner_bank_id"
                                 groups="base.group_extended"/>
                             <field name="refunded_invoice_id" invisible="1"/>
-                            <field name="origin" attrs="{'readonly': ['|', '|',
+                            <field name="copied_from_supply" invisible="1" />
+                            <field name="origin" attrs="{'readonly': ['|', '|', '|',
                                                                       ('state', '!=', 'draft'),
                                                                       ('refunded_invoice_id', '!=', False),
+                                                                      ('copied_from_supply', '=', True),
                                                                       '&amp;', '&amp;',
                                                                       ('type', '=', 'out_invoice'),
                                                                       ('from_supply', '=', True),

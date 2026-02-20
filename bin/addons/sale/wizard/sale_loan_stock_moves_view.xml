@@ -10,7 +10,7 @@
                     <separator colspan="4" string="Request parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
-                    <field name="partner_id" domain="[('customer', '=', True)]" />
+                    <field name="partner_id" domain="[('customer', '=', True)]" context="{'show_button_show_inactive': True}" />
                     <field name="partner_type" />
                     <field name="product_id" />
                     <field name="origin" />

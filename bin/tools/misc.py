@@ -669,6 +669,47 @@ def _email_send(smtp_from, smtp_to_list, message, openobject_id=None, use_ssl=Fa
 
     return True
 
+def email_send_with_logs(self, cr, uid, email_from, email_to, subject, body, email_cc=None, email_bcc=None,
+                         reply_to=False, attach=None, openobject_id=False, use_ssl=False, debug=False, subtype='plain',
+                         x_headers=None, retry=0, priority='3', raise_error=None, context=None):
+    """
+    Call the email_send method X times and create logs with the info
+    """
+    if context is None:
+        context = {}
+
+    attempt = 0
+    email_result = False
+    failed_attempts = 0
+    errors = []
+    while attempt <= retry:
+        try:
+            email_result = email_send(email_from, email_to, subject, body, email_cc=email_cc, email_bcc=email_bcc,
+                                      reply_to=reply_to, attach=attach, openobject_id=openobject_id, use_ssl=use_ssl,
+                                      debug=debug, subtype=subtype, x_headers=x_headers, priority=priority, raise_error=raise_error)
+            break
+        except Exception as e:
+            failed_attempts += 1
+            if str(e) not in errors:
+                errors.append(str(e))
+        finally:
+            attempt += 1
+
+    email_log_vals = {
+        'recipients': ';'.join(email_to),
+        'subject': subject,
+        'body': body,
+        'state': errors and 'error' or 'success',
+        'result': failed_attempts <= retry and 'The email was sent successfully' \
+        or 'Some error(s) occurred while trying to send the email: %s' % ('. '.join(errors),),
+        'failed_attempts': failed_attempts,
+        'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+        'date_sent': time.strftime('%Y-%m-%d %H:%M:%S'),
+        'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+    }
+    self.pool.get('email.log').create(cr, 1, email_log_vals, context=context)
+
+    return email_result
 
 def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=None, reply_to=False,
                attach=None, openobject_id=False, use_ssl=False, debug=False, subtype='plain', x_headers=None, priority='3', raise_error=None):
@@ -1577,7 +1618,6 @@ __icons_list = ['STOCK_ABOUT', 'STOCK_ADD', 'STOCK_APPLY', 'STOCK_BOLD',
                 ]
 
 def icons(*a, **kw):
-    global __icons_list
     return [(x, x) for x in __icons_list ]
 
 def extract_zip_file(zip_file, outdirectory):

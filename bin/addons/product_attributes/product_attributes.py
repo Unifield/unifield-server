@@ -1259,6 +1259,7 @@ class product_attributes(osv.osv):
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
 
         'incompatible_oc_default_values': fields.function(tools.misc.get_fake, method=True, type='boolean', string='Incompatible OC default', fnct_search=_search_incompatible_oc_default_values),
+        'merge_to_msfid': fields.integer('Merge to msfid', copy=False),
     }
 
 
@@ -1840,6 +1841,25 @@ class product_attributes(osv.osv):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             return False
 
+
+        cr.execute('''
+            select
+                p.id
+            from
+                product_product p, product_product kept, product_international_status c
+            where
+                c.id = p.international_status and
+                p.golden_status = 'Merged' and
+                p.active = 't' and
+                p.merge_to_msfid is not null and
+                p.merge_to_msfid = kept.msfid and
+                c.code = 'unidata' and
+                kept.active = 'f'
+        ''')
+        to_inactive = [x[0] for x in cr.fetchall()]
+        if to_inactive:
+            self.write(cr, uid, to_inactive, {'active': False}, context=context)
+
         ids = []
         products_used = set()
 
@@ -1992,7 +2012,6 @@ class product_attributes(osv.osv):
                         del(vals[field])
 
 
-
         if unidata_product and not context.get('sync_update_execution'):
             if 'international_status' not in vals and 'oc_subscription' in vals:
                 if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
@@ -2024,6 +2043,9 @@ class product_attributes(osv.osv):
                     state_id = [state_id]
                 prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
 
+        if unidata_product and context.get('sync_update_execution') and vals.get('active') and 'state' not in vals and \
+                self.search_exists(cr, uid, [('id', 'in', ids), ('active', '=', False), ('standard_ok', '=', 'non_standard_local')], context=context):
+            vals['state'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'status_1')[1] # state UD = Valid
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -2168,6 +2190,8 @@ class product_attributes(osv.osv):
                     raise osv.except_osv(_('Error'), _('Product activation is not allowed on Non-Standard Local Products which are not OC Subscribed'))
                 if instance_level == 'project':
                     raise osv.except_osv(_('Error'), _('%s activation is not allowed at project') % (product.default_code,))
+                if instance_level == 'coordo':
+                    vals['state'] = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]
             if (instance_level == 'section' and (product.international_status.id in (hq_status, itc_status, esc_status) or
                                                  (product.oc_subscription and product.state_ud in ('valid', 'outdated', 'discontinued')))) or \
                     (instance_level == 'coordo' and product.international_status.id == local_status):
@@ -2687,6 +2711,10 @@ class product_attributes(osv.osv):
                        local_merged_product=False,
                        )
         copydef.update(default)
+
+        if 'type' not in copydef or copydef['type'] != 'service_recep':
+            copydef['transport_ok'] = False
+
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
 
     def onchange_code(self, cr, uid, ids, default_code, nomen_manda_2, international_status, context=None):
@@ -2733,6 +2761,8 @@ class product_attributes(osv.osv):
 
         if type in ('consu', 'service', 'service_recep'):
             res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
+        if type != 'service_recep':
+            res.update({'value': {'transport_ok': False}})
         return res
 
     def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, context=None):

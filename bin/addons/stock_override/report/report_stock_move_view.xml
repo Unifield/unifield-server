@@ -156,7 +156,7 @@
                     <field name="date_from" />
                     <field name="date_to" />
                     <separator colspan="4" string="Advanced filters" />
-                    <field name="partner_id" />
+                    <field name="partner_id" context="{'show_button_show_inactive': True}" />
                     <field name="product_id" attrs="{'readonly': ['|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" />
                     <field name="product_list_id" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
                     <newline/>
