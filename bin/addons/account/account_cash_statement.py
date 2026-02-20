@@ -64,6 +64,23 @@ class account_cashbox_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         self._check_number_size(cr, uid, vals, context=context)
+
+        if vals.get('ending_id') and vals.get('pieces'):
+
+            existing_ids = self.search(
+                cr, uid,
+                [('ending_id', '=', vals['ending_id']),
+                 ('pieces', '=', vals['pieces'])],
+                order='write_date desc',
+                limit=1,
+                context=context
+            )
+
+            if existing_ids:
+                existing_id = existing_ids[0]
+                super(account_cashbox_line, self).write(cr, uid, existing_id, vals, context=context)
+                return existing_id
+
         return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
