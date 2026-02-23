@@ -38,7 +38,7 @@
 					<field name="priority" readonly="True" />
 					<field name="categ" readonly="True" />
 					<field name="line_number" readonly="True" />
-					<field name="state" readonly="True" invisible="'with_need_sourcing' in context" />
+					<field name="state" readonly="True" invisible="context.get('sale_order_line_filter_need_sourcing', False)" />
 					<field name="product_id" readonly="True" />
                     <field name="comment" readonly="True" />
 					<field name="product_uom_qty" string="Qty" attrs="{'readonly': []}" />
@@ -89,7 +89,7 @@
 			<field name="priority" eval="99" />
 			<field name="arch" type="xml">
 				<search string="Sourcing Line">
-                    <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('state', '=', 'validated')]" context="{'with_need_sourcing': True}" />
+                    <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('state', '=', 'validated')]" />
 					<filter name="sourced" string="Sourced" icon="terp-camera_test" domain="[('state', 'not in', ['draft', 'validated', 'cancel', 'cancel_r'])]" />
 					<separator orientation="vertical"/>
 					<field name="order_id" string="Order" domain="[('procurement_request', 'in', ['t', 'f'])]" context="{'from_ost': True}" />
@@ -117,7 +117,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('state','!=','procurement')]</field>
-			<field name="context">{'search_default_need_sourcing': True}</field>
+			<field name="context">{'get_filter_vals': True, 'search_default_need_sourcing': True}</field>
 			<field name="search_view_id" ref="sourcing_line_search_form_view" />
 		</record>
 		
