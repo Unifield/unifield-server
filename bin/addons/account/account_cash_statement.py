@@ -63,6 +63,7 @@ class account_cashbox_line(osv.osv):
             raise osv.except_osv(_('Warning'), _(self._max_msg))
 
     def create(self, cr, uid, vals, context=None):
+        context = context or {}
         self._check_number_size(cr, uid, vals, context=context)
 
         if vals.get('ending_id') and vals.get('pieces'):
@@ -78,7 +79,7 @@ class account_cashbox_line(osv.osv):
 
             if existing_ids:
                 existing_id = existing_ids[0]
-                super(account_cashbox_line, self).write(cr, uid, existing_id, vals, context=context)
+                self.write(cr, uid, [existing_id], vals, context=context)
                 return existing_id
 
         return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
