@@ -2744,25 +2744,29 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
-        res = {}
+        res = {'value': {}}
         prods = self.browse(cr, uid, ids, fields_to_fetch=['company_id', 'type', 'international_status'], context=context)
         for prod in prods:
             inter_status = prod.international_status
             instance_level = prod.company_id.instance_id.level
             srml_stock_exist = self.check_exist_srml_stock(cr, uid, prod.id)
             if inter_status.code == 'local' and instance_level == 'coordo' and srml_stock_exist:
-                res.update({'value': {'type': prod.type}, 'warning': {'title': _('Warning'),
-                                                                      'message': _('In a Coordo instance, you can not change the Product Type of a Local Product if it has stock in the Mission Stock Report')}})
+                res = {
+                    'value': {'type': prod.type},
+                    'warning': {'title': _('Warning'), 'message': _('In a Coordo instance, you can not change the Product Type of a Local Product if it has stock in the Mission Stock Report')}
+                }
                 type = prod.type
             elif inter_status.code in ['itc', 'esc', 'hq', 'unidata'] and instance_level == 'section' and srml_stock_exist:
-                res.update({'value': {'type': prod.type}, 'warning': {'title': _('Warning'),
-                                                                      'message': _('In a HQ instance, you can not change the Product Type of an ITC, ESC, HQ or Unidata Product if it has stock in the Mission Stock Report')}})
+                res = {
+                    'value': {'type': prod.type},
+                    'warning': {'title': _('Warning'), 'message': _('In a HQ instance, you can not change the Product Type of an ITC, ESC, HQ or Unidata Product if it has stock in the Mission Stock Report')}
+                }
                 type = prod.type
 
         if type in ('consu', 'service', 'service_recep'):
-            res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
+            res['value'].update({'procure_method': 'make_to_order', 'supply_method': 'buy', })
         if type != 'service_recep':
-            res.update({'value': {'transport_ok': False}})
+            res['value'].update({'transport_ok': False})
         return res
 
     def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, context=None):
