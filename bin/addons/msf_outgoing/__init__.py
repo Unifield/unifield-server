@@ -24,10 +24,8 @@ from tools.translate import _
 PACK_INTEGRITY_STATUS_SELECTION = [
     ('empty', ''),
     ('ok', _('Ok')),
-    ('missing_1', _('The first sequence must start with 1')),
     ('to_smaller_than_from', _('To value must be greater or equal to From value')),
     ('overlap', _('The sequence overlaps previous one')),
-    ('gap', _('A gap exists in the sequence: previous sequence is missing')),
 ]
 INTEGRITY_STATUS_SELECTION = [
     ('negative', _('Negative Value')),

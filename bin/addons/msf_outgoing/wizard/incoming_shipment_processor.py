@@ -369,7 +369,7 @@ class stock_incoming_processor(osv.osv):
                                                                             {'location_id': line.location_id.id, 'location_dest_id': line.move_id.location_dest_id.id, 'obj_type': 'in', 'partner_type': proc.picking_id.partner_id.partner_type},
                                                                             context=context)
                 # If one line as an error, return to wizard
-                if line.integrity_status not in ['empty', 'missing_1', 'to_smaller_than_from', 'overlap', 'gap', 'missing_weight']:
+                if line.integrity_status not in ['empty', 'to_smaller_than_from', 'overlap', 'missing_weight']:
                     return {
                         'type': 'ir.actions.act_window',
                         'res_model': proc._name,
