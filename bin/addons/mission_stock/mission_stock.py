@@ -36,6 +36,7 @@ import base64
 from msf_field_access_rights.osv_override import _get_instance_level
 from datetime import datetime
 from xlwt import Workbook, easyxf, Borders, add_palette_colour
+from openpyxl.cell import WriteOnlyCell
 import tempfile
 import shutil
 import re
@@ -303,6 +304,27 @@ class stock_mission_report(osv.osv):
                                          'datas_fname': file_name,
                                      })
             del data
+
+    def generate_export_file_xlsx(self, cr, uid, request_result, report_id, report_type, attachments_path, header,
+                                  write_attachment_in_db, display_only_in_stock=False,):
+        in_stock = display_only_in_stock and '_only_stock' or ''
+        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + in_stock + '.xlsx')
+
+        if display_only_in_stock:
+            ignore_if_null = []
+            for num, x in enumerate(header):
+                if x[1].endswith('qty'):
+                    ignore_if_null.append(num)
+
+        header_row = [_(column_name) for column_name, colum_property in header]
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
+        report_data = self.read(cr, uid, report_id, ['name', 'last_update'])
+        report_name = report_data['name']
+        report_last_updt = report_data['last_update']
+
+        sheet = self.workbook.active
+        sheet.title = _('Mission Stock Report')
+        self.duplicate_column_dimensions(default_width=10.75)
 
     def generate_export_file(self, cr, uid, request_result, report_id, report_type,
                              attachments_path, header, write_attachment_in_db,
@@ -1425,10 +1447,17 @@ class stock_mission_report(osv.osv):
                 if all_products:
                     self.generate_export_file(cr, uid, request_result, file_type='xls', display_only_in_stock=False,  **params)
 
-            self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
-            logger.info('___ CSV/XLS generation finished !')
-            del request_result
-            del product_values
+            # generate XLSX files
+            # logger.info('___ Start XLS generation...')
+            # if display_only_in_stock:
+            #     self.generate_export_file_xlsx(cr, uid, request_result, display_only_in_stock=True, **params)
+            # if all_products:
+            #     self.generate_export_file_xlsx(cr, uid, request_result, display_only_in_stock=False, **params)
+            #
+            # self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
+            # logger.info('___ XLSX generation finished !')
+            # del request_result
+            # del product_values
         return True
 
 

@@ -22,6 +22,24 @@
             file="mission_stock/report/stock_mission_report_xls.mako"
             report_type="webkit"
             />
-		
+
+        <report
+            id="report_mission_stock_report"
+            string="Mission Stock Report"
+            model="mission.stock.wizard"
+            name="report_mission_stock_report"
+            report_type="openpyxl"
+            auto="False"
+        />
+
+        <report
+            id="report_consolidated_mission_stock_report"
+            string="Consolidated Mission Stock Report"
+            model="mission.stock.wizard"
+            name="report_consolidated_mission_stock_report"
+            report_type="openpyxl"
+            auto="False"
+        />
+<!--            target_filename="${eval(_get_comparison_report_name)}"-->
 	</data>
 </openerp>
