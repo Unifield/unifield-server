@@ -50,7 +50,8 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
 
         report_id = data.get('report_id', None)
         field_name = data.get('field_name', '')
-        file_format = data.get('file_format', '')
+        # file_format = data.get('file_format', '')
+        file_format = 'xlsx'
         display_only_in_stock = data.get('display_only_in_stock', False)
         if display_only_in_stock:
             field_name += '_only_stock'
@@ -62,8 +63,7 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         attachment_obj = pool.get('ir.attachment')
         attachments_path = attachment_obj.get_root_path(cr, uid, check=False)
 
-        store_in_db = attachment_obj.store_data_in_db(cr, uid,
-                                                      ignore_migration=True)
+        store_in_db = attachment_obj.store_data_in_db(cr, uid, ignore_migration=True)
 
         create_missing_report = False
         if data.get('file_name') and data['file_name'] == 'consolidate_mission_stock.xls':

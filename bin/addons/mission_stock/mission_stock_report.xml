@@ -40,6 +40,5 @@
             report_type="openpyxl"
             auto="False"
         />
-<!--            target_filename="${eval(_get_comparison_report_name)}"-->
 	</data>
 </openerp>
