@@ -311,27 +311,27 @@ class stock_mission_report(osv.osv):
                                      })
             del data
 
-    def generate_export_file_xlsx(self, cr, uid, request_result, report_id, report_type, attachments_path, header,
-                                  write_attachment_in_db, display_only_in_stock=False,):
-        def create_style_from_template(self, current_wb, template_sheet, name, cell_index):
-            """
-            :param current_wb: openpyxl workbook to modify
-            :param template_sheet: openpyxl template sheet
-            :param cell_index: index of the cell, example A1
-            """
-            new_style = NamedStyle(name=name)
+    def create_style_from_template(self, current_wb, template_sheet, name, cell_index):
+        """
+        :param current_wb: openpyxl workbook to modify
+        :param template_sheet: openpyxl template sheet
+        :param cell_index: index of the cell, example A1
+        """
+        new_style = NamedStyle(name=name)
 
-            new_style.style = copy(template_sheet[cell_index].style)
-            new_style.font = copy(template_sheet[cell_index].font)
-            new_style.fill = copy(template_sheet[cell_index].fill)
-            new_style.border = copy(template_sheet[cell_index].border)
-            new_style.alignment = copy(template_sheet[cell_index].alignment)
-            new_style.number_format = copy(template_sheet[cell_index].number_format)
+        new_style.style = copy(template_sheet[cell_index].style)
+        new_style.font = copy(template_sheet[cell_index].font)
+        new_style.fill = copy(template_sheet[cell_index].fill)
+        new_style.border = copy(template_sheet[cell_index].border)
+        new_style.alignment = copy(template_sheet[cell_index].alignment)
+        new_style.number_format = copy(template_sheet[cell_index].number_format)
 
-            current_wb.add_named_style(new_style)
+        current_wb.add_named_style(new_style)
 
-            return new_style
+        return new_style
 
+    def generate_export_file(self, cr, uid, request_result, report_id, report_type, attachments_path, header,
+                             write_attachment_in_db, display_only_in_stock=False,):
         attachment_obj = self.pool.get('ir.attachment')
 
         in_stock = display_only_in_stock and '_only_stock' or ''
@@ -360,14 +360,12 @@ class stock_mission_report(osv.osv):
         sheet = wb.active
 
         # Styles
-        default_style = create_style_from_template(wb, template_sheet, 'default_style', 'A1')
-        header_style = create_style_from_template(wb, template_sheet, 'header_style', 'A4')
-        date_style = create_style_from_template(wb, template_sheet, 'date_style', 'B3')
-        float_style = create_style_from_template(wb, template_sheet, 'float_style', 'G5')
-        int_style = create_style_from_template(wb, template_sheet, 'int_style', 'I5')
-        red_style = create_style_from_template(wb, template_sheet, 'red_style', 'A10')
-        red_float_style = create_style_from_template(wb, template_sheet, 'red_float_style', 'G10')
-        red_int_style = create_style_from_template(wb, template_sheet, 'red_int_style', 'I10')
+        default_style = self.create_style_from_template(wb, template_sheet, 'default_style', 'A1')
+        header_style = self.create_style_from_template(wb, template_sheet, 'header_style', 'A4')
+        date_style = self.create_style_from_template(wb, template_sheet, 'date_style', 'B3')
+        float_style = self.create_style_from_template(wb, template_sheet, 'float_style', 'G5')
+        red_style = self.create_style_from_template(wb, template_sheet, 'red_style', 'A10')
+        red_float_style = self.create_style_from_template(wb, template_sheet, 'red_float_style', 'G10')
 
         # Header data
         gen_title_cell = WriteOnlyCell(sheet, value=_('Generating Instance'))
@@ -390,11 +388,12 @@ class stock_mission_report(osv.osv):
 
         # Lines headers
         header_row = []
-        for header in [_(column_name) for column_name, colum_property in header]:
-            header_cell = WriteOnlyCell(sheet, value=header)
+        for current_header in [_(column_name) for column_name, colum_property in header]:
+            header_cell = WriteOnlyCell(sheet, value=current_header)
             header_cell.style = header_style
             header_row.append(header_cell)
         sheet.append(header_row)
+        sheet.row_dimensions[4].height = 45
 
         # Columns size
         for x in range(1, len(header_row) + 1):
@@ -408,8 +407,35 @@ class stock_mission_report(osv.osv):
             sheet.column_dimensions[letter].width = width
 
         # Lines
+        for row in request_result:
+            data_list = []
+            for columns_name, property_name in header:
+                data_list.append(row.get(property_name))
 
-        attachments_path = attachment_obj.get_root_path(cr, uid, check=False)
+            # Do not add the line if we only display what has stock
+            if display_only_in_stock:
+                ignore_line = True
+                for x in ignore_if_null:
+                    if data_list[x]:
+                        ignore_line = False
+                        break
+                if ignore_line:
+                    continue
+
+            current_row = []
+            if row.get('mml_status') == 'F' or row.get('msl_status') == 'F':
+                row_st, float_st = red_style, red_float_style
+            else:
+                row_st, float_st = default_style, float_style
+            for data_count, data in enumerate(data_list):
+                data_cell = WriteOnlyCell(sheet, value=data)
+                if data_count == 4:
+                    data_cell.style = float_st
+                else:
+                    data_cell.style = row_st
+                current_row.append(data_cell)
+            sheet.append(current_row)
+
         wb.save(os.path.join(attachments_path, file_name))
 
         if not write_attachment_in_db:
@@ -424,158 +450,135 @@ class stock_mission_report(osv.osv):
         file.close()
         wb.close()
 
-    def generate_export_file(self, cr, uid, request_result, report_id, report_type,
-                             attachments_path, header, write_attachment_in_db,
-                             product_values, file_type='xls',
-                             display_only_in_stock=False,
-                             is_local_report=False):
-        in_stock = display_only_in_stock and '_only_stock' or ''
-        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + in_stock + '.' + file_type)
+    def generate_full_xlsx(self, cr, uid, report_id, xls_name, context=None):
+        if context is None:
+            context = {}
 
-        if display_only_in_stock:
-            ignore_if_null = []
-            for num, x in enumerate(header):
-                if x[1].endswith('qty'):
-                    ignore_if_null.append(num)
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        instance_obj = self.pool.get('msf.instance')
+        instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
+        uom_obj = self.pool.get('product.uom')
 
+        local_report_id = self.search(cr, uid, [('full_view', '=', 'f'), ('local_report', '=', True)])
+        if not local_report_id:
+            local_report_id = [0]
 
-        header_row = [_(column_name) for column_name, colum_property in header]
-        instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
-        report_data = self.read(cr, uid, report_id, ['name', 'last_update'])
-        report_name = report_data['name']
-        report_last_updt = report_data['last_update']
+        report_last_updt = self.read(cr, uid, report_id, ['last_update'])['last_update']
 
-        if file_type == 'csv':
-            if not write_attachment_in_db:
-                export_file = open(os.path.join(attachments_path, file_name), 'w', newline='')
-            else:
-                export_file = io.StringIO()
-            writer = csv.writer(export_file, dialect=excel_semicolon)
-            # Write common data: Current Instance, Instance Selection, Generation Date, Export Date
-            writer.writerows([[_("Generating instance"), instance_name], [_("Instance selection"), report_name],
-                              [_("Last update"), report_last_updt]])
-            # write headers of the csv file
-            writer.writerow(header_row)
+        instance_dict = {}
+        for x in instance_obj.read(cr, uid, instance_ids, ['name']):
+            instance_dict[x['id']] = x['name']
 
-        if file_type == 'xls':
-            if not write_attachment_in_db:
-                export_file = open(os.path.join(attachments_path, file_name), 'wb')
-            else:
-                export_file = io.BytesIO()
-            # write the headers
-            borders = Borders()
-            borders.left = Borders.THIN
-            borders.right = Borders.THIN
-            borders.top = Borders.THIN
-            borders.bottom = Borders.THIN
+        instance_loc = {}
+        cr.execute("""
+            select distinct s.remote_location_name, s.remote_instance_id 
+            from stock_mission_report_line_location s
+            left join msf_instance i on (s.remote_instance_id=i.id)
+            where s.remote_instance_id is not null and i.state != 'inactive' 
+            order by remote_location_name
+        """)
+        for x in cr.fetchall():
+            instance_loc.setdefault(x[1], []).append(x[0])
 
-            header_style = easyxf("""
-                    font: height 220;
-                    font: name Calibri;
-                    pattern: pattern solid, fore_colour tan;
-                    align: wrap on, vert center, horiz center;
-                """)
-            header_style.borders = borders
-            # this style is done to be the same than previous mako configuration
-            row_style = easyxf("""
-                    font: height 220;
-                    font: name Calibri;
-                    align: wrap on, vert center, horiz center;
-                """)
-            row_style.borders = borders
-            row_style_price = easyxf("""
-                    font: height 220;
-                    font: name Calibri;
-                    align: wrap on, vert center, horiz center;
-                """, num_format_str='0.000')
-            row_style_price.borders = borders
+        all_instances = list(instance_loc.keys())
+        all_instances.insert(0, local_instance.id)
+        cr.execute("""
+            select distinct location.name
+            from stock_mission_report_line_location l, stock_location location
+            where location.id=l.location_id
+                and remote_instance_id is null and location.usage = 'internal'
+            order by location.name
+        """)
+        for x in cr.fetchall():
+            instance_loc.setdefault(local_instance.id, []).append(x[0])
 
-            row_style_red = easyxf("""
-                    font: height 220, color red;
-                    font: name Calibri;
-                    align: wrap on, vert center, horiz center;
-                """)
-            row_style_red.borders = borders
-            row_style_price_red = easyxf("""
-                    font: height 220, color red;
-                    font: name Calibri;
-                    align: wrap on, vert center, horiz center;
-                """, num_format_str='0.000')
-            row_style_price_red.borders = borders
+        # Load the template
+        try:
+            file = file_open('mission_stock/report/consolidated_mission_stock_report.xlsx', mode='rb')
+            template_wb = load_workbook(filename=file)
+            template_sheet = template_wb.active
+        except:
+            raise osv.except_osv(_('Warning !'), _('The template file could not be loaded'))
 
-            data_row_style = easyxf("""
-                    font: height 220;
-                    font: name Calibri;
-                    align: wrap on, vert center, horiz center;
-                """)
-            data_row_style.borders = borders
-            data_row_style.num_format_str = 'DD/MMM/YYYY HH:MM'
-            book = Workbook(encoding='utf-8')
-            sheet = book.add_sheet('Sheet 1')
-            sheet.row_default_height = 60*20
+        wb = openpyxl.Workbook()
+        sheet = wb.active
 
-            # First Line
-            sheet.write(0, 0, _("Generating instance"), row_style)
-            sheet.write(0, 1, instance_name, row_style)
-            # Second Line
-            sheet.write(1, 0, _("Instance selection"), row_style)
-            sheet.write(1, 1, report_name, row_style)
-            # Third Line
-            sheet.write(2, 0, _("Last update"), row_style)
-            sheet.write(2, 1,  report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '', data_row_style)
+        # Styles
+        default_style = self.create_style_from_template(wb, template_sheet, 'default_style', 'A1')
+        empty_style = self.create_style_from_template(wb, template_sheet, 'empty_style', 'D1')
+        yellow_header_style = self.create_style_from_template(wb, template_sheet, 'yellow_header_style', 'A5')
+        green_header_style = self.create_style_from_template(wb, template_sheet, 'green_header_style', 'AN5')
+        date_style = self.create_style_from_template(wb, template_sheet, 'date_style', 'B3')
+        float_style = self.create_style_from_template(wb, template_sheet, 'float_style', 'G5')
 
-            self.xls_write_header(sheet, header_row, header_style)
+        # Header data
+        gen_title_cell = WriteOnlyCell(sheet, value=_('Generating Instance'))
+        gen_title_cell.style = default_style
+        gen_val_cell = WriteOnlyCell(sheet, value=local_instance.name)
+        gen_val_cell.style = default_style
+        sheet.append([gen_title_cell, gen_val_cell])
 
-            # tab header bigger height:
-            sheet.row(3).height_mismatch = True
-            sheet.row(3).height = 45*20
-            sheet.col(0).width = 8000
-            sheet.col(1).width = 10000
+        inst_title_cell = WriteOnlyCell(sheet, value=_('Instance selection'))
+        inst_title_cell.style = default_style
+        inst_val_cell = WriteOnlyCell(sheet, value=_('All loc'))
+        inst_val_cell.style = default_style
+        sheet.append([inst_title_cell, inst_val_cell])
 
-        # write the lines
-        row_count = 4
-        for row in request_result:
-            try:
-                data_list = []
-                for columns_name, property_name in header:
-                    data_list.append(row.get(property_name))
+        date_title_cell = WriteOnlyCell(sheet, value=_('Last update'))
+        date_title_cell.style = default_style
+        date_val_cell = WriteOnlyCell(sheet, value=report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '')
+        date_val_cell.style = date_style
+        sheet.append([date_title_cell, date_val_cell])
 
-                # remove the 5 firsts column are they are not stock qty
-                # and check if there is any other value than 0 on this last columns
-                if display_only_in_stock:
-                    ignore_line = True
-                    for x in ignore_if_null:
-                        if data_list[x]:
-                            ignore_line = False
-                            break
-                    if ignore_line:
-                        continue
-                if file_type == 'xls':
-                    if row.get('mml_status') == 'F' or row.get('msl_status') == 'F':
-                        row_st, price_st = row_style_red, row_style_price_red
-                    else:
-                        row_st, price_st = row_style, row_style_price
-                    self.xls_write_row(sheet, data_list, row_count, row_st, price_st)
-                else:
-                    writer.writerow(data_list)
-                row_count += 1
-            except Exception as e:
-                logging.getLogger('MSR').warning("""An error is occurred when generate the mission stock report %s file : %s\n""" % (file_type, e), exc_info=True)
+        # Lines headers
+        empty_cell = WriteOnlyCell(sheet, value='')
+        empty_cell.style = empty_style
 
-        if file_type == 'xls':
-            book.save(export_file)
-
-        if not write_attachment_in_db:
-            # delete previous reports in DB if any
-            ir_attachment_obj = self.pool.get('ir.attachment')
-            attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
-                                                                 file_name)])
-            if attachment_ids:
-                ir_attachment_obj.unlink(cr, uid, attachment_ids)
+        if local_instance.level == 'section':
+            fixed_data = [
+                (_('Reference'), 'default_code'),
+                (_('Name'), 'pt_name'),
+                (_('Active'), 'product_active'),
+                (_('UoM'), 'pu_name'),
+                (_('Cost Price'), 'pt_standard_price'),
+                (_('Func. Cur.'), 'rc_name')
+            ]
         else:
-            self.write_report_in_database(cr, uid, file_name, export_file.getvalue())
-        # close file
-        export_file.close()
+            fixed_data = [
+                (_('Reference'), 'default_code'),
+                (_('Name'), 'pt_name'),
+                (_('Active'), 'product_active'),
+                (_('MML'), 'mml_status'),
+                (_('MSL'), 'msl_status'),
+                (_('UoM'), 'pu_name'),
+                (_('Cost Price'), 'pt_standard_price'),
+                (_('Func. Cur.'), 'rc_name')
+            ]
+        repeated_data = [
+            (_('Instance stock'), 'l_internal_qty'),
+            (_('Instance stock val.'), 'l_internal_qty_pt_price'),
+            (_('Stock Qty.'), 'l_stock_qty'),
+            (_('Cross-Docking Qty.'), 'l_cross_qty'),
+            (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+            (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
+            (_('Eprep Qty.'), 'l_eprep_qty'),
+            (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
+            (_('Input Qty'), 'l_input_qty'),
+            (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
+            (_('AMC'), 'product_amc'),
+            (_('FMC'), 'product_consumption'),
+            (_('In Pipe Qty'), 'l_in_pipe_qty')
+        ]
+
+        header_styles = [yellow_header_style, green_header_style]
+        top_header_row, header_row = [], []
+        i = 0
+        for x in fixed_data:
+            header_row.append(empty_cell)
+            header_row.append((header_styles[i], _(x[0])))
+
+
+        return True
 
     def generate_full_xls(self, cr, uid, report_id, xls_name, context=None):
         if context is None:
@@ -1117,12 +1120,8 @@ class stock_mission_report(osv.osv):
 
 
 
-                self._get_export(cr, uid, report['id'], product_values,
-                                 csv=csv, xls=xls,
-                                 with_valuation=with_valuation,
-                                 all_products=all_products,
-                                 display_only_in_stock=display_only_in_stock,
-                                 context=context)
+                self._get_export(cr, uid, report['id'], product_values, with_valuation=with_valuation, all_products=all_products,
+                                 display_only_in_stock=display_only_in_stock, context=context)
                 # To keep the normal reports after they are generated if the Consolidated MSR returns an error
                 cr.commit()
 
@@ -1467,10 +1466,9 @@ class stock_mission_report(osv.osv):
                 except:
                     pass
 
-    def _get_export(self, cr, uid, ids, product_values, csv=True, xls=True, with_valuation=True, all_products=True,
-                    display_only_in_stock=False, context=None):
+    def _get_export(self, cr, uid, ids, product_values, with_valuation=True, all_products=True, display_only_in_stock=False, context=None):
         '''
-        Get the CSV files of the stock mission report.
+        Get the XLSX files of the stock mission report.
         This method generates 4 files (according to option set) :
             * 1 file with no split of WH and no valuation
             * 1 file with no split of WH and valuation
@@ -1490,10 +1488,8 @@ class stock_mission_report(osv.osv):
         except osv.except_osv as e:
             logger.warning("___ %s The report will be stored in the database." % e.value)
 
-
         write_attachment_in_db = False
-        # for MSR reports, the migration is ignored, if the path is defined and
-        # usable, it is used, migration done or not.
+        # for MSR reports, the migration is ignored, if the path is defined and usable, it is used, migration done or not
         if attachment_obj.store_data_in_db(cr, uid, ignore_migration=True):
             write_attachment_in_db = True
 
@@ -1529,28 +1525,12 @@ class stock_mission_report(osv.osv):
                 # 'is_local_report': not report['full_view'],
             }
 
-            # generate CSV file
-            # if csv:
-            #     logger.info('___ Start CSV generation...')
-            #     if display_only_in_stock:
-            #         self.generate_export_file(cr, uid, request_result, file_type='csv', display_only_in_stock=True,  **params)
-            #     if all_products:
-            #         self.generate_export_file(cr, uid, request_result, file_type='csv', display_only_in_stock=False,  **params)
-            #
-            # # generate XLS files
-            # if xls:
-            #     logger.info('___ Start XLS generation...')
-            #     if display_only_in_stock:
-            #         self.generate_export_file(cr, uid, request_result, file_type='xls', display_only_in_stock=True,  **params)
-            #     if all_products:
-            #         self.generate_export_file(cr, uid, request_result, file_type='xls', display_only_in_stock=False,  **params)
-
             # generate XLSX files
-            logger.info('___ Start XLS generation...')
+            logger.info('___ Start XLSX generation...')
             if display_only_in_stock:
-                self.generate_export_file_xlsx(cr, uid, request_result, display_only_in_stock=True, **params)
+                self.generate_export_file(cr, uid, request_result, display_only_in_stock=True, **params)
             if all_products:
-                self.generate_export_file_xlsx(cr, uid, request_result, display_only_in_stock=False, **params)
+                self.generate_export_file(cr, uid, request_result, display_only_in_stock=False, **params)
 
             self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
             logger.info('___ XLSX generation finished !')
