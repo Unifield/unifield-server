@@ -224,9 +224,9 @@ class sde_import(osv.osv_memory):
                 # get the IN with the Ship Ref or the Origin
                 in_id = self.get_incoming_id_from_json(cr, uid, json_data, in_updated, context=context)
 
-                # If the IN is Available Updated reset as much data as possible, compared to the PO
-                if in_updated and self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] == 'updated':
-                    self.reset_in_available_updated(cr, uid, [in_id], context=context)
+                # If the IN is Available Shipped/Updated reset as much data as possible, compared to the PO
+                if self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] in ['shipped', 'updated']:
+                    self.reset_in_available_shipped_updated(cr, uid, [in_id], context=context)
 
                 in_proc_ids = in_proc_obj.search(cr, uid, [('picking_id', '=', in_id), ('draft', '=', True)], context=context)
                 if in_proc_ids:
@@ -399,12 +399,12 @@ class sde_import(osv.osv_memory):
 
         return in_id[0]
 
-    def reset_in_available_updated(self, cr, uid, ids, context=None):
+    def reset_in_available_shipped_updated(self, cr, uid, ids, context=None):
         '''
-        For each move of the Available Updated IN, reset as much data as possible:
+        For each move of the Available Shipped/Updated IN, reset as much data as possible:
             - Merge the quantities of split lines and delete the splits
             - Remove any BN/ED info
-            - Restore the product of the linked PO line
+            - Restore the product, quantity and unit price of the linked PO line
         '''
         if context is None:
             context = {}
@@ -414,7 +414,8 @@ class sde_import(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
 
         cr.execute("""
-            SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, m.product_qty, COALESCE(pl.product_id, m.product_id)
+            SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, COALESCE(pl.product_qty, m.product_qty), 
+                COALESCE(pl.product_id, m.product_id), COALESCE(pl.price_unit, m.price_unit)
             FROM stock_move m LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
             WHERE m.state = 'assigned' AND m.picking_id in %s and m.product_qty != 0
             """, (tuple(ids),))
@@ -423,13 +424,14 @@ class sde_import(osv.osv_memory):
         for x in cr.fetchall():
             key = (x[1], x[2], x[3])
             if key not in data:
-                data[key] = {'product_id': x[5], 'product_qty': 0, 'master': x[0]}
+                data[key] = {'product_id': x[5], 'product_qty': 0, 'price_unit': x[6], 'master': x[0]}
             else:
                 to_del.append(x[0])
             data[key]['product_qty'] += x[4]
         for key in data:
             move_vals = {'product_id': data[key]['product_id'], 'product_qty': data[key]['product_qty'],
-                         'product_uos_qty': data[key]['product_qty'], 'prodlot_id': False, 'expired_date': False}
+                         'product_uos_qty': data[key]['product_qty'], 'price_unit': data[key]['price_unit'],
+                         'prodlot_id': False, 'expired_date': False}
             move_obj.write(cr, uid, data[key]['master'], move_vals, context=context)
         move_obj.unlink(cr, uid, to_del, force=True, context=context)
 

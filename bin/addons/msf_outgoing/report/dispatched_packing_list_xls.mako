@@ -118,6 +118,8 @@
     <Column ss:AutoFitWidth="0" ss:Width="140.75"/>
     <Column ss:AutoFitWidth="0" ss:Width="85"/>
     <Column ss:AutoFitWidth="0" ss:Width="89.25"/>
+    <Column ss:AutoFitWidth="0" ss:Width="85"/>
+    <Column ss:AutoFitWidth="0" ss:Width="50"/>
     <Column ss:AutoFitWidth="0" ss:Width="30"/>
     <Column ss:AutoFitWidth="0" ss:Width="30"/>
     <Column ss:AutoFitWidth="0" ss:Width="30"/>
@@ -220,14 +222,14 @@
 
        % if not p['pf']:
        <Row>
-           <Cell ss:StyleID="NoPack" ss:MergeAcross="11"><Data ss:Type="String">${_('NO PACK FAMILIES IN THIS PPL')|x}</Data></Cell>
+           <Cell ss:StyleID="NoPack" ss:MergeAcross="13"><Data ss:Type="String">${_('NO PACK FAMILIES IN THIS PPL')|x}</Data></Cell>
        </Row>
        % endif
        % for pf in getParcel(p['pf']):
            <Row>
              <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Parcel No:')|x} ${(pf.from_pack)|x} ${_('to')|x} ${(pf.to_pack)|x}</Data></Cell>
              <Cell ss:StyleID="line_header"><Data ss:Type="String">${(pf.num_of_packs)|x} ${_('Parcel')|x}${(pf.num_of_packs > 1 and 's' or '')|x}</Data></Cell>
-             <Cell ss:StyleID="line_header" ss:MergeAcross="3"><Data ss:Type="String">${_('Total weight')|x} ${(formatLang(pf.total_weight or 0.00))|x} kg     -     ${_('Total volume')|x} ${(formatLang(pf.total_volume or 0.00))|x} dm³</Data></Cell>
+             <Cell ss:StyleID="line_header" ss:MergeAcross="5"><Data ss:Type="String">${_('Total weight')|x} ${(formatLang(pf.total_weight or 0.00))|x} kg     -     ${_('Total volume')|x} ${(formatLang(pf.total_volume or 0.00))|x} dm³</Data></Cell>
              <Cell ss:StyleID="line_header"/>
              <Cell ss:StyleID="line_header"/>
              <Cell ss:StyleID="line_header" ss:MergeAcross="2"><Data ss:Type="String">${_('Containing:')|x}</Data></Cell>
@@ -238,6 +240,8 @@
              <Cell ss:StyleID="line_header_italic"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
              <Cell ss:StyleID="line_header_italic" ss:MergeAcross="2"><Data ss:Type="String">${_('Comment')|x}</Data></Cell>
              <Cell ss:StyleID="line_header_italic"><Data ss:Type="String">${_('Total Qty.')|x}</Data></Cell>
+             <Cell ss:StyleID="line_header_italic"><Data ss:Type="String">${_('Unit Price')|x}</Data></Cell>
+             <Cell ss:StyleID="line_header_italic"><Data ss:Type="String">${_('Currency')|x}</Data></Cell>
              <Cell ss:StyleID="line_header_italic"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
              <Cell ss:StyleID="line_header_italic"><Data ss:Type="String">${_('Exp. Date')|x}</Data></Cell>
              <Cell ss:StyleID="line_header_italic"><Data ss:Type="String">${_('CC')|x}</Data></Cell>
@@ -251,6 +255,8 @@
                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.product_id.name)|x}</Data></Cell>
                    <Cell ss:StyleID="line_left" ss:MergeAcross="2"><Data ss:Type="String">${(m.comment or '')|x}</Data></Cell>
                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(formatLang(m.product_qty or 0.00))|x} ${(m.product_uom.name)|x}</Data></Cell>
+                   <Cell ss:StyleID="line_left"><Data ss:Type="String">${(formatLang(m.price_unit or 0.00))|x}</Data></Cell>
+                   <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.price_currency_id and m.price_currency_id.name or '')|x}</Data></Cell>
                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.prodlot_id.name or '')|x}</Data></Cell>
                    % if isDate(m.prodlot_id.life_date):
                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${(m.prodlot_id.life_date)|n}T00:00:00.000</Data></Cell>
