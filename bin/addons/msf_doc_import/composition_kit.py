@@ -84,6 +84,8 @@ class composition_kit(osv.osv):
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        if obj.state != 'draft':
+            raise osv.except_osv(_('Error'), _('You can only import on a Draft Theoretical Kit Composition; import file is ignored'))
 
         fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
 
@@ -108,7 +110,7 @@ class composition_kit(osv.osv):
             # Check length of the row
             col_count = len(row)
             if col_count != 8:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
 Module, Product Code*, Product Description, Quantity, Product UOM, Comment, B.Num mandatory and Exp. Date mandatory"""))
 
             if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
@@ -184,6 +186,8 @@ Module, Product Code*, Product Description, Quantity, Product UOM, Comment, B.Nu
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.real_file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        if obj.state != 'draft':
+            raise osv.except_osv(_('Error'), _('You can only import on a Draft Kit Composition List; import file is ignored'))
 
         fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.real_file_to_import))
 

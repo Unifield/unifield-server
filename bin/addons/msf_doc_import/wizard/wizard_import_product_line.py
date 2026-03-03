@@ -249,19 +249,21 @@ class wizard_import_product_line(osv.osv_memory):
         """
         wiz_common_import = self.pool.get('wiz.common.import')
         p_mass_upd_obj = self.pool.get('product.mass.update')
-        for wiz_read in self.read(cr, uid, ids, ['product_mass_upd_id', 'file']):
-            p_mass_upd_id = wiz_read['product_mass_upd_id']
+        for wiz_read in self.browse(cr, uid, ids, fields_to_fetch=['product_mass_upd_id', 'file'], context=context):
+            p_mass_upd = wiz_read.product_mass_upd_id
             if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
+            if p_mass_upd.state != 'draft':
+                return self.write(cr, uid, ids, {'state': 'done', 'message': _("You can only import on a Draft Product Mass Update; import file is ignored")}, context=context)
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read.file))
                 # iterator on rows
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'p_mass_upd_id': p_mass_upd_id, 'header_index': header_index})
+                context.update({'p_mass_upd_id': p_mass_upd.id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_product_line_import, origin='')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
@@ -272,7 +274,7 @@ class wizard_import_product_line(osv.osv_memory):
                 return self.write(cr, uid, ids, {'message': message})
             except StopIteration:
                 return self.write(cr, uid, ids, {'message': _('The file has no row, nothing to import')})
-            p_mass_upd_obj.write(cr, uid, p_mass_upd_id, {'state': 'done', 'import_in_progress': True}, context)
+            p_mass_upd_obj.write(cr, uid, p_mass_upd.id, {'state': 'done', 'import_in_progress': True}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.

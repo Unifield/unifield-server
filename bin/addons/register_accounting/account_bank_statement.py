@@ -459,14 +459,6 @@ class account_bank_statement(osv.osv):
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
                 create_cashbox_lines(self, cr, uid, reg.id, context=context)
-            # For bank statement, give balance_end
-            elif reg.journal_id.type == 'bank':
-                # Verify that another bank statement exists.
-                st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
-                if len(st_prev_ids) > 1:
-                    raise osv.except_osv(_('Error'), _('A problem occurred: More than one register have this one as previous register!'))
-                if st_prev_ids:
-                    self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
 
     def button_cancel_closing_balance_confirmation(self, cr, uid, ids, context=None):
@@ -519,7 +511,7 @@ class account_bank_statement(osv.osv):
                     raise osv.except_osv(_('Warning'), _('Bank statement balance is not equal to Calculated balance.'))
         context.update({'active_ids': ids, 'active_id': ids[0]})
         st = self.browse(cr, uid, ids[0], context=context)
-        prev_reg_id = previous_register_id(self, cr, uid, st.period_id.id, st.journal_id.id)
+        prev_reg_id = previous_register_id(self, cr, uid, st.period_id.id, st.journal_id.id, raise_error=False)
         if prev_reg_id:
             prev_reg_state = self.browse(cr, uid, prev_reg_id, context=context).state
         else:

@@ -46,7 +46,8 @@
         'wizard/split_move_view.xml',
         'wizard/kit_mass_import_view.xml',
         'report/kit_mass_import_export_view.xml',
-        'report/kitting_order_report.xml'
+        'report/kitting_order_report.xml',
+        'report/tkc_kcl_comparison_report_view.xml'
     ],
     "demo_xml": [],
     'test': [

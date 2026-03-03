@@ -74,9 +74,9 @@
 
         <menuitem
             action="action_wizard_import_batch"
-            sequence="5"
+            sequence="4"
             name="Import Batch Numbers"
-            parent="stock.menu_action_production_lot_form"
+            parent="stock.menu_action_bn_management"
             id="menu_action_wizard_import_batch" />
 
     </data>

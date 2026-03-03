@@ -70,6 +70,6 @@
         <field name="domain">[('location_dest_id.destruction_location', '=', True)]</field>
         <field name="help">Destruction Location</field>
     </record>
-    <menuitem action="action_destruction_location_report" id="menu_action_destruction_location_report" parent="stock.menu_traceability" sequence="6"/>
+    <menuitem action="action_destruction_location_report" id="menu_action_destruction_location_report" parent="stock.next_id_61" sequence="12"/>
 </data>
 </openerp>

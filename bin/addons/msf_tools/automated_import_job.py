@@ -35,6 +35,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+from datetime import datetime
 
 from threading import RLock
 from service.web_services import report_spool
@@ -481,9 +482,10 @@ class automated_import_job(osv.osv):
                             self.pool.get(msg_dict['res_model']).log(cr, uid, msg_dict['res_id'], msg_dict['msg'])
                             error_message.append(msg_dict['msg'])
 
+                    job_end_time = datetime.now()
                     self.write(cr, uid, [job.id], {
                         'filename': filename,
-                        'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'end_time': job_end_time.strftime('%Y-%m-%d %H:%M:%S'),
                         'nb_processed_records': nb_processed,
                         'nb_rejected_records': nb_rejected,
                         'comment': '\n'.join(error_message),
@@ -494,6 +496,28 @@ class automated_import_job(osv.osv):
 
                     remote.move_to_process_path(filename, success=is_success)
                     self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+
+                    # If activated, email the recipient(s) when an error occurs, depending on the selected type
+                    if import_data.allow_email_notification and import_data.email_notification_ok and \
+                            state in import_data.email_notification_type.split('_') and \
+                            (import_data.email or import_data.email2 or import_data.email3):
+                        emails = []
+                        if import_data.email:
+                            emails.append(import_data.email)
+                        if import_data.email2:
+                            emails.append(import_data.email2)
+                        if import_data.email3:
+                            emails.append(import_data.email3)
+
+                        email_subject = _('%s: Error during automated import job (ID %s) on %s at %s') % (job.import_id.name, job.id, job_end_time.strftime('%d/%m/%Y'), job_end_time.strftime('%H:%M:%S'))
+                        email_body = _("""%s: an error occurred during the import job report for the automated import ID %s (%s) at %s
+Filename: %s
+
+Error(s):
+%s""") % (job.import_id.name, job.id, job.import_id.function_id.name, job_end_time.strftime('%d/%m/%Y %H:%M:%S'), filename, '\n'.join(error_message))
+
+                        tools.email_send_with_logs(self, cr, uid, False, emails, email_subject, email_body, retry=2, raise_error=True)
+
                     cr.commit()
                 except Exception as e:
                     cr.rollback()

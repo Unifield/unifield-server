@@ -9,7 +9,9 @@
             name="kit.report"
             target_filename='${eval(_get_report_name)}'
             rml="addons/kit/report/kit_report.rml"
-            string="Kit" />
+            string="Kit"
+            sequence="3"
+        />
 
     </data>
 </openerp>

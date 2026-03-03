@@ -69,14 +69,10 @@ class account_cash_statement(osv.osv):
         # Observe register state
         prev_reg = False
         prev_reg_id = vals.get('prev_reg_id', False)
-        if prev_reg_id:
-            prev_reg = self.browse(cr, uid, [prev_reg_id], context=context)[0]
-            # if previous register closing balance is freezed, then retrieving previous closing balance
-            # US_410: retrieving previous closing balance even closing balance is not freezed
-            # if prev_reg.closing_balance_frozen:
-            # US-948: carry over for bank, and always carry over bank
-            # accountant manual field
-            if journal.type == 'bank':
+        if journal.type == 'bank' and prev_reg_id:
+            prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['balance_end_real', 'closing_balance_frozen'], context=context)[0]
+            if prev_reg.closing_balance_frozen:
+                # if previous register closing balance is frozen, then retrieving previous closing balance
                 vals.update({'balance_start': prev_reg.balance_end_real})
 
         if not prev_reg and sync_update and vals.get('period_id') and vals.get('journal_id'):
@@ -190,12 +186,31 @@ class account_cash_statement(osv.osv):
             res[statement.id] = diff_amount
         return res
 
-    def _get_cash_starting_balance(self, cr, uid, ids, context=None):
+    def _get_bank_cash_starting_balance(self, cr, uid, ids, context=None):
         if not ids:
             return {}
         if isinstance(ids, int):
             ids = [ids]
 
+        # bank
+        cr.execute('''select st.id, prev.balance_end_real, st.state
+            from
+                account_bank_statement st
+                inner join account_journal j on st.journal_id = j.id
+                left join account_bank_statement prev on prev.id = st.prev_reg_id
+            where
+                j.type = 'bank' and
+                coalesce(prev.closing_balance_frozen, 'f') = 'f' and
+                st.id in %s
+        ''', (tuple(ids), ))
+        ret = {}
+        for x in cr.fetchall():
+            if x[1] is None:
+                # no prev reg (created by former sync rule) or prev frozen: then starting was set
+                continue
+            else:
+                ret[x[0]] = x[1]
+        # cash
         cr.execute('''
             select
                 st.id, coalesce(amount.amount, 0)+coalesce(amount.mig, 0)+coalesce(st.initial_migration_amount,0)
@@ -221,7 +236,10 @@ class account_cash_statement(osv.osv):
                 st.id in %s
         ''', (tuple(ids), ))
 
-        return dict(cr.fetchall())
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+
+        return ret
 
 
     def _msf_calculated_balance_compute(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -255,7 +273,7 @@ class account_cash_statement(osv.osv):
         data = super(account_cash_statement, self).read(cr, uid, ids, vals, context=context, load=load)
 
         if not vals or 'balance_start' in vals:
-            cash_balance_start = self._get_cash_starting_balance(cr, uid, ids, context)
+            cash_balance_start = self._get_bank_cash_starting_balance(cr, uid, ids, context)
             if cash_balance_start:
                 if isinstance(ids, int):
                     data['balance_start'] = cash_balance_start[ids[0]]

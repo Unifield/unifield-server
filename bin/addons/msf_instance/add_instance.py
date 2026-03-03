@@ -468,6 +468,12 @@ class account_bank_statement(osv.osv):
                 for regline in reg.line_ids:
                     if regline.state == 'draft':
                         raise osv.except_osv(_('Warning'), _('You cannot close a project register at coordo level if we have draft entries at coordo level.'))
+            #if reg.closing_balance_frozen and context.get('sync_update_execution', False):
+            #    # wha if the balance is reopen ?
+            #    # frozen on our side, but not frozen in the sync update: do not write balance_end
+            #    if not vals.get('closing_balance_frozen') and 'balance_end_real' in newvals:
+            #        del newvals['balance_end_real']
+
             if reg.closing_balance_frozen and not context.get('sync_update_execution', False):
                 # remove the values for each register with a confirmed balance
                 # Note: at Cashbox closing the balance_end_real is set to the reg.balance_end value: keep this change

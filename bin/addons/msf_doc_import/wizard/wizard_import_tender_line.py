@@ -256,19 +256,21 @@ Importation completed in %s!
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         tender_obj = self.pool.get('tender')
-        for wiz_read in self.read(cr, uid, ids, ['tender_id', 'file']):
-            tender_id = wiz_read['tender_id']
-            if not wiz_read['file']:
+        for wiz_read in self.browse(cr, uid, ids, fields_to_fetch=['tender_id', 'file'], context=context):
+            tender = wiz_read.tender_id
+            if not wiz_read.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
+            if tender.state != 'draft':
+                return self.write(cr, uid, ids, {'state': 'done', 'message': _("You can only import on a Draft Tender; import file is ignored")}, context=context)
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read.file))
                 # iterator on rows
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'tender_id': tender_id, 'header_index': header_index, 'object': tender_obj})
+                context.update({'tender_id': tender.id, 'header_index': header_index, 'object': tender_obj})
                 res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_tender_line_import)
                 if not res:
                     return self.write(cr, uid, ids, res1)
@@ -277,8 +279,8 @@ Importation completed in %s!
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
-            # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            tender_obj.write(cr, uid, tender_id, {'state': 'done'}, context)
+            # we close the Tender only during the import process so that the user can't update the Tender in the same time (all fields are readonly)
+            tender_obj.write(cr, uid, tender.id, {'state': 'done'}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.

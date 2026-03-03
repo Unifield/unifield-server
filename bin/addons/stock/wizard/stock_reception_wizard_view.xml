@@ -14,13 +14,14 @@
                     <field name="start_date" />
                     <field name="end_date" />
                     <field name="reason_type_id" widget="selection" domain="[('incoming_ok', '=', True)]" />
-                    <field name="partner_id" />
+                    <field name="partner_id" context="{'show_button_show_inactive': True}" />
                     <field name="order_category" />
                     <field name="order_type" />
                     <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"/>
                     <field name="location_dest_id"  />
                     <field name="final_dest_id" attrs="{'readonly': [('final_partner_id', '!=', False)]}" on_change="onchange_final_dest_id(final_dest_id)" />
-                    <field name="final_partner_id" attrs="{'readonly': [('final_dest_id', '!=', False)]}" on_change="onchange_final_partner_id(final_partner_id)" />
+                    <field name="final_partner_id" attrs="{'readonly': [('final_dest_id', '!=', False)]}"
+                           on_change="onchange_final_partner_id(final_partner_id)" context="{'show_button_show_inactive': True}" />
                     <separator colspan="4" string="Actions" />
                     <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
                 </form>
@@ -39,6 +40,7 @@
             id="menu_stock_reception_wizard"
             action="action_stock_reception_wizard"
             parent="stock.next_id_61"
+            sequence="7"
             />
 
     </data>

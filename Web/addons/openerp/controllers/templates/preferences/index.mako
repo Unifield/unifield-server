@@ -21,7 +21,7 @@
                     jQuery(this).addClass('errorfield');
                     jQuery("<span class='fielderror'>${_('Invalid Email address.')}</span>").insertAfter(jQuery(this));
                     ok = false;
-                } else if (jQuery(this).attr('kind') == 'msf_email' && !this.value.endsWith('msf.org')) {
+                } else if (jQuery(this).is(':visible') && jQuery(this).attr('kind') == 'msf_email' && !this.value.endsWith('msf.org')) {
                     jQuery(this).addClass('errorfield');
                     jQuery("<span class='fielderror'>${_('Email address must end with msf.org.')}</span>").insertAfter(jQuery(this));
                     ok = false;

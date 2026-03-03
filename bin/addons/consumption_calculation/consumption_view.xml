@@ -184,7 +184,7 @@
         
         <menuitem
              id="warehouse_consumption_menu"
-             name="Consumption reports"
+             name="Consumption Reports"
              sequence="-20"
              parent="stock.next_id_61" />
              
@@ -199,7 +199,7 @@
             <field name="model">monthly.review.consumption</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Monthly consumption" hide_delete_button="1">
+                <form string="Monthly Consumption" hide_delete_button="1">
                     <separator colspan="4" string="General information" />
                     <field name="period_from" on_change="period_change(period_from, period_to)" />
                     <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_doc_import) -->
@@ -244,7 +244,7 @@
             <field name="model">monthly.review.consumption</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Monthly consumption" hide_delete_button="1">
+                <tree string="Monthly Consumption" hide_delete_button="1">
                     <field name="period_from" />
                     <field name="period_to" />
                     <field name="nb_lines" />
@@ -262,7 +262,7 @@
             <field name="model">monthly.review.consumption</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Monthly consumption">
+                <search string="Monthly Consumption">
                     <group col="10" colspan="4">
                         <field name="period_from"/>
                         <field name="period_to"/>
@@ -280,7 +280,7 @@
         </record>
         
         <record id="action_monthly_review_consumption" model="ir.actions.act_window">
-            <field name="name">Monthly consumption</field>
+            <field name="name">Monthly Consumption</field>
             <field name="res_model">monthly.review.consumption</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

@@ -4,7 +4,7 @@
 
         <report
             id="report_merged_ud_products"
-            string="Merged UD products report"
+            string="Merged UD Products Report"
             model="merged_ud_products"
             name="report.merged_ud_products"
             report_type="openpyxl"
@@ -18,7 +18,7 @@
             <field name="model">merged_ud_products</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Merged UD products report">
+                <form string="Merged UD Products Report">
                     <separator colspan="4" string="Parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
@@ -30,7 +30,7 @@
         </record>
 
         <record id="action_merged_ud_products" model="ir.actions.act_window">
-            <field name="name">Merged UD products report</field>
+            <field name="name">Merged UD Products Report</field>
             <field name="res_model">merged_ud_products</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>

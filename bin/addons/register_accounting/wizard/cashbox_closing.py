@@ -94,7 +94,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                         create_cashbox_lines(self, cr, uid, st.id, context=context)
                         # Change cashbox state
                         context['update_next_reg_balance_start'] = True
-                        start_balance = st_obj._get_cash_starting_balance(cr, uid, [st.id], context=context)
+                        start_balance = st_obj._get_bank_cash_starting_balance(cr, uid, [st.id], context=context)
                         vals = {'name': st_number, 'state':'confirm', 'closing_date': datetime.today()}
                         if start_balance:
                             vals['balance_start'] = start_balance[st.id]

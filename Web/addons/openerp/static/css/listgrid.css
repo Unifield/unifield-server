@@ -263,6 +263,12 @@ strong#total_sum_label {
 .warning {
     margin-right: 3px;
 }
+
+/* US-14145: Order Calculation lines */
+#order_calc_line_ids_grid td.grid-cell span[name="list_rr_value"] {
+    display: inline-block;
+    min-width: 200px;
+}
 /**
  * vim: sts=4 st=4 et
  *

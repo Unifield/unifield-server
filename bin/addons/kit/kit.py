@@ -1068,6 +1068,23 @@ class composition_kit(osv.osv):
             'context': {'composition_type': 'theoretical'},
         }
 
+    def _get_comparison_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
+
+        ftf = ['composition_version_id', 'composition_product_id', 'composition_lot_id', 'composition_reference']
+        kcl = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
+        if not kcl.composition_version_id:
+            raise osv.except_osv(_('Error'), _('This report is only available for KCLs using a Version'))
+
+        return (_('TKC_KCL_%s_%s_Comparison_Report_%s') % (kcl.composition_product_id.default_code,
+                                                           (kcl.composition_lot_id and kcl.composition_lot_id.name or kcl.composition_reference).replace('/', '_'),
+                                                           time.strftime('%Y_%m_%d_%H_%M')))
+
 
 composition_kit()
 
@@ -1077,7 +1094,7 @@ class composition_item(osv.osv):
     kit composition items representing kit parts
     '''
     _name = 'composition.item'
-    _order = 'item_module'
+    _order = 'item_module, id'
 
     def _common_update(self, cr, uid, vals, context=None):
         '''
@@ -1328,8 +1345,7 @@ class composition_item(osv.osv):
                 'item_kit_id': fields.many2one('composition.kit', string='Kit/Version', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
                 'item_stock_move_id': fields.many2one('stock.move', string='Kitting Order Stock Move', readonly=True, help='This field represents the stock move corresponding to this item for Kit production.'),
-                'item_kit_name': fields.related('item_kit_id', 'composition_product_id', type='many2one', relation='product.product', string="Kit Product Code", store=True, readonly=True),
-                'item_kit_batch': fields.related('item_kit_id', 'composition_lot_id', type='many2one', relation='stock.production.lot', string="Kit/BN", store=True, readonly=True),
+                'item_kit_name': fields.related('item_kit_id', 'composition_product_id', type='many2one', relation='product.product', string="Kit/Product Code", store=True, readonly=True),
                 'comment': fields.char(size=256, string='Comment'),
                 'kit_state': fields.related('item_kit_id', 'state', type='char', size=64, string='Kit State', readonly=True),
                 'to_consume_id': fields.many2one('kit.creation.to.consume', 'KO Components to Consume'),
