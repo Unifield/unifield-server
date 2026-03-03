@@ -366,7 +366,7 @@ class account_analytic_line(osv.osv):
         if posting_date is None:
             posting_date = strftime('%Y-%m-%d')
 
-        if strptime(posting_date, '%Y-%m-%d').tm_mon and context.get('period_id_for_dec_hq_entries'):
+        if strptime(posting_date, '%Y-%m-%d').tm_mon == 12 and context.get('period_id_for_dec_hq_entries'):
             # (US-815) use the right period for December HQ Entries
             period_id = context['period_id_for_dec_hq_entries']
         else:

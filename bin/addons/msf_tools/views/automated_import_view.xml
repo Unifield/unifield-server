@@ -103,6 +103,18 @@
                         <field name="ftp_report_ok" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
                     </group>
 
+                    <field name="allow_email_notification" invisible="1"/>
+                    <separator colspan="4" string="Email Notifications configuration" attrs="{'invisible': [('allow_email_notification', '=', False)]}" />
+                    <group col="4" colspan="4" attrs="{'invisible': [('allow_email_notification', '=', False)]}">
+                        <field name="email_notification_ok"/>
+                        <field name="email_notification_type" attrs="{'readonly': [('email_notification_ok', '=', False)], 'required': [('email_notification_ok', '=', True)]}"/>
+                    </group>
+                    <group col="6" colspan="4" attrs="{'invisible': [('allow_email_notification', '=', False)]}">
+                        <field name="email" widget="email" attrs="{'readonly': [('email_notification_ok', '=', False)]}"/>
+                        <field name="email2" widget="email" attrs="{'readonly': [('email_notification_ok', '=', False)]}"/>
+                        <field name="email3" widget="email" attrs="{'readonly': [('email_notification_ok', '=', False)]}"/>
+                    </group>
+
                     <separator colspan="4" string="Scheduler configuration" />
                     <group colspan="4" col="6">
                         <field name="priority" />

@@ -1309,6 +1309,8 @@ class account_invoice(osv.osv):
         for line in lines:
             # in case of a refund cancel/modify, mark each SR line as reversal of the corresponding SI line IF it's an
             # account.invoice.line with an account having the type Income or Expense (EXCLUDE Extra-accounting expenses)
+            line['original_invoice_line_id'] = line['id']
+            line['original_line_qty'] = line.get('quantity')
             if is_account_inv_line and context.get('refund_mode', '') in ['cancel', 'modify'] and line['account_id']:
                 account_id = type(line['account_id']) == tuple and line['account_id'][0] or line['account_id']
                 account = account_obj.browse(cr, uid, account_id,
@@ -1580,7 +1582,13 @@ class account_invoice_line(osv.osv):
             }
         }
 
-
+    def change_refund_quantity(self, cr, uid, ids, quantity, original_invoice_line_id, original_line_qty, context=None):
+        if original_invoice_line_id and quantity - original_line_qty > 0.001:
+            return {
+                'warning': {'message': _('Quantity cannot be greater than %s') % original_line_qty},
+                'value': {'quantity': original_line_qty}
+            }
+        return {}
 
     def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, is_asset=False, context=None):
         if context is None:

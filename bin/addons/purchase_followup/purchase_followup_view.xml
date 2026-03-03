@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
-	<data>
-		
-		<record id="action_purchase_order_follow_up" model="ir.actions.server">
+    <data>
+
+        <record id="action_purchase_order_follow_up" model="ir.actions.server">
             <field name="name">Order Follow Up</field>
             <field name="model_id" ref="model_purchase_order_followup"/>
             <field name="state">code</field>
             <field name="code">action = obj.start_order_followup(context=context)</field>
         </record>
-        
+
         <record id="ir_open_purchase_order_follow_up" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">purchase.order</field>
@@ -17,89 +17,91 @@
             <field eval="'ir.actions.server,%d'%action_purchase_order_follow_up" name="value"/>
             <field eval="True" name="object"/>
         </record>
-        
+
         <record id="purchase_order_followup_form_view" model="ir.ui.view">
-        	<field name="name">purchase.order.followup.form.view</field>
-        	<field name="model">purchase.order.followup</field>
-        	<field name="type">form</field>
-        	<field name="arch" type="xml">
-        		<form string="Purchase Order Followup">
-        			<field name="order_id" readonly="1" />
-        			<field name="supplier_ref" readonly="1" />
+            <field name="name">purchase.order.followup.form.view</field>
+            <field name="model">purchase.order.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Purchase Order Followup">
+                    <field name="order_id" readonly="1" />
+                    <field name="supplier_ref" readonly="1" />
                     <field name="partner_id" readonly="1" />
                     <field name="order_type" readonly="1" />
                     <field name="priority" readonly="1" />
                     <field name="categ" readonly="1" />
-        			<!--<field name="delivery_requested_date" readonly="1" />
-        			<field name="delivery_confirmed_date" readonly="1" />-->
-        			<field name="line_ids" mode="tree" readonly="1" colspan="4" nolabel="1">
-        				<tree string="Followup lines" colors="orange:return_move==True">
-        					<field name="line_name" />
-        					<field name="line_product_id" />
-        					<field name="line_product_qty" />
-        					<field name="line_uom_id" />
-        					<field name="line_confirmed_date" />
-        					<field name="line_shipped_rate" widget="progressbar" />
-        					<field name="picking_id" />
-        					<button name="go_to_incoming" type="object" string="View Incoming shipment" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '!=', False)]}" />
-        					<field name="move_product_id" />
-        					<field name="move_product_qty" />
-        					<field name="move_uom_id" />
-        					<field name="move_delivery_date" />
-        					<field name="move_state" />
+                    <!--<field name="delivery_requested_date" readonly="1" />
+                    <field name="delivery_confirmed_date" readonly="1" />-->
+                    <field name="line_ids" mode="tree" readonly="1" colspan="4" nolabel="1">
+                        <tree string="Followup lines" colors="orange:return_move==True">
+                            <field name="line_name" />
+                            <field name="line_product_id" />
+                            <field name="line_comment" />
+                            <field name="line_product_qty" />
+                            <field name="line_uom_id" />
+                            <field name="line_confirmed_date" />
+                            <field name="line_shipped_rate" widget="progressbar" />
+                            <field name="picking_id" />
+                            <button name="go_to_incoming" type="object" string="View Incoming shipment" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '!=', False)]}" />
+                            <field name="move_product_id" />
+                            <field name="move_product_qty" />
+                            <field name="move_uom_id" />
+                            <field name="move_delivery_date" />
+                            <field name="move_state" />
                             <field name="return_move" invisible="1" />
-        				</tree>
-        			</field>
-        			<button name="close_view" type="object" string="Close" icon="gtk-cancel" colspan="2" />
-        			<button name="update_view" type="object" string="Update" icon="gtk-execute" colspan="2" />
+                        </tree>
+                    </field>
+                    <button name="close_view" type="object" string="Close" icon="gtk-cancel" colspan="2" />
+                    <button name="update_view" type="object" string="Update" icon="gtk-execute" colspan="2" />
                     <newline />
                     <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" context="{'export':True}" />
                     <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" context="{'export':True}" />
                 </form>
-        	</field>
+            </field>
         </record>
-        
+
         <record id="purchase_order_followup_split_form_view" model="ir.ui.view">
-        	<field name="name">purchase.order.followup.split.form.view</field>
-        	<field name="model">purchase.order.followup</field>
-        	<field name="type">form</field>
+            <field name="name">purchase.order.followup.split.form.view</field>
+            <field name="model">purchase.order.followup</field>
+            <field name="type">form</field>
             <field name="priority">17</field>
-        	<field name="arch" type="xml">
-        		<form string="Purchase Order Followup">
-        			<field name="order_id" readonly="1" />
-        			<field name="supplier_ref" readonly="1" />
+            <field name="arch" type="xml">
+                <form string="Purchase Order Followup">
+                    <field name="order_id" readonly="1" />
+                    <field name="supplier_ref" readonly="1" />
                     <field name="partner_id" readonly="1" />
                     <field name="order_type" readonly="1" />
                     <field name="priority" readonly="1" />
                     <field name="categ" readonly="1" />
-        			<!--<field name="delivery_requested_date" readonly="1" />
-        			<field name="delivery_confirmed_date" readonly="1" />-->
-        			<field name="line_ids" mode="tree" readonly="1" colspan="4" nolabel="1">
-        				<tree string="Followup lines" colors="orange:return_move==True">
-        					<field name="order_id" />
-        					<field name="line_name" />
-        					<field name="line_product_id" />
-        					<field name="line_product_qty" />
-        					<field name="line_uom_id" />
-        					<field name="line_confirmed_date" />
-        					<field name="line_shipped_rate" widget="progressbar" />
-        					<field name="picking_id" />
-        					<button name="go_to_incoming" type="object" string="View Incoming shipment" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '!=', False)]}" />
-        					<field name="move_product_id" />
-        					<field name="move_product_qty" />
-        					<field name="move_uom_id" />
-        					<field name="move_delivery_date" />
-        					<field name="move_state" />
+                    <!--<field name="delivery_requested_date" readonly="1" />
+                    <field name="delivery_confirmed_date" readonly="1" />-->
+                    <field name="line_ids" mode="tree" readonly="1" colspan="4" nolabel="1">
+                        <tree string="Followup lines" colors="orange:return_move==True">
+                            <field name="order_id" />
+                            <field name="line_name" />
+                            <field name="line_product_id" />
+                            <field name="line_comment" />
+                            <field name="line_product_qty" />
+                            <field name="line_uom_id" />
+                            <field name="line_confirmed_date" />
+                            <field name="line_shipped_rate" widget="progressbar" />
+                            <field name="picking_id" />
+                            <button name="go_to_incoming" type="object" string="View Incoming shipment" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '!=', False)]}" />
+                            <field name="move_product_id" />
+                            <field name="move_product_qty" />
+                            <field name="move_uom_id" />
+                            <field name="move_delivery_date" />
+                            <field name="move_state" />
                             <field name="return_move" invisible="1" />
-        				</tree>
-        			</field>
-        			<button name="close_view" type="object" string="Close" icon="gtk-cancel" colspan="2" />
-        			<button name="update_view" type="object" string="Update" icon="gtk-execute" colspan="2" />
+                        </tree>
+                    </field>
+                    <button name="close_view" type="object" string="Close" icon="gtk-cancel" colspan="2" />
+                    <button name="update_view" type="object" string="Update" icon="gtk-execute" colspan="2" />
                     <newline />
                     <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" context="{'export':True}" />
                     <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" context="{'export':True}" />
                 </form>
-        	</field>
+            </field>
         </record>
 
         <record id="purchase_order_followup_from_menu" model="ir.ui.view">
@@ -148,6 +150,6 @@
                   action="action_purchase_order_followup_from_menu"
                   parent="base.next_id_73"
                   sequence="6" />
-		
-	</data>
+
+    </data>
 </openerp>

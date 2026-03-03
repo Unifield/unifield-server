@@ -88,7 +88,7 @@
         </record>
 
         <record id="action_stock_card" model="ir.actions.act_window">
-            <field name="name">Stock card</field>
+            <field name="name">Stock Cards</field>
             <field name="res_model">stock.card.wizard</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -104,7 +104,7 @@
 
         <menuitem id="menu_stock_card"
                   action="action_stock_card"
-                  sequence="5"
+                  sequence="-5"
                   parent="stock.menu_traceability" />
 
 

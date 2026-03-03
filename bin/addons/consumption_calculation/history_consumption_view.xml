@@ -143,7 +143,7 @@
         <field name="model">product.history.consumption</field>
         <field name="type">search</field>
         <field name="arch" type="xml">
-            <search string="Historical consumptions">
+            <search string="Historical Consumptions">
                 <field name="requestor_id" />
                 <filter domain="[('requestor_id', '=', uid)]" icon="terp-personal" help="My requests" />
                 <field name="requestor_date" />
@@ -156,7 +156,7 @@
         <field name="model">product.history.consumption</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Historical consumptions" noteditable="1" colors="grey:status=='in_progress';green:status=='ready';red:status=='error'">
+            <tree string="Historical Consumptions" noteditable="1" colors="grey:status=='in_progress';green:status=='ready';red:status=='error'">
                 <field name="requestor_date" />
                 <field name="requestor_id" />
                 <field name="date_from" />
@@ -192,7 +192,7 @@
 
     <menuitem id="menu_product_history_consumption"
           action="action_history_consumption"
-		  name="Historical consumption"
+		  name="Historical Consumption"
 		  parent="warehouse_consumption_menu" />
 
     <record id="product_history_consumption_tree_view" model="ir.ui.view">
@@ -201,7 +201,7 @@
         <field name="type">tree</field>
         <field name="priority">200</field>
         <field name="arch" type="xml">
-            <tree string="Historical consumptions" hide_delete_button="1">
+            <tree string="Historical Consumptions" hide_delete_button="1">
                 <field name="default_code" />
                 <field name="name" />
             </tree>

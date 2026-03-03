@@ -115,7 +115,6 @@ class account_invoice_import(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
         partner_obj = self.pool.get('res.partner')
         account_obj = self.pool.get('account.account')
-        product_obj = self.pool.get('product.product')
         import_cell_data_obj = self.pool.get('import.cell.data')
         errors_obj = self.pool.get('account.invoice.import.errors')
         ana_obj = self.pool.get('analytic.distribution')
@@ -193,6 +192,10 @@ class account_invoice_import(osv.osv_memory):
                     raise osv.except_osv(_('Warning'),
                                          _("The combination \"Currency, Partner and Posting Date\" of the imported file "
                                            "doesn't match with the current invoice."))
+
+                cr.execute('select id, original_line_qty from account_invoice_line where invoice_id=%s and original_invoice_line_id is not null', (invoice.id, ))
+                original_qty = dict(cr.fetchall())
+
                 # ignore: header account, empty line, line with titles
                 for i in range(3):
                     next(rows)
@@ -275,17 +278,13 @@ class account_invoice_import(osv.osv_memory):
                     if all_fields_editable:
                         if not product_code:
                             vals['product_id'] = False  # delete the existing value
-                        else:
-                            product_ids = product_obj.search(cr, uid, [('default_code', '=', product_code), ('active', '=', True)],
-                                                             limit=1, context=context)
-                            if not product_ids:
-                                errors.append(_("Line %s: the product %s doesn't exist or is inactive.") % (current_line_num, product_code))
-                                continue
-                            vals['product_id'] = product_ids[0]
                         try:
                             quantity = float(quantity)
                         except ValueError:
                             errors.append(_("Line %s: the quantity format is incorrect.") % (current_line_num,))
+                            continue
+                        if invoice_line_ids[0] in original_qty and quantity - original_qty[invoice_line_ids[0]] > 0.01:
+                            errors.append(_("Line %s: the quantity cannot be greater than %s.") % (current_line_num, original_qty[invoice_line_ids[0]]))
                             continue
                         vals['quantity'] = quantity
 

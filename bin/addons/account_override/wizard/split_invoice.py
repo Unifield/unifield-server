@@ -100,7 +100,10 @@ class wizard_split_invoice(osv.osv_memory):
         for inv_line in inv_lines:
             if inv_line.id not in inv_lines_in_wiz:
                 # UC1: the line has been deleted in the wizard: add it in the new invoice, and then remove it from the original one
-                invl_obj.copy(cr, uid, inv_line.id, {'invoice_id': new_inv_id}, context=context)
+                new_data = {'invoice_id': new_inv_id}
+                if inv_line.original_invoice_line_id:
+                    new_data.update({'original_invoice_line_id': inv_line.original_invoice_line_id.id, 'original_line_qty': inv_line.original_line_qty})
+                invl_obj.copy(cr, uid, inv_line.id, new_data, context=context)
                 invl_obj.unlink(cr, uid, [inv_line.id], context=context)
             else:
                 wiz_line_ids = wiz_line_obj.search(cr, uid,
@@ -113,8 +116,13 @@ class wizard_split_invoice(osv.osv_memory):
                     diff_qty = (inv_line.quantity or 0.0) - wiz_line_qty
                     if abs(diff_qty) > 10**-3:  # UC2: line unchanged in the wizard: nothing to do, i.e. keep it in the original invoice
                         # UC3: quantity has been modified: write the new qty in the original inv., and create a line for the diff in the new one
-                        invl_obj.write(cr, uid, [inv_line.id], {'quantity': wiz_line_qty}, context=context)
-                        invl_obj.copy(cr, uid, inv_line.id, {'invoice_id': new_inv_id, 'quantity': diff_qty}, context=context)
+                        original_data = {'quantity': wiz_line_qty}
+                        new_data = {'invoice_id': new_inv_id, 'quantity': diff_qty}
+                        if inv_line.original_invoice_line_id:
+                            original_data.update({'original_invoice_line_id': inv_line.original_invoice_line_id.id, 'original_line_qty': wiz_line_qty})
+                            new_data.update({'original_invoice_line_id': inv_line.original_invoice_line_id.id, 'original_line_qty': diff_qty})
+                        invl_obj.write(cr, uid, [inv_line.id], original_data, context=context)
+                        invl_obj.copy(cr, uid, inv_line.id, new_data, context=context)
 
         # Calculate total for invoices
         invoice_ids.append(wizard.invoice_id.id)
