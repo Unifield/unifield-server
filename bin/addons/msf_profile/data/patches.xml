@@ -1297,5 +1297,10 @@
         <record id="us_15252_non_service_prod_transport_flag" model="patch.scripts">
             <field name="method">us_15252_non_service_prod_transport_flag</field>
         </record>
+
+        <record id="us_12391_cleanup_rate_VEF_2016" model="patch.scripts">
+            <field name="method">us_12391_cleanup_rate_VEF_2016</field>
+        </record>
+
     </data>
 </openerp>

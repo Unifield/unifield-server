@@ -145,17 +145,20 @@ class res_currency_rate_functional(osv.osv):
         period_obj = self.pool.get('account.period')
         if context is None:
             context = {}
-        for currency in self.read(cr, uid, ids, ['currency_id', 'name'], context=context):
-            period_ids = period_obj.get_period_from_date(cr, uid, currency['name'], context=context)
-            if period_ids:
-                period = period_obj.read(cr, uid, period_ids[0], ['state', 'name'], context=context)
-                if period['state'] != 'created':
-                    raise osv.except_osv(_('Error'),
-                                         _("You can't delete this FX rate as the period \"%s\" isn't in Draft state.") % period['name'])
-            res = res & super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
-            if currency['currency_id']:
-                currency_id = currency['currency_id'][0]
-                self.refresh_move_lines(cr, uid, ids, currency=currency_id)
+        for currency_rate in self.browse(cr, uid, ids, fields_to_fetch=['currency_id', 'name'], context=context):
+            if currency_rate.currency_id and currency_rate.currency_id.currency_table_id:
+                # currency table rate, no check
+                res = res & super(res_currency_rate_functional, self).unlink(cr, uid, currency_rate.id, context)
+            else:
+                period_ids = period_obj.get_period_from_date(cr, uid, currency_rate.name, context=context)
+                if period_ids:
+                    period = period_obj.read(cr, uid, period_ids[0], ['state', 'name'], context=context)
+                    if period['state'] != 'created':
+                        raise osv.except_osv(_('Error'),
+                                             _("You can't delete this FX rate as the period \"%s\" isn't in Draft state.") % period['name'])
+                res = res & super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
+                if currency_rate.currency_id:
+                    self.refresh_move_lines(cr, uid, ids, currency=currency_rate.currency_id.id)
         return res
 
 res_currency_rate_functional()
