@@ -39,7 +39,7 @@ class mission_stock_report_parser(XlsxReportParser):
             path = os.path.join(attachments_path, file_name)
             if not os.path.exists(path):
                 create_missing_report = True
-        if create_missing_report and file_name != 'consolidate_mission_stock.xls':
+        if create_missing_report and file_name != 'consolidate_mission_stock_report.xlsx':
             # if the requested attachment doesn't exist, create it
             msr_obj = pool.get('stock.mission.report')
             with_valuation = False

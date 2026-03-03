@@ -293,15 +293,13 @@ class stock_mission_report(osv.osv):
     def write_report_in_database(self, cr, uid, file_name, data):
         # write the report in the DB
         ir_attachment_obj = self.pool.get('ir.attachment')
-        attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
-                                                             file_name)])
+        attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=', file_name)])
 
         if isinstance(data, str):
             data = bytes(data, 'utf8')
         if attachment_ids:
             # overwrite existing
-            ir_attachment_obj.write(cr, uid, attachment_ids[0],
-                                    {'datas': base64.b64encode(data)})
+            ir_attachment_obj.write(cr, uid, attachment_ids[0], {'datas': base64.b64encode(data)})
         else:
             ir_attachment_obj.create(cr, uid,
                                      {
@@ -570,13 +568,61 @@ class stock_mission_report(osv.osv):
             (_('In Pipe Qty'), 'l_in_pipe_qty')
         ]
 
-        header_styles = [yellow_header_style, green_header_style]
         top_header_row, header_row = [], []
-        i = 0
-        for x in fixed_data:
-            header_row.append(empty_cell)
-            header_row.append((header_styles[i], _(x[0])))
+        for header in fixed_data:
+            top_header_row.append(empty_cell)
+            header_cell = WriteOnlyCell(sheet, value=header[0])
+            header_cell.style = yellow_header_style
+            header_row.append(header_cell)
 
+        header_styles = [yellow_header_style, green_header_style]
+        i = 0
+        col_num = len(fixed_data) + 1
+        letter = False
+        for inst_id in all_instances:
+            header_style = header_styles[i]
+            first_letter = False
+            for x in repeated_data:
+                letter = get_column_letter(col_num)
+                if not first_letter:
+                    first_letter = letter
+                    top_header_cell = WriteOnlyCell(sheet, value=instance_dict[inst_id])
+                else:
+                    top_header_cell = WriteOnlyCell(sheet, value='')
+                top_header_cell.style = header_style
+                top_header_row.append(top_header_cell)
+                header_cell = WriteOnlyCell(sheet, value=x[0])
+                header_cell.style = header_style
+                header_row.append(header_cell)
+                col_num += 1
+            for x in instance_loc.get(inst_id, []):
+                letter = get_column_letter(col_num)
+                if not first_letter:
+                    first_letter = letter
+                    top_header_cell = WriteOnlyCell(sheet, value=instance_dict[inst_id])
+                else:
+                    top_header_cell = WriteOnlyCell(sheet, value='')
+                top_header_cell.style = header_style
+                top_header_row.append(top_header_cell)
+                header_cell = WriteOnlyCell(sheet, value=x)
+                header_cell.style = header_style
+                header_row.append(header_cell)
+                col_num += 1
+
+            sheet.append(top_header_row)
+            sheet.merged_cells.ranges.append("%s:%s" % (first_letter, letter or get_column_letter(len(fixed_data) + 1)))
+            sheet.append(header_row)
+            i = 1 - i
+
+        # wb.save(os.path.join(attachments_path, file_name))
+        #
+        # self.save_file(cr, uid, file_name, xls_name)
+
+        # Close the files
+        file.close()
+        wb.close()
+
+        self.write(cr, uid, report_id, {'consolidated_export_ok': True}, context=context)
 
         return True
 
@@ -1131,6 +1177,7 @@ class stock_mission_report(osv.osv):
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
                     try:
                         self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
+                        # self.generate_full_xlsx(cr, uid, report['id'], 'consolidate_mission_stock_report.xlsx', context=context)
                     except Exception:
                         cr.rollback()
                         consolidated_error = traceback.format_exc()
