@@ -340,7 +340,7 @@ class sde_import(osv.osv_memory):
 
         po_name = json_data.get('origin') and json_data['origin'].strip().upper() or False
         partner_fo_ref = json_data.get('partner_fo_ref') and json_data['partner_fo_ref'].strip().upper() or False
-        ship_ref = json_data.get('freight') and json_data['freight'].strip().upper() or False
+        ship_ref = json_data.get('freight_number') and json_data['freight_number'].strip().upper() or False
 
         # Search the IN
         return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, partner_fo_ref, in_updated, context=context)
@@ -396,6 +396,8 @@ class sde_import(osv.osv_memory):
                     in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), error_msg)
+        elif len(in_id) > 1:
+            raise osv.except_osv(_('Error'), _('Unifield was unable to identify the correct IN since multiple documents match the PO reference %s received from SDE. Please check the data sent and add more references') % (po_name,))
 
         return in_id[0]
 
@@ -414,7 +416,7 @@ class sde_import(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
 
         cr.execute("""
-            SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, COALESCE(pl.product_qty, m.product_qty), 
+            SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, m.product_qty,
                 COALESCE(pl.product_id, m.product_id), COALESCE(pl.price_unit, m.price_unit)
             FROM stock_move m LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
             WHERE m.state = 'assigned' AND m.picking_id in %s and m.product_qty != 0
