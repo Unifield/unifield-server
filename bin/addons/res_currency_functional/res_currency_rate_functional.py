@@ -146,7 +146,7 @@ class res_currency_rate_functional(osv.osv):
         if context is None:
             context = {}
         for currency_rate in self.browse(cr, uid, ids, fields_to_fetch=['currency_id', 'name'], context=context):
-            if currency_rate.currency_id and currency_rate.currency_id.currency_table_id:
+            if not currency_rate.currency_id or (currency_rate.currency_id and currency_rate.currency_id.currency_table_id):
                 # currency table rate, no check
                 res = res & super(res_currency_rate_functional, self).unlink(cr, uid, currency_rate.id, context)
             else:
