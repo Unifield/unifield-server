@@ -156,9 +156,12 @@ class res_currency_rate_functional(osv.osv):
                     if period['state'] != 'created':
                         raise osv.except_osv(_('Error'),
                                              _("You can't delete this FX rate as the period \"%s\" isn't in Draft state.") % period['name'])
+
+                rate_date = currency_rate.name
                 res = res & super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
                 if currency_rate.currency_id:
-                    self.refresh_move_lines(cr, uid, ids, currency=currency_rate.currency_id.id)
+                    self.refresh_move_lines(cr, uid, ids, currency=currency_rate.currency_id.id, date=rate_date)
+                    self.refresh_analytic_lines(cr, uid, ids, date=rate_date, currency=currency_rate.currency_id.id, context=context)
         return res
 
 res_currency_rate_functional()
