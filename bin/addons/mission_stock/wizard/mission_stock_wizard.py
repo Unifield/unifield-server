@@ -244,8 +244,10 @@ report when the last update field will be filled. Thank you for your comprehensi
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'report_consolidated_mission_stock_report',
+            # 'report_name': 'stock.mission.report_xls',
             'datas': {
                 'file_name': 'consolidate_mission_stock_report.xlsx',
+                # 'file_name': 'consolidate_mission_stock.xls',
                 'target_filename': _('Consolidated_Mission_Stock_Report_%s_%s') % (instance_name, time.strftime('%Y%m%d_%H%M%S'))
             },
             'nodestroy': True,

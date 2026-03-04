@@ -529,9 +529,6 @@ class stock_mission_report(osv.osv):
         sheet.append([date_title_cell, date_val_cell])
 
         # Lines headers
-        empty_cell = WriteOnlyCell(sheet, value='')
-        empty_cell.style = empty_style
-
         if local_instance.level == 'section':
             fixed_data = [
                 (_('Reference'), 'default_code'),
@@ -569,7 +566,16 @@ class stock_mission_report(osv.osv):
         ]
 
         top_header_row, header_row = [], []
-        for header in fixed_data:
+        default_width = 11
+        for col_num, header in enumerate(fixed_data):
+            letter = get_column_letter(col_num + 1)
+            if letter in ['A', 'B', 'C']:
+                width = 20
+            else:
+                width = default_width
+            sheet.column_dimensions[letter].width = width
+            empty_cell = WriteOnlyCell(sheet, value='')
+            empty_cell.style = empty_style
             top_header_row.append(empty_cell)
             header_cell = WriteOnlyCell(sheet, value=header[0])
             header_cell.style = yellow_header_style
@@ -578,12 +584,15 @@ class stock_mission_report(osv.osv):
         header_styles = [yellow_header_style, green_header_style]
         i = 0
         col_num = len(fixed_data) + 1
+        next_row = sheet._current_row + 1
+        cells_to_merge = []
         letter = False
         for inst_id in all_instances:
             header_style = header_styles[i]
             first_letter = False
             for x in repeated_data:
                 letter = get_column_letter(col_num)
+                sheet.column_dimensions[letter].width = default_width
                 if not first_letter:
                     first_letter = letter
                     top_header_cell = WriteOnlyCell(sheet, value=instance_dict[inst_id])
@@ -597,6 +606,7 @@ class stock_mission_report(osv.osv):
                 col_num += 1
             for x in instance_loc.get(inst_id, []):
                 letter = get_column_letter(col_num)
+                sheet.column_dimensions[letter].width = default_width
                 if not first_letter:
                     first_letter = letter
                     top_header_cell = WriteOnlyCell(sheet, value=instance_dict[inst_id])
@@ -608,15 +618,108 @@ class stock_mission_report(osv.osv):
                 header_cell.style = header_style
                 header_row.append(header_cell)
                 col_num += 1
-
-            sheet.append(top_header_row)
-            sheet.merged_cells.ranges.append("%s:%s" % (first_letter, letter or get_column_letter(len(fixed_data) + 1)))
-            sheet.append(header_row)
+            if first_letter:
+                cells_to_merge.append("%s%s:%s%s" % (first_letter, next_row, letter, next_row))
             i = 1 - i
 
-        # wb.save(os.path.join(attachments_path, file_name))
-        #
-        # self.save_file(cr, uid, file_name, xls_name)
+        sheet.append(top_header_row)
+        sheet.row_dimensions[sheet._current_row].height = 45
+        sheet.merged_cells.ranges = cells_to_merge
+        sheet.append(header_row)
+        sheet.row_dimensions[sheet._current_row].height = 45
+
+        sheet.freeze_panes = 'A%s' % (sheet._current_row + 1,)
+
+        # Lines
+        report_id_by_instance_id = {}
+        r_ids = self.search(cr, uid, [('full_view', '=', False)])
+        for x in self.read(cr, uid, r_ids, ['instance_id']):
+            report_id_by_instance_id[x['instance_id'][0]] = x['id']
+
+        cr.execute(GET_EXPORT_REQUEST, (context.get('lang', 'en_MF'), tuple(r_ids)))
+
+        cr1 = pooler.get_db(cr.dbname).cursor()
+        cr1.execute("""
+            select p.default_code         as default_code,
+                   location.name          as local_location_name,
+                   l.remote_location_name as remote_location_name,
+                   l.remote_instance_id   as remote_instance_id,
+                   l.quantity             as quantity,
+                   l.uom_id               as sml_uom,
+                   t.uom_id               as product_uom,
+                   msl.mml_status,
+                   msl.mml_status
+            from stock_mission_report_line_location l
+                left join stock_mission_report_line msl on msl.product_id = l.product_id and msl.mission_report_id = %s
+                inner join product_product p on p.id = l.product_id
+                inner join product_template t on t.id = p.product_tmpl_id
+                left join stock_location location on location.id = l.location_id
+                left join msf_instance i on l.remote_instance_id = i.id
+            where (location.usage = 'internal' or location.id is null) and coalesce(i.state, '') != 'inactive'
+            order by p.default_code
+        """, (local_report_id[0],))
+
+        p_code = False
+        last_stock_level_line = cr1.dictfetchone()
+        data = {}
+        srl = cr.dictfetchone()
+        while srl:
+            line_row = []
+            if not p_code or p_code == srl['default_code']:
+                data[srl['mission_report_id']] = srl
+                p_code = srl['default_code']
+            else:
+                stock_level_data = {}
+                while last_stock_level_line and last_stock_level_line['default_code'] == p_code:
+                    instance_id = last_stock_level_line['remote_instance_id'] or local_instance.id
+                    location_name = last_stock_level_line['remote_location_name'] or last_stock_level_line['local_location_name']
+                    qty = last_stock_level_line['quantity']
+                    if last_stock_level_line['sml_uom'] != last_stock_level_line['product_uom']:
+                        qty = uom_obj._compute_qty(cr, uid, last_stock_level_line['sml_uom'], last_stock_level_line['quantity'], last_stock_level_line['product_uom'])
+                    if abs(qty) < 0.0001:
+                        qty = 0
+                    stock_level_data.setdefault(instance_id, {}).update({location_name: qty})
+                    last_stock_level_line = cr1.dictfetchone()
+                to_write = []
+                for name, key in fixed_data:
+                    to_write.append(data.get(report_id_by_instance_id[local_instance.id], {}).get(key))
+                for inst_id in all_instances:
+                    if inst_id not in report_id_by_instance_id:
+                        continue
+                    for name, key in repeated_data:
+                        num = data.get(report_id_by_instance_id[inst_id], {}).get(key)
+                        if not num or num == '.000':
+                            num = None
+                        to_write.append(num)
+                    for x in instance_loc.get(inst_id, []):
+                        to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
+
+                # for line_data in to_write:
+                #     data_cell = WriteOnlyCell(sheet, value=line_data)
+                #     if isinstance(line_data, float):
+                #         data_cell.style = float_style
+                #     else:
+                #         data_cell.style = default_style
+                #     line_row.append(header_cell)
+
+                data = {srl['mission_report_id']: srl}
+                p_code = srl['default_code']
+            sheet.append(line_row)
+            srl = cr.dictfetchone()
+
+
+        attachments_path = None
+        attachment_obj = self.pool.get('ir.attachment')
+        try:
+            attachments_path = attachment_obj.get_root_path(cr, uid)
+        except:
+            self.logger.warning("___ attachments_path %s doesn't exists. The report will be stored in the database" % attachments_path)
+
+        write_attachment_in_db = attachment_obj.store_data_in_db(cr, uid, ignore_migration=True)
+        # if write_attachment_in_db:
+        #     self.write_report_in_database(cr, uid, '', wb)
+        # else:
+        wb.save(os.path.join(attachments_path, 'consolidate_mission_stock_report.xlsx'))
 
         # Close the files
         file.close()
@@ -1121,7 +1224,7 @@ class stock_mission_report(osv.osv):
                         # Update all lines
                         self.update_lines(cr, uid, [report['id']])
 
-                logger.info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                logger.info("""___ exporting the report lines of the report %s to excel, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
                 if report['local_report']:
                     # Update the update date on report
                     self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
@@ -1176,8 +1279,8 @@ class stock_mission_report(osv.osv):
                 consolidated_error = False
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
                     try:
-                        self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
-                        # self.generate_full_xlsx(cr, uid, report['id'], 'consolidate_mission_stock_report.xlsx', context=context)
+                        # self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
+                        self.generate_full_xlsx(cr, uid, report['id'], 'consolidate_mission_stock_report.xlsx', context=context)
                     except Exception:
                         cr.rollback()
                         consolidated_error = traceback.format_exc()
