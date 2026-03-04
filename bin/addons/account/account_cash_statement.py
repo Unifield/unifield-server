@@ -65,30 +65,78 @@ class account_cashbox_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         context = context or {}
         self._check_number_size(cr, uid, vals, context=context)
-
-        if vals.get('ending_id') and vals.get('pieces'):
-
-            existing_ids = self.search(
-                cr, uid,
-                [('ending_id', '=', vals['ending_id']),
-                 ('pieces', '=', vals['pieces'])],
-                order='write_date desc',
-                limit=1,
-                context=context
-            )
-
-            if existing_ids:
-                existing_id = existing_ids[0]
-                self.write(cr, uid, [existing_id], vals, context=context)
-                return existing_id
-
         return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        context = context or {}
         self._check_number_size(cr, uid, vals, context=context)
         return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
+
+    def unlink(self, cr, uid, ids, context=None):
+        return super(account_cashbox_line, self).unlink(cr, uid, ids, context=context)
+
+    def _get_sdref(self, cr, uid, res_id, context=None):
+        context = context or {}
+        model_data_obj = self.pool.get('ir.model.data')
+        data_ids = model_data_obj.search(cr, uid, [('model', '=', 'account.cashbox.line'), ('res_id', '=', res_id)], context=context)
+        if not data_ids:
+            return None
+        data = model_data_obj.browse(cr, uid, data_ids[0], context=context)
+        return f"{data.module}.{data.name}"
+
+    def _get_register_lines(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            register = line.starting_id or line.ending_id
+            lines = []
+            if register:
+                cashbox_lines = register.starting_details_ids or register.ending_details_ids
+                for l in cashbox_lines:
+                    sdref = self._get_sdref(cr, uid, l.id, context=context)
+                    lines.append((sdref, l.number, l.pieces))
+            res[line.id] = lines
+        return res
+
+    def _set_register_lines(self, cr, uid, id, name, value, arg, context=None):
+        context = context or {}
+        if not value:
+            return
+
+        register = self.browse(cr, uid, id, context=context)
+        existing_lines = register.starting_details_ids or register.ending_details_ids
+        relation_field = 'starting_id' if register.starting_details_ids else 'ending_id'
+
+        existing_map = {}
+        for line in existing_lines:
+            sdref = self._get_sdref(cr, uid, line.id, context=context)
+            existing_map[sdref] = line
+
+        cashbox_obj = self.pool.get('account.cashbox.line')
+
+        for item in value:
+            if not item:
+                continue
+            sdref, number, pieces = item
+            if sdref in existing_map:
+                cashbox_obj.write(
+                    cr, uid,
+                    [existing_map[sdref].id],
+                    {'number': number, 'pieces': pieces},
+                    context=context
+                )
+                existing_map.pop(sdref)
+            else:
+                vals = {
+                    'number': number,
+                    'pieces': pieces,
+                    relation_field: register.id,
+                }
+                cashbox_obj.create(cr, uid, vals, context=context)
+
+        for line in existing_map.values():
+            line.unlink()
 
     _columns = {
         'pieces': fields.float('Values', digits_compute=dp.get_precision('Account')),
@@ -96,6 +144,7 @@ class account_cashbox_line(osv.osv):
         'subtotal': fields.function(_sub_total, method=True, string='Sub Total', type='float', digits_compute=dp.get_precision('Account')),
         'starting_id': fields.many2one('account.bank.statement', ondelete='cascade'),
         'ending_id': fields.many2one('account.bank.statement', ondelete='cascade'),
+        'register_lines': fields.function(_get_register_lines, fnct_inv=_set_register_lines, type='text', string="Register Lines", store=True, method=True,),
     }
 
     def _check_cashbox_closing_duplicates(self, cr, uid, ids):
