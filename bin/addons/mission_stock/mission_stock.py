@@ -30,27 +30,22 @@ import time
 import threading
 import logging
 import os
-import csv
-import io
 import base64
 from msf_field_access_rights.osv_override import _get_instance_level
 from datetime import datetime
-from xlwt import Workbook, easyxf, Borders, add_palette_colour
-import tempfile
-import shutil
 import re
 import traceback
 from copy import copy
 from tools.misc import file_open
+from io import BytesIO
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl.styles import NamedStyle
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.cell import WriteOnlyCell
 
-# the ';' delimiter is recognize by default on the Microsoft Excel version I tried
+
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
-CSV_DELIMITER = ';'
 
 HEADER_DICT = {
     's_nv_vals': (
@@ -134,8 +129,6 @@ GET_EXPORT_REQUEST = '''SELECT
     WHERE l.mission_report_id in %s
     ORDER BY l.default_code, l.mission_report_id'''
 
-class excel_semicolon(csv.excel):
-    delimiter = CSV_DELIMITER
 
 class msr_in_progress(osv.osv_memory):
     '''
@@ -181,6 +174,7 @@ class msr_in_progress(osv.osv_memory):
         return
 
 msr_in_progress()
+
 
 class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
@@ -268,27 +262,6 @@ class stock_mission_report(osv.osv):
                 self.update(cr, uid, res, context=context)
 
         return res
-
-    def xls_write_styled_header(self, sheet, cell_list):
-        column_count = 0
-        for style, column in cell_list:
-            sheet.write(4, column_count, _(column), style)
-            column_count += 1
-
-    def xls_write_header(self, sheet, cell_list, style):
-        column_count = 0
-        for column in cell_list:
-            sheet.write(3, column_count, _(column), style)
-            column_count += 1
-
-    def xls_write_row(self, sheet, cell_list, row_count, style, style_price):
-        for column_count, column in enumerate(cell_list):
-            if column_count == 4:  # style for price
-                sheet.write(row_count, column_count, column, style_price)
-            else:
-                sheet.write(row_count, column_count, _(column), style)
-        sheet.row(row_count).height = 60*20
-
 
     def write_report_in_database(self, cr, uid, file_name, data):
         # write the report in the DB
@@ -442,7 +415,9 @@ class stock_mission_report(osv.osv):
             if attachment_ids:
                 attachment_obj.unlink(cr, uid, attachment_ids)
         else:
-            self.write_report_in_database(cr, uid, file_name, export_file.getvalue())
+            buffer = BytesIO()
+            wb.save(buffer)
+            self.write_report_in_database(cr, uid, file_name, buffer.getvalue())
 
         # Close the files
         file.close()
@@ -529,7 +504,6 @@ class stock_mission_report(osv.osv):
         sheet.append([date_title_cell, date_val_cell])
 
         # Lines headers
-        float_cols = []  # To know which column to put float_style
         if local_instance.level == 'section':
             fixed_data = [
                 (_('Reference'), 'default_code'),
@@ -539,6 +513,7 @@ class stock_mission_report(osv.osv):
                 (_('Cost Price'), 'pt_standard_price'),
                 (_('Func. Cur.'), 'rc_name')
             ]
+            float_cols = [5]  # To know which column to put float_style
         else:
             fixed_data = [
                 (_('Reference'), 'default_code'),
@@ -550,6 +525,7 @@ class stock_mission_report(osv.osv):
                 (_('Cost Price'), 'pt_standard_price'),
                 (_('Func. Cur.'), 'rc_name')
             ]
+            float_cols = [7]  # To know which column to put float_style
         repeated_data = [
             (_('Instance stock'), 'l_internal_qty'),
             (_('Instance stock val.'), 'l_internal_qty_pt_price'),
@@ -604,6 +580,8 @@ class stock_mission_report(osv.osv):
                 header_cell = WriteOnlyCell(sheet, value=x[0])
                 header_cell.style = header_style
                 header_row.append(header_cell)
+                if 'price' in x[1]:
+                    float_cols.append(col_num)
                 col_num += 1
             for x in instance_loc.get(inst_id, []):
                 letter = get_column_letter(col_num)
@@ -695,9 +673,9 @@ class stock_mission_report(osv.osv):
                     for x in instance_loc.get(inst_id, []):
                         to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
-                for line_data in to_write:
+                for col_num, line_data in enumerate(to_write):
                     data_cell = WriteOnlyCell(sheet, value=line_data)
-                    if isinstance(line_data, float):
+                    if col_num + 1 in float_cols:
                         data_cell.style = float_style
                     else:
                         data_cell.style = default_style
@@ -708,6 +686,7 @@ class stock_mission_report(osv.osv):
                 sheet.append(line_row)
             srl = cr.dictfetchone()
 
+        cr1.close(True)
 
         attachments_path = None
         attachment_obj = self.pool.get('ir.attachment')
@@ -717,10 +696,12 @@ class stock_mission_report(osv.osv):
             self.logger.warning("___ attachments_path %s doesn't exists. The report will be stored in the database" % attachments_path)
 
         write_attachment_in_db = attachment_obj.store_data_in_db(cr, uid, ignore_migration=True)
-        # if write_attachment_in_db:
-        #     self.write_report_in_database(cr, uid, '', wb)
-        # else:
-        wb.save(os.path.join(attachments_path, 'consolidate_mission_stock_report.xlsx'))
+        if write_attachment_in_db:
+            buffer = BytesIO()
+            wb.save(buffer)
+            self.write_report_in_database(cr, uid, 'consolidate_mission_stock_report.xlsx', buffer.getvalue())
+        else:
+            wb.save(os.path.join(attachments_path, 'consolidate_mission_stock_report.xlsx'))
 
         # Close the files
         file.close()
@@ -729,284 +710,6 @@ class stock_mission_report(osv.osv):
         self.write(cr, uid, report_id, {'consolidated_export_ok': True}, context=context)
 
         return True
-
-    def generate_full_xls(self, cr, uid, report_id, xls_name, context=None):
-        if context is None:
-            context = {}
-
-        local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        instance_obj = self.pool.get('msf.instance')
-        instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
-        uom_obj = self.pool.get('product.uom')
-
-        local_report_id = self.search(cr, uid, [('full_view', '=', 'f'), ('local_report', '=', True)])
-        if not local_report_id:
-            local_report_id = [0]
-
-        report_last_updt = self.read(cr, uid, report_id, ['last_update'])['last_update']
-
-        instance_dict = {}
-        for x in instance_obj.read(cr, uid, instance_ids, ['name']):
-            instance_dict[x['id']] = x['name']
-
-        instance_loc = {}
-        cr.execute("""
-            select distinct s.remote_location_name, s.remote_instance_id 
-            from stock_mission_report_line_location s
-            left join msf_instance i on (s.remote_instance_id=i.id)
-            where s.remote_instance_id is not null and i.state != 'inactive' 
-            order by remote_location_name
-        """)
-        for x in cr.fetchall():
-            instance_loc.setdefault(x[1], []).append(x[0])
-
-        all_instances = list(instance_loc.keys())
-        all_instances.insert(0, local_instance.id)
-        cr.execute("""
-            select distinct location.name
-            from stock_mission_report_line_location l, stock_location location
-            where location.id=l.location_id
-                and remote_instance_id is null and location.usage = 'internal'
-            order by location.name
-        """)
-        for x in cr.fetchall():
-            instance_loc.setdefault(local_instance.id, []).append(x[0])
-
-        borders = Borders()
-        borders.left = Borders.THIN
-        borders.right = Borders.THIN
-        borders.top = Borders.THIN
-        borders.bottom = Borders.THIN
-
-        header_style = easyxf("""
-                font: height 220;
-                font: name Calibri;
-                pattern: pattern solid, fore_colour tan;
-                align: wrap on, vert center, horiz center;
-            """)
-        header_style.borders = borders
-        # this style is done to be the same than previous mako configuration
-        row_style = easyxf("""
-                font: height 220;
-                font: name Calibri;
-                align: wrap on, vert center, horiz center;
-            """)
-        date_row_style = easyxf("""
-                font: height 220;
-                font: name Calibri;
-                align: wrap on, vert center, horiz center;
-            """, num_format_str='DD/MMM/YYYY HH:MM')
-        row_style_price = easyxf("""
-                font: height 220;
-                font: name Calibri;
-                align: wrap on, vert center, horiz center;
-            """, num_format_str='0.000')
-
-        book = Workbook()
-        add_palette_colour("custom_colour_1", 0x21)
-        book.set_colour_RGB(0x21, 255, 255, 0)
-        add_palette_colour("custom_colour_2", 0x22)
-        book.set_colour_RGB(0x22, 92, 208, 50)
-        header_style1 = easyxf("""
-                font: height 220;
-                font: name Calibri;
-                pattern: pattern solid, fore_colour custom_colour_1;
-                align: wrap on, vert center, horiz center;
-            """)
-        header_style1.borders = borders
-        header_style2 = easyxf("""
-                font: height 220;
-                font: name Calibri;
-                pattern: pattern solid, fore_colour custom_colour_2;
-                align: wrap on, vert center, horiz center;
-            """)
-        header_style2.borders = borders
-
-        header_styles = [header_style1, header_style2]
-        row_style.borders = borders
-        date_row_style.borders = borders
-        row_style_price.borders = borders
-
-        sheet = book.add_sheet('Sheet 1')
-        sheet.row_default_height = 60*20
-
-        sheet.write(0, 0, _("Generating instance"), row_style)
-        sheet.write(0, 1, local_instance.name, row_style)
-        sheet.col(0).width = 5000
-        sheet.write(1, 0, _("Instance selection"), row_style)
-        sheet.write(1, 1, _('All loc'), row_style)
-        sheet.col(1).width = 5000
-        sheet.write(2, 0, _("Last update"), row_style)
-        sheet.write(2, 1, report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '', date_row_style)
-        sheet.col(2).width = 5000
-
-        sheet.set_horz_split_pos(5)
-        sheet.set_vert_split_pos(5)
-        sheet.panes_frozen = True
-        sheet.remove_splits = True
-
-        if local_instance.level == 'section':
-            fixed_data = [
-                (_('Reference'), 'default_code'),
-                (_('Name'), 'pt_name'),
-                (_('Active'), 'product_active'),
-                (_('UoM'), 'pu_name'),
-                (_('Cost Price'), 'pt_standard_price'),
-                (_('Func. Cur.'), 'rc_name')
-            ]
-        else:
-            fixed_data = [
-                (_('Reference'), 'default_code'),
-                (_('Name'), 'pt_name'),
-                (_('Active'), 'product_active'),
-                (_('MML'), 'mml_status'),
-                (_('MSL'), 'msl_status'),
-                (_('UoM'), 'pu_name'),
-                (_('Cost Price'), 'pt_standard_price'),
-                (_('Func. Cur.'), 'rc_name')
-            ]
-        repeated_data = [
-            (_('Instance stock'), 'l_internal_qty'),
-            (_('Instance stock val.'), 'l_internal_qty_pt_price'),
-            (_('Stock Qty.'), 'l_stock_qty'),
-            (_('Cross-Docking Qty.'), 'l_cross_qty'),
-            (_('Secondary Stock Qty.'), 'l_secondary_qty'),
-            (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
-            (_('Eprep Qty.'), 'l_eprep_qty'),
-            (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
-            (_('Input Qty'), 'l_input_qty'),
-            (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
-            (_('AMC'), 'product_amc'),
-            (_('FMC'), 'product_consumption'),
-            (_('In Pipe Qty'), 'l_in_pipe_qty')
-        ]
-
-        header_row = []
-        i = 0
-        for x in fixed_data:
-            header_row.append((header_styles[i], _(x[0])))
-
-        begin = len(fixed_data)
-        for inst_id in all_instances:
-            max_size = begin + len(repeated_data) + len(instance_loc.get(inst_id, [])) - 1
-            if max_size > 255:
-                raise osv.except_osv(_('Error'), _('The Consolidated Mission Stock Report could not be generated because there is more than 255 columns. Please use the individual Mission Stock Reports instead'))
-            sheet.write_merge(3, 3, begin, max_size, instance_dict[inst_id], style=header_styles[i])
-            begin = max_size + 1
-            i = 1 - i
-
-        i = 0
-        for inst_id in all_instances:
-            for x in repeated_data:
-                header_row.append((header_styles[i], _(x[0])))
-            for x in instance_loc.get(inst_id, []):
-                header_row.append((header_styles[i], x))
-            i = 1 - i
-
-        self.xls_write_styled_header(sheet, header_row)
-
-        # tab header bigger height:
-        sheet.row(3).height_mismatch = True
-        sheet.row(0).height = 45*20
-        sheet.row(1).height = 45*20
-        sheet.row(2).height = 45*20
-        sheet.row(3).height = 45*20
-        sheet.row(4).height_mismatch = True
-        sheet.row(4).height = 45*20
-
-
-        report_id_by_instance_id = {}
-        r_ids = self.search(cr, uid, [('full_view', '=', False)])
-        for x in self.read(cr, uid, r_ids, ['instance_id']):
-            report_id_by_instance_id[x['instance_id'][0]] = x['id']
-
-        cr.execute(GET_EXPORT_REQUEST, (context.get('lang', 'en_MF'), tuple(r_ids)))
-
-        cr1 = pooler.get_db(cr.dbname).cursor()
-        cr1.execute("""
-            select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom, msl.mml_status, msl.mml_status
-            from stock_mission_report_line_location l
-            left join stock_mission_report_line msl on msl.product_id = l.product_id and msl.mission_report_id = %s
-            inner join product_product p on p.id = l.product_id
-            inner join product_template t on t.id = p.product_tmpl_id
-            left join stock_location location on location.id = l.location_id
-            left join msf_instance i on l.remote_instance_id=i.id
-            where (location.usage = 'internal' or location.id is null) and coalesce(i.state,'') != 'inactive'
-            order by p.default_code
-        """, (local_report_id[0], ))
-
-        p_code = False
-        last_stock_level_line = cr1.dictfetchone()
-        row_count = 5
-        data = {}
-        srl = cr.dictfetchone()
-        while srl:
-            if not p_code or p_code == srl['default_code']:
-                data[srl['mission_report_id']] = srl
-                p_code = srl['default_code']
-            else:
-                stock_level_data = {}
-                while last_stock_level_line and last_stock_level_line['default_code'] == p_code:
-                    instance_id = last_stock_level_line['remote_instance_id'] or local_instance.id
-                    location_name = last_stock_level_line['remote_location_name'] or last_stock_level_line['local_location_name']
-                    qty = last_stock_level_line['quantity']
-                    if last_stock_level_line['sml_uom'] != last_stock_level_line['product_uom']:
-                        qty = uom_obj._compute_qty(cr, uid, last_stock_level_line['sml_uom'], last_stock_level_line['quantity'], last_stock_level_line['product_uom'])
-                    if abs(qty) < 0.0001:
-                        qty = 0
-                    stock_level_data.setdefault(instance_id, {}).update({location_name: qty})
-                    last_stock_level_line = cr1.dictfetchone()
-                to_write = []
-                for name, key in fixed_data:
-                    to_write.append(data.get(report_id_by_instance_id[local_instance.id], {}).get(key))
-                for inst_id in all_instances:
-                    if inst_id not in report_id_by_instance_id:
-                        continue
-                    for name, key in repeated_data:
-                        num = data.get(report_id_by_instance_id[inst_id], {}).get(key)
-                        if not num or num == '.000':
-                            num = None
-                        to_write.append(num)
-                    for x in instance_loc.get(inst_id, []):
-                        to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
-
-                self.xls_write_row(sheet, to_write, row_count, row_style, row_style_price)
-                row_count += 1
-
-
-                data = {srl['mission_report_id']: srl}
-                p_code = srl['default_code']
-            srl = cr.dictfetchone()
-
-
-        xls_file = tempfile.NamedTemporaryFile(delete=False)
-        book.save(xls_file)
-        file_name = xls_file.name
-        xls_file.close()
-        self.save_file(cr, uid, file_name, xls_name)
-        os.remove(file_name)
-        cr1.close(True)
-        self.write(cr, uid, report_id, {'consolidated_export_ok': True}, context=context)
-        return True
-
-    def save_file(self, cr, uid, file_name, name):
-        attachments_path = None
-        attachment_obj = self.pool.get('ir.attachment')
-        try:
-            attachments_path = attachment_obj.get_root_path(cr, uid)
-        except:
-            self.logger.warning("___ attachments_path %s doesn't exists. The report will be stored in the database" % attachments_path)
-
-        fd = open(file_name, 'rb')
-        write_attachment_in_db = attachment_obj.store_data_in_db(cr, uid, ignore_migration=True)
-        if write_attachment_in_db:
-            fd.seek(0)
-            self.write_report_in_database(cr, uid, name, fd.read())
-        else:
-            dest_path = os.path.join(attachments_path, name)
-            shutil.copy(fd.name, dest_path)
-        fd.close()
-
 
     def background_update(self, cr, uid, ids, context=None):
         """
@@ -1153,11 +856,8 @@ class stock_mission_report(osv.osv):
 
         return True
 
-    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values,
-                                            csv=True, xls=True, with_valuation=True,
-                                            all_products=True,
-                                            display_only_in_stock=False,
-                                            context=None):
+    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values, with_valuation=True,
+                                            all_products=True, display_only_in_stock=False, context=None):
         if context is None:
             context = {}
         if isinstance(report_ids, int):
@@ -1280,7 +980,6 @@ class stock_mission_report(osv.osv):
                 consolidated_error = False
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
                     try:
-                        # self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
                         self.generate_full_xlsx(cr, uid, report['id'], 'consolidate_mission_stock_report.xlsx', context=context)
                     except Exception:
                         cr.rollback()
@@ -1600,11 +1299,15 @@ class stock_mission_report(osv.osv):
         for report_id in ids:
             # delete previously generated reports
             for report_type in list(HEADER_DICT.keys()):
+                # Old report names kept to delete old existing reports. To remove completely in future versions ?
                 csv_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.csv')
                 xml_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
                 csv_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.csv')
                 xml_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.xls')
-                file_name_list = [csv_file_name, xml_file_name, csv_file_name_in_stock, xml_file_name_in_stock]
+
+                xlsx_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xlsx')
+                xlsx_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock.xlsx')
+                file_name_list = [csv_file_name, xml_file_name, csv_file_name_in_stock, xml_file_name_in_stock, xlsx_file_name, xlsx_file_name_in_stock]
                 attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', 'in', file_name_list)], context=context)
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
                 try:

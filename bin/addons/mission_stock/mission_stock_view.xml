@@ -224,7 +224,7 @@
                 <separator colspan="4" string="Actions" />
                 <button name="update" string="Update (in background)" type="object" colspan="2" icon="gtk-remove" attrs="{'invisible': ['|', ('local_report', '!=', True), ('full_view', '=', True)]}"/>
                 <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
-                <button name="open_consolidated_xls" string="Open Consolidated XLS file" type="object" icon="gtk-print" colspan="4" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
+                <button name="open_consolidated_xlsx" string="Open Consolidated XLSX file" type="object" icon="gtk-print" colspan="4" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
             </form>
         </field>
     </record>

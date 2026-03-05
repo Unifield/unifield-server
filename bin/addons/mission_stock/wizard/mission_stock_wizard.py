@@ -238,23 +238,21 @@ report when the last update field will be filled. Thank you for your comprehensi
 
         return wiz_id
 
-    def open_consolidated_xls(self, cr, uid, ids, context=None):
+    def open_consolidated_xlsx(self, cr, uid, ids, context=None):
         instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.name
 
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'report_consolidated_mission_stock_report',
-            # 'report_name': 'stock.mission.report_xls',
             'datas': {
                 'file_name': 'consolidate_mission_stock_report.xlsx',
-                # 'file_name': 'consolidate_mission_stock.xls',
                 'target_filename': _('Consolidated_Mission_Stock_Report_%s_%s') % (instance_name, time.strftime('%Y%m%d_%H%M%S'))
             },
             'nodestroy': True,
             'context': context,
         }
 
-    def open_file(self, cr, uid, ids, file_format='xls', context=None):
+    def open_file(self, cr, uid, ids, context=None):
         '''
         Open the file
         '''
@@ -280,14 +278,13 @@ report when the last update field will be filled. Thank you for your comprehensi
         datas.update({
             'field_name': field_name,
             'report_id': res['report_id'],
-            'file_format': file_format,
             'display_only_in_stock': (res['display_only_in_stock'] == 'true'),
             'target_filename': res['fname'],
         })
 
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'stock.mission.report_xls',
+            'report_name': 'report_mission_stock_report',
             'datas': datas,
             'nodestroy': True,
             'context': context,
