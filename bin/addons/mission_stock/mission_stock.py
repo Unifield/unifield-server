@@ -507,7 +507,7 @@ class stock_mission_report(osv.osv):
         yellow_header_style = self.create_style_from_template(wb, template_sheet, 'yellow_header_style', 'A5')
         green_header_style = self.create_style_from_template(wb, template_sheet, 'green_header_style', 'AN5')
         date_style = self.create_style_from_template(wb, template_sheet, 'date_style', 'B3')
-        float_style = self.create_style_from_template(wb, template_sheet, 'float_style', 'G5')
+        float_style = self.create_style_from_template(wb, template_sheet, 'float_style', 'G6')
 
         # Header data
         gen_title_cell = WriteOnlyCell(sheet, value=_('Generating Instance'))
@@ -529,6 +529,7 @@ class stock_mission_report(osv.osv):
         sheet.append([date_title_cell, date_val_cell])
 
         # Lines headers
+        float_cols = []  # To know which column to put float_style
         if local_instance.level == 'section':
             fixed_data = [
                 (_('Reference'), 'default_code'),
@@ -694,17 +695,17 @@ class stock_mission_report(osv.osv):
                     for x in instance_loc.get(inst_id, []):
                         to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
-                # for line_data in to_write:
-                #     data_cell = WriteOnlyCell(sheet, value=line_data)
-                #     if isinstance(line_data, float):
-                #         data_cell.style = float_style
-                #     else:
-                #         data_cell.style = default_style
-                #     line_row.append(header_cell)
+                for line_data in to_write:
+                    data_cell = WriteOnlyCell(sheet, value=line_data)
+                    if isinstance(line_data, float):
+                        data_cell.style = float_style
+                    else:
+                        data_cell.style = default_style
+                    line_row.append(data_cell)
 
                 data = {srl['mission_report_id']: srl}
                 p_code = srl['default_code']
-            sheet.append(line_row)
+                sheet.append(line_row)
             srl = cr.dictfetchone()
 
 
