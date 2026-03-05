@@ -6,7 +6,7 @@ from openobject import ustr
 from openobject.controllers import BaseController
 from openerp.utils.rpc import session
 import formencode
-
+from openerp.controllers.utils import get_db_list
 
 class ResetPasswordForm(openobject.widgets.Form):
     name = "reset_password"
@@ -57,35 +57,68 @@ class ResetPassword(BaseController):
 
     msg = property(get_msg, set_msg)
 
-
     @expose(template="/openerp/controllers/templates/reset_password.mako")
     def index(self, token=None, db=None, **kw):
-        form = _FORM
         error = self.msg
         self.msg = {}
-        return dict(form=form, error=error, token=token, db=db)
 
+        db_data = get_db_list()
+        dblist = db_data.get('dblist', [])
+
+        return dict(
+            error=error,
+            token=token,
+            db=db,
+            dblist=dblist
+        )
 
     @expose()
-    @validate(form=_FORM)
     @error_handler(index)
-    def confirm(self, password, password2, token, db, **kw):
+    def confirm(self, login=None, email=None, db=None,
+                token=None, password=None, password2=None, **kw):
 
         if password != password2:
-            self.msg = {'title': _('Error'), 'message': _('Passwords do not match')}
+            self.msg = {
+                'title': _('Error'),
+                'message': _('Passwords do not match')
+            }
+            return self.index(token=token, db=db)
+
+        if not all([login, email, db, token, password]):
+            self.msg = {
+                'title': _('Error'),
+                'message': _('All fields are required')
+            }
             return self.index(token=token, db=db)
 
         try:
-            session.execute_noauth(
-                'common', 'reset_password_from_token',
+            result = session.execute_noauth(
+                'common',
+                'reset_password_from_token',
                 db,
-                token, password
+                login,
+                email,
+                token,
+                password
             )
 
-            self.msg = {'title': _('Success'), 'message': _('Password changed successfully')}
+            if isinstance(result, str):
+                self.msg = {
+                    'title': _('Error'),
+                    'message': result
+                }
+                return self.index(token=token, db=db)
+
+            self.msg = {
+                'title': _('Success'),
+                'message': _('Password successfully updated')
+            }
             return self.index()
 
         except Exception as e:
             cherrypy.log("ERROR: %s" % e)
-            self.msg = {'title': _('Error'), 'message': ustr(e)}
+            self.msg = {
+                'title': _('Error'),
+                'message': ustr(e)
+            }
             return self.index(token=token, db=db)

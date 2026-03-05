@@ -77,7 +77,8 @@
                                             <button type="button" class="static_boxes" tabindex="-1" onclick="location.href='${py.url('/openerp/database')}'" id="databases">${_("Databases")}
                                             </button>
                                         % endif
-                                        <button type="button" class="static_boxes" onclick="location.href='${py.url('/openerp/forgotten_password')}'" id="forgotten_password">${_("Forgotten Password")}</button>
+                                        <button type="button" class="static_boxes" onclick="location.href='${py.url('/openerp/forgotten_login')}'" id="forgotten_login">${_("Forgot login?")}</button>
+                                        <button type="button" class="static_boxes" onclick="location.href='${py.url('/openerp/forgotten_password')}'" id="forgotten_password">${_("Forgot password?")}</button>
                                         <button type="button" class="static_boxes" onclick="disable_save()" id="login">${_("Login")}</button>
                                     </td>
                                 </tr>

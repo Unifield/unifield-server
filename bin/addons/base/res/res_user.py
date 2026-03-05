@@ -39,8 +39,10 @@ from tools.misc import fakeUid
 from tools.misc import get_global_instance_level
 from tools.misc import search_global_instance_level
 from tools import config
-import uuid
 import time
+import random
+import string
+from datetime import datetime, timedelta
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -1307,17 +1309,22 @@ class users(osv.osv):
             user_ids = self.search(cr, 1, [
                 ('login', '=', login),
                 ('active', '=', True),
+                ('user_email', '=', email),
             ], context=context)
 
             if not user_ids:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('No user found with this login and email.')
+                raise Exception(
+                    _('No result found for combination of values entered above, please see with your UniField IT Administrator')
                 )
 
             user = self.browse(cr, 1, user_ids[0], context=context)
 
-            token = uuid.uuid4().hex
+            if user.synchronize and 'HQ' not in db_name:
+                raise Exception(
+                    _('The values entered above are for a synched user. The password reset process for synched users must be initiated at HQ. Please connect there or alert a member of your IT support team')
+                )
+
+            token = ''.join(random.choices(string.digits, k=10))
             now = time.strftime('%Y-%m-%d %H:%M:%S')
 
             self.write(cr, 1, user_ids[0], {
@@ -1326,43 +1333,95 @@ class users(osv.osv):
             }, context=context)
             cr.commit()
 
-            base_url = config.get('web.base.url', 'http://0.0.0.0:8061')
-            reset_url = "%s/openerp/reset_password?token=%s&db=%s" % (
-                base_url, token, cr.dbname
-            )
-
             body = u"""
-                Bonjour %s,
-            
-                Vous avez demandé la réinitialisation de votre mot de passe.
-            
-                Lien :
-                %s
-            
-                Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
-            """ % (user.name, reset_url)
+                Password reset request
+                A request has been received to reset your password.
+                -This password reset request is valid for the next 6 hours.
+                Otherwise you will need to renew your request for a new password via UF login screen.
+                
+                Here are the details of your account:
+                User login %s
+                Temporary code: %s
+                Please note this temporary code will only be valid 6 hours.
+                Please return to UF login page and click on link "Forgotten password?". In this screen click
+                button “Add temporary code”. Fill in details there.
+                
+                If it was not you who has triggered this password reset, please contact your IT - security
+                responsible to alert them.
+            """ % (user.login, token)
 
             tools.email_send(email_from=None, email_to=[email],
-                             subject='Password reset',
+                             subject='[UniField] Account password reset',
                              body=body)
             cr.close()
 
             return True
 
-    def reset_password_from_token(self, db_name, token, new_password, context=None):
+    def send_login_email(self, db_name, email, context=None):
         context = context or {}
 
         cr = pooler.get_db(db_name).cursor()
 
         user_ids = self.search(cr, 1, [
-            ('reset_password_token', '=', token),
             ('active', '=', True),
+            ('user_email', '=', email),
+        ], context=context)
+
+        if not user_ids:
+            return True
+
+        users = self.browse(cr, 1, user_ids, context=context)
+
+        login_lines = ""
+        for user in users:
+            login_lines += "login %s\n" % user.login
+
+        body = u"""
+                Request to retrieve forgotten user login information
+                A request has been received to identify your user login.
+            
+                Here are the details of user login(s) linked to this email address for the selected instance:
+            
+                %s
+            
+                To log in using correct login, please return to UniField login page and proceed as usual.
+            
+                If it was not you who has triggered this login request, please contact your IT security responsible.
+        """ % login_lines
+
+        tools.email_send(
+            email_from=None,
+            email_to=[email],
+            subject='[UniField] User Account Login identification',
+            body=body
+        )
+
+        cr.close()
+        return True
+
+    def reset_password_from_token(self, db_name, login, email, token, new_password, context=None):
+        context = context or {}
+
+        cr = pooler.get_db(db_name).cursor()
+
+        now = datetime.now()
+
+        limit = now - timedelta(hours=6)
+
+        limit_str = limit.strftime('%Y-%m-%d %H:%M:%S')
+
+        user_ids = self.search(cr, 1, [
+            ('reset_password_token', '=', token),
+            ('login', '=', login),
+            ('active', '=', True),
+            ('user_email', '=', email),
+            ('reset_password_date', '>=', limit_str),
         ], context=context)
 
         if not user_ids:
             raise osv.except_osv(
                 _('Error'),
-                _('Invalid or expired reset token.')
+                _('At least one of the values entered is not valid. Please check your email. If code was generated more than 6 hours ago, it will have expired, restart the process via UniField login page')
             )
 
         user = self.browse(cr, 1, user_ids[0], context=context)

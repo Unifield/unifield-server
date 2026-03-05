@@ -24,21 +24,11 @@
                             <img src="/openerp/static/images/stock/stock_person.png" alt=""/>
                         </legend>
                         <div class="box2" style="padding: 5px 5px 20px 5px">
+                            <div>
+                                <h1>${_("Password management")}</h1>
+                                <p>${_("To receive an email to reset password please fill in all fields below:")}</p>
+                            </div>
                             <table width="100%" align="center" cellspacing="2px" cellpadding="0" style="border:none;">
-                                <tr>
-                                    <td class="label"><label for="db">${_("Database:")}</label></td>
-                                    <td style="padding: 3px;">
-                                        % if dblist is None:
-                                            <input type="text" name="db" id="db" class="db_user_pass" value="${db}"/>
-                                        % else:
-                                            <select name="db" id="db" class="db_user_pass">
-                                                % for v in dblist:
-                                                    <option value="${v}" ${db and v.lower()==db.lower() and "selected" or ""}>${v}</option>
-                                                % endfor
-                                            </select>
-                                        % endif
-                                    </td>
-                                </tr>
                                 <tr>
                                     <td class="label"><label for="user">${_("User:")}</label></td>
                                     <td style="padding: 3px;"><input type="text" id="user" name="user" class="db_user_pass" value="${user}" autofocus="true" autocomplete="off"/></td>
@@ -48,9 +38,25 @@
                                     <td style="padding: 3px;"><input type="text" id="email" name="email" class="db_user_pass" value="${email}" autofocus="true" autocomplete="off"/></td>
                                 </tr>
                                 <tr>
+                                    <td class="label"><label for="db">${_("Database:")}</label></td>
+                                    <td style="padding: 3px;">
+                                        % if dblist is None:
+                                            <input type="text" name="db" id="db" class="db_user_pass" value="${db}"/>
+                                        % else:
+                                            <select name="db" id="db" class="db_user_pass">
+                                                <option value="">${_("")}</option>
+                                                % for v in dblist:
+                                                    <option value="${v}" ${db and v.lower()==db.lower() and "selected" or ""}>${v}</option>
+                                                % endfor
+                                            </select>
+                                        % endif
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td></td>
                                     <td class="db_login_buttons">
-                                        <button type="submit" class="static_boxes" id="send">${_("Send")}</button>
+                                        <button type="submit" class="static_boxes" id="send">${_("Submit")}</button>
+                                        <button type="button" class="static_boxes" onclick="location.href='${py.url('/openerp/reset_password')}'" id="reset">${_("Add temporary code")}</button>
                                     </td>
                                 </tr>
                             </table>

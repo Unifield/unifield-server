@@ -14,8 +14,9 @@ from openerp.utils.rpc import RPCProxy, session
 import openobject
 from openobject import pooler
 import cherrypy
+import xmlrpc.client
 
-class ReplacePasswordField(openobject.widgets.PasswordField):
+class ReplaceLoginField(openobject.widgets.PasswordField):
     params = {
         'autocomplete': 'Autocomplete field',
     }
@@ -29,8 +30,7 @@ class ReplacePasswordField(openobject.widgets.PasswordField):
             'onkeydown': 'if (event.keyCode == 13) replace_pass_submit()',
             'class': 'requiredfield',
         })
-        super(ReplacePasswordField, self).__init__(*arg, **kwargs)
-
+        super(ReplaceLoginField, self).__init__(*arg, **kwargs)
 
 class DBForm(openobject.widgets.Form):
     strip_name = True
@@ -41,7 +41,7 @@ class DBForm(openobject.widgets.Form):
         super(DBForm, self).__init__(*args, **kw)
         to_add = []
         for field in self.fields:
-            if isinstance(field, ReplacePasswordField):
+            if isinstance(field, ReplaceLoginField):
                 to_add.append(openobject.widgets.HiddenField(name=field.replace_for, attrs={'autocomplete': 'off'}))
                 self.replace_password_fields[field.name] = field.replace_for
         if to_add:
@@ -54,18 +54,13 @@ class DBForm(openobject.widgets.Form):
             self.validator.add_field(add.name, formencode.validators.NotEmpty())
 
 
-class FormForgottenPassword(DBForm):
-    name = "forgotten_password"
-    string = _('Forgotten Password')
-    action = '/openerp/forgotten_password/send'
+class FormForgottenLogin(DBForm):
+    name = "forgotten_login"
+    string = _('Forgotten Login')
+    action = '/openerp/forgotten_login/send'
     submit_text = _('Send reset link')
 
     fields = [
-        openobject.widgets.TextField(
-            name='user',
-            label=_('User'),
-            validator=formencode.validators.NotEmpty()
-        ),
         openobject.widgets.TextField(
             name='email',
             label=_('Email'),
@@ -76,16 +71,16 @@ class FormForgottenPassword(DBForm):
 
 
 _FORMS = {
-    'forgotten_password': FormForgottenPassword()
+    'forgotten_login': FormForgottenLogin()
 }
 
-class ForgottenPassword(BaseController):
+class ForgottenLogin(BaseController):
     _inherit = 'res.users'
-    _cp_path = "/openerp/forgotten_password"
+    _cp_path = "/openerp/forgotten_login"
     msg = {}
 
     def __init__(self, *args, **kwargs):
-        super(ForgottenPassword, self).__init__(*args, **kwargs)
+        super(ForgottenLogin, self).__init__(*args, **kwargs)
         self._msg = {}
 
     def get_msg(self):
@@ -101,38 +96,31 @@ class ForgottenPassword(BaseController):
     msg = property(get_msg, set_msg)
 
 
-    @expose(template="/openerp/controllers/templates/forgotten_password.mako")
+    @expose(template="/openerp/controllers/templates/forgotten_login.mako")
     def index(self, tg_errors=None, **kw):
-        form = _FORMS['forgotten_password']
+        form = _FORMS['forgotten_login']
         error = self.msg
         self.msg = {}
         db_data = get_db_list()
         dblist = db_data.get('dblist', [])
-        return dict(form=form, error=error, user="", dblist=dblist, email="")
+        return dict(form=form, error=error, dblist=dblist, email="")
 
     @expose()
-    @validate(form=_FORMS['forgotten_password'])
+    @validate(form=_FORMS['forgotten_login'])
     @error_handler(index)
-    def send(self, user, db, email, **kw):
+    def send(self, db, email, **kw):
         self.msg = {}
 
         try:
             result = session.execute_noauth(
-                'common', 'send_reset_password_email',
+                'common', 'send_login_email',
                 db,
-                user, email
+                email
             )
-
-            if isinstance(result, str):
-                self.msg = {
-                    'title': _('Error'),
-                    'message': result
-                }
-                return self.index()
 
             self.msg = {
                 'title': _('Success'),
-                'message': _('Email sent!')
+                'message': _('User login has been sent to you via email')
             }
             return self.index()
 

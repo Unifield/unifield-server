@@ -36,6 +36,7 @@ from . import execute
 from . import j18n
 from . import downloadbg
 from . import forgotten_password
+from . import forgotten_login
 from . import reset_password
 
-__all__ = ['secured', 'unsecured', 'login', 'change_password', 'SecuredController', 'error_page', 'actions', 'widgets', 'form', 'root', 'tree', 'wizard', 'search', 'preferences', 'selection', 'shortcuts', 'banner', 'shortcut_tooltip', 'requests', 'unifield_version', 'openm2o', 'openo2m', 'openm2m', 'listgrid', 'attachment', 'translator', 'impex', 'fieldpref', 'view_log', 'database', 'viewed', 'viewlist', 'modules', 'execute', 'j18n', 'downloadbg', 'forgotten_password', 'reset_password']
+__all__ = ['secured', 'unsecured', 'login', 'change_password', 'SecuredController', 'error_page', 'actions', 'widgets', 'form', 'root', 'tree', 'wizard', 'search', 'preferences', 'selection', 'shortcuts', 'banner', 'shortcut_tooltip', 'requests', 'unifield_version', 'openm2o', 'openo2m', 'openm2m', 'listgrid', 'attachment', 'translator', 'impex', 'fieldpref', 'view_log', 'database', 'viewed', 'viewlist', 'modules', 'execute', 'j18n', 'downloadbg', 'forgotten_password', 'reset_password', 'forgotten_login']
