@@ -63,7 +63,10 @@ class ResetPassword(BaseController):
         self.msg = {}
 
         db_data = get_db_list()
+        dbfilter = cherrypy.request.app.config['openerp-web'].get('dblist.filter')
         dblist = db_data.get('dblist', [])
+        if dbfilter != 'EXACT':
+            dblist = [''] + dblist
 
         return dict(
             error=error,

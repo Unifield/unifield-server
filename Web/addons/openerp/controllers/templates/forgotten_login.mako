@@ -30,7 +30,7 @@
                             </div>
                             <table width="100%" align="center" cellspacing="2px" cellpadding="0" style="border:none;">
                                 <tr>
-                                    <td class="label"><label for="email">${_("Email:")}</label></td>
+                                    <td class="label"><label for="email">${_("Email address:")}</label></td>
                                     <td style="padding: 3px;"><input type="text" id="email" name="email" class="db_user_pass" value="${email}" autofocus="true" autocomplete="off"/></td>
                                 </tr>
                                 <tr>
@@ -40,7 +40,6 @@
                                             <input type="text" name="db" id="db" class="db_user_pass" value="${db}"/>
                                         % else:
                                             <select name="db" id="db" class="db_user_pass">
-                                                <option value="">${_("")}</option>
                                                 % for v in dblist:
                                                     <option value="${v}" ${db and v.lower()==db.lower() and "selected" or ""}>${v}</option>
                                                 % endfor
@@ -52,6 +51,14 @@
                                     <td></td>
                                     <td class="db_login_buttons">
                                         <button type="submit" class="static_boxes" id="send">${_("Submit")}</button>
+
+                                        % if error and error.get('title') == 'Success':
+                                            <a href="/openerp/login" style="margin-left:10px;">
+                                                <button type="button" class="static_boxes">
+                                                    ${_("Return to login page")}
+                                                </button>
+                                            </a>
+                                        % endif
                                     </td>
                                 </tr>
                             </table>

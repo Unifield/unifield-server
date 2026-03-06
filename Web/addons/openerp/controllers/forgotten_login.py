@@ -102,7 +102,10 @@ class ForgottenLogin(BaseController):
         error = self.msg
         self.msg = {}
         db_data = get_db_list()
+        dbfilter = cherrypy.request.app.config['openerp-web'].get('dblist.filter')
         dblist = db_data.get('dblist', [])
+        if dbfilter != 'EXACT':
+            dblist = [''] + dblist
         return dict(form=form, error=error, dblist=dblist, email="")
 
     @expose()

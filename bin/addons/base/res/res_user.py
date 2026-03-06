@@ -1321,7 +1321,7 @@ class users(osv.osv):
 
             if user.synchronize and 'HQ' not in db_name:
                 raise Exception(
-                    _('The values entered above are for a synched user. The password reset process for synched users must be initiated at HQ. Please connect there or alert a member of your IT support team')
+                    _('The values entered above are for a synched user, the password reset functionality is not possible for this user type. Please contact your UF referent/UF support via the ticketing system.')
                 )
 
             token = ''.join(random.choices(string.digits, k=10))

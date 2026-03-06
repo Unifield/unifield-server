@@ -48,7 +48,6 @@
                                             <input type="text" name="db" id="db" class="db_user_pass" value="${db}"/>
                                         % else:
                                             <select name="db" id="db" class="db_user_pass">
-                                                <option value="">${_("")}</option>
                                                 % for v in dblist:
                                                     <option value="${v}" ${db and v.lower()==db.lower() and "selected" or ""}>${v}</option>
                                                 % endfor
@@ -79,6 +78,14 @@
                                     <td></td>
                                     <td class="db_login_buttons">
                                         <button type="submit" class="static_boxes" id="send">${_("Change password")}</button>
+
+                                        % if error and error.get('title') == 'Success':
+                                            <a href="/openerp/login" style="margin-left:10px;">
+                                                <button type="button" class="static_boxes">
+                                                    ${_("Return to login page")}
+                                                </button>
+                                            </a>
+                                        % endif
                                     </td>
                                 </tr>
                             </table>
