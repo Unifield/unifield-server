@@ -366,6 +366,8 @@ class stock_mission_report(osv.osv):
         sheet.append(header_row)
         sheet.row_dimensions[4].height = 45
 
+        sheet.freeze_panes = 'A%s' % (sheet._current_row + 1,)
+
         # Columns size
         for x in range(1, len(header_row) + 1):
             letter = get_column_letter(x)
