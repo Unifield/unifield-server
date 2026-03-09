@@ -25,6 +25,7 @@ import time
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
+import ast
 
 class account_cashbox_line(osv.osv):
 
@@ -86,57 +87,61 @@ class account_cashbox_line(osv.osv):
         data = model_data_obj.browse(cr, uid, data_ids[0], context=context)
         return f"{data.module}.{data.name}"
 
-    def _get_register_lines(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_register_lines(self, cr, uid, ids, name, arg, context=None):
+        context = context or {}
         res = {}
+
         for line in self.browse(cr, uid, ids, context=context):
-            register = line.starting_id or line.ending_id
-            lines = []
-            if register:
-                cashbox_lines = register.starting_details_ids or register.ending_details_ids
-                for l in cashbox_lines:
+            statement = line.starting_id or line.ending_id
+            values = []
+
+            if statement:
+                existing_lines = statement.starting_details_ids or statement.ending_details_ids
+
+                for l in existing_lines:
                     sdref = self._get_sdref(cr, uid, l.id, context=context)
-                    lines.append((sdref, l.number, l.pieces))
-            res[line.id] = lines
+                    values.append((sdref, l.number, l.pieces))
+
+            res[line.id] = values
+
         return res
 
     def _set_register_lines(self, cr, uid, id, name, value, arg, context=None):
         context = context or {}
+
         if not value:
             return
 
-        register = self.browse(cr, uid, id, context=context)
-        existing_lines = register.starting_details_ids or register.ending_details_ids
-        relation_field = 'starting_id' if register.starting_details_ids else 'ending_id'
+        if isinstance(value, str):
+            value = ast.literal_eval(value)
 
-        existing_map = {}
-        for line in existing_lines:
-            sdref = self._get_sdref(cr, uid, line.id, context=context)
-            existing_map[sdref] = line
+        line = self.browse(cr, uid, id, context=context)
+        statement = line.starting_id or line.ending_id
+        if not statement:
+            return
 
-        cashbox_obj = self.pool.get('account.cashbox.line')
+        relation_field = 'starting_id' if line.starting_id else 'ending_id'
+
+        lines_pool = self.pool.get('account.cashbox.line')
+
+        existing_lines = statement.starting_details_ids if relation_field == 'starting_id' else statement.ending_details_ids
+        pieces_map = {l.pieces: l for l in existing_lines}
 
         for item in value:
-            if not item:
+            if not item or len(item) != 3:
                 continue
             sdref, number, pieces = item
-            if sdref in existing_map:
-                cashbox_obj.write(
-                    cr, uid,
-                    [existing_map[sdref].id],
-                    {'number': number, 'pieces': pieces},
-                    context=context
-                )
-                existing_map.pop(sdref)
-            else:
-                vals = {
-                    'number': number,
-                    'pieces': pieces,
-                    relation_field: register.id,
-                }
-                cashbox_obj.create(cr, uid, vals, context=context)
 
-        for line in existing_map.values():
-            line.unlink()
+            if pieces in pieces_map:
+                line_to_update = pieces_map[pieces]
+                if line_to_update.number != number:
+                    lines_pool.write(cr, uid, line_to_update.id, {'number': number}, context=context)
+            else:
+                lines_pool.create(cr, uid, {
+                    relation_field: statement.id,
+                    'pieces': pieces,
+                    'number': number,
+                }, context=context)
 
     _columns = {
         'pieces': fields.float('Values', digits_compute=dp.get_precision('Account')),
