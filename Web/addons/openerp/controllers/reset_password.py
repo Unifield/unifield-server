@@ -58,21 +58,30 @@ class ResetPassword(BaseController):
     msg = property(get_msg, set_msg)
 
     @expose(template="/openerp/controllers/templates/reset_password.mako")
-    def index(self, token=None, db=None, **kw):
+    def index(self, token=None, db=None, data=None, **kw):
         error = self.msg
         self.msg = {}
 
         db_data = get_db_list()
         dbfilter = cherrypy.request.app.config['openerp-web'].get('dblist.filter')
         dblist = db_data.get('dblist', [])
-        if dbfilter != 'EXACT':
+        db_from_url = kw.get('db')
+
+        if db_from_url and db_from_url in dblist:
+            dblist.remove(db_from_url)
+            dblist.insert(0, db_from_url)
+
+        if not db_from_url and (dbfilter != 'EXACT' or len(dblist) != 1):
             dblist = [''] + dblist
+
+        data = data or {}
 
         return dict(
             error=error,
             token=token,
             db=db,
-            dblist=dblist
+            dblist=dblist,
+            data=data
         )
 
     @expose()
@@ -85,14 +94,38 @@ class ResetPassword(BaseController):
                 'title': _('Error'),
                 'message': _('Passwords do not match')
             }
-            return self.index(token=token, db=db)
+            return self.index(token=token, db=db, data={
+                'login': login,
+                'email': email,
+                'token': token,
+                'password': password,
+                'password2': password2
+            })
 
         if not all([login, email, db, token, password]):
             self.msg = {
                 'title': _('Error'),
                 'message': _('All fields are required')
             }
-            return self.index(token=token, db=db)
+            return self.index(token=token, db=db, data={
+                'login': login,
+                'email': email,
+                'token': token,
+                'password': password,
+                'password2': password2
+            })
+
+        mail_ok = session.execute_noauth(
+            'common',
+            'is_mail_configured',
+            db
+        )
+        if not mail_ok:
+            self.msg = {
+                'title': _('Configuration Error'),
+                'message': _('Email server is not configured')
+            }
+            return self.index()
 
         try:
             result = session.execute_noauth(

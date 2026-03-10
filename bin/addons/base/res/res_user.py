@@ -1333,7 +1333,7 @@ class users(osv.osv):
             }, context=context)
             cr.commit()
 
-            body = u"""
+            body = _("""
                 Password reset request
                 A request has been received to reset your password.
                 -This password reset request is valid for the next 6 hours.
@@ -1348,7 +1348,7 @@ class users(osv.osv):
                 
                 If it was not you who has triggered this password reset, please contact your IT - security
                 responsible to alert them.
-            """ % (user.login, token)
+            """) % (user.login, token)
 
             tools.email_send(email_from=None, email_to=[email],
                              subject='[UniField] Account password reset',
@@ -1376,7 +1376,7 @@ class users(osv.osv):
         for user in users:
             login_lines += "login %s\n" % user.login
 
-        body = u"""
+        body = _("""
                 Request to retrieve forgotten user login information
                 A request has been received to identify your user login.
             
@@ -1387,7 +1387,7 @@ class users(osv.osv):
                 To log in using correct login, please return to UniField login page and proceed as usual.
             
                 If it was not you who has triggered this login request, please contact your IT security responsible.
-        """ % login_lines
+        """) % login_lines
 
         tools.email_send(
             email_from=None,
@@ -1438,6 +1438,13 @@ class users(osv.osv):
         cr.close()
 
         return True
+
+    def is_mail_configured(self, db_name):
+        return bool(
+            tools.config.get('smtp_server')
+            and tools.config.get('email_from')
+            and tools.config.get('smtp_port')
+        )
 
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1

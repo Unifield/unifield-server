@@ -14,45 +14,7 @@ from openerp.utils.rpc import RPCProxy, session
 import openobject
 from openobject import pooler
 import cherrypy
-
-class ReplacePasswordField(openobject.widgets.PasswordField):
-    params = {
-        'autocomplete': 'Autocomplete field',
-    }
-    autocomplete = 'off'
-    replace_for = False
-
-    def __init__(self, *arg, **kwargs):
-        self.replace_for = kwargs['name']
-        kwargs['name'] = 'show_%s' % kwargs['name']
-        kwargs.setdefault('attrs', {}).update({
-            'onkeydown': 'if (event.keyCode == 13) replace_pass_submit()',
-            'class': 'requiredfield',
-        })
-        super(ReplacePasswordField, self).__init__(*arg, **kwargs)
-
-
-class DBForm(openobject.widgets.Form):
-    strip_name = True
-    display_string = False
-    display_description = False
-
-    def __init__(self, *args, **kw):
-        super(DBForm, self).__init__(*args, **kw)
-        to_add = []
-        for field in self.fields:
-            if isinstance(field, ReplacePasswordField):
-                to_add.append(openobject.widgets.HiddenField(name=field.replace_for, attrs={'autocomplete': 'off'}))
-                self.replace_password_fields[field.name] = field.replace_for
-        if to_add:
-            self.hidden_fields += to_add
-        if self.validator is openobject.validators.DefaultValidator:
-            self.validator = openobject.validators.Schema()
-        for f in self.fields:
-            self.validator.add_field(f.name, f.validator)
-        for add in to_add:
-            self.validator.add_field(add.name, formencode.validators.NotEmpty())
-
+from openerp.controllers.password_utils import ReplaceField, DBForm
 
 class FormForgottenPassword(DBForm):
     name = "forgotten_password"
@@ -102,16 +64,26 @@ class ForgottenPassword(BaseController):
 
 
     @expose(template="/openerp/controllers/templates/forgotten_password.mako")
-    def index(self, tg_errors=None, **kw):
+    def index(self, tg_errors=None, data=None, **kw):
         form = _FORMS['forgotten_password']
         error = self.msg
         self.msg = {}
+
         db_data = get_db_list()
         dbfilter = cherrypy.request.app.config['openerp-web'].get('dblist.filter')
         dblist = db_data.get('dblist', [])
-        if dbfilter != 'EXACT':
+        db_from_url = kw.get('db')
+
+        if db_from_url and db_from_url in dblist:
+            dblist.remove(db_from_url)
+            dblist.insert(0, db_from_url)
+
+        if not db_from_url and (dbfilter != 'EXACT' or len(dblist) != 1):
             dblist = [''] + dblist
-        return dict(form=form, error=error, user="", dblist=dblist, email="")
+
+        data = data or {}
+        return dict(form=form, error=error, dblist=dblist, data=data)
+
 
     @expose()
     @validate(form=_FORMS['forgotten_password'])
@@ -120,6 +92,29 @@ class ForgottenPassword(BaseController):
         self.msg = {}
 
         try:
+            if not all([user, email, db]):
+                self.msg = {
+                    'title': _('Error'),
+                    'message': _('All fields are required')
+                }
+                return self.index(data={
+                    'user': user,
+                    'email': email,
+                    'db': db
+                })
+
+            mail_ok = session.execute_noauth(
+                'common',
+                'is_mail_configured',
+                db
+            )
+            if not mail_ok:
+                self.msg = {
+                    'title': _('Configuration Error'),
+                    'message': _('Email server is not configured')
+                }
+                return self.index()
+
             result = session.execute_noauth(
                 'common', 'send_reset_password_email',
                 db,
@@ -131,15 +126,27 @@ class ForgottenPassword(BaseController):
                     'title': _('Error'),
                     'message': result
                 }
-                return self.index()
+                return self.index(data={
+                    'user': user,
+                    'email': email,
+                    'db': db
+                })
 
             self.msg = {
                 'title': _('Success'),
                 'message': _('Email sent!')
             }
-            return self.index()
+            return self.index(data={
+                'user': user,
+                'email': email,
+                'db': db
+            })
 
         except Exception as e:
             cherrypy.log("ERROR: %s" % e)
             self.msg = {'title': _('Error'), 'message': ustr(e)}
-            return self.index()
+            return self.index(data={
+                'user': user,
+                'email': email,
+                'db': db
+            })

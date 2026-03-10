@@ -659,7 +659,19 @@ class common(_ObjectService):
                 else:
                     msg = tools.ustr(e)
                 return msg
-
+        elif method == 'is_mail_configured':
+            try:
+                db_name = params[0]
+                db, pool = pooler.get_db_and_pool(db_name)
+                cr = db.cursor()
+                try:
+                    user_obj = pool.get('res.users')
+                    result = user_obj.is_mail_configured(db_name)
+                finally:
+                    cr.close()
+                return result
+            except Exception:
+                return False
         elif method == 'logout':
             if auth:
                 auth.logout(params[1])

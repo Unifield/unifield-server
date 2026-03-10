@@ -32,13 +32,15 @@
                                 <tr>
                                     <td class="label"><label for="login">${_("Login:")}</label></td>
                                     <td style="padding: 3px;">
-                                        <input type="text" id="login" name="login" class="db_user_pass" autocomplete="off"/>
+                                        <input type="text" id="login" name="login" class="db_user_pass"
+                                               value="${data.get('login','')}" autocomplete="off"/>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="email">${_("Email:")}</label></td>
                                     <td style="padding: 3px;">
-                                        <input type="text" id="email" name="email" class="db_user_pass" autocomplete="off"/>
+                                        <input type="text" id="email" name="email" class="db_user_pass"
+                                               value="${data.get('email','')}" autocomplete="off"/>
                                     </td>
                                 </tr>
                                 <tr>
@@ -58,7 +60,8 @@
                                 <tr>
                                     <td class="label"><label for="token">${_("Token:")}</label></td>
                                     <td style="padding: 3px;">
-                                        <input type="text" id="token" name="token" class="db_user_pass" autocomplete="off"/>
+                                        <input type="text" id="token" name="token" class="db_user_pass"
+                                               value="${data.get('token','')}" autocomplete="off"/>
                                     </td>
                                 </tr>
                                 <tr>
