@@ -23,7 +23,6 @@ class FormForgottenLogin(DBForm):
         openobject.widgets.TextField(
             name='email',
             label=_('Email'),
-            validator=formencode.validators.Email(not_empty=True)
         )
     ]
 

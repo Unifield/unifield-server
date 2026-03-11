@@ -18,12 +18,10 @@ class ResetPasswordForm(openobject.widgets.Form):
         openobject.widgets.PasswordField(
             name='password',
             label=_('New password'),
-            validator=formencode.validators.NotEmpty()
         ),
         openobject.widgets.PasswordField(
             name='password2',
             label=_('Confirm password'),
-            validator=formencode.validators.NotEmpty()
         ),
         openobject.widgets.HiddenField(
             name='token'

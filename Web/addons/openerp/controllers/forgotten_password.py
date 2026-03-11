@@ -26,12 +26,10 @@ class FormForgottenPassword(DBForm):
         openobject.widgets.TextField(
             name='user',
             label=_('User'),
-            validator=formencode.validators.NotEmpty()
         ),
         openobject.widgets.TextField(
             name='email',
             label=_('Email'),
-            validator=formencode.validators.Email(not_empty=True)
         )
     ]
 
