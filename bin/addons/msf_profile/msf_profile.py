@@ -164,23 +164,24 @@ class patch_scripts(osv.osv):
                 new_add_id = addr_obj.copy(cr, uid, add_id, {'partner_id': False, 'name': False})
                 users_obj.write(cr, uid, [u_id], {'address_id': new_add_id})
 
-        cr.execute('''
-            select
-                distinct on (res_id) res_id, new_value
-            from
-                audittrail_log_line
-            where
-                name = 'user_email' and
-                object_id = (select id from ir_model where model='res.users') and
-                res_id in %s
-            order by
-                res_id, id desc
-        ''', (tuple(user_to_fix), ))
+        if user_to_fix:
+            cr.execute('''
+                select
+                    distinct on (res_id) res_id, new_value
+                from
+                    audittrail_log_line
+                where
+                    name = 'user_email' and
+                    object_id = (select id from ir_model where model='res.users') and
+                    res_id in %s
+                order by
+                    res_id, id desc
+            ''', (tuple(user_to_fix), ))
 
-        for user_id, email in cr.fetchall():
-            if user_id and user_id != 1:
-                user_to_fix.remove(user_id)
-                users_obj.write(cr, uid, [user_id], {'user_email': email or False})
+            for user_id, email in cr.fetchall():
+                if user_id and user_id != 1:
+                    user_to_fix.remove(user_id)
+                    users_obj.write(cr, uid, [user_id], {'user_email': email or False})
 
         if user_to_fix:
             users_obj.write(cr, uid, list(user_to_fix), {'user_email': False})
