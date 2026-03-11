@@ -37,7 +37,7 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="label"><label for="email">${_("Email:")}</label></td>
+                                    <td class="label"><label for="email">${_("Email address:")}</label></td>
                                     <td style="padding: 3px;">
                                         <input type="text" id="email" name="email" class="db_user_pass"
                                                value="${data.get('email','')}" autocomplete="off"/>
@@ -71,7 +71,7 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="label"><label for="password2">${_("Confirm password:")}</label></td>
+                                    <td class="label"><label for="password2">${_("Confirm new password:")}</label></td>
                                     <td style="padding: 3px;">
                                         <input type="password" id="password2" name="password2" class="db_user_pass" autocomplete="off"/>
                                     </td>

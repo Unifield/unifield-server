@@ -1318,6 +1318,8 @@ class users(osv.osv):
                 )
 
             user = self.browse(cr, 1, user_ids[0], context=context)
+            if not context.get("lang"):
+                    context["lang"] = user.context_lang or "en_MF"
 
             if user.synchronize and 'HQ' not in db_name:
                 raise Exception(
@@ -1344,14 +1346,14 @@ class users(osv.osv):
                 Temporary code: %s
                 Please note this temporary code will only be valid 6 hours.
                 Please return to UF login page and click on link "Forgotten password?". In this screen click
-                button “Add temporary code”. Fill in details there.
+                button "Add temporary code". Fill in details there.
                 
                 If it was not you who has triggered this password reset, please contact your IT - security
                 responsible to alert them.
             """) % (user.login, token)
 
             tools.email_send(email_from=None, email_to=[email],
-                             subject='[UniField] Account password reset',
+                             subject=_("[UniField] Account password reset"),
                              body=body)
             cr.close()
 
@@ -1371,6 +1373,8 @@ class users(osv.osv):
             return True
 
         users = self.browse(cr, 1, user_ids, context=context)
+        if not context.get("lang"):
+            context["lang"] = users[0].context_lang or "en_MF"
 
         login_lines = ""
         for user in users:
@@ -1392,7 +1396,7 @@ class users(osv.osv):
         tools.email_send(
             email_from=None,
             email_to=[email],
-            subject='[UniField] User Account Login identification',
+            subject=_("[UniField] User Account Login identification"),
             body=body
         )
 

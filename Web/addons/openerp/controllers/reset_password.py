@@ -115,18 +115,6 @@ class ResetPassword(BaseController):
                 'password2': password2
             })
 
-        mail_ok = session.execute_noauth(
-            'common',
-            'is_mail_configured',
-            db
-        )
-        if not mail_ok:
-            self.msg = {
-                'title': _('Configuration Error'),
-                'message': _('Email server is not configured')
-            }
-            return self.index()
-
         try:
             result = session.execute_noauth(
                 'common',

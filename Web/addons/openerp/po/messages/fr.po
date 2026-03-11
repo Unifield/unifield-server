@@ -229,7 +229,7 @@ msgstr "Supprimer"
 #: controllers/database.py:83 controllers/database.py:91
 #: controllers/templates/login.mako:43
 msgid "Database:"
-msgstr "Base de données:"
+msgstr "Base de données :"
 
 #: controllers/database.py:84 controllers/database.py:92
 #: controllers/database.py:100 controllers/templates/login.mako:61
@@ -1743,7 +1743,52 @@ msgid "Confirm new password:"
 msgstr "Confirmation nouveau mot de passe :"
 
 msgid "Email address:"
-msgstr "Adresse Email"
+msgstr "Adresse Email :"
+
+msgid "User login:"
+msgstr "Utilisateur :"
+
+msgid "Submit"
+msgstr "Envoyer"
+
+msgid "Change password"
+msgstr "Changer le mot de passe"
+
+msgid "Token:"
+msgstr "Code :"
+
+msgid "Token:"
+msgstr "Code :"
+
+msgid "Login:"
+msgstr "Utilisateur :"
+
+msgid "Add temporary code"
+msgstr "Ajouter un code temporaire"
+
+msgid "Forgot login?"
+msgstr "Identifiant oublié ?"
+
+msgid "Forgot password?"
+msgstr "Mot de passe oublié ?"
+
+msgid "Forgotten Login"
+msgstr "Identifiant oublié"
+
+msgid "Login management"
+msgstr "Gestion des identifiants"
+
+msgid "To receive an email containing user login please fill in field(s) below:"
+msgstr "Pour recevoir un e-mail contenant vos identifiants de connexion, veuillez remplir le(s) champ(s) ci-dessous :"
+
+msgid "Password management"
+msgstr "Gestion des mots de passe"
+
+msgid "To receive an email to reset password please fill in all fields below:"
+msgstr "Pour recevoir un e-mail afin de réinitialiser votre mot de passe, veuillez remplir tous les champs ci-dessous :"
+
+msgid "Reset of password using email code"
+msgstr "Réinitialisation du mot de passe à l'aide d'un code envoyé par e-mail"
 
 msgid "You have to change your password."
 msgstr "Vous devez changer votre mot de passe."
@@ -2006,3 +2051,30 @@ msgstr "Ne plus demander"
 #: controllers/templates/footer.mako:12
 msgid "databases hosted"
 msgstr "bases hébergées"
+
+#: controllers/forgotten_login.py:88
+#: controllers/forgotten_password.py:98
+#: controllers/reset_password.py:108
+msgid "All fields are required"
+msgstr "Tous les champs sont obligatoires"
+
+#: controllers/forgotten_login.py:103
+#: controllers/forgotten_password.py:114
+msgid "Email server is not configured"
+msgstr "Le serveur d'e-mail n'est pas configuré."
+
+#: controllers/forgotten_login.py:115
+msgid "User login has been sent to you via email"
+msgstr "Votre identifiant utilisateur vous a été envoyé par e-mail."
+
+#: controllers/forgotten_password.py:137
+msgid "Email sent!"
+msgstr "E-mail envoyé !"
+
+#: controllers/reset_password.py:95
+msgid "Passwords do not match"
+msgstr "Les mots de passe ne correspondent pas."
+
+#: controllers/reset_password.py:138
+msgid "Password successfully updated"
+msgstr "Mot de passe mis à jour avec succès"
