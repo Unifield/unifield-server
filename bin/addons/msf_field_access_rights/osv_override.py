@@ -186,6 +186,37 @@ def _get_family(obj, family):
                 if key != obj._name:
                     _get_family(obj.pool.get(key), family)
 
+def has_write_access_on_field(self, cr, uid, id_, field):
+    instance_level = _get_instance_level(self, cr, uid)
+
+    if not instance_level:
+        return True
+
+    real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+
+    cr.execute('''select
+        r.domain_text
+        from
+            msf_field_access_rights_field_access_rule r
+            left join msf_field_access_rights_field_access_rule_line l on l.field_access_rule = r.id
+            left join field_access_rule_groups_rel far_grp on far_grp.field_access_rule_id = r.id
+            left join res_groups_users_rel user_group on user_group.gid = far_grp.group_id
+        where
+            r.instance_level = %(instance_level)s and
+            (far_grp.group_id is NULL or user_group.uid = %(for_user_id)s) and
+            model_name = %(model)s and
+            l.field_name = %(field)s and
+            r.active = 't' and
+            coalesce(write_access, 'f') = 'f'
+        ''', {'instance_level': instance_level, 'for_user_id': real_uid, 'model': self._name, 'field': field})
+
+    for r in cr.fetchall():
+        if _record_matches_domain(self, cr, id_, r[0]):
+            return False
+
+    return True
+
+orm.orm.has_write_access_on_field = has_write_access_on_field
 
 def _get_rules_for_family(self, cr, rules_pool, instance_level, groups):
     family = [self._name]

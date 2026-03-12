@@ -2196,8 +2196,12 @@ class product_attributes(osv.osv):
                                                  (product.oc_subscription and product.state_ud in ('valid', 'outdated', 'discontinued')))) or \
                     (instance_level == 'coordo' and product.international_status.id == local_status):
                 vals.update({'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]})
-            real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-            self.write(cr, real_uid, product.id, vals, context=context)
+
+            # US-15613/ US-7665 allowed if FARLs allow write on active field
+            if not self.has_write_access_on_field(cr, uid, product.id, 'active'):
+                raise osv.except_osv(_('Error'), _('Permission denied on active field'))
+
+            self.write(cr, uid, product.id, vals, context=context)
 
         return True
 
