@@ -640,8 +640,8 @@ class signature_object(osv.osv):
                 if line.signed:
                     to_unsign.append(line.id)
         if to_unsign:
-            # disable check if button has BAR (i.e: uid.realUid exists)
-            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'), check_super_unsign=True)
+            # disable check as it's expected to be in a case where all signatures must be removed
+            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=False)
 
         return True
 
@@ -775,8 +775,6 @@ class signature_line(osv.osv):
                 group_name = 'Sign_document_creator_finance'
             elif sign_line.signature_id.signature_res_model in ['purchase.order', 'stock.picking', 'sale.order']:
                 group_name = 'Sign_document_creator_supply'
-            elif sign_line.signature_id.signature_res_model == 'physical.inventory':
-                group_name = 'Sign_user'
             if not group_name or (group_name and not user_obj.check_user_has_group(cr, uid, group_name)):
                 raise osv.except_osv(_('Warning'), _("You are not allowed to remove this signature"))
             if not sign_line.signature_id.allowed_to_be_signed_unsigned:
