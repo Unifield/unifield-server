@@ -124,10 +124,12 @@
     <Column ss:AutoFitWidth="0" ss:Width="30"/>
     <Column ss:AutoFitWidth="0" ss:Width="30"/>
 
-    % for p in getPackingList(ship):
-       <Row ss:Height="16.5">
-         <Cell ss:StyleID="title"><Data ss:Type="String">${_('%s: PACKING LIST') % (ship.name)|x}</Data></Cell>
-       </Row>
+    <Row ss:Height="16.5">
+      <Cell ss:StyleID="title"><Data ss:Type="String">${_('%s: PACKING LIST') % (ship.name)|x}</Data></Cell>
+    </Row>
+
+    <% packing_lists = getPackingList(ship) %>
+    % for p in packing_lists:
        <Row>
          <Cell ss:StyleID="header"><Data ss:Type="String">${(p['ppl'].name)|x}</Data></Cell>
          <Cell ss:Index="10"><Data ss:Type="String"></Data></Cell>
@@ -266,10 +268,16 @@
                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.product_id.is_kc and 'X' or '')|x}</Data></Cell>
                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.product_id.dg_txt or '')|x}</Data></Cell>
                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.product_id.cs_txt or '')|x}</Data></Cell>
-              </Row>
+               </Row>
           % endfor
-      % endfor
-    %endfor
+       % endfor
+       <Row></Row>
+    % endfor
+    % if not packing_lists:
+       <Row>
+           <Cell ss:StyleID="NoPack" ss:MergeAcross="3"><Data ss:Type="String">${_('NO PACK FAMILIES IN THIS SHIPMENT')|x}</Data></Cell>
+       </Row>
+    % endif
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>

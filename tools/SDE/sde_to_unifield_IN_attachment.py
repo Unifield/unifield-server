@@ -11,6 +11,8 @@ dbname = 'my_db'
 user = 'my_user'
 password = 'my_password'
 host = 'my_host'
+
+# Not needed if the instance is HTTPs
 port = 8069  # json-rpc port, 8069 on prod instance
 
 def json_rpc(url, method, params, timeout=None):
@@ -48,8 +50,11 @@ if not os.path.exists(filepath):
 
 lang_context = {'lang': 'en_MF'}  # or fr_MF
 
+# Comment both linse and uncomment the other two in case the instance is HTTPs
 url_object = f"http://{host}:{port}/jsonrpc/object"
 url = f"http://{host}:{port}/jsonrpc/common"
+# url_object = f"https://{host}/jsonrpc/object"
+# url = f"https://{host}/jsonrpc/common"
 
 # retrieve the user id
 user_id = json_rpc(url, "login", [dbname, user, password])

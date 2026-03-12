@@ -99,8 +99,6 @@ class dispatched_packing_list_xls_parser(report_sxw.rml_parse):
 
         if filtered_result:
             filtered_result[-1]['last'] = True
-        else:
-            raise osv.except_osv(_('Error'), _('No PPL to export !'))
 
         return filtered_result
 
