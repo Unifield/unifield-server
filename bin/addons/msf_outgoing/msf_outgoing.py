@@ -1944,21 +1944,14 @@ class shipment(osv.osv):
     def generate_dispatched_packing_list_report(self, cr, uid, context=None):
         '''
         Method used by the SDE script to export the file
-        Generate a Dispatched Packing List report for Dispatched sub-Ships with Pack Families, having an Internal,
-        Intermission, Inter-section or External Customer
+        Generate a Dispatched Packing List report for Dispatched sub-Ships, having an Internal, Intermission,
+        Inter-section or External Customer
         '''
         if context is None:
             context = {}
 
-        cr.execute("""
-            SELECT s.id FROM shipment s
-                LEFT JOIN res_partner p ON s.partner_id = p.id
-                LEFT JOIN pack_family_memory pf ON pf.shipment_id = s.id
-            WHERE s.parent_id IS NOT NULL AND s.state = 'done' AND pf.id IS NOT NULL AND pf.state NOT IN ('returned', 'cancel')
-                AND p.partner_type IN ('internal', 'intermission', 'section', 'external')
-            GROUP BY s.id
-        """)
-        ship_ids = [x[0] for x in cr.fetchall()]
+        ship_domain = [('parent_id', '!=', False), ('state', '=', 'done'), ('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])]
+        ship_ids = self.search(cr, uid, ship_domain, context=context)
         if not ship_ids:
             raise osv.except_osv(_('Error'), _('There is no Dispatched Shipment having an Internal, Intermission, Inter-section or External Customer'))
         datas = {'ids': ship_ids}
