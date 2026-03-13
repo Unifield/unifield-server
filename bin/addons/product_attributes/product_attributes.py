@@ -2762,7 +2762,7 @@ class product_attributes(osv.osv):
         if type in ('consu', 'service', 'service_recep'):
             res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
         if type != 'service_recep':
-            res.update({'value': {'transport_ok': False}})
+            res.setdefault('value', {}).update({'transport_ok': False})
         return res
 
     def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, context=None):
