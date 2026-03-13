@@ -120,15 +120,22 @@ class account_cashbox_line(osv.osv):
             value = ast.literal_eval(value)
 
         lines_pool = self.pool.get('account.cashbox.line')
-        line = self.browse(cr, uid, id, context=context)
 
-        if not line.ending_id:
+        cr.execute("""
+                   SELECT ending_id
+                   FROM account_cashbox_line
+                   WHERE id = %s
+                   """, (id,))
+        row = cr.fetchone()
+
+        if not row or not row[0]:
             return
 
-        statement = line.ending_id
+        statement_id = row[0]
+
         existing_ids = lines_pool.search(
             cr, uid,
-            [('ending_id', '=', statement.id)],
+            [('ending_id', '=', statement_id)],
             context=context
         )
         existing_lines = lines_pool.browse(cr, uid, existing_ids, context=context)
@@ -173,7 +180,7 @@ class account_cashbox_line(osv.osv):
                     cr,
                     uid,
                     {
-                        'ending_id': statement.id,
+                        'ending_id': statement_id,
                         'pieces': pieces,
                         'number': number
                     },
@@ -183,6 +190,8 @@ class account_cashbox_line(osv.osv):
                 incoming_keys.append(new_key)
 
         for key, l in existing_map.items():
+            if l.id == id:
+                continue
             if key not in incoming_keys:
                 lines_pool.unlink(
                     cr,
