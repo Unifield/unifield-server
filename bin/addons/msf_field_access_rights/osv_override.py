@@ -191,14 +191,15 @@ def has_write_access_on_field(self, cr, uid, id_, field, context=None):
     if context is None:
         context = {}
 
-    if uid == 1 or context.get('sync_update_execution'):
+    real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+
+    if real_uid == 1 or context.get('sync_update_execution'):
         return True
 
     instance_level = _get_instance_level(self, cr, uid)
     if not instance_level:
         return True
 
-    real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
     cr.execute('''select
         r.domain_text
