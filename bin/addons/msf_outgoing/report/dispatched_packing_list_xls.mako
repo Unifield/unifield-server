@@ -128,8 +128,7 @@
       <Cell ss:StyleID="title"><Data ss:Type="String">${_('%s: PACKING LIST') % (ship.name)|x}</Data></Cell>
     </Row>
 
-    <% packing_lists = getPackingList(ship) %>
-    % for p in packing_lists:
+    % for p in getPackingList(ship):
        <Row>
          <Cell ss:StyleID="header"><Data ss:Type="String">${(p['ppl'].name)|x}</Data></Cell>
          <Cell ss:Index="10"><Data ss:Type="String"></Data></Cell>
@@ -273,11 +272,6 @@
        % endfor
        <Row></Row>
     % endfor
-    % if not packing_lists:
-       <Row>
-           <Cell ss:StyleID="NoPack" ss:MergeAcross="3"><Data ss:Type="String">${_('NO PACK FAMILIES IN THIS SHIPMENT')|x}</Data></Cell>
-       </Row>
-    % endif
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
