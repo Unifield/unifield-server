@@ -2198,7 +2198,7 @@ class product_attributes(osv.osv):
                 vals.update({'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]})
 
             # US-15613/ US-7665 allowed if FARLs allow write on active field
-            if not self.has_write_access_on_field(cr, uid, product.id, 'active'):
+            if not self.has_write_access_on_field(cr, uid, product.id, 'active', context=context):
                 raise osv.except_osv(_('Error'), _('Permission denied on active field'))
 
             self.write(cr, uid, product.id, vals, context=context)

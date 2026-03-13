@@ -186,9 +186,15 @@ def _get_family(obj, family):
                 if key != obj._name:
                     _get_family(obj.pool.get(key), family)
 
-def has_write_access_on_field(self, cr, uid, id_, field):
-    instance_level = _get_instance_level(self, cr, uid)
+def has_write_access_on_field(self, cr, uid, id_, field, context=None):
 
+    if context is None:
+        context = {}
+
+    if uid == 1 or context.get('sync_update_execution'):
+        return True
+
+    instance_level = _get_instance_level(self, cr, uid)
     if not instance_level:
         return True
 
