@@ -98,15 +98,23 @@ class account_cashbox_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             values = []
             if line.ending_id:
-                line_ids = lines_pool.search(
-                    cr, uid,
-                    [('ending_id', '=', line.ending_id.id)],
-                    context=context
-                )
-                for l in lines_pool.browse(cr, uid, line_ids, context=context):
-                    sdref = self._get_sdref(cr, uid, l.id, context=context)
-                    if sdref:
-                        values.append((sdref, l.number, l.pieces))
+                statement_field = 'ending_id'
+                statement_id = line.ending_id.id
+            elif line.starting_id:
+                statement_field = 'starting_id'
+                statement_id = line.starting_id.id
+            else:
+                res[line.id] = str(values)
+                continue
+            line_ids = lines_pool.search(
+                cr, uid,
+                [(statement_field, '=', statement_id)],
+                context=context
+            )
+            for l in lines_pool.browse(cr, uid, line_ids, context=context):
+                sdref = self._get_sdref(cr, uid, l.id, context=context)
+                if sdref:
+                    values.append((sdref, l.number, l.pieces))
             res[line.id] = str(values)
         return res
 
@@ -122,22 +130,25 @@ class account_cashbox_line(osv.osv):
         lines_pool = self.pool.get('account.cashbox.line')
 
         cr.execute("""
-                   SELECT ending_id
+                   SELECT starting_id, ending_id
                    FROM account_cashbox_line
                    WHERE id = %s
                    """, (id,))
         row = cr.fetchone()
 
-        if not row or not row[0]:
+        if not row:
             return
 
-        statement_id = row[0]
+        starting_id, ending_id = row
 
-        existing_ids = lines_pool.search(
-            cr, uid,
-            [('ending_id', '=', statement_id)],
-            context=context
-        )
+        if ending_id:
+            domain = [('ending_id', '=', ending_id)]
+        elif starting_id:
+            domain = [('starting_id', '=', starting_id)]
+        else:
+            return
+
+        existing_ids = lines_pool.search(cr, uid, domain, context=context)
         existing_lines = lines_pool.browse(cr, uid, existing_ids, context=context)
         existing_map = {}
 
@@ -176,14 +187,18 @@ class account_cashbox_line(osv.osv):
                         context=context
                     )
             else:
+                new_vals = {
+                    'number': number,
+                    'pieces': pieces
+                }
+                if ending_id:
+                    new_vals['ending_id'] = ending_id
+                if starting_id:
+                    new_vals['starting_id'] = starting_id
                 new_id = lines_pool.create(
                     cr,
                     uid,
-                    {
-                        'ending_id': statement_id,
-                        'pieces': pieces,
-                        'number': number
-                    },
+                    new_vals,
                     context=context
                 )
                 new_key = "account_cashbox_line/%s" % new_id
@@ -193,12 +208,7 @@ class account_cashbox_line(osv.osv):
             if l.id == id:
                 continue
             if key not in incoming_keys:
-                lines_pool.unlink(
-                    cr,
-                    uid,
-                    [l.id],
-                    context=context
-                )
+                lines_pool.unlink(cr, uid, [l.id], context=context)
 
     _columns = {
         'pieces': fields.float('Values', digits_compute=dp.get_precision('Account')),
