@@ -117,7 +117,7 @@
 
 ## COLUMNS
 <%
-col_count = 13
+col_count = 14
 header_merge_accross_count = col_count - 2  ## merging cell self deduced
 %>
 % for o in objects:
@@ -129,6 +129,8 @@ header_merge_accross_count = col_count - 2  ## merging cell self deduced
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 ## product description
 <Column ss:AutoFitWidth="1" ss:Width="170" />
+## comment
+<Column ss:AutoFitWidth="1" ss:Width="200" />
 ## proc. method
 <Column ss:AutoFitWidth="1" ss:Width="60"  />
 ## po/cft
@@ -200,6 +202,7 @@ headers_list = [
     _('#'),
     _('PRODUCT CODE'),
     _('PRODUCT DESCRIPTION'),
+    _('COMMENT'),
     _('QTY'),
     _('UOM'),
     _('DEL. CONF. DATE'),
@@ -227,43 +230,45 @@ headers_list = [
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_product_id and line.line_product_id.default_code or ''|x}</Data></Cell>
 ## 3) purchase line product description
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_product_id and line.line_product_id.name or ''|x}</Data></Cell>
-## 4) purchase line qty
+## 4) purchase line comment
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_comment or ''|x}</Data></Cell>
+## 5) purchase line qty
 % if line.line_product_qty:
     <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">${line.line_product_qty}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 % endif
-## 5) purchase line uom
+## 6) purchase line uom
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_uom_id and line.line_uom_id.name or ''|x}</Data></Cell>
-## 6) purchase line confirmed date
+## 7) purchase line confirmed date
 <% dt = parse_date_xls(line.line_confirmed_date) %>
 % if dt:
     <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${dt|n}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 % endif
-## 7) shipped rate0
+## 8) shipped rate0
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_product_id and '%s %%' % min(line.line_shipped_rate, 100.00) or ''|x}</Data></Cell>
-## 8) incoming shipment
+## 9) incoming shipment
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.picking_id and line.picking_id.name or ''|x}</Data></Cell>
-## 9) move product
+## 10) move product
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.move_product_id and '[%s] %s' % (line.move_product_id.default_code, line.move_product_id.name) or ''|x}</Data></Cell>
-## 10) move qty
+## 11) move qty
 % if line.move_product_qty:
     <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">${line.move_product_qty}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 % endif
-## 11) move uom
+## 12) move uom
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.move_uom_id and line.move_uom_id.name or ''|x}</Data></Cell>
-## 12) move delivery date
+## 13) move delivery date
 <% dt = parse_date_xls(line.move_delivery_date) %>
 % if dt:
     <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${dt|n}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 % endif
-## 13) move state
+## 14) move state
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.move_state or ''|x}</Data></Cell>
 </Row>
 % endfor

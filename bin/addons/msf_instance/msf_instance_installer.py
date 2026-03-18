@@ -39,6 +39,8 @@ class msf_instance_setup(osv.osv_memory):
                     user_obj.write(cr, uid, user['id'],
                                    {'groups_id': [(6, 0, user['groups_id'])]},
                                    context=context)
+        else:
+            self.pool.get('patch.scripts').us_14217_set_journal_restriction(cr, uid)
 
         # trigger update on account.period.state closed by sync
         self.pool.get('patch.scripts').update_us_435_2(cr, uid)

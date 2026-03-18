@@ -25,6 +25,7 @@ from osv import fields
 from tools.translate import _
 from tools.misc import _get_std_mml_status
 from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
 from msf_partner import PARTNER_TYPE
 
 import decimal_precision as dp
@@ -112,9 +113,49 @@ class supplier_catalogue(osv.osv):
         res = super(supplier_catalogue, self).create(cr, uid, vals, context=context)
 
         # UTP-746: now check if the partner is inactive, then set this catalogue also to become inactive
-        catalogue = self.browse(cr, uid, [res], fields_to_fetch=['partner_id'], context=context)[0]
-        if not catalogue.partner_id.active:
-            self.write(cr, uid, [res], {'active': False}, context=context)
+        ftf = ['period_from', 'period_to', 'partner_id', 'currency_id']
+        cat = self.browse(cr, uid, [res], fields_to_fetch=ftf, context=context)[0]
+        to_write = {}
+        if not cat.partner_id.active:
+            to_write['active'] = False
+        # US-14372: During auto-import, set the period_to of other non-sync ESC catalogues to the period_from - 1 day
+        # in case there is an overlap
+        if context.get('auto_import_ok') and cat.partner_id.partner_type == 'esc':
+            period_from = cat.period_from
+            # To prevent using a new catalogue with no period_from and put a bad date on overlapping catalogues
+            no_period_from = False
+            if not period_from:
+                period_from = datetime.now().strftime('%Y-%m-%d')
+                no_period_from = True
+            period_to = cat.period_to or '2999-12-31'
+
+            entity_identifier_like = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier + '%'
+            cr.execute("""
+                SELECT c.id, c.period_from
+                FROM supplier_catalogue oc, supplier_catalogue c
+                    LEFT JOIN ir_model_data d ON d.res_id = c.id AND d.model = 'supplier.catalogue' AND d.module = 'sd'
+                WHERE oc.id = %s AND oc.id != c.id AND c.state = 'confirmed' AND c.partner_id = %s AND c.active = 't'
+                    AND c.currency_id = %s and d.name LIKE %s
+                    AND (COALESCE(c.period_from, '1970-01-01'), COALESCE(c.period_to, '2999-12-31'))
+                        OVERLAPS (TO_DATE(%s, 'YYYY-MM-DD'), TO_DATE(%s, 'YYYY-MM-DD'))
+                ORDER BY c.period_from, c.id
+            """, (cat.id, cat.partner_id.id, cat.currency_id.id, entity_identifier_like, period_from, period_to))
+            overlap_data = cr.fetchall()
+            nb_overlap = len(overlap_data)
+            for x in overlap_data:
+                # In case there is more than 1 overlap, do not put the same dates on several catalogues
+                new_period_to = (datetime.strptime(period_from, '%Y-%m-%d') + relativedelta(days=-nb_overlap)).strftime('%Y-%m-%d')
+                overlap_write = {'period_to': new_period_to}
+                # Prevent having period_from > period_to
+                if x[1] > new_period_to:
+                    overlap_write['period_from'] = new_period_to
+                self.write(cr, uid, [x[0]], overlap_write, context=context)
+                nb_overlap -= 1
+            if overlap_data and not no_period_from:
+                to_write['period_from'] = period_from
+
+        if to_write:
+            self.write(cr, uid, [res], to_write, context=context)
 
         return res
 

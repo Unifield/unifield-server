@@ -62,8 +62,25 @@
                                     <td></td>
                                     <td class="db_login_buttons">
                                         <button type="submit" class="static_boxes" id="send">${_("Submit")}</button>
-                                        <button type="button" class="static_boxes" onclick="location.href='${py.url('/openerp/reset_password')}'" id="reset">${_("Add temporary code")}</button>
-                                    </td>
+                                        <button type="button" class="static_boxes" id="reset"
+                                            onclick="
+                                                var url = '${py.url('/openerp/reset_password')}';
+
+                                                % if error and error.get('title') == 'Success':
+                                                    var user = document.getElementById('user').value;
+                                                    var email = document.getElementById('email').value;
+                                                    var db = document.getElementById('db').value;
+
+                                                    url += '?login=' + encodeURIComponent(user)
+                                                        + '&email=' + encodeURIComponent(email)
+                                                        + '&db=' + encodeURIComponent(db);
+                                                % endif
+
+                                                location.href = url;
+                                            ">
+                                            ${_("Add temporary code")}
+                                        </button>
+                                   </td>
                                 </tr>
                             </table>
                         </div>

@@ -73,6 +73,10 @@ class ResetPassword(BaseController):
             dblist = [''] + dblist
 
         data = data or {}
+        if kw.get('login'):
+            data['login'] = kw.get('login')
+        if kw.get('email'):
+            data['email'] = kw.get('email')
 
         return dict(
             error=error,
@@ -129,7 +133,10 @@ class ResetPassword(BaseController):
                     'title': _('Error'),
                     'message': result
                 }
-                return self.index(token=token, db=db)
+                return self.index(token=token, db=db, data={
+                    'login': login,
+                    'email': email,
+                })
 
             self.msg = {
                 'title': _('Success'),

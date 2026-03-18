@@ -44,7 +44,8 @@ class res_company(osv.osv):
                 'ocg': 'nothing',
                 'ocp': 'other_no_is',
                 'waca': 'other',
-                'oca': 'other'
+                'oca': 'other',
+                'ubuntu': 'other',
             }.get(oc)
 
         return self._extra_period

@@ -509,7 +509,7 @@ class account_period(osv.osv):
             if x := cr.fetchone():
                 if x[0]:
                     msg = _('Are you sure you want to close the period while there are draft IVI ?')
-                if x[1]:
+                elif x[1]:
                     msg = _('Are you sure you want to close the period while there is an IVI with an empty posting date ?')
 
                 if msg:

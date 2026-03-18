@@ -35,6 +35,7 @@ class account_invoice_sync(osv.osv):
     _columns = {
         'synced': fields.boolean("Synchronized"),
         'from_supply': fields.boolean('From Supply', help="Internal field indicating whether the document is related to a Supply workflow"),
+        'copied_from_supply': fields.boolean("Duplicated from supply invoice", help='this invoice is a manual duplication of a "from supply" invoice', readonly=1),
         'counterpart_inv_number': fields.char('Counterpart Invoice Number', size=64, readonly=True),
         'counterpart_inv_status': fields.selection([
             ('draft', 'Draft'),

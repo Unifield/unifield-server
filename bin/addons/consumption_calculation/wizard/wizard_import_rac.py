@@ -85,6 +85,8 @@ class wizard_import_rac(osv.osv_memory):
         errors = []
         if not import_rac.file:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        if import_rac.rac_id.state != 'draft':
+            raise osv.except_osv(_('Error'), _('You can only import on a Draft Real Consumption; import file is ignored'))
 
         fileobj = SpreadsheetXML(xmlstring=base64.b64decode(import_rac.file))
         # iterator on rows
@@ -216,7 +218,7 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                     remark = row.cells[8].data
                 error += '\n'.join(to_write['error_list'])
                 if not consumed_qty and not product_id == product_tbd:
-                     # If the line doesn't have quantity we do not check it.
+                    # If the line doesn't have quantity we do not check it.
                     error = None
                 line_data = {'batch_mandatory': batch_mandatory,
                              'date_mandatory': date_mandatory,
