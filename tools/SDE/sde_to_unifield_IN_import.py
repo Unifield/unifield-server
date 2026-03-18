@@ -64,15 +64,15 @@ if not user_id:
     print('Wrong %s password on %s:%s db: %s' % (user, host, port, dbname))
     sys.exit(1)
 
-msg = ''
+result = {}
 try:
     # Normal IN import or import for Available Updated INs
     in_updated = sys.argv[1] == 'updated'
 
     # import with a timeout of 240s
-    msg = json_rpc(url_object, "execute", [dbname, user_id, password, 'sde.import', 'sde_in_import', sys.argv[2], in_updated, lang_context], 240)
+    result = json_rpc(url_object, "execute", [dbname, user_id, password, 'sde.import', 'sde_in_import', sys.argv[2], in_updated, lang_context], 240)
 except Exception as e:
-    msg = e
+    result = {'error': True, 'message': e}
 finally:
     # display the result message
-    print('End message: %s' % msg)
+    print(result)

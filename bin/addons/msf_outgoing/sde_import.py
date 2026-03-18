@@ -66,9 +66,9 @@ class sde_import(osv.osv_memory):
         sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
         if not sde_imp['json_text']:
             raise osv.except_osv(_('Warning'), _('No data to import'))
-        msg = self.sde_in_import(cr, uid, sde_imp['json_text'], in_updated, context=context)
+        result = self.sde_in_import(cr, uid, sde_imp['json_text'], in_updated, context=context)
 
-        return self.write(cr, uid, ids, {'message': msg}, context=context)
+        return self.write(cr, uid, ids, {'message': result.get('message', '')}, context=context)
 
     def wizard_sde_file_to_in(self, cr, uid, ids, context=None):
         '''
@@ -114,7 +114,8 @@ class sde_import(osv.osv_memory):
         in_simu_obj = self.pool.get('wizard.import.in.simulation.screen')
 
         context['sde_flow'] = True
-        msg, pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False, False
+        result = {'error': False, 'message': 'Done'}
+        pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
         pagi_json_text = ''
         pagi_json_data = []
         try:
@@ -250,7 +251,8 @@ class sde_import(osv.osv_memory):
                 file_res = pick_obj.generate_simulation_screen_report(cr, uid, simu_id, context=context)
 
                 simu_data = in_simu_obj.read(cr, uid, simu_id, ['import_error_ok', 'message'], context=context)
-                msg = simu_data['message'] or pagi_msg or 'Done'
+                if simu_data['message'] or pagi_msg:
+                    result.update({'error': simu_data['import_error_ok'], 'message': simu_data['message'] or pagi_msg})
                 # Only import when all the data is correct
                 if not simu_data['import_error_ok']:
                     in_simu_obj.launch_import(cr, uid, [simu_id], context=context)
@@ -267,19 +269,20 @@ class sde_import(osv.osv_memory):
                     'res_id': in_id,
                     'datas': file_res.get('result'),
                 })
-            else:
-                msg = pagi_msg or 'Done'
+            elif pagi_msg:
+                result['message'] = pagi_msg
         except Exception as e:
             # Rejection message to send back
             if isinstance(e, osv.except_osv):
-                msg = e.value
+                error_msg = e.value
             else:
-                msg = e.args and '. '.join(e.args) or e
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
         finally:
             if 'sde_flow' in context:
                 context.pop('sde_flow')
 
-        return msg
+        return result
 
     @jsonrpc_orm_exposed('sde.import', 'sde_file_to_in')
     def sde_file_to_in(self, cr, uid, file_path, file, po_ref, pack_ref, partner_fo_ref, context=None):
