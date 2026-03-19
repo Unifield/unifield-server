@@ -59,7 +59,12 @@
             <field name="res_model">email.log</field>
             <field name="view_mode">tree,form</field>
             <field name="view_type">form</field>
-            <field name="domain">[('sender_model_id.model', '=', 'automated.import.job')]</field>
+            <field name="domain">
+                ['|',
+                    ('sender_model_id.model', '=', 'automated.import.job'),
+                    ('sender_model_id.model', '=', 'res.users')
+                ]
+            </field>
         </record>
 
         <menuitem id="auot_import_email_log_menu" name="Auto-import email logs" action="action_auto_import_email_log"
