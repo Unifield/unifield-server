@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <!-- The 2 associated ir_cron will be created during the task creation -->
+        <record id="email_notification_default" model="email.notification">
+            <field name="active">0</field>
+            <field name="reminder_active">0</field>
+        </record>
+    </data>
+
+    <data>
+        <record id="email_notification_form_view" model="ir.ui.view">
+            <field name="name">email.notification.form.view</field>
+            <field name="model">email.notification</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Email Notification Configuration" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <separator colspan="4" string="Electronic Signature Notification Settings" />
+                    <field name="active" />
+                    <field name="delay" />
+                    <field name="check_signature_expiry" />
+                    <newline />
+                    <button name="manual_run_email_notification" string="Run task manually" colspan="4" type="object" icon="gtk-execute" />
+
+                    <separator colspan="4" string="Reminder configuration" />
+                    <group colspan="4" col="4"  attrs="{'readonly':[('active','=','False')]}">
+                        <field name="reminder_active" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="ir_actions_server_email_notification" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'email_notification_default')
+action = {
+'res_model' : 'email.notification',
+'view_type' : 'form',
+'view_mode' : 'form',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_email_notification"/>
+            <field name="condition">True</field>
+            <field name="name">Open Email Notification Configuration</field>
+        </record>
+
+        <record id="email_notification_menu" model="ir.ui.menu">
+            <field name="name">Email Notification Configuration</field>
+            <field name="parent_id" ref="msf_profile.email_main_menu"/>
+            <field name="sequence" eval="15" />
+        </record>
+        <record id="ir_values_menuitem_email_notification" model="ir.values">
+            <field name="name">Menuitem Email Notification Configuration</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('msf_tools.ir_actions_server_email_notification')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('email_notification_menu')" name="res_id"/>
+        </record>
+    </data>
+</openerp>

@@ -31,3 +31,4 @@ from . import report
 from . import message_action
 from . import delete_old_supplier_catalogue
 from . import deactivate_phase_out_partners
+from . import email_notification

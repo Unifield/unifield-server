@@ -63,10 +63,12 @@ action = {
     </record>
 
 
+    <menuitem id="email_main_menu" name="Email" parent="base.menu_config" sequence="10025" />
+
     <record id="ir_ui_menu_emailconfig" model="ir.ui.menu">
         <field name="name">Email Configuration</field>
-        <field name="parent_id" ref="base.menu_config"/>
-        <field name="sequence">10025</field>
+        <field name="parent_id" ref="email_main_menu"/>
+        <field name="sequence">10</field>
     </record>
 
     <record id="ir_values_menuitem_emailconfig" model="ir.values">
