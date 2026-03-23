@@ -450,6 +450,20 @@
                         </page>
                         &signature_template;
                     </notebook>
+                    <group>
+                        <field name="sde_update_msg" invisible="1"/>
+                        <html>
+                            <p id="sde_update_banner_msg" style="display:none; position:fixed; min-width:100%%; z-index:1000; left:0; top:0; text-align:center; padding: 10px 1px; background: red none repeat scroll 0 0; color:white; font-weight:bold; font-size:1.6em" />
+
+                            <script language="javascript">
+                                var sde_update_msg = $('#sde_update_msg').val() || $('#sde_update_msg').text();
+                                if (sde_update_msg) {
+                                    $('#sde_update_banner_msg').html(sde_update_msg);
+                                    $('#sde_update_banner_msg').show();
+                                }
+                            </script>
+                        </html>
+                    </group>
                 </form>
             </field>
         </record>

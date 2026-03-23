@@ -44,9 +44,12 @@ class sde_import(osv.osv_memory):
         'partner_fo_ref_for_in': fields.char(string='Supplier FO reference to find the IN', size=128),
     }
 
+    # =============================================================================================================== #
+    #                                              INCOMING SHIPMENT                                                  #
+    # =============================================================================================================== #
     def wizard_sde_import_in_updated(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the XMLRPC script to import data in an Available Updated IN
+        Method to use instead of the JSONRPC script to import data in an Available Updated IN
         '''
         if context is None:
             context = {}
@@ -56,7 +59,7 @@ class sde_import(osv.osv_memory):
 
     def wizard_sde_import_in(self, cr, uid, ids, context=None, in_updated=False):
         '''
-        Method to use instead of the XMLRPC script to import data in an Available/Available Shipped IN
+        Method to use instead of the JSONRPC script to import data in an Available/Available Shipped IN
         '''
         if context is None:
             context = {}
@@ -72,7 +75,7 @@ class sde_import(osv.osv_memory):
 
     def wizard_sde_file_to_in(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the XMLRPC script
+        Method to use instead of the JSONRPC script
         '''
         if context is None:
             context = {}
@@ -91,7 +94,7 @@ class sde_import(osv.osv_memory):
 
     def generate_sde_dispatched_packing_list_report(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the XMLRPC script
+        Method to use instead of the JSONRPC script
         '''
         if context is None:
             context = {}
@@ -124,7 +127,7 @@ class sde_import(osv.osv_memory):
             sde_pagi_state, sde_pagi_error = False, False
             if json_data.get('sde_pagination_id'):
                 if 'sde_pagination_page' not in json_data or 'sde_pagination_type' not in json_data:
-                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_type are mandatory to use the pagination in the SDE import')
+                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_type are mandatory to use the pagination in the SDE IN import')
                 else:
                     sde_pagi_end_msg = json_data['sde_pagination_type'] == 'end' and _(' and finished') or ''
                     sde_pagi_page = json_data['sde_pagination_page']
@@ -146,7 +149,7 @@ class sde_import(osv.osv_memory):
                             # Use from_pack, to_pack and parcel_ids to see is the pack already exist
                             pagi_json_text = sde_pagi['pagination_json_text']
                             pagi_json_data = json.loads(pagi_json_text)
-                            parcel_keys = sde_pagi['pagination_parcel_keys'].split(',')
+                            parcel_keys = sde_pagi['pagination_keys'].split(',')
                             for pack_data in json_data.get('packing_data', []):
                                 parcels = []
                                 for parcel in pack_data.get('parcel_ids', []):
@@ -177,7 +180,7 @@ class sde_import(osv.osv_memory):
                             pagi_json_text = json.dumps(pagi_json_data)
                             pagi_vals = {
                                 'pagination_json_text': pagi_json_text,
-                                'pagination_parcel_keys': ','.join(parcel_keys),
+                                'pagination_keys': ','.join(parcel_keys),
                                 'page': sde_pagi_page,
                                 'last_modification': datetime.now(),
                             }
@@ -206,7 +209,7 @@ class sde_import(osv.osv_memory):
                                 'state': json_data['sde_pagination_type'] == 'end' and 'done' or 'progress',
                                 'pagination_json_id': json_data['sde_pagination_id'],
                                 'pagination_json_text': json_text,
-                                'pagination_parcel_keys': ','.join(parcel_keys),
+                                'pagination_keys': ','.join(parcel_keys),
                                 'page': 1,
                                 'last_modification': datetime.now(),
                             }
@@ -442,6 +445,234 @@ class sde_import(osv.osv_memory):
 
         return True
 
+    # =============================================================================================================== #
+    #                                               PICKING TICKET                                                    #
+    # =============================================================================================================== #
+    def wizard_sde_picking_ticket_import(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on Picking Tickets
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='picking_import', context=context)
+
+    def wizard_sde_picking_ticket_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on Picking Tickets
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='banner_msg', context=context)
+
+    def wizard_sde_picking_ticket_actions(self, cr, uid, ids, action=False, context=None):
+        '''
+        Method to use instead of the JSONRPC
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
+        if not sde_imp['json_text']:
+            raise osv.except_osv(_('Warning'), _('No data to import'))
+
+        result = []
+        if action == 'picking_import':
+            result = self.sde_picking_ticket_import(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'banner_msg':
+            result = self.sde_picking_ticket_msg(cr, uid, sde_imp['json_text'], context=context)
+
+        return self.write(cr, uid, ids, {'message': result.get('message', '')}, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_import')
+    def sde_picking_ticket_import(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to import JSON data.
+        A pagination system has been added to the import to allow users to import several JSONs for the same document
+        before trying to process the data. The keys sde_pagination_id, sde_import_page and sde_import_end are necessary
+        to allow the pagination.
+        '''
+        if context is None:
+            context = {}
+
+        pagi_obj = self.pool.get('sde.import.pagination')
+        pick_obj = self.pool.get('stock.picking')
+
+        context['sde_flow'] = True
+        result = {'error': False, 'message': 'Done'}
+        pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
+        pagi_json_text = ''
+        pagi_json_data = []
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The "database" key is either empty or missing from the given JSON'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
+            result['database'] = instance_name
+
+            sde_pagi_state, sde_pagi_error = False, False
+            if json_data.get('sde_pagination_id'):
+                if 'sde_pagination_page' not in json_data or 'sde_pagination_end' not in json_data:
+                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_end are mandatory to use the pagination in the SDE Picking Ticket import')
+                else:
+                    sde_pagi_end_msg = json_data.get('sde_pagination_end') and _(' and finished') or ''
+                    sde_pagi_page = json_data['sde_pagination_page']
+                    try:
+                        sde_pagi_page = int(sde_pagi_page)
+                    except ValueError:
+                        sde_pagi_error = _('The page number must be an integer')
+                    sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    if sde_pagi_ids:
+                        sde_pagi_id = sde_pagi_ids[0]
+                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, context=context)
+                        if sde_pagi['state'] == 'done':
+                            sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
+                        elif sde_pagi_page - sde_pagi['page'] != 1:
+                            sde_pagi_error = _('The page number must be in sequential order without gaps: last page imported %s, imported page %s') \
+                                             % (sde_pagi['page'], json_data['sde_pagination_page'])
+                        else:
+                            # Update the existing JSON with the new data in the key move_lines
+                            pagi_json_text = sde_pagi['pagination_json_text']
+                            pagi_json_data = json.loads(pagi_json_text)
+
+                            pagi_json_data['moves_lines'].append(json_data['move_lines'])
+                            pagi_json_text = json.dumps(pagi_json_data)
+
+                            pagi_vals = {
+                                'pagination_json_text': pagi_json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': sde_pagi_page,
+                                'last_modification': datetime.now(),
+                            }
+                            if sde_pagi_end_msg:
+                                pagi_vals['state'] = 'done'
+                            pagi_obj.write(cr, uid, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s updated%s with page %s') % (json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
+                    else:
+                        if sde_pagi_page != 1:
+                            sde_pagi_error = _('The first page of a paginated SDE import must be 1')
+                        else:
+                            sde_pagi_vals = {
+                                'state': json_data.get('sde_pagination_end') and 'done' or 'progress',
+                                'pagination_json_id': json_data['sde_pagination_id'],
+                                'pagination_json_text': json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': 1,
+                                'last_modification': datetime.now(),
+                            }
+                            sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
+
+            if sde_pagi_error:
+                raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
+                                     % (json_data.get('sde_pagination_id'), sde_pagi_error))
+            elif not json_data.get('sde_pagination_id') or (sde_pagi_end_msg and sde_pagi_id):
+                # Get the correct JSON data if the pagination has been used
+                if sde_pagi_id and pagi_json_text and pagi_json_data:
+                    json_text = pagi_json_text
+                    json_data = pagi_json_data
+
+                # get the Picking Ticket from the name
+                if not json_data.get('name'):
+                    raise osv.except_osv(_('Error'), _('The main key "name" is mandatory and should not be empty'))
+                pick_ids = self.get_picking_ticket_from_refs(cr, uid, [json_data['name']], context=context)
+
+                # # attach the simulation report to the IN
+                # self.pool.get('ir.attachment').create(cr, uid, {
+                #     'name': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                #     'datas_fname': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                #     'description': 'IN simulation screen',
+                #     'res_model': 'stock.picking',
+                #     'res_id': in_id,
+                #     'datas': file_res.get('result'),
+                # })
+            elif pagi_msg:
+                result['message'] = pagi_msg
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+        finally:
+            pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': False}, context=context)
+            if 'sde_flow' in context:
+                context.pop('sde_flow')
+
+        return result
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_msg')
+    def sde_picking_ticket_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to set a 'SDE is updating' message on a list of Picking Tickets
+        '''
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        result = {'database': '', 'error': False, 'message': ''}
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The "database" key is either empty or missing from the given JSON'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
+            result['database'] = instance_name
+
+            # Get the Picking Tickets with the references given
+            if not json_data.get('pick_list') or not isinstance(json_data['pick_list'], list):
+                raise osv.except_osv(_('Error'), _('The "pick_list" key must be a non-empty list of Picking Ticket names'))
+            pick_ids = self.get_picking_ticket_from_refs(cr, uid, json_data['pick_list'], context=context)
+
+            update_msg = _('This Picking Ticket is currently being updated via SDE since %s, please avoid making any direct change in UniField')\
+                         % (datetime.now().strftime('%d/%m/%Y %H:%M'),)
+            pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': update_msg}, context=context)
+
+            result['message'] = _('The "updated via SDE" banner message has been put on the Picking Tickets %s') % (', '.join(json_data['pick_list']),)
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+
+        return result
+
+    def get_picking_ticket_from_refs(self, cr, uid, pick_list, context=None):
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+
+        pick_ids, not_found = [], []
+        for pick_name in pick_list:
+            pick_domain = [('state', '=', 'assigned'), ('type', '=', 'out'), ('subtype', '=', 'picking'),
+                           ('backorder_id', '!=', False), ('name', '=', pick_name)]
+            pick_id = pick_obj.search(cr, uid, pick_domain, context=context)
+            if pick_id:
+                pick_ids.append(pick_id[0])
+            else:
+                not_found.append(pick_name)
+
+        if not_found:
+            raise osv.except_osv(_('Error'), _('The Available Picking Tickets %s could not be found') % (', '.join(not_found),))
+
+        return pick_ids
+
 
 sde_import()
 
@@ -453,7 +684,7 @@ class sde_update_log(osv.osv):
 
     _columns = {
         'date': fields.datetime('Update Date', required=True, readonly=True),
-        'doc_type': fields.selection(string='Document', selection=[('in', 'Incoming Shipment')], required=True, readonly=True),
+        'doc_type': fields.selection(string='Document', selection=[('in', 'Incoming Shipment'), ('pick', 'Picking Ticket')], required=True, readonly=True),
         'doc_ref': fields.char(string='Reference', size=64, required=True, readonly=True),
     }
 
@@ -470,7 +701,7 @@ class sde_import_pagination(osv.osv):
         'state': fields.selection(string='State', selection=[('progress', 'In progress'), ('done', 'Done')], readonly=True),
         'pagination_json_id': fields.char(string='Pagination JSON ID', size=16, required=True, readonly=True),
         'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
-        'pagination_parcel_keys': fields.text(string='Pagination parcels keys', required=True, readonly=True),
+        'pagination_keys': fields.text(string='Pagination keys', required=True, readonly=True),
         'page': fields.integer(string='SDE import page', required=True, readonly=True),
         'last_modification': fields.datetime(string='Last modification', readonly=True),
     }
