@@ -1294,6 +1294,10 @@
             <field name="method">us_15079_user_email</field>
         </record>
 
+        <record id="us_15252_non_service_prod_transport_flag" model="patch.scripts">
+            <field name="method">us_15252_non_service_prod_transport_flag</field>
+        </record>
+
         <!-- UF41.0 -->
         <record id="us_14587_15419_hide_sde_menu" model="patch.scripts">
             <field name="method">us_14587_15419_hide_sde_menu</field>

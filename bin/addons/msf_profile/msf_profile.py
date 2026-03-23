@@ -80,6 +80,22 @@ class patch_scripts(osv.osv):
         return True
 
     # UF40.0
+    def us_15252_non_service_prod_transport_flag(self, cr, uid, *a, **b):
+        '''
+        At HQ level, change the transport_ok flag to False on non-service UD products having it at True and sync down the change
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            prod_ids_sql = """SELECT p.id FROM product_product p LEFT JOIN product_template t on p.product_tmpl_id=t.id
+                                                                 LEFT JOIN product_international_status i ON p.international_status=i.id
+                              WHERE i.code='unidata' AND t.type!='service_recep' AND p.transport_ok='t'"""
+            cr.execute("""UPDATE ir_model_data SET last_modification = NOW(), touched = '["transport_ok"]'
+                WHERE model = 'product.product' AND res_id IN (""" + prod_ids_sql + """)""") # not_a_user_entry
+            cr.execute("UPDATE product_product SET transport_ok = 'f' WHERE id IN (" + prod_ids_sql + ")") # not_a_user_entry
+            self.log_info(cr, uid, "US-15252: %d product(s) had their Transport flag set to False" % (cr.rowcount,))
+
+        return True
+
     def us_15152_unsign_non_closed_cancelled_ins(self, cr, uid, *a, **b):
         '''
         Remove the signatures of all INs that are not Closed or Cancelled
@@ -148,23 +164,24 @@ class patch_scripts(osv.osv):
                 new_add_id = addr_obj.copy(cr, uid, add_id, {'partner_id': False, 'name': False})
                 users_obj.write(cr, uid, [u_id], {'address_id': new_add_id})
 
-        cr.execute('''
-            select
-                distinct on (res_id) res_id, new_value
-            from
-                audittrail_log_line
-            where
-                name = 'user_email' and
-                object_id = (select id from ir_model where model='res.users') and
-                res_id in %s
-            order by
-                res_id, id desc
-        ''', (tuple(user_to_fix), ))
+        if user_to_fix:
+            cr.execute('''
+                select
+                    distinct on (res_id) res_id, new_value
+                from
+                    audittrail_log_line
+                where
+                    name = 'user_email' and
+                    object_id = (select id from ir_model where model='res.users') and
+                    res_id in %s
+                order by
+                    res_id, id desc
+            ''', (tuple(user_to_fix), ))
 
-        for user_id, email in cr.fetchall():
-            if user_id and user_id != 1:
-                user_to_fix.remove(user_id)
-                users_obj.write(cr, uid, [user_id], {'user_email': email or False})
+            for user_id, email in cr.fetchall():
+                if user_id and user_id != 1:
+                    user_to_fix.remove(user_id)
+                    users_obj.write(cr, uid, [user_id], {'user_email': email or False})
 
         if user_to_fix:
             users_obj.write(cr, uid, list(user_to_fix), {'user_email': False})

@@ -48,6 +48,10 @@ import pooler
 import xmlrpc.server
 import http.server
 from xmlrpc.server import SimpleXMLRPCDispatcher
+from http.server import BaseHTTPRequestHandler
+
+import json
+import traceback
 
 try:
     import fcntl
@@ -335,6 +339,84 @@ def init_xmlrpc():
         # only register at the secure server
         reg_http_service(websrv_lib.HTTPDir('/xmlrpc/', XMLRPCRequestHandler), True)
         logging.getLogger("web-services").info("Registered XML-RPC over HTTPS only")
+
+class JSONRPCRequestHandler(
+    netsvc.OpenERPDispatcher,
+    websrv_lib.FixSendError,
+    HttpLogHandler,
+    BaseHTTPRequestHandler
+):
+    protocol_version = 'HTTP/1.1'
+    _logger = logging.getLogger('jsonrpc')
+
+    def __init__(self, conn, addr, svr):
+        BaseHTTPRequestHandler.__init__(self, conn, addr, svr)
+
+    def setup(self):
+        self.connection = websrv_lib.dummyconn()
+        self.rpc_paths = [
+            '/jsonrpc/%s' % s
+            for s in netsvc.ExportService._services.keys()
+        ]
+
+    def handle(self):
+        pass
+
+    def finish(self):
+        pass
+
+    def do_POST(self):
+        req = {}
+        try:
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length)
+            req = json.loads(body)
+
+            method = req.get("method")
+            params = req.get("params", [])
+
+            result = self._dispatch(method, params)
+
+            response = {
+                "jsonrpc": "2.0",
+                "result": result,
+                "id": req.get("id"),
+            }
+        except Exception as e:
+            if isinstance(e, netsvc.OpenERPDispatcherException):
+                error = {
+                    'code': -1,
+                    'message': str(e.exception),
+                    'traceback': e.traceback
+                }
+            else:
+               error = {
+                    'code': -2,
+                    'message': e.args and str(e.args[0]) or str(e),
+                    'traceback': ''.join(traceback.format_exception(e)),
+               }
+            response = {
+                "jsonrpc": "2.0",
+                "error": error,
+                "id": req and req.get("id") or None,
+            }
+
+        resp = json.dumps(response).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(resp)))
+        self.end_headers()
+        self.wfile.write(resp)
+
+    def _dispatch(self, method, params):
+        service_name = self.path.rstrip("/").split("/")[-1]
+        return self.dispatch(service_name, method, params, "jsonrpc")
+
+def init_jsonrpc():
+    reg_http_service(websrv_lib.HTTPDir('/jsonrpc/', JSONRPCRequestHandler))
+    logging.getLogger("web-services").info(
+        "Registered JSON-RPC over HTTP"
+    )
 
 class StaticHTTPHandler(HttpLogHandler, websrv_lib.FixSendError, websrv_lib.HttpOptions, websrv_lib.HTTPHandler):
     _logger = logging.getLogger('httpd')

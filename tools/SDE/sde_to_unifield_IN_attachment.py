@@ -1,14 +1,43 @@
 #! /usr/bin/env python
 # -*- encoding: utf-8 -*-
-import xmlrpc.client
 import sys
 import os
+import urllib.request
+import urllib.error
+import json
+import random
 
 dbname = 'my_db'
 user = 'my_user'
 password = 'my_password'
 host = 'my_host'
-port = 8069  # xml-rpc port, 8069 on prod instance
+
+# Not needed if the instance is HTTPs
+port = 8069  # json-rpc port, 8069 on prod instance
+
+def json_rpc(url, method, params, timeout=None):
+    data = {
+        "jsonrpc": "2.0",
+        "method": method,
+        "params": params,
+        "id": random.randint(0, 1000000000),
+    }
+    req = urllib.request.Request(
+        url=url,
+        data=json.dumps(data).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            reply = json.loads(response.read().decode("utf-8"))
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"JSON-RPC request failed: {e}")
+
+    if reply.get("error"):
+        raise RuntimeError(reply["error"])
+
+    return reply["result"]
 
 if len(sys.argv) < 3:
     print(r'Call the script with the file to import and at least the PO reference: i.e "%s C:\path_to_file PO_Reference Ship_or_OUT_Reference Supplier_FO_Reference"' % (sys.argv[0]))
@@ -21,20 +50,20 @@ if not os.path.exists(filepath):
 
 lang_context = {'lang': 'en_MF'}  # or fr_MF
 
-url = 'http://%s:%s/xmlrpc/' % (host, port)
+# Comment both linse and uncomment the other two in case the instance is HTTPs
+url_object = f"http://{host}:{port}/jsonrpc/object"
+url = f"http://{host}:{port}/jsonrpc/common"
+# url_object = f"https://{host}/jsonrpc/object"
+# url = f"https://{host}/jsonrpc/common"
 
-# retrieve the user id : http://<host>:<xmlrpcport>/xmlrpc/common
-sock = xmlrpc.client.ServerProxy(url + 'common', verbose=True)
-user_id = sock.login(dbname, user, password)
+# retrieve the user id
+user_id = json_rpc(url, "login", [dbname, user, password])
 if not user_id:
     print('Wrong %s password on %s:%s db: %s' % (user, host, port, dbname))
     sys.exit(1)
 
-# to query the server: http://<host>:<xmlrpcport>/xmlrpc/object
-sock = xmlrpc.client.ServerProxy(url + 'object', allow_none=True, verbose=True)
-
-# the content of the file is read
-file_content = open(filepath, 'rb').read()
+# the content of the file is read, decode it because JSON can't serialize bytes
+file_content = open(filepath, 'rb').read().decode('utf-8')
 
 # attachment message
 po_ref = sys.argv[2]
@@ -43,7 +72,7 @@ if len(sys.argv) > 3:
     pack_ref = sys.argv[3]
 if len(sys.argv) > 4:
     partner_fo_ref = sys.argv[4]
-msg = sock.execute(dbname, user_id, password, 'sde.import', 'sde_file_to_in', filepath, file_content, po_ref, pack_ref, partner_fo_ref, lang_context)
+msg = json_rpc(url_object, "execute", [dbname, user_id, password, 'sde.import', 'sde_file_to_in', filepath, file_content, po_ref, pack_ref, partner_fo_ref, lang_context])
 
 # display the result message
 print('End message: %s' % msg)

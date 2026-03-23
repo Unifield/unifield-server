@@ -27,6 +27,7 @@ import time
 from datetime import datetime
 import re
 import json
+from tools.rpc_decorators import jsonrpc_orm_exposed
 
 
 class sde_import(osv.osv_memory):
@@ -65,9 +66,9 @@ class sde_import(osv.osv_memory):
         sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
         if not sde_imp['json_text']:
             raise osv.except_osv(_('Warning'), _('No data to import'))
-        msg = self.sde_in_import(cr, uid, sde_imp['json_text'], in_updated, context=context)
+        result = self.sde_in_import(cr, uid, sde_imp['json_text'], in_updated, context=context)
 
-        return self.write(cr, uid, ids, {'message': msg}, context=context)
+        return self.write(cr, uid, ids, {'message': result.get('message', '')}, context=context)
 
     def wizard_sde_file_to_in(self, cr, uid, ids, context=None):
         '''
@@ -96,6 +97,7 @@ class sde_import(osv.osv_memory):
             context = {}
         return self.pool.get('shipment').generate_dispatched_packing_list_report(cr, uid, context=context)
 
+    @jsonrpc_orm_exposed('sde.import', 'sde_in_import')
     def sde_in_import(self, cr, uid, json_text, in_updated=False, context=None):
         '''
         Method used by the SDE script to import JSON data.
@@ -112,7 +114,8 @@ class sde_import(osv.osv_memory):
         in_simu_obj = self.pool.get('wizard.import.in.simulation.screen')
 
         context['sde_flow'] = True
-        msg, pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False, False
+        result = {'error': False, 'message': 'Done'}
+        pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
         pagi_json_text = ''
         pagi_json_data = []
         try:
@@ -222,9 +225,9 @@ class sde_import(osv.osv_memory):
                 # get the IN with the Ship Ref or the Origin
                 in_id = self.get_incoming_id_from_json(cr, uid, json_data, in_updated, context=context)
 
-                # If the IN is Available Updated reset as much data as possible, compared to the PO
-                if in_updated and self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] == 'updated':
-                    self.reset_in_available_updated(cr, uid, [in_id], context=context)
+                # If the IN is Available Shipped/Updated reset as much data as possible, compared to the PO
+                if self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] in ['shipped', 'updated']:
+                    self.reset_in_available_shipped_updated(cr, uid, [in_id], context=context)
 
                 in_proc_ids = in_proc_obj.search(cr, uid, [('picking_id', '=', in_id), ('draft', '=', True)], context=context)
                 if in_proc_ids:
@@ -248,7 +251,8 @@ class sde_import(osv.osv_memory):
                 file_res = pick_obj.generate_simulation_screen_report(cr, uid, simu_id, context=context)
 
                 simu_data = in_simu_obj.read(cr, uid, simu_id, ['import_error_ok', 'message'], context=context)
-                msg = simu_data['message'] or pagi_msg or 'Done'
+                if simu_data['message'] or pagi_msg:
+                    result.update({'error': simu_data['import_error_ok'], 'message': simu_data['message'] or pagi_msg})
                 # Only import when all the data is correct
                 if not simu_data['import_error_ok']:
                     in_simu_obj.launch_import(cr, uid, [simu_id], context=context)
@@ -265,20 +269,22 @@ class sde_import(osv.osv_memory):
                     'res_id': in_id,
                     'datas': file_res.get('result'),
                 })
-            else:
-                msg = pagi_msg or 'Done'
+            elif pagi_msg:
+                result['message'] = pagi_msg
         except Exception as e:
             # Rejection message to send back
             if isinstance(e, osv.except_osv):
-                msg = e.value
+                error_msg = e.value
             else:
-                msg = e.args and '. '.join(e.args) or e
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
         finally:
             if 'sde_flow' in context:
                 context.pop('sde_flow')
 
-        return msg
+        return result
 
+    @jsonrpc_orm_exposed('sde.import', 'sde_file_to_in')
     def sde_file_to_in(self, cr, uid, file_path, file, po_ref, pack_ref, partner_fo_ref, context=None):
         '''
         Method used by the SDE script to attach a file to an IN
@@ -292,6 +298,8 @@ class sde_import(osv.osv_memory):
         try:
             if isinstance(file, bytes):
                 file_data = file
+            elif isinstance(file, str):
+                file_data = file.encode('utf-8')
             else:  # Binary expected
                 file_data = file.data
 
@@ -335,7 +343,7 @@ class sde_import(osv.osv_memory):
 
         po_name = json_data.get('origin') and json_data['origin'].strip().upper() or False
         partner_fo_ref = json_data.get('partner_fo_ref') and json_data['partner_fo_ref'].strip().upper() or False
-        ship_ref = json_data.get('freight') and json_data['freight'].strip().upper() or False
+        ship_ref = json_data.get('freight_number') and json_data['freight_number'].strip().upper() or False
 
         # Search the IN
         return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, partner_fo_ref, in_updated, context=context)
@@ -391,15 +399,17 @@ class sde_import(osv.osv_memory):
                     in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), error_msg)
+        elif len(in_id) > 1:
+            raise osv.except_osv(_('Error'), _('Unifield was unable to identify the correct IN since multiple documents match the PO reference %s received from SDE. Please check the data sent and add more references') % (po_name,))
 
         return in_id[0]
 
-    def reset_in_available_updated(self, cr, uid, ids, context=None):
+    def reset_in_available_shipped_updated(self, cr, uid, ids, context=None):
         '''
-        For each move of the Available Updated IN, reset as much data as possible:
+        For each move of the Available Shipped/Updated IN, reset as much data as possible:
             - Merge the quantities of split lines and delete the splits
             - Remove any BN/ED info
-            - Restore the product of the linked PO line
+            - Restore the product, quantity and unit price of the linked PO line
         '''
         if context is None:
             context = {}
@@ -409,7 +419,8 @@ class sde_import(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
 
         cr.execute("""
-            SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, m.product_qty, COALESCE(pl.product_id, m.product_id)
+            SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, m.product_qty,
+                COALESCE(pl.product_id, m.product_id), COALESCE(pl.price_unit, m.price_unit)
             FROM stock_move m LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
             WHERE m.state = 'assigned' AND m.picking_id in %s and m.product_qty != 0
             """, (tuple(ids),))
@@ -418,13 +429,14 @@ class sde_import(osv.osv_memory):
         for x in cr.fetchall():
             key = (x[1], x[2], x[3])
             if key not in data:
-                data[key] = {'product_id': x[5], 'product_qty': 0, 'master': x[0]}
+                data[key] = {'product_id': x[5], 'product_qty': 0, 'price_unit': x[6], 'master': x[0]}
             else:
                 to_del.append(x[0])
             data[key]['product_qty'] += x[4]
         for key in data:
             move_vals = {'product_id': data[key]['product_id'], 'product_qty': data[key]['product_qty'],
-                         'product_uos_qty': data[key]['product_qty'], 'prodlot_id': False, 'expired_date': False}
+                         'product_uos_qty': data[key]['product_qty'], 'price_unit': data[key]['price_unit'],
+                         'prodlot_id': False, 'expired_date': False}
             move_obj.write(cr, uid, data[key]['master'], move_vals, context=context)
         move_obj.unlink(cr, uid, to_del, force=True, context=context)
 
