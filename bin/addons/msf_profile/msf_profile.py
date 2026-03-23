@@ -97,7 +97,7 @@ class patch_scripts(osv.osv):
                 if line.signed:
                     to_unsign.append(line.id)
         if to_unsign:
-            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, check_ur=False)
+            self.pool.get('signature.line')._action_unsign(cr, uid, to_unsign, check_ur=False)
         self.log_info(cr, uid, "US-15152: The signatures of %s non-closed/cancelled INs were removed" % (len(in_ids),))
 
         return True

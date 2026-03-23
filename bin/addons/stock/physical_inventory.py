@@ -543,7 +543,7 @@ class PhysicalInventory(osv.osv):
 
     def re_generate_discrepancies(self, cr, uid, inventory_ids, context=None):
         # Unsign the signed lines
-        self.unsign_all(cr, uid, inventory_ids, context=context)
+        self._unsign_all(cr, uid, inventory_ids, context=context)
 
         return self.generate_discrepancies(cr, uid, inventory_ids, context=context)
 
@@ -1163,7 +1163,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
                 discrep_line_obj.unlink(cr, uid, discrep_line_ids, context=context)
 
         # Unsign the signed lines
-        self.unsign_all(cr, uid, ids, context=context)
+        self._unsign_all(cr, uid, ids, context=context)
 
         self.write(cr, uid, ids, {'state': 'counting', 'discrepancies_generated': False}, context=context)
         return {}
@@ -1415,7 +1415,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
 
         # Unsign the signed lines
         context['pi_cancel_reset'] = True
-        self.unsign_all(cr, uid, ids, context=context)
+        self._unsign_all(cr, uid, ids, context=context)
         if 'pi_cancel_reset' in context:
             context.pop('pi_cancel_reset')
 
