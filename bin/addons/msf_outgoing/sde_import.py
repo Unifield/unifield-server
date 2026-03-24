@@ -425,7 +425,7 @@ class sde_import(osv.osv_memory):
             SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, m.product_qty,
                 COALESCE(pl.product_id, m.product_id), COALESCE(pl.price_unit, m.price_unit)
             FROM stock_move m LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
-            WHERE m.state = 'assigned' AND m.picking_id in %s and m.product_qty != 0
+            WHERE m.state = 'assigned' AND m.picking_id IN %s AND m.product_qty != 0
             """, (tuple(ids),))
         data = {}
         to_del = []
@@ -502,22 +502,22 @@ class sde_import(osv.osv_memory):
 
         pagi_obj = self.pool.get('sde.import.pagination')
         pick_obj = self.pool.get('stock.picking')
+        wiz_imp_obj = self.pool.get('wizard.pick.import')
 
         context['sde_flow'] = True
-        result = {'error': False, 'message': 'Done'}
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': _('Done')}
         pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
         pagi_json_text = ''
-        pagi_json_data = []
+        pagi_json_data, pick_ids = [], []
         try:
             json_data = json.loads(json_text)
 
             # Check if the call was to the correct instance
-            instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
             if not json_data.get('database'):
-                raise osv.except_osv(_('Error'), _('The "database" key is either empty or missing from the given JSON'))
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
             if json_data['database'] != instance_name:
                 raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
-            result['database'] = instance_name
 
             sde_pagi_state, sde_pagi_error = False, False
             if json_data.get('sde_pagination_id'):
@@ -544,7 +544,7 @@ class sde_import(osv.osv_memory):
                             pagi_json_text = sde_pagi['pagination_json_text']
                             pagi_json_data = json.loads(pagi_json_text)
 
-                            pagi_json_data['moves_lines'].append(json_data['move_lines'])
+                            pagi_json_data['move_lines'].extend(json_data['move_lines'])
                             pagi_json_text = json.dumps(pagi_json_data)
 
                             pagi_vals = {
@@ -581,20 +581,38 @@ class sde_import(osv.osv_memory):
                     json_text = pagi_json_text
                     json_data = pagi_json_data
 
-                # get the Picking Ticket from the name
+                # Get the Picking Ticket from the name
                 if not json_data.get('name'):
                     raise osv.except_osv(_('Error'), _('The main key "name" is mandatory and should not be empty'))
                 pick_ids = self.get_picking_ticket_from_refs(cr, uid, [json_data['name']], context=context)
+                pick_id = pick_ids[0]
+                pick = pick_obj.read(cr, uid, pick_id, ['name', 'sde_updated'], context=context)
+                if pick['sde_updated']:
+                    raise osv.except_osv(_('Error'), _('The Picking Ticket %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE flag there') % (pick['name'],))
 
-                # # attach the simulation report to the IN
-                # self.pool.get('ir.attachment').create(cr, uid, {
-                #     'name': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-                #     'datas_fname': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-                #     'description': 'IN simulation screen',
-                #     'res_model': 'stock.picking',
-                #     'res_id': in_id,
-                #     'datas': file_res.get('result'),
-                # })
+                # Reset the data of the imported lines
+                if not json_data.get('move_lines'):
+                    raise osv.except_osv(_('Error'), _('The main key "move_lines" is mandatory and should not be empty'))
+                lines_to_reset = []
+                for move_data in json_data['move_lines']:
+                    if isinstance(move_data.get('line_number', False), int) and move_data['line_number'] not in lines_to_reset:
+                        lines_to_reset.append(move_data['line_number'])
+                if lines_to_reset:
+                    self.reset_pick_lines(cr, uid, [pick_id], lines_to_reset, context=context)
+
+                # Import the data
+                wiz_id = wiz_imp_obj.create(cr, uid, {'picking_id': pick_id, 'json_text': json_text}, context=context)
+                imp_res = wiz_imp_obj.import_pick_xls(cr, uid, [wiz_id], context=context)
+
+                final_msg = pagi_msg or _('Done')
+                if imp_res:
+                    final_msg = final_msg + _('. The lines number %s were ignored during the import') % (', '.join(imp_res),)
+                result['message'] = final_msg
+
+                pick_obj.write(cr, uid, pick_id, {'sde_updated': True}, context=context)
+
+                # Log the update
+                self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'pick', 'doc_ref': pick['name']}, context=context)
             elif pagi_msg:
                 result['message'] = pagi_msg
         except Exception as e:
@@ -605,6 +623,7 @@ class sde_import(osv.osv_memory):
                 error_msg = e.args and '. '.join(e.args) or e
             result.update({'error': True, 'message': error_msg})
         finally:
+            # Remove the banner message
             pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': False}, context=context)
             if 'sde_flow' in context:
                 context.pop('sde_flow')
@@ -620,21 +639,20 @@ class sde_import(osv.osv_memory):
             context = {}
 
         pick_obj = self.pool.get('stock.picking')
-        result = {'database': '', 'error': False, 'message': ''}
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': ''}
         try:
             json_data = json.loads(json_text)
 
             # Check if the call was to the correct instance
-            instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
             if not json_data.get('database'):
-                raise osv.except_osv(_('Error'), _('The "database" key is either empty or missing from the given JSON'))
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
             if json_data['database'] != instance_name:
                 raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
-            result['database'] = instance_name
 
             # Get the Picking Tickets with the references given
             if not json_data.get('pick_list') or not isinstance(json_data['pick_list'], list):
-                raise osv.except_osv(_('Error'), _('The "pick_list" key must be a non-empty list of Picking Ticket names'))
+                raise osv.except_osv(_('Error'), _('The main key "pick_list" is mandatory and should be a non-empty list of Picking Ticket names'))
             pick_ids = self.get_picking_ticket_from_refs(cr, uid, json_data['pick_list'], context=context)
 
             update_msg = _('This Picking Ticket is currently being updated via SDE since %s, please avoid making any direct change in UniField')\
@@ -672,6 +690,41 @@ class sde_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('The Available Picking Tickets %s could not be found') % (', '.join(not_found),))
 
         return pick_ids
+
+    def reset_pick_lines(self, cr, uid, ids, line_numbers, context=None):
+        '''
+        For each move of the Available Picking Ticket whose line_number is in the import, reset as much data as possible:
+            - Merge the quantities of split lines and delete the splits
+            - Remove any BN/ED info
+            - Sum the quantities and set the quantity to process at 0
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        move_obj = self.pool.get('stock.move')
+
+        cr.execute("""
+            SELECT id, picking_id, line_number, product_qty FROM stock_move
+            WHERE state = 'assigned' AND picking_id IN %s AND product_qty != 0 AND line_number IN %s
+            """, (tuple(ids), tuple(line_numbers)))
+        data = {}
+        to_del = []
+        for x in cr.fetchall():
+            key = (x[1], x[2])
+            if key not in data:
+                data[key] = {'product_qty': 0, 'master': x[0]}
+            else:
+                to_del.append(x[0])
+            data[key]['product_qty'] += x[3]
+        for key in data:
+            move_vals = {'product_qty': data[key]['product_qty'], 'product_uos_qty': data[key]['product_qty'],
+                         'qty_to_process': 0, 'prodlot_id': False, 'expired_date': False}
+            move_obj.write(cr, uid, data[key]['master'], move_vals, context=context)
+        move_obj.unlink(cr, uid, to_del, force=True, context=context)
+
+        return True
 
 
 sde_import()

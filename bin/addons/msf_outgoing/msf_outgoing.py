@@ -4795,6 +4795,18 @@ class stock_picking(osv.osv):
             'width': '220px',
         }
 
+    def reset_sde_updated_flag(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No PICK selected'))
+
+        self.write(cr, uid, ids, {'sde_updated': False}, context=context)
+
+        return True
+
 
 stock_picking()
 
