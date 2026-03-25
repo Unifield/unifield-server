@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
+    <data noupdate="1">
+        <!-- Sequences for sde.export.pagination -->
+        <record id="seq_type_sde_export_pagination" model="ir.sequence.type">
+            <field name="name">SDE Paginated Exports</field>
+            <field name="code">sde.export.pagination</field>
+        </record>
+        <record id="seq_physical_inventory" model="ir.sequence">
+            <field name="name">SDE Paginated Exports</field>
+            <field name="code">sde.export.pagination</field>
+            <field name="prefix">SDE/EXPORT</field>
+            <field name="padding">6</field>
+            <field name="implementation">psql</field>
+        </record>
+    </data>
+
     <data>
         <record id="sde_import_form_view" model="ir.ui.view">
             <field name="name">sde.import.form.view</field>
@@ -27,6 +42,8 @@
                     <separator colspan="4" string="Picking Ticket Tools" />
                     <button name="wizard_sde_picking_ticket_import" string="Import Picking Ticket" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_picking_ticket_msg" string="Set banner on Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
+                    <button name="wizard_sde_picking_ticket_export" string="Export Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
+                    <button name="wizard_sde_picking_ticket_export_lines" string="Export Picking Tickets with lines" icon="gtk-execute" type="object" colspan="2" />
                     <separator colspan="4" string="Report Actions" />
                     <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="4" context="{'from_sde_wizard': True}" />
                 </form>
