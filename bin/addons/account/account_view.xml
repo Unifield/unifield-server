@@ -665,6 +665,29 @@
             </field>
         </record>
 
+        <record id="account.view_other_statement_tree" model="ir.ui.view">
+            <field name="name">account.other.statement.tree</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="11"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="currency"/>
+                    <field name="journal_id"/>
+                    <field name="balance_start"/>
+                    <field name="balance_end" />
+                    <field name="balance_end_real"/>
+                    <field name="state"/>
+                    <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
+                </tree>
+            </field>
+        </record>
+
+
            <!-- US-807: force the priority to 5 to show by default for all cases, BUT when the tree is called from Bank/Cash/Cheque main menu, then the explicit view name will be picked in the python code "register_accounting/account_bank_statement.py" method: get_statement() -->
         <record id="account.view_bank_statement_tree_for_journal" model="ir.ui.view">
             <field name="name">account.bank.statement.tree.journal</field>
@@ -722,6 +745,84 @@
             <field eval="10" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Bank Statement">
+                    <group col="7" colspan="4">
+                        <field name="name" select="1"/>
+                        <field name="date" select="1" on_change="onchange_date(date)"/>
+                        <field name="journal_id" domain="[('type', '=', 'bank')]" on_change="onchange_journal_id(journal_id)" select="1" widget="selection"/>
+                        <newline/>
+                        <field name="period_id"/>
+                        <field name="balance_start"/>
+                        <field name="balance_end_real"/>
+                        <field name="currency" invisible="1"/>
+                        <field name='company_id' widget="selection" groups="base.group_multi_company" />
+                    </group>
+                    <notebook colspan="4">
+                        <page string="Transaction" name="statement_line_ids">
+                            <field colspan="4" name="line_ids" nolabel="1">
+                                <tree editable="bottom" string="Statement lines">
+                                    <field name="sequence" readonly="1" invisible="1"/>
+                                    <field name="date" groups="base.group_extended"/>
+                                    <field name="name"/>
+                                    <field name="ref"/>
+                                    <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
+                                    <field name="type" on_change="onchange_type(partner_id, type)"/>
+                                    <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
+                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
+                                    <field name="amount"/>
+                                </tree>
+                                <form string="Statement lines">
+                                    <field name="date"/>
+                                    <field name="name"/>
+                                    <field name="ref"/>
+                                    <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
+                                    <field name="type" on_change="onchange_type(partner_id, type)"/>
+                                    <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
+                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
+                                    <field name="amount"/>
+                                    <field name="sequence" readonly="0"/>
+                                    <separator colspan="4" string="Notes"/>
+                                    <field colspan="4" name="note" nolabel="1"/>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Journal Entries" name="move_live_ids">
+                            <field colspan="4" name="move_line_ids" nolabel="1" mode="tree,form">
+                            	<tree string="Journal Items" editable="top" on_write="on_create_write">
+									<field name="move_id"/>
+									<field name="ref"/>
+									<field name="date"/>
+									<field name="period_id"/>
+									<field name="partner_id" on_change="onchange_partner_id(move_id, partner_id, account_id, debit, credit, date, journal_id)"/>
+									<field name="account_id"/>
+									<field name="name"/>
+									<field name="journal_id" invisible="1"/>
+									<field name="debit" sum="Total debit"/>
+									<field name="credit" sum="Total credit"/>
+									<field name="reconcile_partial_id" groups="base.group_extended"/>
+									<field name="reconcile_id"/>
+									<field name="state"/>
+								</tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group col="8" colspan="4">
+                        <field name="state"/>
+                        <field name="balance_end"/>
+                        <button name="button_cancel" states="confirm" string="Cancel" type="object" icon="gtk-cancel"/>
+                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="terp-stock_format-scientific"/>
+                        <button name="button_confirm_bank" states="draft" string="Confirm" type="object"  icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_other_statement_form" model="ir.ui.view">
+            <field name="name">account.other.statement.form</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field eval="12" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Statement">
                     <group col="7" colspan="4">
                         <field name="name" select="1"/>
                         <field name="date" select="1" on_change="onchange_date(date)"/>

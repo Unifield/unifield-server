@@ -121,6 +121,8 @@
                     <field name="bank_credit_account_id"/>
                     <field name="cash_debit_account_id"/>
                     <field name="cash_credit_account_id"/>
+                    <field name="other_debit_account_id"/>
+                    <field name="other_credit_account_id"/>
                 </xpath>
             </field>
         </record>

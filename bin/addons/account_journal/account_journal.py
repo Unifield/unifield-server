@@ -36,6 +36,7 @@ class account_journal(osv.osv):
                 ('bank', 'Bank'),
                 ('cash','Cash'),
                 ('cheque', 'Cheque'),
+                ('other', 'Other financial institutions'),
                 ('correction', 'Correction Auto'),
                 ('correction_hq', 'Correction HQ'),
                 ('correction_manual', 'Correction Manual'),
@@ -202,6 +203,11 @@ class account_journal(osv.osv):
                 value['value']['default_debit_account_id'] = company.bank_debit_account_id.id
             if company.bank_credit_account_id:
                 value['value']['default_credit_account_id'] = company.bank_credit_account_id.id
+        elif type == 'other':
+            if company.other_debit_account_id:
+                value['value']['default_debit_account_id'] = company.other_debit_account_id.id
+            if company.other_credit_account_id:
+                value['value']['default_credit_account_id'] = company.other_credit_account_id.id
         elif type == 'cheque':
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK'),
                                                                             ('is_current_instance', '=', True)], context=context)[0]
@@ -268,7 +274,7 @@ class account_journal(osv.osv):
         """
         reg_obj = self.pool.get('account.bank.statement')
         # UTP-182: the register isn't created if the journal comes from another instance via the synchronization
-        if 'type' in vals and vals['type'] in ('cash', 'bank', 'cheque') \
+        if 'type' in vals and vals['type'] in ('cash', 'bank', 'cheque', 'other') \
                 and not context.get('sync_update_execution', False) and \
                 not reg_obj.search_exist(cr, uid, [('journal_id', '=', journal_id)], context=context):
 

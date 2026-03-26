@@ -30,6 +30,17 @@
         menu="True"
         header="False"/>
 
+        <report id="balance_reconciliation"
+        string="Balance Reconciliation"
+        view_ids="account.view_other_statement_tree,account.view_other_statement_form"
+        target_filename="${_('Balance Reconciliation')}_${name}_%(year)s%(month)s%(day)s"
+        model="account.bank.statement"
+        name="bank.reconciliation"
+        rml="register_accounting/report/balance_reconciliation.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+
         <report
         id="cheque_inventory_2"
         string="Cheque Inventory"

@@ -1,0 +1,147 @@
+<?xml version="1.0"?>
+<document filename="balance_reconciliation.pdf">
+
+  <template pageSize="(595.0,832.0)" title="Balance Reconciliation" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
+
+      <pageGraphics>
+        <fill color="blue"/>
+        <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
+        <image x="50" y="760.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+        <setFont name="Helvetica" size="8"/>
+        <fill color="black"/>
+        <drawString x="285" y="10.0">Page <pageNumber /></drawString>
+      </pageGraphics>
+    </pageTemplate>
+  </template>
+
+  <stylesheet>
+    <initialize>
+      <paraStyle name="all" fontName="Helvetica" fontSize="9.0"/>
+    </initialize>
+
+    <blockTableStyle id="table_reconciliation">
+      <lineStyle kind="GRID" colorName="grey"/>
+      <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="table_sign">
+      <lineStyle kind="LINEBELOW" colorName="grey" start="0,0" stop="0,0"/>
+      <lineStyle kind="BOX" colorName="black" start="1,0" stop="1,0"/>
+      <blockValign value="MIDDLE"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="table_comments">
+      <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+    </blockTableStyle>
+
+    <paraStyle name="right" alignment="RIGHT"/>
+    <paraStyle name="center" alignment="CENTER"/>
+    <paraStyle name="text" leftIndent="3mm"/>
+    <paraStyle name="text_right" rightIndent="3mm" alignment="RIGHT"/>
+    <paraStyle name="medium_text" fontName="Helvetica" fontSize="9" alignment="LEFT"/>
+  </stylesheet>
+
+  <story>
+
+    <section>
+      [[ repeatIn(objects,'o') ]]
+      <title>Balance Reconciliation</title>
+      <para style="center"><b>Period: [[ o.period_id and o.period_id.code or '' ]]</b></para>
+      <para style="center"><b>[[ o.period_id and o.period_id.date_stop and formatLang(o.period_id.date_stop, date=True) or '' ]]</b></para>
+
+      <spacer length="24"/>
+
+      <blockTable colWidths="90mm, 90mm" style="table_reconciliation">
+        <tr>
+          <td>
+            <para>Register name: <b>[[ o.name ]]</b></para>
+            <para>Responsible: [[ o.responsible_ids and ', '.join([resp.name for resp in o.responsible_ids]) or '' ]]</para>
+          </td>
+          <td>
+            <para>Balance journal code: <b>[[ o.journal_id and o.journal_id.code or '' ]]</b></para>
+            <para>Cheque journal code(s): <b>[[ o.journal_id.cheque_journal_id and ", ".join([ c.code for c in o.journal_id.cheque_journal_id]) or '-' ]]</b></para>
+            <para>Journal name: <b>[[ o.journal_id and o.journal_id.name or '' ]]</b></para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para>
+              Starting Balance: <b>[[ o.balance_start and formatLang(o.balance_start, digits=2, grouping=True) or '0.00' ]]</b> [[ o.currency and o.currency.name or '' ]]
+            </para>
+            <para>
+              Calculated Balance: <b>[[ o.balance_end and formatLang(o.balance_end, digits=2, grouping=True) or '0.00' ]]</b> [[ o.currency and o.currency.name or '' ]]
+            </para>
+            <para>
+              Total amount of pending cheque: <b>[[ formatLang(get_amount_pending_cheque(o), digits=2, grouping=True) ]]</b> [[ o.currency and o.currency.name or '' ]]
+            </para>
+            <para>
+              Calculated Balance - Pending cheque: <b>[[ formatLang( (o.balance_end or 0.0) - get_amount_pending_cheque(o), digits=2, grouping=True) ]]</b> [[ o.currency and o.currency.name or '' ]]
+            </para>
+          </td>
+          <td>
+            <para>
+              Statement balance: <b>[[ o.balance_end_real and formatLang(o.balance_end_real, digits=2, grouping=True) or '0.00' ]]</b> [[ o.currency and o.currency.name or '' ]]
+            </para>
+            <para>
+              Gap: <b>[[ o.balance_gap and formatLang(o.balance_gap, digits=2, grouping=True) or '0.00' ]]</b> [[ o.currency and o.currency.name or '' ]]
+            </para>
+          </td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <para style="text"><b>Account number:</b></para>
+      <blockTable colWidths="180mm" rowHeights="10mm" style="table_comments">
+        <tr>
+          <td>[[ o.bank_account_number or '' ]]</td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <para style="text"><b>Comments:</b></para>
+      <blockTable colWidths="180mm" rowHeights="20mm" style="table_comments">
+        <tr>
+          <td>[[ format(o.notes or '') ]]</td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <para style="text">Register opening date: <b>[[ o.date and formatLang(o.date, date=True) or '' ]]</b></para>
+      <para style="text">Register state: <b>[[ getSel(o, 'state') ]]</b></para>
+      <para style="text">End of month balance state: <b>[[ o.closing_balance_frozen and translate('Confirmed') or translate('Not confirmed') ]][[ o.closing_balance_frozen and o.closing_balance_frozen_date and (' ' + formatLang(o.closing_balance_frozen_date, date=True)) or '' ]]</b></para>
+      <para style="text">Register closing date: <b>[[ o.closing_date and o.closing_date != "False" and formatLang(o.closing_date, date=True) or '']]</b></para>
+      <para style="text">Report date: <b>[[ formatLang(getNow(show_datetime=True), date_time=True) ]]</b></para>
+
+      <spacer length="24"/>
+
+      <blockTable colWidths="120mm, 60mm" style="table_sign">
+        <tr>
+          <td><para style="medium_text">[[ o.register_closed_by or '' ]] [[ getSign(objects[0], 'fr', 'user_name') ]] [[ getSign(objects[0], 'fr', 'date') ]] [[ getSign(objects[0], 'fr', 'format_value') ]]</para></td>
+          <td><image width="100" height="25" mask="auto">[[ getSign(objects[0], 'fr', 'image') or removeParentNode('image') ]]</image></td>
+        </tr>
+        <tr>
+          <td><para>(Name, Function)</para></td>
+        </tr>
+      </blockTable>
+
+      <blockTable colWidths="120mm, 60mm" style="table_sign">
+        <tr>
+          <td><para style="medium_text">[[ getSign(objects[0], 'mr', 'user_name') ]] [[ getSign(objects[0], 'mr', 'date') ]] [[ getSign(objects[0], 'mr', 'format_value') ]]</para></td>
+          <td><image width="100" height="25" mask="auto">[[ getSign(objects[0], 'mr', 'image') or removeParentNode('image') ]]</image></td>
+        </tr>
+        <tr>
+          <td><para>(Name, Function)</para></td>
+        </tr>
+      </blockTable>
+
+    </section>
+
+
+  </story>
+</document>

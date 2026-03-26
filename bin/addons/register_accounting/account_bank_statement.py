@@ -675,7 +675,15 @@ The starting balance will be proposed automatically and the closing balance is t
             search_view = 'view_account_bank_statement_filter'
             res_module = 'register_accounting'
             res_view = 'inherit_view_bank_statement_form2'
-            st_help = "A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box."
+            st_help = "A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up  cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box."
+        elif st_type == 'other':
+            name = _('Other Registers')
+            tree_module = 'account'
+            tree_view = 'view_other_statement_tree'
+            search_module = 'register_accounting'
+            search_view = 'view_other_statement_search'
+            res_module = 'register_accounting'
+            res_view = 'inherit_view_other_statement_form'
         # Search views
         tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, tree_module, tree_view)
         tree_view_id = tree_view_id and tree_view_id[1] or False

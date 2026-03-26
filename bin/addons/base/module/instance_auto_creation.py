@@ -682,6 +682,7 @@ class instance_auto_creation(osv.osv):
                 'debit_account_pl_negative': 'ye_pl_ne_debit_account',
                 'default_cheque_account': ['cheque_debit_account_id', 'cheque_credit_account_id'],
                 'default_bank_account': ['bank_debit_account_id', 'bank_credit_account_id'],
+                'default_other_account': ['other_debit_account_id', 'other_credit_account_id'],
                 'default_cash_account': ['cash_debit_account_id', 'cash_credit_account_id'],
             }
 
