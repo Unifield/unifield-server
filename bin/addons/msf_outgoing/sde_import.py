@@ -1132,7 +1132,7 @@ sde_import_pagination()
 class sde_export_pagination(osv.osv):
     _name = 'sde.export.pagination'
     _description = 'SDE Paginated Exports'
-    _order = 'id desc'
+    _order = 'id desc,page desc'
 
     _columns = {
         'pagination_json_id': fields.char(string='Pagination JSON ID', size=32, required=True, readonly=True),
