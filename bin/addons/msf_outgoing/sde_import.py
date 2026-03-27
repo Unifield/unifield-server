@@ -859,14 +859,13 @@ class sde_import(osv.osv_memory):
                     pagi_msg = _('. The export have been paginated into %s pages. If you want to retrieve the other pages, please use the "sde_pagination_id" data given') % (last_page,)
 
                     # Create the remaining pages in the background
-                    offset += lines_per_page
                     while sde_pagi_page < last_page:
                         sde_pagi_page += 1
+                        offset += lines_per_page
                         threaded_exp_pagi = threading.Thread(target=self.create_picking_ticket_paginated_export,
                                                              args=(cr, uid, pick_ids, sde_pagi_id, sde_pagi_page, last_page,
                                                                    offset, lines_per_page, with_lines, context))
                         threaded_exp_pagi.start()
-                        offset += lines_per_page
 
                 final_msg_pick = pick_names and ', '.join(pick_names) or _('%s Picking Tickets') % (len(pick_ids),)
                 result.update({
