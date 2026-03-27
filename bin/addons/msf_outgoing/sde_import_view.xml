@@ -6,10 +6,10 @@
             <field name="name">SDE Paginated Exports</field>
             <field name="code">sde.export.pagination</field>
         </record>
-        <record id="seq_physical_inventory" model="ir.sequence">
+        <record id="seq_sde_export_pagination" model="ir.sequence">
             <field name="name">SDE Paginated Exports</field>
             <field name="code">sde.export.pagination</field>
-            <field name="prefix">SDE_PICK/EXPORT</field>
+            <field name="prefix">SDE/EXPORT</field>
             <field name="padding">6</field>
             <field name="implementation">psql</field>
         </record>
@@ -119,6 +119,7 @@
             <field name="arch" type="xml">
                 <search string="SDE Paginated exports">
                     <field name="pagination_json_id" />
+                    <field name="doc_type" />
                     <field name="with_lines" />
                 </search>
             </field>
@@ -131,6 +132,7 @@
             <field name="arch" type="xml">
                 <tree string="SDE Paginated exports" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <field name="pagination_json_id"/>
+                    <field name="doc_type"/>
                     <field name="page"/>
                     <field name="last_page"/>
                     <field name="with_lines"/>
@@ -145,6 +147,7 @@
             <field name="arch" type="xml">
                 <form string="SDE Paginated export" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <field name="pagination_json_id"/>
+                    <field name="doc_type"/>
                     <field name="page"/>
                     <field name="last_page"/>
                     <field name="with_lines"/>

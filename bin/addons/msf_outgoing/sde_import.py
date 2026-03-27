@@ -852,7 +852,8 @@ class sde_import(osv.osv_memory):
                     last_page = math.ceil(nb_lines / lines_per_page)
 
                     pagi_exp_obj.create(cr, uid, {'pagination_json_id': sde_pagi_id, 'pagination_json_text': json.dumps(data),
-                                                  'page': sde_pagi_page, 'last_page': False, 'with_lines': with_lines}, context=context)
+                                                  'doc_type': 'pick', 'page': sde_pagi_page, 'last_page': False,
+                                                  'with_lines': with_lines}, context=context)
                     result.update({'sde_pagination_id': sde_pagi_id, 'sde_pagination_page': sde_pagi_page,
                                    'sde_pagination_last_page': last_page})
 
@@ -1040,8 +1041,8 @@ class sde_import(osv.osv_memory):
                     'np_check': pick[31] or False,
                 })
 
-        pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'page': page,
-                     'last_page': page == last_page, 'with_lines': with_lines}
+        pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'pick',
+                     'page': page, 'last_page': page == last_page, 'with_lines': with_lines}
         self.pool.get('sde.export.pagination').create(new_cr, uid, pagi_vals, context=context)
 
         new_cr.commit()
@@ -1136,6 +1137,7 @@ class sde_export_pagination(osv.osv):
     _columns = {
         'pagination_json_id': fields.char(string='Pagination JSON ID', size=32, required=True, readonly=True),
         'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
+        'doc_type': fields.selection(string='Document', selection=[('pick', 'Picking Ticket')], required=True, readonly=True),
         'page': fields.integer(string='SDE import page', required=True, readonly=True),
         'last_page': fields.boolean(string='Last page of the export', readonly=True),
         'with_lines': fields.boolean(string='Exported with lines', readonly=True),
