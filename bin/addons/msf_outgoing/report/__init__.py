@@ -31,3 +31,4 @@ from . import labels
 from . import cargo_manifest
 from . import pre_packing_excel_report
 from . import freight_manifest
+from . import dispatched_packing_list_xls

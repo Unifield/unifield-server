@@ -1,0 +1,1152 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 MSF, TeMPO Consulting
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import osv, fields
+from tools.translate import _
+
+import base64
+import time
+from datetime import datetime
+import re
+import json
+import math
+import threading
+import pooler
+from tools.rpc_decorators import jsonrpc_orm_exposed
+
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from msf_order_date import TRANSPORT_TYPE
+
+LIST_ORDER_PRIORITY = {key: _(value) for key, value in ORDER_PRIORITY}
+LIST_ORDER_CATEGORY = {key: _(value) for key, value in ORDER_CATEGORY}
+LIST_TRANSPORT_TYPE = {key: _(value) for key, value in TRANSPORT_TYPE}
+
+
+class sde_import(osv.osv_memory):
+    _name = 'sde.import'
+    _description = 'SDE Tools'
+
+    _columns = {
+        'json_text': fields.text(string='JSON data', help='Please put the data on a single line, with no line return. Used by IN imports and Picking actions'),
+        'file': fields.binary(string='File', filters='*.xml, *.xls'),
+        'filename': fields.char(string='Imported filename', size=256),
+        'message': fields.text(string='Message'),
+        'po_ref_for_in': fields.char(string='PO reference to find the IN', size=128),
+        'pack_ref_for_in': fields.char(string='Ship/OUT reference to find the IN', size=128),
+        'partner_fo_ref_for_in': fields.char(string='Supplier FO reference to find the IN', size=128),
+    }
+
+    # =============================================================================================================== #
+    #                                              INCOMING SHIPMENT                                                  #
+    # =============================================================================================================== #
+    def wizard_sde_import_in_updated(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC script to import data in an Available Updated IN
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_import_in(cr, uid, ids, context=context, in_updated=True)
+
+    def wizard_sde_import_in(self, cr, uid, ids, context=None, in_updated=False):
+        '''
+        Method to use instead of the JSONRPC script to import data in an Available/Available Shipped IN
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
+        if not sde_imp['json_text']:
+            raise osv.except_osv(_('Warning'), _('No JSON data to use'))
+        result = self.sde_in_import(cr, uid, sde_imp['json_text'], in_updated, context=context)
+
+        return self.write(cr, uid, ids, {'message': result.get('message', '')}, context=context)
+
+    def wizard_sde_file_to_in(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC script
+        '''
+        if context is None:
+            context = {}
+
+        sde_imp = self.read(cr, uid, ids[0], ['file', 'filename', 'po_ref_for_in', 'pack_ref_for_in', 'partner_fo_ref_for_in'], context=context)
+        if not sde_imp['file']:
+            raise osv.except_osv(_('Warning'), _('No file to import'))
+        file = base64.b64decode(sde_imp['file'])
+
+        if not sde_imp['po_ref_for_in'] and not sde_imp['partner_fo_ref_for_in']:
+            raise osv.except_osv(_('Warning'), _('Please add at least the PO reference or the Supplier FO reference to find the IN'))
+        msg = self.sde_file_to_in(cr, uid, sde_imp['filename'], file, sde_imp['po_ref_for_in'],
+                                  sde_imp['pack_ref_for_in'], sde_imp['partner_fo_ref_for_in'], context=context)
+
+        return self.write(cr, uid, ids, {'message': msg}, context=context)
+
+    def generate_sde_dispatched_packing_list_report(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC script
+        '''
+        if context is None:
+            context = {}
+        return self.pool.get('shipment').generate_dispatched_packing_list_report(cr, uid, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_in_import')
+    def sde_in_import(self, cr, uid, json_text, in_updated=False, context=None):
+        '''
+        Method used by the SDE script to import JSON data.
+        A pagination system has been added to the import to allow users to import several JSONs for the same document
+        before trying to process the data. The keys sde_pagination_id, sde_import_page and sde_import_type are necessary
+        to allow the pagination.
+        '''
+        if context is None:
+            context = {}
+
+        pagi_obj = self.pool.get('sde.import.pagination')
+        pick_obj = self.pool.get('stock.picking')
+        in_proc_obj = self.pool.get('stock.incoming.processor')
+        in_simu_obj = self.pool.get('wizard.import.in.simulation.screen')
+
+        context['sde_flow'] = True
+        result = {'error': False, 'message': 'Done'}
+        pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
+        pagi_json_text = ''
+        pagi_json_data = []
+        try:
+            json_data = json.loads(json_text)
+
+            sde_pagi_state, sde_pagi_error = False, False
+            if json_data.get('sde_pagination_id'):
+                if 'sde_pagination_page' not in json_data or 'sde_pagination_type' not in json_data:
+                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_type are mandatory to use the pagination in the SDE IN import')
+                else:
+                    sde_pagi_end_msg = json_data['sde_pagination_type'] == 'end' and _(' and finished') or ''
+                    sde_pagi_page = json_data['sde_pagination_page']
+                    try:
+                        sde_pagi_page = int(sde_pagi_page)
+                    except ValueError:
+                        sde_pagi_error = _('The page number must be an integer')
+                    sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    if sde_pagi_ids:
+                        sde_pagi_id = sde_pagi_ids[0]
+                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, context=context)
+                        if sde_pagi['state'] == 'done':
+                            sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
+                        elif sde_pagi_page - sde_pagi['page'] != 1:
+                            sde_pagi_error = _('The page number must be in sequential order without gaps: last page imported %s, imported page %s') \
+                                             % (sde_pagi['page'], json_data['sde_pagination_page'])
+                        else:
+                            # Update the existing JSON with the new data in the key packing_data
+                            # Use from_pack, to_pack and parcel_ids to see is the pack already exist
+                            pagi_json_text = sde_pagi['pagination_json_text']
+                            pagi_json_data = json.loads(pagi_json_text)
+                            parcel_keys = sde_pagi['pagination_keys'].split(',')
+                            for pack_data in json_data.get('packing_data', []):
+                                parcels = []
+                                for parcel in pack_data.get('parcel_ids', []):
+                                    if parcel.get('parcel_id'):
+                                        parcel_id = str(parcel['parcel_id']).strip()
+                                        if ',' in parcel_id:
+                                            raise osv.except_osv(_('Warning'), _('parcel_id "%s": Commas (,) are not allowed in Parcel ID')
+                                                                 % (parcel_id,))
+                                        parcels.append(parcel_id)
+                                parcel_key = 'f%st%spl%spar%s' % (pack_data.get('parcel_from', 0), pack_data.get('parcel_to', 0),
+                                                                  pack_data.get('packing_list', ''), ''.join(parcels))
+                                if parcel_key in parcel_keys:
+                                    # Find the correct existing packing_data to update in
+                                    for pagi_pack_data in pagi_json_data.get('packing_data', []):
+                                        pagi_parcels = []
+                                        for pagi_parcel in pagi_pack_data.get('parcel_ids', []):
+                                            if pagi_parcel.get('parcel_id'):
+                                                pagi_parcels.append(str(pagi_parcel['parcel_id']).strip())
+                                        pagi_parcel_key = 'f%st%spl%spar%s' % (pagi_pack_data.get('parcel_from', 0), pagi_pack_data.get('parcel_to', 0),
+                                                                               pagi_pack_data.get('packing_list', ''), ''.join(pagi_parcels))
+                                        if pagi_parcel_key == parcel_key:
+                                            pagi_json_data['packing_data'][pagi_json_data['packing_data'].index(pagi_pack_data)]['move_lines'].extend(pack_data['move_lines'])
+                                            break
+                                else:
+                                    pagi_json_data['packing_data'].append(pack_data)
+                                    parcel_keys.append(parcel_key)
+
+                            pagi_json_text = json.dumps(pagi_json_data)
+                            pagi_vals = {
+                                'pagination_json_text': pagi_json_text,
+                                'pagination_keys': ','.join(parcel_keys),
+                                'page': sde_pagi_page,
+                                'last_modification': datetime.now(),
+                            }
+                            if sde_pagi_end_msg:
+                                pagi_vals['state'] = 'done'
+                            pagi_obj.write(cr, uid, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s updated%s with page %s') \
+                                       % (json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
+                    else:
+                        if sde_pagi_page != 1:
+                            sde_pagi_error = _('The first page of a paginated SDE import must be 1')
+                        else:
+                            parcel_keys = []
+                            for pack_data in json_data.get('packing_data', []):
+                                parcels = []
+                                for parcel in pack_data.get('parcel_ids', []):
+                                    if parcel.get('parcel_id'):
+                                        parcel_id = str(parcel['parcel_id']).strip()
+                                        if ',' in parcel_id:
+                                            raise osv.except_osv(_('Warning'), _('parcel_id "%s": Commas (,) are not allowed in Parcel ID')
+                                                                 % (parcel_id,))
+                                        parcels.append(parcel_id)
+                                parcel_keys.append('f%st%spl%spar%s' % (pack_data.get('parcel_from', 0), pack_data.get('parcel_to', 0),
+                                                                        pack_data.get('packing_list', ''), ''.join(parcels)))
+                            sde_pagi_vals = {
+                                'state': json_data['sde_pagination_type'] == 'end' and 'done' or 'progress',
+                                'pagination_json_id': json_data['sde_pagination_id'],
+                                'pagination_json_text': json_text,
+                                'pagination_keys': ','.join(parcel_keys),
+                                'page': 1,
+                                'last_modification': datetime.now(),
+                            }
+                            sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
+
+            if sde_pagi_error:
+                raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
+                                     % (json_data.get('sde_pagination_id'), sde_pagi_error))
+            elif not json_data.get('sde_pagination_id') or (sde_pagi_end_msg and sde_pagi_id):
+                # Get the correct JSON data if the pagination has been used
+                if sde_pagi_id and pagi_json_text and pagi_json_data:
+                    json_text = pagi_json_text
+                    json_data = pagi_json_data
+
+                # get the IN with the Ship Ref or the Origin
+                in_id = self.get_incoming_id_from_json(cr, uid, json_data, in_updated, context=context)
+
+                # If the IN is Available Shipped/Updated reset as much data as possible, compared to the PO
+                if self.pool.get('stock.picking').read(cr, uid, in_id, ['state'], context=context)['state'] in ['shipped', 'updated']:
+                    self.reset_in_available_shipped_updated(cr, uid, [in_id], context=context)
+
+                in_proc_ids = in_proc_obj.search(cr, uid, [('picking_id', '=', in_id), ('draft', '=', True)], context=context)
+                if in_proc_ids:
+                    in_processor = in_proc_ids[0]
+                    if not in_proc_obj.read(cr, uid, in_processor, ['sde_updated'], context=context)['sde_updated']:
+                        in_proc_obj.write(cr, uid, in_processor, {'sde_updated': True}, context=context)
+                else:
+                    # create stock.incoming.processor and its stock.move.in.processor
+                    in_processor = in_proc_obj.create(cr, uid, {'picking_id': in_id, 'sde_updated': True}, context=context)
+                    # import all lines and set qty to zero
+                    in_proc_obj.create_lines(cr, uid, in_processor, context=context)
+
+                in_proc_obj.launch_simulation(cr, uid, in_processor, context=context)
+
+                simu_id = context.get('simu_id')
+
+                # create simulation screen to get the simulation report:
+                in_simu_obj.write(cr, uid, [simu_id], {'json_text': json_text, 'with_pack': True}, context=context)
+
+                in_simu_obj.launch_simulate(cr, uid, [simu_id], context=context)
+                file_res = pick_obj.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+
+                simu_data = in_simu_obj.read(cr, uid, simu_id, ['import_error_ok', 'message'], context=context)
+                if simu_data['message'] or pagi_msg:
+                    result.update({'error': simu_data['import_error_ok'], 'message': simu_data['message'] or pagi_msg})
+                # Only import when all the data is correct
+                if not simu_data['import_error_ok']:
+                    in_simu_obj.launch_import(cr, uid, [simu_id], context=context)
+                    # Log the update
+                    in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
+                    self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
+
+                # attach the simulation report to the IN
+                self.pool.get('ir.attachment').create(cr, uid, {
+                    'name': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                    'datas_fname': 'SDE_simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                    'description': 'IN simulation screen',
+                    'res_model': 'stock.picking',
+                    'res_id': in_id,
+                    'datas': file_res.get('result'),
+                })
+            elif pagi_msg:
+                result['message'] = pagi_msg
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+        finally:
+            if 'sde_flow' in context:
+                context.pop('sde_flow')
+
+        return result
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_file_to_in')
+    def sde_file_to_in(self, cr, uid, file_path, file, po_ref, pack_ref, partner_fo_ref, context=None):
+        '''
+        Method used by the SDE script to attach a file to an IN
+        '''
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+
+        msg = False
+        try:
+            if isinstance(file, bytes):
+                file_data = file
+            elif isinstance(file, str):
+                file_data = file.encode('utf-8')
+            else:  # Binary expected
+                file_data = file.data
+
+            # Get the IN with the references given
+            in_id = self.get_incoming_id_from_refs(cr, uid, po_ref, pack_ref, partner_fo_ref, False, context=context)
+            in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
+
+            # attach the simulation file to the IN
+            filename = 'SDE_incoming_shipment_simulation_file_%s.%s' % (time.strftime('%Y_%m_%d_%H_%M'), file_path.split('.')[-1])
+            self.pool.get('ir.attachment').create(cr, uid, {
+                'name': filename,
+                'datas_fname': filename,
+                'description': 'SDE file for IN',
+                'res_model': 'stock.picking',
+                'res_id': in_id,
+                'datas': base64.b64encode(file_data).decode('utf8'),
+            })
+            msg = _('%s has been attached to %s') % (filename, in_name)
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                msg = e.value
+            else:
+                msg = e.args and '. '.join(e.args) or e
+
+        return msg
+
+    def get_incoming_id_from_json(self, cr, uid, json_data, in_updated, context=None):
+        '''
+        The Origin field is required in the file, but not the Ship Reference. If the Ship Reference is filled, only
+        Available Shipped INs will be searched, Available otherwise
+        '''
+        if context is None:
+            context = {}
+
+        # Search the file
+        if 'origin' not in json_data:
+            raise osv.except_osv(_('Error'), _('Main key "origin" not found in the given JSON'))
+        if not json_data.get('origin') and not json_data.get('partner_fo_ref'):
+            raise osv.except_osv(_('Error'), _('Either the main key "origin" or the main key "partner_fo_ref" shouldn\'t be empty'))
+
+        po_name = json_data.get('origin') and json_data['origin'].strip().upper() or False
+        partner_fo_ref = json_data.get('partner_fo_ref') and json_data['partner_fo_ref'].strip().upper() or False
+        ship_ref = json_data.get('freight_number') and json_data['freight_number'].strip().upper() or False
+
+        # Search the IN
+        return self.get_incoming_id_from_refs(cr, uid, po_name, ship_ref, partner_fo_ref, in_updated, context=context)
+
+    def get_incoming_id_from_refs(self, cr, uid, po_name, ship_ref, partner_fo_ref, in_updated, context=None):
+        if context is None:
+            context = {}
+
+        if not po_name and not partner_fo_ref:
+            raise osv.except_osv(_('Error'), _('Both the PO Reference and the Supplier FO Reference must not be empty'))
+
+        po_obj = self.pool.get('purchase.order')
+        pick_obj = self.pool.get('stock.picking')
+
+        po_id = False
+        if po_name:
+            if po_name.find(':') != -1:
+                for part in po_name.split(':'):
+                    re_res = re.findall(r'PO[0-9]+$', part, re.I)
+                    if re_res:
+                        po_name = part
+                        break
+            po_id = po_obj.search(cr, uid, [('name', '=ilike', po_name)], context=context)
+            if not po_id:
+                raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
+        if not po_id and partner_fo_ref:
+            po_id = po_obj.search(cr, uid, [('partner_ref', 'ilike', partner_fo_ref)], context=context)
+            if not po_id:
+                raise osv.except_osv(_('Error'), _('PO with Supplier FO reference %s not found') % partner_fo_ref)
+
+        # Search the IN
+        if not po_id:
+            raise osv.except_osv(_('Error'), _('PO was not found with the given references'))
+        in_domain = [('purchase_id', '=', po_id[0]), ('type', '=', 'in'), ('claim', '=', False)]
+        error_msg = _('No available IN found for the given PO %s') % po_name
+
+        in_id = False
+        # Look for Available Updated IN first
+        if in_updated:
+            in_upd_domain = in_domain + [('state', '=', 'updated')]
+            if ship_ref:
+                in_upd_domain.append(('shipment_ref', '=ilike', ship_ref))
+            in_id = pick_obj.search(cr, uid, in_upd_domain, context=context)
+
+        if not in_id:
+            if ship_ref:
+                in_domain.extend([('shipment_ref', '=ilike', ship_ref), ('state', '=', 'shipped')])
+                error_msg = _('No available shipped IN found for the given PO %s and the given Ship Reference %s') % (po_name, ship_ref)
+                in_id = pick_obj.search(cr, uid, in_domain, context=context)
+            else:
+                in_id = pick_obj.search(cr, uid, in_domain + [('state', '=', 'assigned')], context=context)
+                if not in_id:
+                    in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
+        if not in_id:
+            raise osv.except_osv(_('Error'), error_msg)
+        elif len(in_id) > 1:
+            raise osv.except_osv(_('Error'), _('Unifield was unable to identify the correct IN since multiple documents match the PO reference %s received from SDE. Please check the data sent and add more references') % (po_name,))
+
+        return in_id[0]
+
+    def reset_in_available_shipped_updated(self, cr, uid, ids, context=None):
+        '''
+        For each move of the Available Shipped/Updated IN, reset as much data as possible:
+            - Merge the quantities of split lines and delete the splits
+            - Remove any BN/ED info
+            - Restore the product, quantity and unit price of the linked PO line
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        move_obj = self.pool.get('stock.move')
+
+        cr.execute("""
+            SELECT m.id, m.picking_id, m.line_number, m.purchase_line_id, m.product_qty,
+                COALESCE(pl.product_id, m.product_id), COALESCE(pl.price_unit, m.price_unit)
+            FROM stock_move m LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+            WHERE m.state = 'assigned' AND m.picking_id IN %s AND m.product_qty != 0
+            """, (tuple(ids),))
+        data = {}
+        to_del = []
+        for x in cr.fetchall():
+            key = (x[1], x[2], x[3])
+            if key not in data:
+                data[key] = {'product_id': x[5], 'product_qty': 0, 'price_unit': x[6], 'master': x[0]}
+            else:
+                to_del.append(x[0])
+            data[key]['product_qty'] += x[4]
+        for key in data:
+            move_vals = {'product_id': data[key]['product_id'], 'product_qty': data[key]['product_qty'],
+                         'product_uos_qty': data[key]['product_qty'], 'price_unit': data[key]['price_unit'],
+                         'prodlot_id': False, 'expired_date': False}
+            move_obj.write(cr, uid, data[key]['master'], move_vals, context=context)
+        move_obj.unlink(cr, uid, to_del, force=True, context=context)
+
+        return True
+
+    # =============================================================================================================== #
+    #                                               PICKING TICKET                                                    #
+    # =============================================================================================================== #
+    def wizard_sde_picking_ticket_import(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on Picking Tickets
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='picking_import', context=context)
+
+    def wizard_sde_picking_ticket_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on Picking Tickets
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='banner_msg', context=context)
+
+    def wizard_sde_picking_ticket_export(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export Picking
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='picking_export', context=context)
+
+    def wizard_sde_picking_ticket_export_lines(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export Picking Tickets with lines
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='picking_export_lines', context=context)
+
+    def wizard_sde_picking_ticket_actions(self, cr, uid, ids, action=False, context=None):
+        '''
+        Method to use instead of the JSONRPC
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
+        if not sde_imp['json_text']:
+            raise osv.except_osv(_('Warning'), _('No JSON data to use'))
+
+        result = []
+        if action == 'picking_import':
+            result = self.sde_picking_ticket_import(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'banner_msg':
+            result = self.sde_picking_ticket_msg(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'picking_export':
+            result = self.sde_picking_ticket_export(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'picking_export_lines':
+            result = self.sde_picking_ticket_export_lines(cr, uid, sde_imp['json_text'], context=context)
+
+        return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_import')
+    def sde_picking_ticket_import(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to import JSON data.
+        A pagination system has been added to the import to allow users to import several JSONs for the same document
+        before trying to process the data. The keys sde_pagination_id, sde_import_page and sde_import_end are necessary
+        to allow the pagination.
+        '''
+        if context is None:
+            context = {}
+
+        pagi_obj = self.pool.get('sde.import.pagination')
+        pick_obj = self.pool.get('stock.picking')
+        wiz_imp_obj = self.pool.get('wizard.pick.import')
+
+        context['sde_flow'] = True
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': _('Done')}
+        pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
+        pagi_json_text = ''
+        pagi_json_data, pick_ids = [], []
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
+
+            sde_pagi_state, sde_pagi_error = False, False
+            if json_data.get('sde_pagination_id'):
+                if 'sde_pagination_page' not in json_data or 'sde_pagination_end' not in json_data:
+                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_end are mandatory to use the pagination in the SDE Picking Ticket import')
+                else:
+                    sde_pagi_end_msg = json_data.get('sde_pagination_end') and _(' and finished') or ''
+                    sde_pagi_page = json_data['sde_pagination_page']
+                    try:
+                        sde_pagi_page = int(sde_pagi_page)
+                    except ValueError:
+                        sde_pagi_error = _('The page number must be an integer')
+                    sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    if sde_pagi_ids:
+                        sde_pagi_id = sde_pagi_ids[0]
+                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, context=context)
+                        if sde_pagi['state'] == 'done':
+                            sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
+                        elif sde_pagi_page - sde_pagi['page'] != 1:
+                            sde_pagi_error = _('The page number must be in sequential order without gaps: last page imported %s, imported page %s') \
+                                             % (sde_pagi['page'], json_data['sde_pagination_page'])
+                        else:
+                            # Update the existing JSON with the new data in the key move_lines
+                            pagi_json_text = sde_pagi['pagination_json_text']
+                            pagi_json_data = json.loads(pagi_json_text)
+
+                            pagi_json_data['move_lines'].extend(json_data['move_lines'])
+                            pagi_json_text = json.dumps(pagi_json_data)
+
+                            pagi_vals = {
+                                'pagination_json_text': pagi_json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': sde_pagi_page,
+                                'last_modification': datetime.now(),
+                            }
+                            if sde_pagi_end_msg:
+                                pagi_vals['state'] = 'done'
+                            pagi_obj.write(cr, uid, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s updated%s with page %s') % (json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
+                    else:
+                        if sde_pagi_page != 1:
+                            sde_pagi_error = _('The first page of a paginated SDE import must be 1')
+                        else:
+                            sde_pagi_vals = {
+                                'state': json_data.get('sde_pagination_end') and 'done' or 'progress',
+                                'pagination_json_id': json_data['sde_pagination_id'],
+                                'pagination_json_text': json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': 1,
+                                'last_modification': datetime.now(),
+                            }
+                            sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
+
+            if sde_pagi_error:
+                raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
+                                     % (json_data.get('sde_pagination_id'), sde_pagi_error))
+            elif not json_data.get('sde_pagination_id') or (sde_pagi_end_msg and sde_pagi_id):
+                # Get the correct JSON data if the pagination has been used
+                if sde_pagi_id and pagi_json_text and pagi_json_data:
+                    json_text = pagi_json_text
+                    json_data = pagi_json_data
+
+                # Get the Picking Ticket from the name
+                if not json_data.get('name'):
+                    raise osv.except_osv(_('Error'), _('The main key "name" is mandatory and should not be empty'))
+                pick_ids = self.get_picking_ticket_from_refs(cr, uid, [json_data['name']], context=context)
+                pick_id = pick_ids[0]
+                pick = pick_obj.read(cr, uid, pick_id, ['name', 'sde_updated'], context=context)
+                if pick['sde_updated']:
+                    raise osv.except_osv(_('Error'), _('The Picking Ticket %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE flag there') % (pick['name'],))
+
+                # Reset the data of the imported lines
+                if not json_data.get('move_lines'):
+                    raise osv.except_osv(_('Error'), _('The main key "move_lines" is mandatory and should not be empty'))
+                lines_to_reset = []
+                for move_data in json_data['move_lines']:
+                    if isinstance(move_data.get('line_number', False), int) and move_data['line_number'] not in lines_to_reset:
+                        lines_to_reset.append(move_data['line_number'])
+                if lines_to_reset:
+                    self.reset_pick_lines(cr, uid, [pick_id], lines_to_reset, context=context)
+
+                # Import the data
+                wiz_id = wiz_imp_obj.create(cr, uid, {'picking_id': pick_id, 'json_text': json_text}, context=context)
+                imp_res = wiz_imp_obj.import_pick_xls(cr, uid, [wiz_id], context=context)
+
+                final_msg = pagi_msg or _('Done')
+                if imp_res:
+                    final_msg = final_msg + _('. The lines number %s were ignored during the import') % (', '.join(imp_res),)
+                result['message'] = final_msg
+
+                pick_obj.write(cr, uid, pick_id, {'sde_updated': True}, context=context)
+
+                # Log the update
+                self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'pick', 'doc_ref': pick['name']}, context=context)
+            elif pagi_msg:
+                result['message'] = pagi_msg
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+        finally:
+            # Remove the banner message
+            pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': False}, context=context)
+            if 'sde_flow' in context:
+                context.pop('sde_flow')
+
+        return result
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_msg')
+    def sde_picking_ticket_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to set a 'SDE is updating' message on a list of Picking Tickets
+        '''
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': ''}
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
+
+            # Get the Picking Tickets with the references given
+            if not json_data.get('pick_list') or not isinstance(json_data['pick_list'], list):
+                raise osv.except_osv(_('Error'), _('The main key "pick_list" is mandatory and should be a non-empty list of Picking Ticket names'))
+            try:
+                json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
+            except:
+                raise osv.except_osv(_('Error'), _('One or more of the Picking Ticket names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
+            pick_ids = self.get_picking_ticket_from_refs(cr, uid, json_data['pick_list'], context=context)
+
+            update_msg = _('This Picking Ticket is currently being updated via SDE since %s, please avoid making any direct change in UniField')\
+                         % (datetime.now().strftime('%d/%m/%Y %H:%M'),)
+            pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': update_msg}, context=context)
+
+            result['message'] = _('The "updated via SDE" banner message has been put on the Picking Tickets %s') % (', '.join(json_data['pick_list']),)
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+
+        return result
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_export_lines')
+    def sde_picking_ticket_export_lines(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to export info on Picking Tickets with lines
+        '''
+        return self.sde_picking_ticket_export(cr, uid, json_text, with_lines=True, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_export')
+    def sde_picking_ticket_export(self, cr, uid, json_text, with_lines=False, context=None):
+        '''
+        Method used by the SDE script to export info on Picking Tickets. Doesn't export lines' data unless specified
+        '''
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        pagi_exp_obj = self.pool.get('sde.export.pagination')
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': '', 'data': []}
+        pagi_msg = ''
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
+
+            if json_data.get('sde_pagination_id'):
+                if not json_data.get('sde_pagination_page'):
+                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" is mandatory and should not be empty when using "sde_pagination_id"'))
+                try:
+                    json_data['sde_pagination_page'] = int(json_data['sde_pagination_page'])
+                except:
+                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" must be an integer'))
+                if json_data['sde_pagination_page'] <= 0:
+                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" must be above 0'))
+
+                pagi_exp_domain = [('pagination_json_id', '=', json_data['sde_pagination_id']), ('page', '=', json_data['sde_pagination_page'])]
+                pagi_exp_ids = pagi_exp_obj.search(cr, uid, pagi_exp_domain, context=context)
+                if pagi_exp_ids:
+                    pagi_exp = pagi_exp_obj.read(cr, uid, pagi_exp_ids[0], ['pagination_json_text', 'with_lines'], context=context)
+                    result.update({
+                        'sde_pagination_id': json_data['sde_pagination_id'],
+                        'sde_pagination_page': json_data['sde_pagination_page'],
+                        'message': _('The header%s data from the page %s of %s have been exported')
+                                   % (pagi_exp['with_lines'] and _(' and lines') or '', json_data['sde_pagination_page'], json_data['sde_pagination_id']),
+                        'data': json.loads(pagi_exp['pagination_json_text']),
+                    })
+                else:
+                    raise osv.except_osv(_('Error'), _('No export data was found with the "sde_pagination_id" %s and the "sde_pagination_page" %s')
+                                         % (json_data['sde_pagination_id'], json_data['sde_pagination_page']))
+            else:
+                # Get the Picking Tickets with the references given
+                pick_names = []
+                if json_data.get('pick_list') and isinstance(json_data['pick_list'], list):
+                    try:
+                        json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
+                    except:
+                        raise osv.except_osv(_('Error'), _('One or more of the Picking Ticket names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
+                    pick_names = json_data['pick_list']
+                    pick_ids = self.get_picking_ticket_from_refs(cr, uid, pick_names, context=context)
+                else:
+                    pick_domain = [('state', '=', 'assigned'), ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]
+                    pick_ids = pick_obj.search(cr, uid, pick_domain, context=context)
+
+                # Default number of lines per page is 100 if not specified
+                lines_per_page = 100
+                if json_data.get('lines_per_page'):
+                    try:
+                        json_data['lines_per_page'] = int(json_data['lines_per_page'])
+                    except:
+                        raise osv.except_osv(_('Error'), _('The main key "lines_per_page" must be an integer'))
+                    if json_data['lines_per_page'] <= 0:
+                        raise osv.except_osv(_('Error'), _('The main key "lines_per_page" must be above 0'))
+                    lines_per_page = json_data['lines_per_page']
+
+                # Count the number of lines
+                if with_lines:
+                    cr.execute("""SELECT COUNT(id) FROM stock_move WHERE picking_id IN %s AND state != 'cancel'""", (tuple(pick_ids),))
+                    nb_lines = cr.fetchone()[0]
+                else:
+                    nb_lines = len(pick_ids)
+
+                data = {}
+                offset = 0
+                for pick in self.get_picking_ticket_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
+                    if not data.get(pick[0]):
+                        partner_data = [pick[11], _('Supply Responsible')]
+                        address_data = []
+                        if pick[12]:
+                            address_data.append(pick[12])
+                        if pick[13]:
+                            address_data.append(pick[13])
+                        if pick[14]:
+                            address_data.append(pick[14])
+                        if address_data:
+                            partner_data.append(' '.join(address_data))
+                        if pick[15]:
+                            partner_data.append(pick[15])
+
+                        data[pick[0]] = {
+                            'date': pick[1],
+                            'origin': pick[2] or '',
+                            'client_po_ref': pick[3] or '',
+                            'incoming_ref': pick[4] or '',
+                            'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
+                            'delivery_requested_date': pick[6] or '',
+                            'fo_details': pick[7],
+                            'transport_type': pick[8] and LIST_TRANSPORT_TYPE[pick[8]] or '',
+                            'priority': pick[9] and LIST_ORDER_PRIORITY[pick[9]] or '',
+                            'ready_to_ship_date': pick[10] or '',
+                            'delivery_address': partner_data and '; '.join(partner_data) or '',
+                            'total_items': pick[16] or 0,
+                            'latest_log': pick[17] or '',
+                            'latest_log_date': pick[18] or '',
+                        }
+
+                    if with_lines and len(pick) > 20:
+                        if 'move_lines' not in data[pick[0]]:
+                            data[pick[0]]['move_lines'] = []
+                        data[pick[0]]['move_lines'].append({
+                            'line_number': pick[20],
+                            'product_code': pick[21],
+                            'product_name': pick[22],
+                            'changed_product_code': pick[23] or '',
+                            'comment': pick[24] or '',
+                            'source_location': pick[25],
+                            'product_qty': pick[26] or 0,
+                            'qty_to_process': None,  # Left empty to force SDE to change the value
+                            'prodlot_id':pick[27] or '',
+                            'expired_date': pick[28] or '',
+                            'kc_check': pick[29] or False,
+                            'dg_check': pick[30] == 'True' and _('True') or pick[30] == 'no_know' and _('Unknown') or _('False'),
+                            'np_check': pick[31] or False,
+                        })
+
+                if nb_lines > lines_per_page:
+                    sde_pagi_id = self.pool.get('ir.sequence').get(cr, uid, 'sde.export.pagination')
+                    sde_pagi_page = 1
+                    last_page = math.ceil(nb_lines / lines_per_page)
+
+                    pagi_exp_obj.create(cr, uid, {'pagination_json_id': sde_pagi_id, 'pagination_json_text': json.dumps(data),
+                                                  'doc_type': 'pick', 'page': sde_pagi_page, 'last_page': False,
+                                                  'with_lines': with_lines}, context=context)
+                    result.update({'sde_pagination_id': sde_pagi_id, 'sde_pagination_page': sde_pagi_page,
+                                   'sde_pagination_last_page': last_page})
+
+                    pagi_msg = _('. The export have been paginated into %s pages. If you want to retrieve the other pages, please use the "sde_pagination_id" data given') % (last_page,)
+
+                    # Create the remaining pages in the background
+                    while sde_pagi_page < last_page:
+                        sde_pagi_page += 1
+                        offset += lines_per_page
+                        threaded_exp_pagi = threading.Thread(target=self.create_picking_ticket_paginated_export,
+                                                             args=(cr, uid, pick_ids, sde_pagi_id, sde_pagi_page, last_page,
+                                                                   offset, lines_per_page, with_lines, context))
+                        threaded_exp_pagi.start()
+
+                final_msg_pick = pick_names and ', '.join(pick_names) or _('%s Picking Tickets') % (len(pick_ids),)
+                result.update({
+                    'data': data,
+                    'message': _('The header%s data of %s have been exported%s') % (with_lines and _(' and lines') or '', final_msg_pick, pagi_msg)
+                })
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+
+        return result
+
+    def get_picking_ticket_from_refs(self, cr, uid, pick_list, context=None):
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+
+        pick_ids, not_found = [], []
+        for pick_name in pick_list:
+            pick_domain = [('state', '=', 'assigned'), ('type', '=', 'out'), ('subtype', '=', 'picking'),
+                           ('backorder_id', '!=', False), ('name', '=', pick_name)]
+            pick_id = pick_obj.search(cr, uid, pick_domain, context=context)
+            if pick_id:
+                pick_ids.append(pick_id[0])
+            else:
+                not_found.append(pick_name)
+
+        if not_found:
+            raise osv.except_osv(_('Error'), _('The Available Picking Tickets %s could not be found') % (', '.join(not_found),))
+
+        return pick_ids
+
+    def get_picking_ticket_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
+        """
+        Get info from PICKs, its latest Track Change and info from their moves when needed
+        """
+        if context is None:
+            context = {}
+
+        sql_lines_col, sql_lines_join, sql_lines_group, sql_lines_order = '', '', '', ''
+        if with_lines:  # Additional data for the lines
+            sql_lines_col = """,
+                m.id, --19
+                m.line_number, -- 20
+                pp.default_code, -- 21
+                pt.name, -- 22
+                CASE WHEN m.sale_line_id IS NOT NULL AND sl.product_id != m.product_id 
+                    THEN CONCAT(pp.default_code, ' [', pt.name, ']') ELSE '' END, -- 23
+                m.comment, -- 24
+                l.name, -- 25
+                m.product_qty, -- 26
+                lot.name, -- 27
+                m.expired_date, -- 28
+                pcc.cold_chain, -- 29 kc_check
+                pp.dangerous_goods, -- 30 dg_check
+                pp.controlled_substance -- 31 np_check
+            """
+            sql_lines_join = """
+                LEFT JOIN product_product pp ON m.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
+                LEFT JOIN sale_order_line sl ON m.sale_line_id = sl.id
+                LEFT JOIN stock_location l ON m.location_id = l.id
+                LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
+            """
+            sql_lines_group = """, m.id,  m.line_number, pp.default_code, pt.name, sl.product_id, m.comment, l.name, 
+                m.product_qty, lot.name, m.expired_date, pcc.cold_chain, pp.dangerous_goods, pp.controlled_substance"""
+            sql_lines_order = ', m.line_number, m.id'
+        cr.execute("""
+            SELECT
+                p.name, -- 0
+                p.date, -- 1
+                p.origin, -- 2
+                s.client_order_ref, -- 3
+                inc.name, -- 4
+                p.order_category, -- 5
+                s.delivery_requested_date, -- 6
+                COALESCE(s.details, p.details), -- 7
+                s.transport_type, -- 8
+                s.priority, -- 9
+                s.ready_to_ship_date, -- 10
+                par.name, -- 11
+                addr.street, -- 12
+                addr.street2, -- 13
+                co.name, -- 14
+                addr.phone, -- 15
+                COUNT(DISTINCT(m.line_number)), -- 16
+                MAX(a.log), -- 17
+                MAX(a.timestamp) -- 18
+                """ + sql_lines_col + """
+            FROM stock_move m
+                LEFT JOIN stock_picking p ON m.picking_id = p.id
+                LEFT JOIN audittrail_log_line a ON p.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'stock.picking' LIMIT 1)
+                LEFT JOIN stock_picking inc ON p.incoming_id = inc.id
+                LEFT JOIN sale_order s ON p.sale_id = s.id
+                LEFT JOIN res_partner par ON p.partner_id = par.id
+                LEFT JOIN res_partner_address addr ON p.address_id = addr.id
+                LEFT JOIN res_country co ON addr.country_id = co.id
+                """ + sql_lines_join + """
+            WHERE p.id IN %s AND m.state != 'cancel'
+            GROUP BY p.id, p.name, p.date, p.origin, s.client_order_ref, inc.name, p.order_category,
+                s.delivery_requested_date, COALESCE(s.details, p.details), s.transport_type, s.priority,
+                s.ready_to_ship_date, par.name, addr.street, addr.street2, co.name, addr.phone""" + sql_lines_group + """
+            ORDER BY p.id""" + sql_lines_order + """ OFFSET %s LIMIT %s
+        """, (tuple(ids), offset, limit))
+
+        return cr.fetchall()
+
+    def create_picking_ticket_paginated_export(self, cr, uid, ids, pagi_ref, page, last_page, offset, limit, with_lines=False, context=None):
+        '''
+        Method to be used in the background to create the paginated exports beyond page 1
+        '''
+        if context is None:
+            context = {}
+
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        data = {}
+        for pick in self.get_picking_ticket_export_data(new_cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
+            if not data.get(pick[0]):
+                partner_data = [pick[11], _('Supply Responsible')]
+                address_data = []
+                if pick[12]:
+                    address_data.append(pick[12])
+                if pick[13]:
+                    address_data.append(pick[13])
+                if pick[14]:
+                    address_data.append(pick[14])
+                if address_data:
+                    partner_data.append(' '.join(address_data))
+                if pick[15]:
+                    partner_data.append(pick[15])
+
+                data[pick[0]] = {
+                    'date': pick[1],
+                    'origin': pick[2] or '',
+                    'client_po_ref': pick[3] or '',
+                    'incoming_ref': pick[4] or '',
+                    'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
+                    'delivery_requested_date': pick[6] or '',
+                    'fo_details': pick[7],
+                    'transport_type': pick[8] and LIST_TRANSPORT_TYPE[pick[8]] or '',
+                    'priority': pick[9] and LIST_ORDER_PRIORITY[pick[9]] or '',
+                    'ready_to_ship_date': pick[10] or '',
+                    'delivery_address': partner_data and '; '.join(partner_data) or '',
+                    'total_items': pick[16] or 0,
+                    'latest_log': pick[17] or '',
+                    'latest_log_date': pick[18] or '',
+                }
+
+            if with_lines and len(pick) > 20:
+                if 'move_lines' not in data[pick[0]]:
+                    data[pick[0]]['move_lines'] = []
+                data[pick[0]]['move_lines'].append({
+                    'line_number': pick[20],
+                    'product_code': pick[21],
+                    'product_name': pick[22],
+                    'changed_product_code': pick[23] or '',
+                    'comment': pick[24] or '',
+                    'source_location': pick[25],
+                    'product_qty': pick[26] or 0,
+                    'qty_to_process': None,  # Left empty to force SDE to change the value
+                    'prodlot_id': pick[27] or '',
+                    'expired_date': pick[28] or '',
+                    'kc_check': pick[29] or False,
+                    'dg_check': pick[30] == 'True' and _('True') or pick[30] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': pick[31] or False,
+                })
+
+        pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'pick',
+                     'page': page, 'last_page': page == last_page, 'with_lines': with_lines}
+        self.pool.get('sde.export.pagination').create(new_cr, uid, pagi_vals, context=context)
+
+        new_cr.commit()
+        new_cr.close(True)
+
+        return True
+
+    def reset_pick_lines(self, cr, uid, ids, line_numbers, context=None):
+        '''
+        For each move of the Available Picking Ticket whose line_number is in the import, reset as much data as possible:
+            - Merge the quantities of split lines and delete the splits
+            - Remove any BN/ED info
+            - Sum the quantities and set the quantity to process at 0
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        move_obj = self.pool.get('stock.move')
+
+        cr.execute("""
+                   SELECT id, picking_id, line_number, product_qty
+                   FROM stock_move
+                   WHERE state = 'assigned' AND picking_id IN %s AND product_qty != 0 AND line_number IN %s
+            """, (tuple(ids), tuple(line_numbers)))
+        data = {}
+        to_del = []
+        for x in cr.fetchall():
+            key = (x[1], x[2])
+            if key not in data:
+                data[key] = {'product_qty': 0, 'master': x[0]}
+            else:
+                to_del.append(x[0])
+            data[key]['product_qty'] += x[3]
+        for key in data:
+            move_vals = {'product_qty': data[key]['product_qty'], 'product_uos_qty': data[key]['product_qty'],
+                         'qty_to_process': 0, 'prodlot_id': False, 'expired_date': False}
+            move_obj.write(cr, uid, data[key]['master'], move_vals, context=context)
+        move_obj.unlink(cr, uid, to_del, force=True, context=context)
+
+        return True
+
+
+sde_import()
+
+
+class sde_update_log(osv.osv):
+    _name = 'sde.update.log'
+    _description = 'SDE Update Logs'
+    _order = 'id desc'
+
+    _columns = {
+        'date': fields.datetime('Update Date', required=True, readonly=True),
+        'doc_type': fields.selection(string='Document',
+                                     selection=[('in', 'Incoming Shipment'), ('pick', 'Picking Ticket')], required=True,
+                                     readonly=True),
+        'doc_ref': fields.char(string='Reference', size=64, required=True, readonly=True),
+    }
+
+
+sde_update_log()
+
+
+class sde_import_pagination(osv.osv):
+    _name = 'sde.import.pagination'
+    _description = 'SDE Paginated Imports'
+    _order = 'id desc'
+
+    _columns = {
+        'state': fields.selection(string='State', selection=[('progress', 'In progress'), ('done', 'Done')], readonly=True),
+        'pagination_json_id': fields.char(string='Pagination JSON ID', size=16, required=True, readonly=True),
+        'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
+        'pagination_keys': fields.text(string='Pagination keys', required=True, readonly=True),
+        'page': fields.integer(string='SDE import page', required=True, readonly=True),
+        'last_modification': fields.datetime(string='Last modification', readonly=True),
+    }
+
+    _defaults = {
+        'state': 'progress',
+    }
+
+
+sde_import_pagination()
+
+
+class sde_export_pagination(osv.osv):
+    _name = 'sde.export.pagination'
+    _description = 'SDE Paginated Exports'
+    _order = 'id desc,page desc'
+
+    _columns = {
+        'pagination_json_id': fields.char(string='Pagination JSON ID', size=32, required=True, readonly=True),
+        'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
+        'doc_type': fields.selection(string='Document', selection=[('pick', 'Picking Ticket')], required=True, readonly=True),
+        'page': fields.integer(string='SDE import page', required=True, readonly=True),
+        'last_page': fields.boolean(string='Last page of the export', readonly=True),
+        'with_lines': fields.boolean(string='Exported with lines', readonly=True),
+    }
+
+    _defaults = {
+        'last_page': False,
+        'with_lines': False,
+    }
+
+
+sde_export_pagination()

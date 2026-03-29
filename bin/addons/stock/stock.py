@@ -1119,6 +1119,8 @@ class stock_picking(osv.osv):
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
         'details': fields.char(size=86, string='Details'),
+        'sde_updated': fields.boolean('Updated by SDE'),
+        'sde_update_msg': fields.text('Message to be displayed when SDE is updating a document'),
     }
 
     _defaults = {
@@ -1130,7 +1132,9 @@ class stock_picking(osv.osv):
         'invoice_state': 'none',
         'sync_dpo_in': False,
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c)
+        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c),
+        'sde_updated': False,
+        'sde_update_msg': False,
     }
 
     def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -1168,6 +1172,8 @@ class stock_picking(osv.osv):
         to_reset = {
             'claim': False,
             'claim_name': '',
+            'sde_updated': False,
+            'sde_update_msg': False,
             'from_manage_expired': False,
             'sync_dpo_in': False,
             'dpo_incoming': False,
@@ -1426,7 +1432,7 @@ class stock_picking(osv.osv):
 
     def action_cancel(self, cr, uid, ids, context=None):
         """ 
-        Changes picking state to cancel.
+        Changes picking state to cancel. Remove the banner SDE message
         @return: True
         """
         if isinstance(ids, int):
@@ -1438,7 +1444,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         for pick in self.read(cr, uid, ids, ['move_lines'], context=context):
             move_obj.action_cancel(cr, uid, pick['move_lines'], context)
-        self.write(cr, uid, ids, {'state': 'cancel', 'invoice_state': 'none'})
+        self.write(cr, uid, ids, {'state': 'cancel', 'invoice_state': 'none', 'sde_update_msg': False})
         self.log_picking(cr, uid, ids, context=context)
 
         return True
@@ -1447,7 +1453,8 @@ class stock_picking(osv.osv):
     # TODO: change and create a move if not parents
     #
     def action_done(self, cr, uid, ids, context=None):
-        """ Changes picking state to done.
+        """
+        Changes picking state to done. Remove the banner SDE message
         @return: True
         """
         if isinstance(ids, int):
@@ -1460,6 +1467,7 @@ class stock_picking(osv.osv):
         self.write(cr, uid, ids, {
             'state': 'done',
             'date_done': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'sde_update_msg': False,
         })
         self.log_picking(cr, uid, ids, context=context)
         return True

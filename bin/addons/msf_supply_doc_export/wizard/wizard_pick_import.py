@@ -26,6 +26,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from datetime import datetime
 
 import base64
+import json
 
 
 # /!\ to keep up to date with XLS export template:
@@ -68,9 +69,10 @@ class wizard_pick_import(osv.osv_memory):
     _columns = {
         'picking_id': fields.many2one('stock.picking', string="PICK ref", required=True),
         'import_file': fields.binary('PICK import file', required=True),
+        'json_text': fields.text(string='JSON as text', help='Please put the data on a single line, with no line return'),
     }
 
-    def normalize_data(self, cr, uid, data):
+    def normalize_data(self, cr, uid, data, json_import=False):
         if 'qty_to_process' in data:  # set to float
             if not data['qty_to_process']:
                 data['qty_to_process'] = 0.0
@@ -78,9 +80,10 @@ class wizard_pick_import(osv.osv_memory):
                 try:
                     data['qty_to_process'] = float(data['qty_to_process'])
                 except:
-                    raise osv.except_osv(
-                        _('Error'), _('Line %s: Column "Qty to Process" must be a number') % data['item']
-                    )
+                    if json_import:
+                        raise osv.except_osv(_('Error'), _('Line %s: Key "qty_to_process" must be a number') % data['item'])
+                    else:
+                        raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" must be a number') % data['item'])
 
         if 'qty' in data:  # set to float
             if not data['qty']:
@@ -89,9 +92,10 @@ class wizard_pick_import(osv.osv_memory):
                 try:
                     data['qty'] = float(data['qty'])
                 except:
-                    raise osv.except_osv(
-                        _('Error'), _('Line %s: Column "Qty" must be a number') % data['item']
-                    )
+                    if json_import:
+                        raise osv.except_osv(_('Error'), _('Line %s: Key "qty" must be a number') % data['item'])
+                    else:
+                        raise osv.except_osv(_('Error'), _('Line %s: Column "Qty" must be a number') % data['item'])
 
         if 'batch' in data:  # set to str
             if not data['batch']:
@@ -102,11 +106,15 @@ class wizard_pick_import(osv.osv_memory):
                 data['expiry_date'] = ''
             else:
                 try:
-                    data['expiry_date'] = datetime(data['expiry_date'].year, data['expiry_date'].month, data['expiry_date'].day)
+                    if isinstance(data['expiry_date'], str):
+                        data['expiry_date'] = datetime.strptime(data['expiry_date'], '%Y-%m-%d')
+                    else:
+                        data['expiry_date'] = datetime(data['expiry_date'].year, data['expiry_date'].month, data['expiry_date'].day)
                 except:
-                    raise osv.except_osv(
-                        _('Error'), _('Line %s: Column "Expiry Date" must be a date') % data['item']
-                    )
+                    if json_import:
+                        raise osv.except_osv(_('Error'), _('Line %s: Key "expired_date" must be a date') % data['item'])
+                    else:
+                        raise osv.except_osv(_('Error'), _('Line %s: Column "Expiry Date" must be a date') % data['item'])
 
         return data
 
@@ -187,10 +195,11 @@ class wizard_pick_import(osv.osv_memory):
                     # Prevent modification of confirmed (Not Available) line
                     return False
 
+        import_type = context.get('sde_flow') and _('the JSON data') or _('the import file')
         raise osv.except_osv(
             _('Error'),
-            _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen')
-            % (line_data['item'], line_data['qty'])
+            _('The total quantity of line #%s in %s (%s) doesn\'t match with the total qty on screen')
+            % (line_data['item'], import_type, line_data['qty'])
         )
 
     def checks_on_batch(self, cr, uid, ids, product, line_data, context=None):
@@ -207,6 +216,26 @@ class wizard_pick_import(osv.osv_memory):
                 _('Error'),
                 _('Line %s: Product is expiry date mandatory and no expiry date is given') % line_data['item']
             )
+
+    def get_import_json_data(self, cr, uid, ids, json_data, context=None):
+        if context is None:
+            context = {}
+
+        import_data_header = {'reference': json_data['name']}
+        import_data_lines = {}
+        line_index = 0
+        for move in json_data.get('move_lines', []):
+            line_index += 1
+            import_data_lines[line_index] = {
+                'item': move.get('line_number', False),
+                'code': move.get('product_code', ''),
+                'qty': move.get('qty', move.get('qty_to_process', 0.0)),
+                'qty_to_process': move.get('qty_to_process', 0.0),
+                'batch': move.get('prodlot_id', ''),
+                'expiry_date': move.get('expired_date', ''),
+            }
+
+        return (import_data_header, import_data_lines)
 
     def get_import_data(self, cr, uid, ids, import_file, context=None):
         if context is None:
@@ -238,10 +267,7 @@ class wizard_pick_import(osv.osv_memory):
 
         product_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', line_data['code'])], limit=1, context=context)
         if not product_ids:
-            raise osv.except_osv(
-                _('Error'),
-                _('Product with code %s not found in database') % line_data['code']
-            )
+            raise osv.except_osv(_('Error'), _('Product with code %s not found in database') % line_data['code'])
 
         return prod_obj.browse(cr, uid, product_ids[0], fields_to_fetch=['batch_management', 'perishable'], context=context)
 
@@ -250,35 +276,56 @@ class wizard_pick_import(osv.osv_memory):
             context = {}
 
         wiz = self.browse(cr, uid, ids[0], context=context)
-        if not wiz.import_file:
-            raise osv.except_osv(_('Error'), _('No file to import'))
-        import_file = SpreadsheetXML(xmlstring=base64.b64decode(wiz.import_file))
-        import_data_header, import_data_lines = self.get_import_data(cr, uid, ids, import_file, context=context)
+        json_import = False
+        if wiz.json_text:
+            json_import = True
+            json_data = json.loads(wiz.json_text)
+            import_data_header, import_data_lines = self.get_import_json_data(cr, uid, ids, json_data, context=context)
+        else:
+            if not wiz.import_file:
+                raise osv.except_osv(_('Error'), _('No file to import'))
+            import_file = SpreadsheetXML(xmlstring=base64.b64decode(wiz.import_file))
+            import_data_header, import_data_lines = self.get_import_data(cr, uid, ids, import_file, context=context)
 
         if (import_data_header['reference'] or '').lower() != wiz.picking_id.name.lower():
             raise osv.except_osv(_('Error'), _('PICK reference in the import file doesn\'t match with the current PICK'))
 
         moves_data = []
         qty_per_line = {}
-        treated_lines = []
+        treated_lines, ignored_lines = [], []
         for xls_line_number, line_data in sorted(import_data_lines.items()):
             try:
                 line_data['item'] = int(line_data['item'])
             except:
-                raise osv.except_osv(_('Error'), _('File line %s: Column "Item" must be an integer') % xls_line_number)
+                if json_import:
+                    raise osv.except_osv(_('Error'), _('Line %s: Data of key "line_number" must be an integer') % xls_line_number)
+                else:
+                    raise osv.except_osv(_('Error'), _('File line %s: Column "Item" must be an integer') % xls_line_number)
 
+            # Completely ignore an imported line if qty_to_process is 'NULL' during JSON import
+            if json_import and line_data.get('qty_to_process') == 'NULL':
+                ignored_lines.append(_('%s (Qty to Process %s)') % (line_data['item'], line_data['qty_to_process']))
+                continue
             if line_data['qty_to_process'] is None:
-                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should contain the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
-            if line_data['qty_to_process'] and float(line_data['qty_to_process']) < 0:
-                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should be greater than 0') % line_data['item'])
+                if json_import:
+                    raise osv.except_osv(_('Error'), _('Line %s: Key "qty_to_process" should contain the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
+                else:
+                    raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should contain the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
 
-            line_data = self.normalize_data(cr, uid, line_data)
+            line_data = self.normalize_data(cr, uid, line_data, json_import)
+
+            if line_data['qty_to_process'] and float(line_data['qty_to_process']) < 0:
+                if json_import:
+                    raise osv.except_osv(_('Error'), _('Line %s: Key "qty_to_process" should be greater than 0') % line_data['item'])
+                else:
+                    raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should be greater than 0') % line_data['item'])
             if line_data['qty']:
                 to_write = {}
 
                 product = self.get_product(cr, uid, ids, line_data, context=context)
                 move_id = self.get_matching_move(cr, uid, ids, line_data, product.id, wiz.picking_id.id, treated_lines, context=context)
                 if not move_id:
+                    ignored_lines.append(_('%s (Qty to Process %s)') % (line_data['item'], line_data['qty_to_process']))
                     continue
                 else:
                     self.checks_on_batch(cr, uid, ids, product, line_data, context=context)
@@ -286,10 +333,16 @@ class wizard_pick_import(osv.osv_memory):
                         'move_id': move_id,
                     })
                     if line_data['qty_to_process'] > line_data['qty']:
-                        raise osv.except_osv(
-                            _('Error'), _('Line %s: Column "Qty to Process" (%s) cannot be greater than "Qty" (%s)')
-                            % (line_data['item'], line_data['qty_to_process'], line_data['qty'])
-                        )
+                        if json_import:
+                            raise osv.except_osv(
+                                _('Error'), _('Line %s: Key "qty_to_process" (%s) cannot be greater than "qty" (%s)')
+                                % (line_data['item'], line_data['qty_to_process'], line_data['qty'])
+                            )
+                        else:
+                            raise osv.except_osv(
+                                _('Error'), _('Line %s: Column "Qty to Process" (%s) cannot be greater than "Qty" (%s)')
+                                % (line_data['item'], line_data['qty_to_process'], line_data['qty'])
+                            )
                     treated_lines.append(to_write['move_id'])
 
                 move = self.pool.get('stock.move').browse(cr, uid, to_write['move_id'], context=context)
@@ -342,12 +395,19 @@ class wizard_pick_import(osv.osv_memory):
             GROUP BY m.line_number, p.default_code
         """, (wiz.picking_id.id,))
         for prod in cr.fetchall():
-            if prod[2] != 0 and qty_per_line.get(prod[0]) and qty_per_line[prod[0]] != prod[2]:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen (%s)')
-                    % (prod[0], prod[2], qty_per_line.get(prod[0]))
-                )
+            if prod[2] != 0 and qty_per_line.get(prod[0]):
+                if context.get('sde_flow') and qty_per_line[prod[0]] > prod[2]:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The total quantity of line #%s in the JSON data (%s) can not be more than the total qty on screen (%s)')
+                        % (prod[0], qty_per_line.get(prod[0]), prod[2])
+                    )
+                elif not context.get('sde_flow') and qty_per_line[prod[0]] != prod[2]:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen (%s)')
+                        % (prod[0], qty_per_line.get(prod[0], prod[2]))
+                    )
 
         for to_write in moves_data:
             if to_write.get('move_id'):
@@ -356,7 +416,10 @@ class wizard_pick_import(osv.osv_memory):
                     move_data.update({'prodlot_id': to_write['prodlot_id']})
                 self.pool.get('stock.move').write(cr, uid, to_write['move_id'], move_data, context=context)
 
-        return {'type': 'ir.actions.act_window_close'}
+        if context.get('sde_flow'):
+            return ignored_lines
+        else:
+            return {'type': 'ir.actions.act_window_close'}
 
 
 wizard_pick_import()

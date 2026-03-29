@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'stock.picking')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name']
+        fields = ['name', 'sde_updated']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.picking'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
@@ -54,7 +54,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'stock.picking')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name', 'state']
+        fields = ['name', 'state', 'sde_updated']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.picking'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
