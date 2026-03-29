@@ -52,14 +52,22 @@ class XlsxReport(report_int):
         wb.iso_dates = True
         parser = self.parser(cr, uid, ids, wb, wb_t, context)
         parser.model = datas.get('model')
-        parser.generate(context=context)
-        tmp = NamedTemporaryFile(delete=False)
-        wb.save(tmp.name)
-        wb.close()
-        if wb_t:
-            wb_t.close()
-        tmp.seek(0)
-        return (Path(tmp.name, delete=True), 'xlsx')
+        if datas and self.name in ['report.report_mission_stock_report', 'report.report_consolidated_mission_stock_report']:
+            # Different generate behavior
+            res = parser.generate(cr, uid, datas, context=context)
+            wb.close()
+            if wb_t:
+                wb_t.close()
+            return res
+        else:
+            parser.generate(context=context)
+            tmp = NamedTemporaryFile(delete=False)
+            wb.save(tmp.name)
+            wb.close()
+            if wb_t:
+                wb_t.close()
+            tmp.seek(0)
+            return (Path(tmp.name, delete=True), 'xlsx')
 
 class XlsxReportParser():
     def __init__(self, cr, uid, ids, workbook, workbook_template, context):
