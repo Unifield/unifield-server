@@ -365,6 +365,7 @@ class account_invoice(osv.osv):
         'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1),
         'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
         'is_partner_active': fields.related('partner_id', 'active', type='boolean', string='Partner Active', store=False, write_relate=False),
+        'po_details': fields.char(size=86, string='PO Details'),
     }
     _defaults = {
         'type': _get_type,

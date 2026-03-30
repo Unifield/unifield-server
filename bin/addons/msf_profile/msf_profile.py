@@ -60,6 +60,20 @@ class patch_scripts(osv.osv):
     }
 
     # UF41.0
+    def us_15072_po_detail(self, cr, uid, *a, **b):
+        """
+        Add the PO details to the invoice
+        """
+        cr.execute("""
+            UPDATE account_invoice AS ai
+            SET po_details = po.details
+            FROM stock_picking AS sp
+            JOIN purchase_order po ON sp.purchase_id = po.id
+            WHERE sp.id = ai.picking_id
+                AND ai.po_details IS NULL
+        """)
+        return True
+
     def us_15432_fix_currencies_rounding(self, cr, uid, *a, **b):
         """
         Set the currencies rounding to 0.010000

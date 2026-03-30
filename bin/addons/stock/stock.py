@@ -1774,7 +1774,8 @@ class stock_picking(osv.osv):
                 'origin': (invoice.origin or '') + ', ' + (picking.name or '') + (picking.origin and (':' + picking.origin) or ''),
                 'comment': (comment and (invoice.comment and invoice.comment+"\n"+comment or comment)) or (invoice.comment and invoice.comment or ''),
                 'date_invoice':context.get('date_inv',False),
-                'user_id':uid
+                'user_id':uid,
+                'po_details': picking.purchase_id.details
             }
             invoice_obj.write(cr, uid, [invoice_id], invoice_vals, context=context)
         else:
@@ -1794,6 +1795,7 @@ class stock_picking(osv.osv):
                 'user_id':uid,
                 'picking_id': picking.id,
                 'from_supply': True,
+                'po_details': picking.purchase_id.details
             }
             if picking.sale_id:
                 if not partner.property_account_position.id:

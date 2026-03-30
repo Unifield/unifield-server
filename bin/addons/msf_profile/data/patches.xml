@@ -1311,5 +1311,9 @@
             <field name="method">us_15432_fix_currencies_rounding</field>
         </record>
 
+        <record id="us_15072_po_detail" model="patch.scripts">
+            <field name="method">us_15072_po_detail</field>
+        </record>
+
     </data>
 </openerp>
