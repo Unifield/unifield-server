@@ -154,6 +154,11 @@ class product_mass_update(osv.osv):
 
         return super(product_mass_update, self).copy(cr, uid, id, default=default, context=context)
 
+    def onchange_active_product(self, cr, uid, ids, active_product):
+        if active_product == 'no':
+            return {'value': {'product_state': False}}
+        return {'value': {}}
+
     def onchange_inc_check(self, cr, uid, ids, empty_inc_account):
         if empty_inc_account:
             return {'value': {'property_account_income': False}}
