@@ -1047,8 +1047,8 @@ class shipment(osv.osv):
                     initial_to_pack = 0
                     selected_number = 0
                 else:
-                    initial_from_pack = family.from_pack
-                    initial_to_pack = family.to_pack - family.selected_number
+                    initial_from_pack = family.from_pack + family.selected_number
+                    initial_to_pack  = family.to_pack
                     selected_number = initial_to_pack - initial_from_pack + 1
 
                 selected_parcel_ids = family.selected_parcel_ids
@@ -1059,8 +1059,8 @@ class shipment(osv.osv):
                     raise osv.except_osv(_('Error'), _('Number of Parcel IDs %d does not match returned number %d') % (len(selected_parcel_ids.split(',')), family.selected_number))
 
                 back_ship_line_id = self.pool.get('pack.family.memory').copy(cr, uid, ship_line.id, {
-                    'from_pack': family.to_pack - family.selected_number + 1,
-                    'to_pack': family.to_pack,
+                    'from_pack': family.from_pack,
+                    'to_pack': family.from_pack + family.selected_number - 1,
                     'selected_number': family.selected_number,
                     'state': 'returned',
                     'move_lines': False,
