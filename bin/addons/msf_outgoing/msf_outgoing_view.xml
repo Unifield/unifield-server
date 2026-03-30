@@ -435,7 +435,7 @@
                             <newline />
                             <group colspan="4" attrs="{'invisible': ['|', ('backorder_id', '=', False), ('sde_updated', '=', False)]}">
                                 <field name="sde_updated" readonly="1"/>
-                                <button name="reset_sde_updated_flag" states="assigned" string="Reset Updated by SDE" type="object" icon="gtk-refresh" />
+                                <button name="reset_sde_updated_flag" states="assigned" string="Reset SDE update" type="object" icon="gtk-refresh" />
                             </group>
                         </page>
                         <page string="Notes">

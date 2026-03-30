@@ -1064,11 +1064,14 @@ class sde_import(osv.osv_memory):
 
         move_obj = self.pool.get('stock.move')
 
+        ln_sql = ""
+        if line_numbers:
+            ln_sql = " AND line_number IN %s" % (tuple(line_numbers),)
         cr.execute("""
                    SELECT id, picking_id, line_number, product_qty
                    FROM stock_move
-                   WHERE state = 'assigned' AND picking_id IN %s AND product_qty != 0 AND line_number IN %s
-            """, (tuple(ids), tuple(line_numbers)))
+                   WHERE state = 'assigned' AND picking_id IN %s AND product_qty != 0
+            """ + ln_sql, (tuple(ids),))
         data = {}
         to_del = []
         for x in cr.fetchall():

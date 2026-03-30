@@ -4803,7 +4803,10 @@ class stock_picking(osv.osv):
         if not ids:
             raise osv.except_osv(_('Error'), _('No PICK selected'))
 
-        self.write(cr, uid, ids, {'sde_updated': False}, context=context)
+        # Reset all lines and merge the splits
+        self.pool.get('sde.import').reset_pick_lines(cr, uid, ids, [], context=context)
+
+        self.write(cr, uid, ids, {'sde_updated': False, 'sde_reset_date': datetime.now()}, context=context)
 
         return True
 

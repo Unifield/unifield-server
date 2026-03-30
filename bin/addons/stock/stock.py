@@ -1120,6 +1120,7 @@ class stock_picking(osv.osv):
         'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
         'details': fields.char(size=86, string='Details'),
         'sde_updated': fields.boolean('Updated by SDE'),
+        'sde_reset_date': fields.datetime('Reset action applied'),
         'sde_update_msg': fields.text('Message to be displayed when SDE is updating a document'),
     }
 
@@ -1134,6 +1135,7 @@ class stock_picking(osv.osv):
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c),
         'sde_updated': False,
+        'sde_reset_date': False,
         'sde_update_msg': False,
     }
 
@@ -1173,6 +1175,7 @@ class stock_picking(osv.osv):
             'claim': False,
             'claim_name': '',
             'sde_updated': False,
+            'sde_reset_date': False,
             'sde_update_msg': False,
             'from_manage_expired': False,
             'sync_dpo_in': False,

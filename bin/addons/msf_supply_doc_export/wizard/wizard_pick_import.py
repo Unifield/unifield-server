@@ -400,13 +400,13 @@ class wizard_pick_import(osv.osv_memory):
                     raise osv.except_osv(
                         _('Error'),
                         _('The total quantity of line #%s in the JSON data (%s) can not be more than the total qty on screen (%s)')
-                        % (prod[0], qty_per_line.get(prod[0]), prod[2])
+                        % (prod[0], qty_per_line.get(prod[0]), prod[2] or 0)
                     )
                 elif not context.get('sde_flow') and qty_per_line[prod[0]] != prod[2]:
                     raise osv.except_osv(
                         _('Error'),
                         _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen (%s)')
-                        % (prod[0], qty_per_line.get(prod[0], prod[2]))
+                        % (prod[0], qty_per_line.get(prod[0], prod[2] or 0))
                     )
 
         for to_write in moves_data:

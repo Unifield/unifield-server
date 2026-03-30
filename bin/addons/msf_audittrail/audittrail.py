@@ -852,10 +852,12 @@ class audittrail_rule(osv.osv):
                                 continue
 
                         if old_value != new_value:
-                            # Prevent log to be created for datetime fields if only the time changes, but not in auto import/export
+                            # Prevent log to be created for datetime fields if only the time changes, but not in auto import/export for the field start_time
+                            # or in stock.picking for the field sde_reset_date
                             if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and \
                                     old_value[:10] == new_value[:10] and \
-                                    (model_name_tolog not in ['automated.import', 'automated.export'] or field != 'start_time'):
+                                    (model_name_tolog not in ['automated.import', 'automated.export', 'stock.picking']
+                                     or field not in ('start_time', 'sde_reset_date')):
                                 continue
                             # US-13017
                             if model_name_tolog == 'automated.import' and field == 'start_time':
