@@ -1617,10 +1617,8 @@ class stock_move(osv.osv):
                 res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True, prod_lot=prod_lot, lefo=lefo, assign_expired=assign_expired)
                 if res:
                     if move.location_id.id == move.location_dest_id.id:
-                        state = 'done'
                         done.append(move.id)
                     else:
-                        state = 'assigned'
                         move_to_assign.append(move.id)
 
                     pickings.setdefault(move.picking_id.id, 0)
