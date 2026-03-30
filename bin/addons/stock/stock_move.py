@@ -1631,7 +1631,7 @@ class stock_move(osv.osv):
                     if bn_needed:
                         prodlot_id = r[3] or None
                         expired_date = r[2] or None
-                    cr.execute("update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s, state=%s, qty_to_process=%s where id=%s", (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, state, r[0], move.id))
+                    cr.execute("update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s, qty_to_process=%s where id=%s", (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, r[0], move.id))
                     while res:
                         r = res.pop(0)
                         prodlot_id = False
