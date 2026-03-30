@@ -1119,6 +1119,7 @@ class stock_picking(osv.osv):
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
         'details': fields.char(size=86, string='Details'),
+        'sde_updated': fields.boolean('Updated by SDE'),
     }
 
     _defaults = {
@@ -1130,7 +1131,8 @@ class stock_picking(osv.osv):
         'invoice_state': 'none',
         'sync_dpo_in': False,
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c)
+        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c),
+        'sde_updated': False,
     }
 
     def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -1168,6 +1170,7 @@ class stock_picking(osv.osv):
         to_reset = {
             'claim': False,
             'claim_name': '',
+            'sde_updated': False,
             'from_manage_expired': False,
             'sync_dpo_in': False,
             'dpo_incoming': False,
