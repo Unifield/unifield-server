@@ -1297,5 +1297,9 @@
         <record id="us_15252_non_service_prod_transport_flag" model="patch.scripts">
             <field name="method">us_15252_non_service_prod_transport_flag</field>
         </record>
+
+        <record id="us_15433_delete_WACA_2025_fiscal_year" model="patch.scripts">
+            <field name="method">us_15433_delete_WACA_2025_fiscal_year</field>
+        </record>
     </data>
 </openerp>

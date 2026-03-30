@@ -59,6 +59,24 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF41.0
+    def us_15433_delete_WACA_2025_fiscal_year(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if not entity_obj or entity_obj.get_entity(cr, uid).oc != 'waca':
+            return
+
+        cr.execute("""
+            DELETE FROM
+                account_fiscalyear
+            WHERE
+                code = 'FY2025' and
+                id in (
+                    select res_id from ir_model_data where model='account.fiscalyear' and name='FY2025'
+                )
+        """)
+        if cr.rowcount:
+            self.log_info(cr, uid, "US-15433: FY 2025 deleted")
+
     # UF40.0
     def us_15252_non_service_prod_transport_flag(self, cr, uid, *a, **b):
         '''
