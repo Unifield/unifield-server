@@ -60,6 +60,31 @@ class patch_scripts(osv.osv):
     }
 
     # UF41.0
+    def us_15432_fix_currencies_rounding(self, cr, uid, *a, **b):
+        """
+        Set the currencies rounding to 0.010000
+        """
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            currency_obj = self.pool.get('res.currency')
+
+            currency_ids = currency_obj.search(cr, uid, [
+                ('rounding', '=', 0)
+            ], context=None)
+
+            if currency_ids:
+                currency_obj.write(cr, uid, currency_ids, {
+                    'rounding': 0.01
+                }, context=None)
+
+        cr.execute("""
+            UPDATE res_currency
+            SET rounding = 0.010000
+                WHERE rounding = 0
+        """)
+        return True
+
     def us_15433_delete_WACA_2025_fiscal_year(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
         if not entity_obj or entity_obj.get_entity(cr, uid).oc != 'waca':
@@ -7736,7 +7761,6 @@ class ir_model_data(osv.osv):
                                                  )
             os.rename(fp.name, "%sold" % fp.name)
             logger.warn('Set US-268 as executed')
-
 
 ir_model_data()
 

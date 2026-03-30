@@ -387,6 +387,7 @@ class res_currency(osv.osv):
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'res.currency', context=c),
         'accuracy': 4,
         'ocp_workday_decimal': 2,
+        'rounding': 0.010000
     }
 
     _sql_constraints = [

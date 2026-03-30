@@ -1306,5 +1306,10 @@
         <record id="us_12391_cleanup_rate_VEF_2016" model="patch.scripts">
             <field name="method">us_12391_cleanup_rate_VEF_2016</field>
         </record>
+
+        <record id="us_15432_fix_currencies_rounding" model="patch.scripts">
+            <field name="method">us_15432_fix_currencies_rounding</field>
+        </record>
+
     </data>
 </openerp>
