@@ -1981,48 +1981,6 @@ class shipment2(osv.osv):
     '''
     _inherit = 'shipment'
 
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
-        '''
-        Change the delivery address when the partner change.
-        '''
-        v = {}
-        d = {}
-
-        if not partner_id:
-            v.update({'address_id': False})
-            address_id = False
-        elif address_id:
-            d.update({'address_id': [('partner_id', '=', partner_id)]})
-
-        addr = False
-        if address_id:
-            addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
-
-        if partner_id and (not address_id or (addr and addr.partner_id.id != partner_id)):
-            addr = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
-            if not addr.get('delivery'):
-                addr = addr.get('default')
-            else:
-                addr = addr.get('delivery')
-
-            address_id = addr
-
-            v.update({'address_id': addr})
-
-        if address_id:
-            error = self.on_change_address_id(cr, uid, ids, address_id, context=context)
-            if error:
-                error['value'] = {'address_id': False}
-                error['domain'] = d
-                return error
-
-        warning = {
-            'title': _('Warning'),
-            'message': _('The field you are modifying may impact the shipment mechanism, please check the correct process.'),
-        }
-
-        return {'value': v, 'domain': d, 'warning': warning}
-
     def on_change_shipper_name(self, cr, uid, ids, shipper_name):
         return {
             'value': {'shipper_name': shipper_name},
