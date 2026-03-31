@@ -308,6 +308,24 @@ class wizard_account_invoice(osv.osv):
             'context': context,
         }
 
+    def onchange_date_invoice(self, cr, uid, ids,
+                              date_invoice=False):
+        values = {}
+
+        if date_invoice:
+            values['register_posting_date'] = date_invoice
+
+        return {'value': values}
+
+    def onchange_register_posting_date(self, cr, uid, ids,
+                                       register_posting_date=False):
+        values = {}
+
+        if register_posting_date:
+            values['date_invoice'] = register_posting_date
+
+        return {'value': values}
+
 wizard_account_invoice()
 
 class wizard_account_invoice_line(osv.osv):
