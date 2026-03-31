@@ -1522,7 +1522,7 @@ class account_mcdb(osv.osv):
             prop_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.name
             date_str = time.strftime('%Y%m%d')
 
-            filename = "%s_Combined Journals Report_%s" % (prop_instance, date_str)
+            filename = "%s_Combined Journals Report XLS_%s" % (prop_instance, date_str)
         else:
             report_name = 'combined.journals.report.pdf'
             filename = 'Combined Journals Report PDF'
