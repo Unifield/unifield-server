@@ -1298,7 +1298,7 @@ class users(osv.osv):
             if not context.get("lang"):
                     context["lang"] = user.context_lang or "en_MF"
 
-            if user.synchronize and self.pool.get('res.company')._get_instance_level(cr, 1) == 'section':
+            if user.synchronize and self.pool.get('res.company')._get_instance_level(cr, 1) != 'section':
                 raise Exception(
                     _('The values entered above are for a synched user, the password reset functionality is not possible for this user type. Please contact your UF referent/UF support via the ticketing system.')
                 )
@@ -1462,7 +1462,7 @@ class users(osv.osv):
             'password': new_passwd,
             'reset_password_token': False,
             'reset_password_date': False,
-        }, context=context)
+        }, context=dict(context or {}, from_reset_password=True))
         cr.commit()
         cr.close()
 
