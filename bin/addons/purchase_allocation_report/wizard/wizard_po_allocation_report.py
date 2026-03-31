@@ -47,7 +47,7 @@ class wizard_po_allocation_report(osv.osv_memory):
         po_obj = self.pool.get('purchase.order')
         active_ids = context.get('active_ids', [])
         order_name = active_ids and len(active_ids) > 0 and po_obj.read(cr, uid, active_ids[0], ['name'], context=context)['name'] or ''
-        filename = "Allocation Report_%s_%s" % (order_name, time.strftime('%Y%m%d'))
+        filename = "Allocation Report_%s_%s" % (order_name, time.strftime('%Y%m%d_%H_%M'))
         data = {
             'ids': active_ids,
             'model': context.get('active_model', 'ir.ui.menu'),

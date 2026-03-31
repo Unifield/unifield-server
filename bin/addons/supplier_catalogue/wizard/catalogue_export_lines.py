@@ -22,6 +22,8 @@
 from osv import osv
 from osv import fields
 
+import time
+
 
 class catalogue_export_lines(osv.osv_memory):
     _name = 'catalogue.export.lines'
@@ -41,6 +43,8 @@ class catalogue_export_lines(osv.osv_memory):
 
         catalogue_ids = context.get('active_ids', [])
 
+        catalogue = self.pool.get('supplier.catalogue').read(cr, uid, catalogue_ids[0], ['name'], context=context)
+
         report_name = 'supplier.catalogue.lines.xls'
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': report_name,
@@ -52,12 +56,14 @@ class catalogue_export_lines(osv.osv_memory):
             'background_time': 15,
         })
 
-        datas = {'ids': catalogue_ids, 'context': context}
-
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
-            'datas': datas,
+            'datas': {
+                'ids': catalogue_ids,
+                'context': context,
+                'target_filename': 'SCLX_%s_%s' % (catalogue and catalogue['name'] or '', time.strftime('%Y%m%d_%H_%M')),
+            },
             'nodestroy': True,
             'context': context,
         }

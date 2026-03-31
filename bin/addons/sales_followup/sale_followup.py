@@ -21,7 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
-import datetime
+import time
 
 class sale_order_followup_test(osv.osv_memory):
     _name = 'sale.order.followup.test'
@@ -328,7 +328,7 @@ class sale_order_followup(osv.osv_memory):
 
         return tender_ids
 
-    def export_get_file_name(self, cr, uid, ids, prefix='FO_Follow_Up', context=None):
+    def export_get_file_name(self, cr, uid, ids, prefix='FO Follow up', context=None):
         if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
@@ -337,11 +337,8 @@ class sale_order_followup(osv.osv_memory):
         if not foup or not foup.order_id or not foup.order_id.name:
             return False
         if foup.order_id.procurement_request:
-            prefix = 'IR_Follow_Up'
-        dt_now = datetime.datetime.now()
-        po_name = "%s_%s_%d_%02d_%02d" % (prefix,
-                                          foup.order_id.name.replace('/', '_'),
-                                          dt_now.year, dt_now.month, dt_now.day)
+            prefix = 'IR Follow up'
+        po_name = "%s_%s_%s" % (prefix, foup.order_id.name.replace('/', '_'), time.strftime('%Y%m%d_%H_%M'))
         return po_name
 
     def export_xls(self, cr, uid, ids, context=None):

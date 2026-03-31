@@ -341,6 +341,9 @@ class ir_followup_location_wizard(osv.osv_memory):
 
         self.get_values(cr, uid, ids, context=context)
 
+        wizard = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context)
+        ir_name = wizard.order_id and wizard.order_id.name or ''
+
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': 'IR followup',
             'report_name': 'ir.follow.up.location.report_xls',
@@ -348,11 +351,14 @@ class ir_followup_location_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 3
 
-        data = {'ids': ids, 'context': context}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'ir.follow.up.location.report_xls',
-            'datas': data,
+            'datas': {
+                'ids': ids,
+                'context': context,
+                'target_filename': _('IR Follow up_%s_%s') % (ir_name, time.strftime('%Y%m%d_%H_%M'))
+            },
             'context': context,
         }
 
@@ -369,6 +375,9 @@ class ir_followup_location_wizard(osv.osv_memory):
 
         self.get_values(cr, uid, ids, context=context)
 
+        wizard = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context)
+        ir_name = wizard.order_id and wizard.order_id.name or ''
+
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': 'IR followup',
             'report_name': 'ir.follow.up.location.report_pdf',
@@ -376,11 +385,15 @@ class ir_followup_location_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 20
 
-        data = {'ids': ids, 'context': context, 'is_rml': True}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'ir.follow.up.location.report_pdf',
-            'datas': data,
+            'datas': {
+                'ids': ids,
+                'context': context,
+                'is_rml': True,
+                'target_filename': _('IR Follow up_%s_%s') % (ir_name, time.strftime('%Y%m%d_%H_%M'))
+            },
             'context': context,
         }
 

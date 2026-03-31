@@ -619,6 +619,7 @@ class product_history_consumption(osv.osv):
             return {
                 'type': 'ir.actions.report.xml',
                 'report_name': 'report_historical_consumption_xlsx',
+                'datas': {'target_filename': _('Historical Consumption_%s') % (time.strftime('%Y%m%d_%H_%M'),),},
                 'context': context,
             }
         return self.return_waiting_screen(cr, uid, ids, context=context)
