@@ -204,7 +204,7 @@ class account_journal(osv.osv):
             if company.bank_credit_account_id:
                 value['value']['default_credit_account_id'] = company.bank_credit_account_id.id
         elif type == 'other':
-            analytic_other_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'OTH'),
+            analytic_other_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'MBM'),
                                                                           ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_other_journal
             if company.other_debit_account_id:
