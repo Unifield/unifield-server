@@ -4385,6 +4385,7 @@ class stock_picking(osv.osv):
                                                                                   'shipment_id': shipment_id,
                                                                                   'state': 'assigned',
                                                                                   'packing_list': picking.packing_list,
+                                                                                  'description_ppl': picking.details,
                                                                                   'parcel_comment': picking.description_ppl,
                                                                               }, context=context)
                     pack_move_data['shipment_line_id'] = ship_line_id

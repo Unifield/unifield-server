@@ -155,6 +155,17 @@ class patch_scripts(osv.osv):
             cr.execute("delete from res_currency_rate where name='2016-06-01' and id in (select res_id from ir_model_data where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094')")
             cr.execute("delete from ir_model_data where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
             self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 duplicated')
+
+    def us_15639_update_description_ppl(self, cr, uid, *a, **b):
+        '''
+        Update the description_ppl field of Draft/Available pack_family_memory using the linked Pack's (stock_picking) details
+        '''
+        cr.execute("""
+            UPDATE pack_family_memory AS pf
+            SET description_ppl = p.details FROM stock_picking AS p
+            WHERE pf.draft_packing_id = p.id AND pf.state IN ('draft', 'assigned')
+        """)
+        self.log_info(cr, uid, 'US-15639: The Details of %s Pack Families have been updated' % (cr.rowcount,))
         return True
 
     # UF40.0

@@ -1315,5 +1315,8 @@
             <field name="method">us_15072_po_detail</field>
         </record>
 
+        <record id="us_15639_update_description_ppl" model="patch.scripts">
+            <field name="method">us_15639_update_description_ppl</field>
+        </record>
     </data>
 </openerp>
