@@ -1340,6 +1340,22 @@ class users(osv.osv):
                 state = 'error'
                 result = tools.ustr(e)
 
+            body_without_token = _("""
+                Password reset request
+                A request has been received to reset your password.
+                -This password reset request is valid for the next 6 hours.
+                Otherwise you will need to renew your request for a new password via UF login screen.
+
+                Here are the details of your account:
+                User login %s
+                Temporary code: **********
+                Please note this temporary code will only be valid 6 hours.
+                Please return to UF login page and click on link "Forgotten password?". In this screen click
+                button "Add temporary code". Fill in details there.
+
+                If it was not you who has triggered this password reset, please contact your IT - security
+                responsible to alert them.
+            """) % (user.login)
 
             email_log_obj = self.pool.get('email.log')
             sender_model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.users')], context=context)[0]
@@ -1347,7 +1363,7 @@ class users(osv.osv):
             email_log_obj.create(cr, 1, {
                 'recipients': email,
                 'subject': "[UniField] Account password reset",
-                'body': body,
+                'body': body_without_token,
                 'state': state,
                 'result': result,
                 'failed_attempts': 0 if state == 'success' else 1,
