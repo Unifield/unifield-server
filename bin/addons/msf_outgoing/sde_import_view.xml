@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
         <!-- SDE User -->
         <record model="res.users" id="base.user_sde_tool">
             <field name="name">SDE Tool</field>
             <field name="login">sde_tool</field>
             <field name="active" eval="False" />
+<!--            <field name="active" eval="True" />-->
         </record>
 
         <!-- Sequences for sde.export.pagination -->
@@ -17,6 +18,19 @@
             <field name="name">SDE Paginated Exports</field>
             <field name="code">sde.export.pagination</field>
             <field name="prefix">SDE/EXPORT</field>
+            <field name="padding">6</field>
+            <field name="implementation">psql</field>
+        </record>
+
+        <!-- Sequences for sde.availability.check -->
+        <record id="seq_type_sde_availability_check" model="ir.sequence.type">
+            <field name="name">SDE Availability Checks</field>
+            <field name="code">sde.vailability.check</field>
+        </record>
+        <record id="seq_ssde_availability_check" model="ir.sequence">
+            <field name="name">SSDE Availability Checks</field>
+            <field name="code">sde.vailability.check</field>
+            <field name="prefix">SDE/AVCHK</field>
             <field name="padding">6</field>
             <field name="implementation">psql</field>
         </record>
@@ -51,6 +65,8 @@
                     <button name="wizard_sde_picking_ticket_msg" string="Set banner on Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_picking_ticket_export" string="Export Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_picking_ticket_export_lines" string="Export Picking Tickets with lines" icon="gtk-execute" type="object" colspan="2" />
+                    <separator colspan="4" string="OUT Tools" />
+                    <button name="wizard_sde_out_msg" string="Set banner on OUTs" icon="gtk-execute" type="object" colspan="2" />
                     <separator colspan="4" string="Report Actions" />
                     <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="4" context="{'from_sde_wizard': True}" />
                 </form>

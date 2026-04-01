@@ -919,8 +919,8 @@ class users(osv.osv):
         if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
             raise osv.except_osv(_('Error'), _('Activation of UniData_pull user is not allowed.'))
 
-        if values.get('active') and self._get_sde_tool_user_id(cr) in ids:
-            raise osv.except_osv(_('Error'), _('Activation of SDE Tool user is not allowed.'))
+        if values.get('active') and not values['active'] and self._get_sde_tool_user_id(cr) in ids:
+            raise osv.except_osv(_('Error'), _('Deactivation of SDE Tool user is not allowed.'))
 
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()

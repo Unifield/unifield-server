@@ -3576,7 +3576,7 @@ class stock_picking(osv.osv):
             # At first we confirm the new picking (if necessary)
             pick_to_check = False
             if new_picking_id:
-                self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id}, context=context)
+                self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id, 'sde_update_msg': False}, context=context)
 
                 rw_name = context.get('rw_backorder_name', False)
                 update_vals = {}
@@ -3636,7 +3636,7 @@ class stock_picking(osv.osv):
                 else:
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-                    update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}
+                    update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S'), 'sde_update_msg': False}
                     pick_to_check = picking.id
                     self.write(cr, uid, picking.id, update_vals)
 

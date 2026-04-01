@@ -515,7 +515,7 @@ class sde_import(osv.osv_memory):
         if action == 'picking_import':
             result = self.sde_picking_ticket_import(cr, uid, sde_imp['json_text'], context=context)
         elif action == 'banner_msg':
-            result = self.sde_picking_ticket_msg(cr, uid, sde_imp['json_text'], context=context)
+            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'pick', context=context)
         elif action == 'picking_export':
             result = self.sde_picking_ticket_export(cr, uid, sde_imp['json_text'], context=context)
         elif action == 'picking_export_lines':
@@ -618,7 +618,7 @@ class sde_import(osv.osv_memory):
                 # Get the Picking Ticket from the name
                 if not json_data.get('name'):
                     raise osv.except_osv(_('Error'), _('The main key "name" is mandatory and should not be empty'))
-                pick_ids = self.get_picking_ticket_from_refs(cr, uid, [json_data['name']], context=context)
+                pick_ids = self.get_stock_picking_from_refs(cr, uid, [json_data['name']], 'out', 'picking', context=context)
                 pick_id = pick_ids[0]
                 pick = pick_obj.read(cr, uid, pick_id, ['name', 'sde_updated'], context=context)
                 if pick['sde_updated']:
@@ -672,41 +672,7 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        pick_obj = self.pool.get('stock.picking')
-        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
-        result = {'database': instance_name, 'error': False, 'message': ''}
-        try:
-            json_data = json.loads(json_text)
-
-            # Check if the call was to the correct instance
-            if not json_data.get('database'):
-                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
-            if json_data['database'] != instance_name:
-                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
-
-            # Get the Picking Tickets with the references given
-            if not json_data.get('pick_list') or not isinstance(json_data['pick_list'], list):
-                raise osv.except_osv(_('Error'), _('The main key "pick_list" is mandatory and should be a non-empty list of Picking Ticket names'))
-            try:
-                json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
-            except:
-                raise osv.except_osv(_('Error'), _('One or more of the Picking Ticket names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
-            pick_ids = self.get_picking_ticket_from_refs(cr, uid, json_data['pick_list'], context=context)
-
-            update_msg = _('This Picking Ticket is currently being updated via SDE since %s, please avoid making any direct change in UniField')\
-                         % (datetime.now().strftime('%d/%m/%Y %H:%M'),)
-            pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': update_msg}, context=context)
-
-            result['message'] = _('The "updated via SDE" banner message has been put on the Picking Tickets %s') % (', '.join(json_data['pick_list']),)
-        except Exception as e:
-            # Rejection message to send back
-            if isinstance(e, osv.except_osv):
-                error_msg = e.value
-            else:
-                error_msg = e.args and '. '.join(e.args) or e
-            result.update({'error': True, 'message': error_msg})
-
-        return result
+        return self.sde_stock_picking_msg(cr, uid, json_text, 'pick', context=context)
 
     @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_export_lines')
     def sde_picking_ticket_export_lines(self, cr, uid, json_text, context=None):
@@ -770,10 +736,13 @@ class sde_import(osv.osv_memory):
                     except:
                         raise osv.except_osv(_('Error'), _('One or more of the Picking Ticket names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
                     pick_names = json_data['pick_list']
-                    pick_ids = self.get_picking_ticket_from_refs(cr, uid, pick_names, context=context)
+                    pick_ids = self.get_stock_picking_from_refs(cr, uid, pick_names, 'out', 'picking', context=context)
                 else:
                     pick_domain = [('state', '=', 'assigned'), ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]
                     pick_ids = pick_obj.search(cr, uid, pick_domain, context=context)
+
+                if not pick_ids:
+                    raise osv.except_osv(_('Error'), _('There is no Available Picking Ticket to export'))
 
                 # Default number of lines per page is 100 if not specified
                 lines_per_page = 100
@@ -882,27 +851,6 @@ class sde_import(osv.osv_memory):
             result.update({'error': True, 'message': error_msg})
 
         return result
-
-    def get_picking_ticket_from_refs(self, cr, uid, pick_list, context=None):
-        if context is None:
-            context = {}
-
-        pick_obj = self.pool.get('stock.picking')
-
-        pick_ids, not_found = [], []
-        for pick_name in pick_list:
-            pick_domain = [('state', '=', 'assigned'), ('type', '=', 'out'), ('subtype', '=', 'picking'),
-                           ('backorder_id', '!=', False), ('name', '=', pick_name)]
-            pick_id = pick_obj.search(cr, uid, pick_domain, context=context)
-            if pick_id:
-                pick_ids.append(pick_id[0])
-            else:
-                not_found.append(pick_name)
-
-        if not_found:
-            raise osv.except_osv(_('Error'), _('The Available Picking Tickets %s could not be found') % (', '.join(not_found),))
-
-        return pick_ids
 
     def get_picking_ticket_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
         """
@@ -1089,6 +1037,168 @@ class sde_import(osv.osv_memory):
 
         return True
 
+    # =============================================================================================================== #
+    #                                            OUT (DELIVERY ORDER)                                                 #
+    # =============================================================================================================== #
+    def wizard_sde_out_import(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on OUTs
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_out_actions(cr, uid, ids, action='out_import', context=context)
+
+    def wizard_sde_out_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on OUTs
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_out_actions(cr, uid, ids, action='banner_msg', context=context)
+
+    def wizard_sde_out_export(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export OUTs
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_out_actions(cr, uid, ids, action='out_export', context=context)
+
+    def wizard_sde_out_export_lines(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export OUTs with lines
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_out_actions(cr, uid, ids, action='out_export_lines', context=context)
+
+    def wizard_sde_out_actions(self, cr, uid, ids, action=False, context=None):
+        '''
+        Method to use instead of the JSONRPC
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
+        if not sde_imp['json_text']:
+            raise osv.except_osv(_('Warning'), _('No JSON data to use'))
+
+        result = []
+        if action == 'out_import':
+            result = self.sde_out_import(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'banner_msg':
+            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'out', context=context)
+        elif action == 'out_export':
+            result = self.sde_out_export(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'out_export_lines':
+            result = self.sde_out_export_lines(cr, uid, sde_imp['json_text'], context=context)
+
+        return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_out_msg')
+    def sde_out_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to set a 'SDE is updating' message on a list of OUTs
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_msg(cr, uid, json_text, 'out', context=context)
+
+    # =============================================================================================================== #
+    #                                                     ALL                                                         #
+    # =============================================================================================================== #
+    def sde_stock_picking_msg(self, cr, uid, json_text, doc_type, context=None):
+        '''
+        Method used by the SDE script to set a 'SDE is updating' message on a list of Picking Tickets/OUTs
+        '''
+        if context is None:
+            context = {}
+        if not doc_type:
+            raise osv.except_osv(_('Error'), _('Please specify a doc_type if you want to search for a stock_picking'))
+
+        pick_obj = self.pool.get('stock.picking')
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+
+        result = {'database': instance_name, 'error': False, 'message': ''}
+        doc = _('Picking Ticket')
+        pick_type = 'out'
+        pick_subtype = 'picking'
+        if doc_type == 'out':
+            doc = _('OUT')
+            pick_subtype = 'standard'
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)')
+                                     % (json_data['database'], instance_name))
+
+            # Get the documents with the references given
+            if not json_data.get('pick_list') or not isinstance(json_data['pick_list'], list):
+                raise osv.except_osv(_('Error'), _('The main key "pick_list" is mandatory and should be a non-empty list of %s names') % (doc,))
+            try:
+                json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
+            except:
+                raise osv.except_osv(_('Error'), _('One or more of the %s names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one') % (doc,))
+            pick_ids = self.get_stock_picking_from_refs(cr, uid, json_data['pick_list'], pick_type, pick_subtype, context=context)
+
+            update_msg = _('This %s is currently being updated via SDE since %s, please avoid making any direct change in UniField') \
+                         % (doc, datetime.now().strftime('%d/%m/%Y %H:%M'),)
+            pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': update_msg}, context=context)
+
+            result['message'] = _('The "updated via SDE" banner message has been put on the %s %s') % (doc, ', '.join(json_data['pick_list']),)
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+
+        return result
+
+    def get_stock_picking_from_refs(self, cr, uid, pick_list, pick_type, pick_subtype, context=None):
+        if context is None:
+            context = {}
+        if not pick_type or not pick_subtype:
+            raise osv.except_osv(_('Error'), _('Please specify a pick_type and pick_subtype'))
+
+        pick_obj = self.pool.get('stock.picking')
+
+        pick_ids, not_found = [], []
+        for pick_name in pick_list:
+            pick_domain = [('state', '=F', 'assigned'), ('type', '=', pick_type), ('subtype', '=', pick_subtype), ('name', '=', pick_name)]
+            if pick_type == 'pick':
+                pick_domain.append(('backorder_id', '!=', False))
+            pick_id = pick_obj.search(cr, uid, pick_domain, context=context)
+            if pick_id:
+                pick_ids.append(pick_id[0])
+            else:
+                not_found.append(pick_name)
+
+        if not_found:
+            if pick_type == 'out' and pick_subtype == 'standard':
+                doc = _('OUTs')
+            else:
+                doc = _('Picking Tickets')
+            raise osv.except_osv(_('Error'), _('The Available %s %s could not be found') % (doc, ', '.join(not_found),))
+
+        return pick_ids
+
 
 sde_import()
 
@@ -1101,7 +1211,7 @@ class sde_update_log(osv.osv):
     _columns = {
         'date': fields.datetime('Update Date', required=True, readonly=True),
         'doc_type': fields.selection(string='Document',
-                                     selection=[('in', 'Incoming Shipment'), ('pick', 'Picking Ticket')], required=True,
+                                     selection=[('in', 'Incoming Shipment'), ('pick', 'Picking Ticket'), ('out', 'Delivery Order')], required=True,
                                      readonly=True),
         'doc_ref': fields.char(string='Reference', size=64, required=True, readonly=True),
     }
@@ -1140,7 +1250,7 @@ class sde_export_pagination(osv.osv):
     _columns = {
         'pagination_json_id': fields.char(string='Pagination JSON ID', size=32, required=True, readonly=True),
         'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
-        'doc_type': fields.selection(string='Document', selection=[('pick', 'Picking Ticket')], required=True, readonly=True),
+        'doc_type': fields.selection(string='Document', selection=[('pick', 'Picking Ticket'), ('out', 'Delivery Order')], required=True, readonly=True),
         'page': fields.integer(string='SDE import page', required=True, readonly=True),
         'last_page': fields.boolean(string='Last page of the export', readonly=True),
         'with_lines': fields.boolean(string='Exported with lines', readonly=True),
@@ -1153,3 +1263,28 @@ class sde_export_pagination(osv.osv):
 
 
 sde_export_pagination()
+
+
+class sde_availability_check(osv.osv):
+    _name = 'sde.availability.check'
+    _description = 'SDE Availability Checks'
+    _order = 'id desc'
+
+    _columns = {
+        'name': fields.char(string='SDE Check Availability Reference', size=32, required=True, readonly=True),
+        'state': fields.selection(string='State', selection=[('progress', 'In progress'), ('done', 'Done'), ('error', 'Error')], readonly=True),
+        'doc_type': fields.selection(string='Document', selection=[('out', 'Delivery Order')], required=True, readonly=True),
+        'checked_pick_ids': fields.many2many('stock.picking', 'sde_availability_check_pick_rel', 'picking_id',
+                                             'sde_availability_check_id', string='Affected documents',
+                                             help='List of OUTs that had their Availability checked', readonly=True, order_by='id'),
+        'nb_checked': fields.integer(string='Number of checked documents', readonly=True),
+        'total_to_check': fields.integer(string='Number of documents to check', required=True, readonly=True),
+    }
+
+    _defaults = {
+        'state': 'progress',
+        'nb_checked': 0,
+    }
+
+
+sde_availability_check()

@@ -873,12 +873,19 @@
                 <form string="Delivery Orders">
                     <group col="6" colspan="4">
                         <html colspan="6">
-                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                            <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                            <p id="sde_update_banner_msg" style="display:none; position:fixed; min-width:100%%; z-index:1000; left:0; top:0; text-align:center; padding: 10px 1px; background: red none repeat scroll 0 0; color:white; font-weight:bold; font-size:1.6em" />
+
                             <script language="javascript">
                                 var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
                                 if (alert_msl_mml) {
                                     $('#msl_mml').html(alert_msl_mml);
                                     $('#msl_mml').show();
+                                }
+                                var sde_update_msg = $('#sde_update_msg').val() || $('#sde_update_msg').text();
+                                if (sde_update_msg) {
+                                    $('#sde_update_banner_msg').html(sde_update_msg);
+                                    $('#sde_update_banner_msg').show();
                                 }
                             </script>
                         </html>
@@ -887,6 +894,7 @@
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1" />
                             <field name="alert_msl_mml" invisible="1" />
+                            <field name="sde_update_msg" invisible="1"/>
                             <field name="partner_id2"
                                 on_change="on_change_partner_out(partner_id2, address_id, type)"
                                 required="1"
@@ -1102,6 +1110,7 @@
                             <field name="move_type" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}" invisible="1" />
                             <field name="type" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}" invisible="1" />
                             <field name="transport_order_id" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
+                            <field name="sde_updated" readonly="1" attrs="{'invisible': [('sde_updated', '=', False)]}"/>
                             <field name="company_id" widget="selection" invisible="1"/>
                         </page>
                         <page string="Notes">
