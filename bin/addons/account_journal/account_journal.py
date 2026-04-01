@@ -36,7 +36,7 @@ class account_journal(osv.osv):
                 ('bank', 'Bank'),
                 ('cash','Cash'),
                 ('cheque', 'Cheque'),
-                ('other', 'Other financial institutions'),
+                ('other', 'Other fin institutions/mobile money'),
                 ('correction', 'Correction Auto'),
                 ('correction_hq', 'Correction HQ'),
                 ('correction_manual', 'Correction Manual'),
@@ -204,9 +204,11 @@ class account_journal(osv.osv):
             if company.bank_credit_account_id:
                 value['value']['default_credit_account_id'] = company.bank_credit_account_id.id
         elif type == 'other':
-            analytic_other_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'MBM'),
-                                                                          ('is_current_instance', '=', True)], context=context)[0]
-            value['value']['analytic_journal_id'] = analytic_other_journal
+            analytic_ids = analytic_journal_obj.search(cr, uid, [('code', '=', 'OFIN'),
+                                                                 ('is_current_instance', '=', True)], context=context)
+
+            if analytic_ids:
+                value['value']['analytic_journal_id'] = analytic_ids[0]
             if company.other_debit_account_id:
                 value['value']['default_debit_account_id'] = company.other_debit_account_id.id
             if company.other_credit_account_id:

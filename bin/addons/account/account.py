@@ -674,7 +674,7 @@ class account_journal(osv.osv):
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True),
         'code': fields.char('Code', size=5, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
-        'type': fields.selection([('sale', 'Sale'),('sale_refund','Sale Refund'), ('purchase', 'Purchase'), ('purchase_refund','Purchase Refund'), ('cash', 'Cash'), ('bank', 'Bank and Cheques'), ('other', 'Other financial institutions'), ('general', 'General'), ('situation', 'Opening/Closing Situation')], 'Type', size=32, required=True, select=1,
+        'type': fields.selection([('sale', 'Sale'),('sale_refund','Sale Refund'), ('purchase', 'Purchase'), ('purchase_refund','Purchase Refund'), ('cash', 'Cash'), ('bank', 'Bank and Cheques'), ('other', 'Other fin institutions/mobile money'), ('general', 'General'), ('situation', 'Opening/Closing Situation')], 'Type', size=32, required=True, select=1,
                                  help="Select 'Sale' for Sale journal to be used at the time of making invoice."\
                                  " Select 'Purchase' for Purchase Journal to be used at the time of approving purchase order."\
                                  " Select 'Cash' to be used at the time of making payment."\
