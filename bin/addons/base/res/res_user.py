@@ -268,6 +268,7 @@ class users(osv.osv):
     __admin_ids = {}
     __sync_user_ids = {}
     __unidata_pull_ids = {}
+    __sde_tool_ids = {}
     __ignore_ur_ids = {}
     _uid_cache = {}
     _name = "res.users"
@@ -708,6 +709,11 @@ class users(osv.osv):
             self.__unidata_pull_ids[cr.dbname] = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_unidata_pull')[1]
         return self.__unidata_pull_ids[cr.dbname]
 
+    def _get_sde_tool_user_id(self, cr):
+        if self.__sde_tool_ids.get(cr.dbname) is None:
+            self.__sde_tool_ids[cr.dbname] = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sde_tool')[1]
+        return self.__sde_tool_ids[cr.dbname]
+
     def _get_ignore_ur_ids(self, cr):
         if self.__ignore_ur_ids.get(cr.dbname) is None:
             self.__ignore_ur_ids[cr.dbname] = [self._get_unidata_pull_user_id(cr), self._get_sync_user_id(cr)]
@@ -912,6 +918,9 @@ class users(osv.osv):
         self._check_email_format(cr, uid, values, context=context)
         if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
             raise osv.except_osv(_('Error'), _('Activation of UniData_pull user is not allowed.'))
+
+        if values.get('active') and self._get_sde_tool_user_id(cr) in ids:
+            raise osv.except_osv(_('Error'), _('Activation of SDE Tool user is not allowed.'))
 
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()

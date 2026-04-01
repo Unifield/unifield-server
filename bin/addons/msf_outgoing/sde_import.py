@@ -622,7 +622,7 @@ class sde_import(osv.osv_memory):
                 pick_id = pick_ids[0]
                 pick = pick_obj.read(cr, uid, pick_id, ['name', 'sde_updated'], context=context)
                 if pick['sde_updated']:
-                    raise osv.except_osv(_('Error'), _('The Picking Ticket %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE flag there') % (pick['name'],))
+                    raise osv.except_osv(_('Error'), _('The Picking Ticket %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE update there') % (pick['name'],))
 
                 # Reset the data of the imported lines
                 if not json_data.get('move_lines'):

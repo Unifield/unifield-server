@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
+        <!-- SDE User -->
+        <record model="res.users" id="base.user_sde_tool">
+            <field name="name">SDE Tool</field>
+            <field name="login">sde_tool</field>
+            <field name="active" eval="False" />
+        </record>
+
         <!-- Sequences for sde.export.pagination -->
         <record id="seq_type_sde_export_pagination" model="ir.sequence.type">
             <field name="name">SDE Paginated Exports</field>

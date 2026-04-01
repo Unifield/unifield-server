@@ -60,11 +60,13 @@ class patch_scripts(osv.osv):
     }
 
     # UF41.0
-    def us_14587_15419_15645_hide_sde_menu(self, cr, uid, *a, **b):
+    def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
         '''
-        Hide the 4 Single Data Entry menus used for manual actions
-        Then menus will need be manually activated if someone want to test SDE from Unifield
+        Hide the 4 Single Data Entry menus used for manual actions. Then menus will need be manually activated if
+        someone want to test SDE from Unifield
+        Give the new user "sde_tool" the Groups "Sync / User", "Sup_Warehouse_Manager" and "Sup_Transport_Manager"
         '''
+        # Hide the menu
         menu_obj = self.pool.get('ir.ui.menu')
 
         sde_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_main_menu')[1]
@@ -77,6 +79,17 @@ class patch_scripts(osv.osv):
 
         # SQL request to activate the menus, then restart the server
         # UPDATE ir_ui_menu SET active = 't' WHERE id IN (SELECT res_id FROM ir_model_data WHERE name IN ('sde_import_menu', 'sde_import_main_menu', 'sde_paginated_import_menu', 'sde_paginated_export_menu'));
+
+        # Set the needed Groups to "sde_tool" user
+        user_obj = self.pool.get('res.users')
+        sde_tool_user_id = user_obj._get_sde_tool_user_id(cr)
+        if sde_tool_user_id:
+            group_obj = self.pool.get('res.groups')
+            sync_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+            sup_wh_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Warehouse_Manager')])
+            sup_tr_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Transport_Manager')])
+
+            user_obj.write(cr, uid, sde_tool_user_id, {'groups_id': [(6, 0, [sync_group_ids[0], sup_wh_man_group_ids[0], sup_tr_man_group_ids[0]])]}, context={})
 
         return True
 
