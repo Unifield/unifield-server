@@ -690,7 +690,7 @@ SELECT res_id, touched
         if analytic_line.distrib_line_id:
             analytic_line.distrib_line_id.unlink(context=context)
 
-        return self.unlink(cr, uid, [res_id], context=context)
+        return self.unlink(cr, uid, [res_id], context={**context, 'from_message_unlink': True})
 
     @orm_method_overload
     def unlink(self, original_unlink, cr, uid, ids, context=None):
@@ -708,12 +708,10 @@ SELECT res_id, touched
                                        if not rec.module == 'sd'],
                                    context=context)
 
-        # condtion <self._name not in ('account.analytic.line')> added to fix US-13993
-        # I think this block could be removed, to not remove the ir.model.data record
-        # when a record is deleted in a sync_message_execution
-        # as this code is here since 2013 (SP-129: added in commit to fix another use case),
-        # I keep it to prevent regressions
-        if context.get('sync_message_execution') and self._name not in ('account.analytic.line'):
+        # condition <self._name not in ('account.analytic.line')> added to fix US-13993
+        # context.get('from_message_unlink') added to not forward deletion UF-2344
+        if context.get('sync_message_execution') and (
+                context.get('from_message_unlink') or self._name not in ('account.analytic.line')):
             return original_unlink(self, cr, uid, ids, context=context)
 
         # In an update creation context, references are deleted normally
