@@ -750,14 +750,14 @@ class shipment(osv.osv):
         shadow_pack_id = picking_obj.copy(cr, uid, picking.id, shadow_pack_data, context=new_ctx)
         ###
 
-        selected_to_pack = family.from_pack + selected_number - 1
+        selected_from_pack = family.to_pack - selected_number + 1
 
         if selected_number == int(family.num_of_packs):
             initial_from_pack = 0
             initial_to_pack = 0
         else:
-            initial_from_pack = family.from_pack + selected_number
-            initial_to_pack = family.to_pack
+            initial_from_pack = family.from_pack
+            initial_to_pack = family.to_pack - selected_number
 
         dest_location = picking.warehouse_id.lot_output_id.id
         if family.draft_packing_id.sale_id and family.draft_packing_id.sale_id.procurement_request and \
@@ -767,8 +767,8 @@ class shipment(osv.osv):
         ship_line_id = self.pool.get('pack.family.memory').copy(cr, uid, family.id, {
             'move_lines': [],
             'shipment_id': new_shipment_id,
-            'from_pack': family.from_pack,
-            'to_pack': selected_to_pack,
+            'from_pack': selected_from_pack,
+            'to_pack': family.to_pack,
             'selected_number': selected_number,
             'draft_packing_id': new_packing_id,
             'location_id': picking.warehouse_id.lot_distribution_id.id,
@@ -1047,8 +1047,8 @@ class shipment(osv.osv):
                     initial_to_pack = 0
                     selected_number = 0
                 else:
-                    initial_from_pack = family.from_pack + family.selected_number
-                    initial_to_pack  = family.to_pack
+                    initial_from_pack = family.from_pack
+                    initial_to_pack = family.to_pack - family.selected_number
                     selected_number = initial_to_pack - initial_from_pack + 1
 
                 selected_parcel_ids = family.selected_parcel_ids
@@ -1059,8 +1059,8 @@ class shipment(osv.osv):
                     raise osv.except_osv(_('Error'), _('Number of Parcel IDs %d does not match returned number %d') % (len(selected_parcel_ids.split(',')), family.selected_number))
 
                 back_ship_line_id = self.pool.get('pack.family.memory').copy(cr, uid, ship_line.id, {
-                    'from_pack': family.from_pack,
-                    'to_pack': family.from_pack + family.selected_number - 1,
+                    'from_pack': family.to_pack - family.selected_number + 1,
+                    'to_pack': family.to_pack,
                     'selected_number': family.selected_number,
                     'state': 'returned',
                     'move_lines': False,
