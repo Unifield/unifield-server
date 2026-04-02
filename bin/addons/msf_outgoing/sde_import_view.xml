@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
         <!-- SDE User -->
         <record model="res.users" id="base.user_sde_tool">
             <field name="name">SDE Tool</field>
@@ -25,11 +25,11 @@
         <!-- Sequences for sde.availability.check -->
         <record id="seq_type_sde_availability_check" model="ir.sequence.type">
             <field name="name">SDE Availability Checks</field>
-            <field name="code">sde.vailability.check</field>
+            <field name="code">sde.availability.check</field>
         </record>
         <record id="seq_ssde_availability_check" model="ir.sequence">
             <field name="name">SSDE Availability Checks</field>
-            <field name="code">sde.vailability.check</field>
+            <field name="code">sde.availability.check</field>
             <field name="prefix">SDE/AVCHK</field>
             <field name="padding">6</field>
             <field name="implementation">psql</field>
@@ -68,6 +68,8 @@
                     <separator colspan="4" string="OUT Tools" />
                     <button name="wizard_sde_out_import" string="Import OUT" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_out_msg" string="Set banner on OUTs" icon="gtk-execute" type="object" colspan="2" />
+                    <button name="wizard_sde_out_check_availability" string="Check Availability OUTs" icon="gtk-execute" type="object" colspan="2" />
+                    <newline />
                     <button name="wizard_sde_out_export" string="Export OUTs" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_out_export_lines" string="Export OUTs with lines" icon="gtk-execute" type="object" colspan="2" />
                     <separator colspan="4" string="Report Actions" />
@@ -190,6 +192,61 @@
         </record>
 
         <menuitem name="SDE Paginated exports" action="action_sde_paginated_export" id="sde_paginated_export_menu" parent="sde_import_main_menu" sequence="12" />
+
+        <record id="sde_availability_check_search_view" model="ir.ui.view">
+            <field name="name">sde.availability.check.search.view</field>
+            <field name="model">sde.availability.check</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="SDE Availability Checks">
+                    <field name="name" />
+                    <field name="doc_type" />
+                    <field name="checked_pick_ids" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+        <record id="sde_availability_check_tree_view" model="ir.ui.view">
+            <field name="name">sde.availability.check.tree.view</field>
+            <field name="model">sde.availability.check</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="SDE Availability Checks" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                    <field name="name"/>
+                    <field name="doc_type"/>
+                    <field name="nb_checked"/>
+                    <field name="nb_to_check"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="sde_availability_check_form_view" model="ir.ui.view">
+            <field name="name">sde.availability.check.form.view</field>
+            <field name="model">sde.availability.check</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="SDE Availability Checks" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                    <field name="name"/>
+                    <field name="doc_type"/>
+                    <field name="nb_checked"/>
+                    <field name="nb_to_check"/>
+                    <field name="checked_pick_ids" colspan="4"/>
+                    <field name="error_msg" colspan="4"/>
+                    <field name="state" colspan="4"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sde_availability_check" model="ir.actions.act_window">
+            <field name="name">SDE Availability Checks</field>
+            <field name="res_model">sde.availability.check</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem name="SDE Availability Checks" action="action_sde_availability_check" id="sde_availability_check_menu" parent="sde_import_main_menu" sequence="13" />
 
         <record id="sde_update_log_search_view" model="ir.ui.view">
             <field name="name">sde.update.log.search.view</field>

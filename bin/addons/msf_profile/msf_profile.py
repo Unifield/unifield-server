@@ -73,12 +73,14 @@ class patch_scripts(osv.osv):
         sde_tools_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_menu')[1]
         sde_pagi_imp_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_import_menu')[1]
         sde_pagi_exp_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_export_menu')[1]
+        sde_avchk_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_availability_check_menu')[1]
 
         menu_obj.write(cr, uid, sde_menu_id, {'active': False}, context={})
-        menu_obj.write(cr, uid, [sde_tools_menu_id, sde_pagi_imp_menu_id, sde_pagi_exp_menu_id], {'active': False}, context={})
+        menu_ids = [sde_tools_menu_id, sde_pagi_imp_menu_id, sde_pagi_exp_menu_id, sde_avchk_menu_id]
+        menu_obj.write(cr, uid, menu_ids, {'active': False}, context={})
 
         # SQL request to activate the menus, then restart the server
-        # UPDATE ir_ui_menu SET active = 't' WHERE id IN (SELECT res_id FROM ir_model_data WHERE name IN ('sde_import_menu', 'sde_import_main_menu', 'sde_paginated_import_menu', 'sde_paginated_export_menu'));
+        # UPDATE ir_ui_menu SET active = 't' WHERE id IN (SELECT res_id FROM ir_model_data WHERE name IN ('sde_import_menu', 'sde_import_main_menu', 'sde_paginated_import_menu', 'sde_paginated_export_menu', 'sde_availability_check_menu'));
 
         # Set the needed Groups to "sde_tool" user, exclude sync server
         if not cr.table_exists('sync_server_user_rights'):
