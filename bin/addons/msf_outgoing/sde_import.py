@@ -679,7 +679,10 @@ class sde_import(osv.osv_memory):
         '''
         Method used by the SDE script to export info on Picking Tickets with lines
         '''
-        return self.sde_picking_ticket_export(cr, uid, json_text, with_lines=True, context=context)
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'picking', with_lines=True, context=context)
 
     @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_export')
     def sde_picking_ticket_export(self, cr, uid, json_text, with_lines=False, context=None):
@@ -689,7 +692,7 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        self.sde_stock_picking_export(cr, uid, json_text, 'out', 'picking', with_lines=with_lines, context=context)
+        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'picking', with_lines=with_lines, context=context)
 
     def get_picking_ticket_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
         """
@@ -962,14 +965,17 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        return self.sde_out_export(cr, uid, json_text, with_lines=True, context=context)
+        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'standard', with_lines=True, context=context)
 
     @jsonrpc_orm_exposed('sde.import', 'sde_out_export')
-    def sde_out_export(self, cr, uid, json_text, with_lines=False, context=None):
+    def sde_out_export(self, cr, uid, json_text, context=None):
         '''
         Method used by the SDE script to export info on OUTs. Doesn't export lines' data unless specified
         '''
-        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'standard', with_lines=with_lines, context=context)
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'standard', with_lines=False, context=context)
 
     def get_out_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
         """
@@ -1435,7 +1441,7 @@ class sde_import(osv.osv_memory):
 
         pick_ids, not_found = [], []
         for pick_name in pick_list:
-            pick_domain = [('state', '=F', 'assigned'), ('type', '=', pick_type), ('subtype', '=', pick_subtype), ('name', '=', pick_name)]
+            pick_domain = [('state', '=', 'assigned'), ('type', '=', pick_type), ('subtype', '=', pick_subtype), ('name', '=', pick_name)]
             if pick_type == 'pick':
                 pick_domain.append(('backorder_id', '!=', False))
             pick_id = pick_obj.search(cr, uid, pick_domain, context=context)
