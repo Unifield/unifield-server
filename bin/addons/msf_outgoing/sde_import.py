@@ -517,9 +517,9 @@ class sde_import(osv.osv_memory):
         elif action == 'banner_msg':
             result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'pick', context=context)
         elif action == 'picking_export':
-            result = self.sde_picking_ticket_export(cr, uid, sde_imp['json_text'], context=context)
+            result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'picking', with_lines=False, context=context)
         elif action == 'picking_export_lines':
-            result = self.sde_picking_ticket_export_lines(cr, uid, sde_imp['json_text'], context=context)
+            result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'picking', with_lines=True, context=context)
 
         return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
 
@@ -685,14 +685,14 @@ class sde_import(osv.osv_memory):
         return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'picking', with_lines=True, context=context)
 
     @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_export')
-    def sde_picking_ticket_export(self, cr, uid, json_text, with_lines=False, context=None):
+    def sde_picking_ticket_export(self, cr, uid, json_text, context=None):
         '''
-        Method used by the SDE script to export info on Picking Tickets. Doesn't export lines' data unless specified
+        Method used by the SDE script to export info on Picking Tickets
         '''
         if context is None:
             context = {}
 
-        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'picking', with_lines=with_lines, context=context)
+        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'picking', with_lines=False, context=context)
 
     def get_picking_ticket_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
         """
@@ -802,7 +802,7 @@ class sde_import(osv.osv_memory):
                     'incoming_ref': pick[4] or '',
                     'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
                     'delivery_requested_date': pick[6] or '',
-                    'fo_details': pick[7],
+                    'fo_details': pick[7] or '',
                     'transport_type': pick[8] and LIST_TRANSPORT_TYPE[pick[8]] or '',
                     'priority': pick[9] and LIST_ORDER_PRIORITY[pick[9]] or '',
                     'ready_to_ship_date': pick[10] or '',
@@ -890,7 +890,8 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_out_actions(cr, uid, ids, action='out_import', context=context)
+        # return self.wizard_sde_out_actions(cr, uid, ids, action='out_import', context=context)
+        return True
 
     def wizard_sde_out_msg(self, cr, uid, ids, context=None):
         '''
@@ -941,9 +942,9 @@ class sde_import(osv.osv_memory):
         elif action == 'banner_msg':
             result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'out', context=context)
         elif action == 'out_export':
-            result = self.sde_out_export(cr, uid, sde_imp['json_text'], context=context)
+            result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'standard', with_lines=False, context=context)
         elif action == 'out_export_lines':
-            result = self.sde_out_export_lines(cr, uid, sde_imp['json_text'], context=context)
+            result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'standard', with_lines=True, context=context)
 
         return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
 
@@ -970,7 +971,7 @@ class sde_import(osv.osv_memory):
     @jsonrpc_orm_exposed('sde.import', 'sde_out_export')
     def sde_out_export(self, cr, uid, json_text, context=None):
         '''
-        Method used by the SDE script to export info on OUTs. Doesn't export lines' data unless specified
+        Method used by the SDE script to export info on OUTs
         '''
         if context is None:
             context = {}
@@ -1010,8 +1011,8 @@ class sde_import(osv.osv_memory):
                     LEFT JOIN product_product pp ON m.product_id = pp.id
                     LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
                     LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
-                    LEFT JOIN product_international_status pis ON pp.international_status = pid.id
-                    LEFT JOIN product_nomenclature pno ON pp.nomen_manda_0 = pno.id
+                    LEFT JOIN product_international_status pis ON pp.international_status = pis.id
+                    LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
                     LEFT JOIN product_asset pas ON m.asset_id = pas.id
                     LEFT JOIN composition_kit k ON m.composition_list_id = k.id
                     LEFT JOIN stock_location l ON m.location_id = l.id
@@ -1070,7 +1071,7 @@ class sde_import(osv.osv_memory):
         new_cr = pooler.get_db(cr.dbname).cursor()
 
         data = {}
-        for pick in self.get_out_export_data(cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
+        for pick in self.get_out_export_data(new_cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
             if not data.get(pick[0]):
                 partner_data = [_('Supply Responsible')]
                 address_data = []
@@ -1092,7 +1093,7 @@ class sde_import(osv.osv_memory):
                     'backorder_name': pick[4] or '',
                     'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
                     'reason_type': pick[6] and pick[7] and '%s %s' % (pick[6], pick[7]) or '',
-                    'details': pick[8],
+                    'details': pick[8] or '',
                     'expected_ship_date': pick[9] or '',
                     'requestor': pick[10] or '',
                     'delivery_address': partner_data and '; '.join(partner_data) or '',
@@ -1284,7 +1285,7 @@ class sde_import(osv.osv_memory):
 
                 data = {}
                 offset = 0
-                if pick_type == 'out' and pick_subtype == 'subtype':
+                if pick_type == 'out' and pick_subtype == 'standard':
                     export_type = 'out'
                     threaded_method = self.create_out_paginated_export
                     for pick in self.get_out_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
@@ -1309,7 +1310,7 @@ class sde_import(osv.osv_memory):
                                 'backorder_name': pick[4] or '',
                                 'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
                                 'reason_type': pick[6] and pick[7] and '%s %s' % (pick[6], pick[7]) or '',
-                                'details': pick[8],
+                                'details': pick[8] or '',
                                 'expected_ship_date': pick[9] or '',
                                 'requestor': pick[10] or '',
                                 'delivery_address': partner_data and '; '.join(partner_data) or '',
@@ -1365,7 +1366,7 @@ class sde_import(osv.osv_memory):
                                 'incoming_ref': pick[4] or '',
                                 'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
                                 'delivery_requested_date': pick[6] or '',
-                                'fo_details': pick[7],
+                                'fo_details': pick[7] or '',
                                 'transport_type': pick[8] and LIST_TRANSPORT_TYPE[pick[8]] or '',
                                 'priority': pick[9] and LIST_ORDER_PRIORITY[pick[9]] or '',
                                 'ready_to_ship_date': pick[10] or '',
@@ -1538,7 +1539,7 @@ class sde_availability_check(osv.osv):
                                              'sde_availability_check_id', string='Affected documents',
                                              help='List of OUTs that had their Availability checked', readonly=True, order_by='id'),
         'nb_checked': fields.integer(string='Number of checked documents', readonly=True),
-        'total_to_check': fields.integer(string='Number of documents to check', required=True, readonly=True),
+        'nb_to_check': fields.integer(string='Number of documents to check', required=True, readonly=True),
     }
 
     _defaults = {
