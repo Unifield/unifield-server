@@ -479,7 +479,7 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='picking_import', context=context)
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, 'picking_import', context=context)
 
     def wizard_sde_picking_ticket_msg(self, cr, uid, ids, context=None):
         '''
@@ -489,7 +489,7 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='banner_msg', context=context)
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, 'banner_msg', context=context)
 
     def wizard_sde_picking_ticket_export(self, cr, uid, ids, context=None):
         '''
@@ -499,7 +499,7 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='picking_export', context=context)
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, 'picking_export', context=context)
 
     def wizard_sde_picking_ticket_export_lines(self, cr, uid, ids, context=None):
         '''
@@ -509,9 +509,9 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, action='picking_export_lines', context=context)
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, 'picking_export_lines', context=context)
 
-    def wizard_sde_picking_ticket_actions(self, cr, uid, ids, action=False, context=None):
+    def wizard_sde_picking_ticket_actions(self, cr, uid, ids, action, context=None):
         '''
         Method to use instead of the JSONRPC
         '''
@@ -541,8 +541,8 @@ class sde_import(osv.osv_memory):
         '''
         Method used by the SDE script to import JSON data.
         A pagination system has been added to the import to allow users to import several JSONs for the same document
-        before trying to process the data. The keys sde_pagination_id, sde_import_page and sde_import_end are necessary
-        to allow the pagination.
+        before trying to process the data. The keys sde_pagination_id, sde_pagination_page and sde_pagination_end are
+        necessary to allow the pagination.
         '''
         if context is None:
             context = {}
@@ -869,7 +869,10 @@ class sde_import(osv.osv_memory):
 
         ln_sql = ""
         if line_numbers:
-            ln_sql = " AND line_number IN %s" % (tuple(line_numbers),)
+            if len(line_numbers) == 1:
+                ln_sql = " AND line_number = %s" % (line_numbers[0],)
+            else:
+                ln_sql = " AND line_number IN %s" % (tuple(line_numbers),)
         cr.execute("""
                    SELECT id, picking_id, line_number, product_qty
                    FROM stock_move
@@ -903,7 +906,7 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        # return self.wizard_sde_out_actions(cr, uid, ids, action='out_import', context=context)
+        # return self.wizard_sde_out_actions(cr, uid, ids, 'out_import', context=context)
         return True
 
     def wizard_sde_out_msg(self, cr, uid, ids, context=None):
@@ -914,7 +917,7 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_out_actions(cr, uid, ids, action='banner_msg', context=context)
+        return self.wizard_sde_out_actions(cr, uid, ids, 'banner_msg', context=context)
 
     def wizard_sde_out_check_availability(self, cr, uid, ids, context=None):
         '''
@@ -924,7 +927,7 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_out_actions(cr, uid, ids, action='check_availability', context=context)
+        return self.wizard_sde_out_actions(cr, uid, ids, 'check_availability', context=context)
 
     def wizard_sde_out_export(self, cr, uid, ids, context=None):
         '''
@@ -934,7 +937,7 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_out_actions(cr, uid, ids, action='out_export', context=context)
+        return self.wizard_sde_out_actions(cr, uid, ids, 'out_export', context=context)
 
     def wizard_sde_out_export_lines(self, cr, uid, ids, context=None):
         '''
@@ -944,9 +947,9 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_out_actions(cr, uid, ids, action='out_export_lines', context=context)
+        return self.wizard_sde_out_actions(cr, uid, ids, 'out_export_lines', context=context)
 
-    def wizard_sde_out_actions(self, cr, uid, ids, action=False, context=None):
+    def wizard_sde_out_actions(self, cr, uid, ids, action, context=None):
         '''
         Method to use instead of the JSONRPC
         '''
@@ -972,6 +975,153 @@ class sde_import(osv.osv_memory):
             result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'standard', with_lines=True, context=context)
 
         return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_out_import')
+    def sde_out_import(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to import JSON data.
+        A pagination system has been added to the import to allow users to import several JSONs for the same document
+        before trying to process the data. The keys sde_pagination_id, sde_pagination_page and sde_pagination_end are
+        necessary to allow the pagination.
+        '''
+        if context is None:
+            context = {}
+
+        pagi_obj = self.pool.get('sde.import.pagination')
+        pick_obj = self.pool.get('stock.picking')
+        out_proc_obj = self.pool.get('outgoing.delivery.processor')
+        wiz_imp_obj = self.pool.get('wizard.out.import')
+
+        context['sde_flow'] = True
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': _('Done')}
+        pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
+        pagi_json_text = ''
+        pagi_json_data, out_ids = [], []
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)')
+                                     % (json_data['database'], instance_name))
+
+            sde_pagi_state, sde_pagi_error = False, False
+            if json_data.get('sde_pagination_id'):
+                if 'sde_pagination_page' not in json_data or 'sde_pagination_end' not in json_data:
+                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_end are mandatory to use the pagination in the SDE OUT import')
+                else:
+                    sde_pagi_end_msg = json_data.get('sde_pagination_end') and _(' and finished') or ''
+                    sde_pagi_page = json_data['sde_pagination_page']
+                    try:
+                        sde_pagi_page = int(sde_pagi_page)
+                    except ValueError:
+                        sde_pagi_error = _('The page number must be an integer')
+                    sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    if sde_pagi_ids:
+                        sde_pagi_id = sde_pagi_ids[0]
+                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, context=context)
+                        if sde_pagi['state'] == 'done':
+                            sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
+                        elif sde_pagi_page - sde_pagi['page'] != 1:
+                            sde_pagi_error = _('The page number must be in sequential order without gaps: last page imported %s, imported page %s') \
+                                             % (sde_pagi['page'], json_data['sde_pagination_page'])
+                        else:
+                            # Update the existing JSON with the new data in the key move_lines
+                            pagi_json_text = sde_pagi['pagination_json_text']
+                            pagi_json_data = json.loads(pagi_json_text)
+
+                            pagi_json_data['move_lines'].extend(json_data['move_lines'])
+                            pagi_json_text = json.dumps(pagi_json_data)
+
+                            pagi_vals = {
+                                'pagination_json_text': pagi_json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': sde_pagi_page,
+                                'last_modification': datetime.now(),
+                            }
+                            if sde_pagi_end_msg:
+                                pagi_vals['state'] = 'done'
+                            pagi_obj.write(cr, uid, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s updated%s with page %s') % (
+                                json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
+                    else:
+                        if sde_pagi_page != 1:
+                            sde_pagi_error = _('The first page of a paginated SDE import must be 1')
+                        else:
+                            sde_pagi_vals = {
+                                'state': json_data.get('sde_pagination_end') and 'done' or 'progress',
+                                'pagination_json_id': json_data['sde_pagination_id'],
+                                'pagination_json_text': json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': 1,
+                                'last_modification': datetime.now(),
+                            }
+                            sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
+
+            if sde_pagi_error:
+                raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
+                                     % (json_data.get('sde_pagination_id'), sde_pagi_error))
+            elif not json_data.get('sde_pagination_id') or (sde_pagi_end_msg and sde_pagi_id):
+                # Get the correct JSON data if the pagination has been used
+                if sde_pagi_id and pagi_json_text and pagi_json_data:
+                    json_text = pagi_json_text
+                    json_data = pagi_json_data
+
+                # Get the OUT from the name
+                if not json_data.get('name'):
+                    raise osv.except_osv(_('Error'), _('The main key "name" is mandatory and should not be empty'))
+                out_ids = self.get_stock_picking_from_refs(cr, uid, [json_data['name']], ['assigned'], 'out', 'standard', context=context)
+                out_id = out_ids[0]
+                out = pick_obj.read(cr, uid, out_id, ['name', 'sde_updated'], context=context)
+                if out['sde_updated']:
+                    raise osv.except_osv(_('Error'), _('The OUT %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE update there')
+                                         % (out['name'],))
+
+                if not json_data.get('move_lines'):
+                    raise osv.except_osv(_('Error'), _('The main key "move_lines" is mandatory and should not be empty'))
+
+                # Reset the existing saved data before to import
+                out_proc_ids = out_proc_obj.search(cr, uid, [('picking_id', '=', out_id), ('draft', '=', True)], context=context)
+                out_proc_obj.do_reset(cr, uid, out_proc_ids, context=context)
+
+                # Create outgoing.delivery.processor and its lines
+                out_proc_id = out_proc_obj.create(cr, uid, {'picking_id': out_id, 'sde_updated': True}, context=context)
+                out_proc_obj.create_lines(cr, uid, out_proc_id, context=context)
+
+                # Import the data
+                wiz_id = wiz_imp_obj.create(cr, uid, {'processor_id': out_proc_id, 'json_text': json_text}, context=context)
+                imp_res = wiz_imp_obj.import_out_xlsx(cr, uid, [wiz_id], context=context)
+
+                final_msg = pagi_msg or _('Done')
+                if imp_res:
+                    final_msg = final_msg + _('. The lines number %s were ignored during the import') % (', '.join(imp_res),)
+                result['message'] = final_msg
+
+                pick_obj.write(cr, uid, out_id, {'sde_updated': True}, context=context)
+
+                # Log the update
+                self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'out',
+                                                                 'doc_ref': out['name']}, context=context)
+            elif pagi_msg:
+                result['message'] = pagi_msg
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+        finally:
+            # Remove the banner message
+            pick_obj.write(cr, uid, out_ids, {'sde_update_msg': False}, context=context)
+            if 'sde_flow' in context:
+                context.pop('sde_flow')
+
+        return result
 
     @jsonrpc_orm_exposed('sde.import', 'sde_out_msg')
     def sde_out_msg(self, cr, uid, json_text, context=None):
@@ -1006,37 +1156,37 @@ class sde_import(osv.osv_memory):
                                      % (json_data['database'], instance_name))
 
             # Get the OUTs with the references given
-            pick_names = []
+            out_names = []
             states = ['confirmed', 'assigned']
             if json_data.get('pick_list') and isinstance(json_data['pick_list'], list):
                 try:
-                    json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
+                    json_data['pick_list'] = [str(out_name).strip() for out_name in json_data['pick_list']]
                 except:
                     raise osv.except_osv(_('Error'), _('One or more of the OUT names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
-                pick_names = json_data['pick_list']
-                pick_ids = self.get_stock_picking_from_refs(cr, uid, pick_names, states, 'out', 'standard', context=context)
+                out_names = json_data['pick_list']
+                out_ids = self.get_stock_picking_from_refs(cr, uid, out_names, states, 'out', 'standard', context=context)
             else:
-                pick_domain = [('state', 'in', states), ('type', '=', 'out'), ('subtype', '=', 'standard')]
-                pick_ids = pick_obj.search(cr, uid, pick_domain, context=context)
+                out_domain = [('state', 'in', states), ('type', '=', 'out'), ('subtype', '=', 'standard')]
+                out_ids = pick_obj.search(cr, uid, out_domain, context=context)
 
-            if not pick_ids:
+            if not out_ids:
                 raise osv.except_osv(_('Error'), _('There is no OUT to check the availability on'))
 
             # Create sde.availability.check that will be updated every time the availability is checked on an OUT
             sde_avchk_name = self.pool.get('ir.sequence').get(cr, uid, 'sde.availability.check')
-            sde_avchk_vals = {'name': sde_avchk_name, 'doc_type': 'out', 'nb_to_check': len(pick_ids)}
+            sde_avchk_vals = {'name': sde_avchk_name, 'doc_type': 'out', 'nb_to_check': len(out_ids)}
             sde_avchk_id = self.pool.get('sde.availability.check').create(cr, uid, sde_avchk_vals, context=context)
 
             # Check the availability of each OUT one by one in the background
             threaded_exp_pagi = threading.Thread(target=self.sde_out_check_availability_update,
-                                                 args=(cr, uid, sde_avchk_id, pick_ids, context))
+                                                 args=(cr, uid, sde_avchk_id, out_ids, context))
             threaded_exp_pagi.start()
 
             result.update({
                 'message': _('Check Availability is in progress on %s OUTs%s')
-                           % (len(pick_ids), pick_names and ': ' + ', '.join(pick_names) or ''),
+                           % (len(out_ids), out_names and ': ' + ', '.join(out_names) or ''),
                 'sde_availability_check_id': sde_avchk_name,
-                'nb_to_check': len(pick_ids),
+                'nb_to_check': len(out_ids),
             })
         except Exception as e:
             # Rejection message to send back
@@ -1161,58 +1311,58 @@ class sde_import(osv.osv_memory):
         new_cr = pooler.get_db(cr.dbname).cursor()
 
         data = {}
-        for pick in self.get_out_export_data(new_cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
-            if not data.get(pick[0]):
+        for out in self.get_out_export_data(new_cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
+            if not data.get(out[0]):
                 partner_data = [_('Supply Responsible')]
                 address_data = []
-                if pick[11]:
-                    address_data.append(pick[11])
-                if pick[12]:
-                    address_data.append(pick[12])
-                if pick[13]:
-                    address_data.append(pick[13])
+                if out[11]:
+                    address_data.append(out[11])
+                if out[12]:
+                    address_data.append(out[12])
+                if out[13]:
+                    address_data.append(out[13])
                 if address_data:
                     partner_data.append(' '.join(address_data))
-                if pick[14]:
-                    partner_data.append(pick[14])
+                if out[14]:
+                    partner_data.append(out[14])
 
-                data[pick[0]] = {
-                    'origin': pick[1] or '',
-                    'date': pick[2],
-                    'partner_name': pick[3] or '',
-                    'backorder_name': pick[4] or '',
-                    'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
-                    'reason_type': pick[6] and pick[7] and '%s %s' % (pick[6], pick[7]) or '',
-                    'details': pick[8] or '',
-                    'expected_ship_date': pick[9] or '',
-                    'requestor': pick[10] or '',
+                data[out[0]] = {
+                    'origin': out[1] or '',
+                    'date': out[2],
+                    'partner_name': out[3] or '',
+                    'backorder_name': out[4] or '',
+                    'order_category': out[5] and LIST_ORDER_CATEGORY[out[5]] or '',
+                    'reason_type': out[6] and out[7] and '%s %s' % (out[6], out[7]) or '',
+                    'details': out[8] or '',
+                    'expected_ship_date': out[9] or '',
+                    'requestor': out[10] or '',
                     'delivery_address': partner_data and '; '.join(partner_data) or '',
-                    'latest_log': pick[15] or '',
-                    'latest_log_date': pick[16] or '',
+                    'latest_log': out[15] or '',
+                    'latest_log_date': out[16] or '',
                 }
 
-            if with_lines and len(pick) > 16:
-                if 'move_lines' not in data[pick[0]]:
-                    data[pick[0]]['move_lines'] = []
-                data[pick[0]]['move_lines'].append({
-                    'line_number': pick[18],
-                    'product_code': pick[19],
-                    'product_name': pick[20],
-                    'product_creator': pick[21],
-                    'nomen_main_type': pick[22],
-                    'comment': pick[23] or '',
-                    'asset': pick[24] or '',
-                    'kit': pick[25] or '',
-                    'source_location': pick[26],
-                    'destination_location': pick[27],
-                    'product_qty': pick[28] or 0,
+            if with_lines and len(out) > 16:
+                if 'move_lines' not in data[out[0]]:
+                    data[out[0]]['move_lines'] = []
+                data[out[0]]['move_lines'].append({
+                    'line_number': out[18],
+                    'product_code': out[19],
+                    'product_name': out[20],
+                    'product_creator': out[21],
+                    'nomen_main_type': out[22],
+                    'comment': out[23] or '',
+                    'asset': out[24] or '',
+                    'kit': out[25] or '',
+                    'source_location': out[26],
+                    'destination_location': out[27],
+                    'product_qty': out[28] or 0,
                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                    'uom': pick[29] or '',
-                    'prodlot_id': pick[30] or '',
-                    'expired_date': pick[31] or '',
-                    'kc_check': pick[32] or False,
-                    'dg_check': pick[33] == 'True' and _('True') or pick[34] == 'no_know' and _('Unknown') or _('False'),
-                    'np_check': pick[34] or False,
+                    'uom': out[29] or '',
+                    'prodlot_id': out[30] or '',
+                    'expired_date': out[31] or '',
+                    'kc_check': out[32] or False,
+                    'dg_check': out[33] == 'True' and _('True') or out[34] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': out[34] or False,
                 })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'out',
@@ -1224,7 +1374,7 @@ class sde_import(osv.osv_memory):
 
         return True
 
-    def sde_out_check_availability_update(self, cr, uid, sde_avchk_id, pick_ids, context=None):
+    def sde_out_check_availability_update(self, cr, uid, sde_avchk_id, out_ids, context=None):
         '''
         Method to be used in the background to update the availability of a list of OUTs
         '''
@@ -1235,12 +1385,12 @@ class sde_import(osv.osv_memory):
         sde_avchk_vals = {}
         nb_checked = 0
         error_msg = ''
-        for pick_id in pick_ids:
+        for out_id in out_ids:
             nb_checked += 1
             new_cr = pooler.get_db(cr.dbname).cursor()
             try:
-                self.pool.get('stock.picking').check_availability_manually(new_cr, uid, [pick_id], context=context)
-                sde_avchk_vals['checked_pick_ids'] = [(4, pick_id)]
+                self.pool.get('stock.picking').check_availability_manually(new_cr, uid, [out_id], context=context)
+                sde_avchk_vals['checked_pick_ids'] = [(4, out_id)]
             except Exception as e:
                 nb_checked -= 1
                 # Rejection message
@@ -1326,6 +1476,7 @@ class sde_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Please specify a pick_type and pick_subtype'))
 
         pick_obj = self.pool.get('stock.picking')
+        avchk_obj = self.pool.get('sde.availability.check')
         pagi_exp_obj = self.pool.get('sde.export.pagination')
 
         instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
@@ -1337,7 +1488,8 @@ class sde_import(osv.osv_memory):
             export_type = 'pick'
 
         result = {'database': instance_name, 'error': False, 'message': '', 'data': []}
-        pagi_msg = ''
+        pagi_msg, avchk_msg = '', ''
+        avchk_data = False
         try:
             json_data = json.loads(json_text)
 
@@ -1348,206 +1500,236 @@ class sde_import(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)')
                                      % (json_data['database'], instance_name))
 
-            if json_data.get('sde_pagination_id'):
-                if not json_data.get('sde_pagination_page'):
-                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" is mandatory and should not be empty when using "sde_pagination_id"'))
-                try:
-                    json_data['sde_pagination_page'] = int(json_data['sde_pagination_page'])
-                except:
-                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" must be an integer'))
-                if json_data['sde_pagination_page'] <= 0:
-                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" must be above 0'))
-
-                pagi_exp_domain = [('doc_type', '=', export_type), ('pagination_json_id', '=', json_data['sde_pagination_id']),
-                                   ('page', '=', json_data['sde_pagination_page'])]
-                pagi_exp_ids = pagi_exp_obj.search(cr, uid, pagi_exp_domain, context=context)
-                if pagi_exp_ids:
-                    pagi_exp = pagi_exp_obj.read(cr, uid, pagi_exp_ids[0], ['pagination_json_text', 'with_lines'], context=context)
+            if json_data.get('sde_availability_check_id'):
+                # Check and get the availability check data
+                avchk_domain = [('doc_type', '=', export_type), ('name', '=', json_data['sde_availability_check_id'])]
+                avchk_ids = avchk_obj.search(cr, uid, avchk_domain, context=context)
+                if avchk_ids:
+                    avchk_data = avchk_obj.browse(cr, uid, avchk_ids[0], context=context)
                     result.update({
-                        'sde_pagination_id': json_data['sde_pagination_id'],
-                        'sde_pagination_page': json_data['sde_pagination_page'],
-                        'message': _('The header%s data from the page %s of %s have been exported')
-                                   % (pagi_exp['with_lines'] and _(' and lines') or '', json_data['sde_pagination_page'], json_data['sde_pagination_id']),
-                        'data': json.loads(pagi_exp['pagination_json_text']),
+                        'sde_availability_check_id': json_data['sde_availability_check_id'],
+                        'nb_checked': avchk_data.nb_checked,
+                        'nb_to_check': avchk_data.nb_to_check,
+                        'checked_availability': [p.name for p in avchk_data.checked_pick_ids]
                     })
                 else:
-                    raise osv.except_osv(_('Error'), _('No %s export data was found with the "sde_pagination_id" %s and the "sde_pagination_page" %s')
-                                         % (doc, json_data['sde_pagination_id'], json_data['sde_pagination_page']))
+                    raise osv.except_osv(_('Error'), _('There is no availability being checked for %s with the "sde_availability_check_id" %s')
+                                         % (doc, json_data['sde_availability_check_id'],))
+
+            if not avchk_data or (avchk_data and avchk_data.state == 'done'):
+                if json_data.get('sde_pagination_id'):
+                    # Check the pagination data
+                    if not json_data.get('sde_pagination_page'):
+                        raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" is mandatory and should not be empty when using "sde_pagination_id"'))
+                    try:
+                        json_data['sde_pagination_page'] = int(json_data['sde_pagination_page'])
+                    except:
+                        raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" must be an integer'))
+                    if json_data['sde_pagination_page'] <= 0:
+                        raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" must be above 0'))
+
+                    pagi_exp_domain = [('doc_type', '=', export_type), ('pagination_json_id', '=', json_data['sde_pagination_id']),
+                                       ('page', '=', json_data['sde_pagination_page'])]
+                    pagi_exp_ids = pagi_exp_obj.search(cr, uid, pagi_exp_domain, context=context)
+                    if pagi_exp_ids:
+                        pagi_exp = pagi_exp_obj.read(cr, uid, pagi_exp_ids[0], ['pagination_json_text', 'with_lines'], context=context)
+                        result.update({
+                            'sde_pagination_id': json_data['sde_pagination_id'],
+                            'sde_pagination_page': json_data['sde_pagination_page'],
+                            'message': _('The header%s data from the page %s of %s have been exported')
+                                       % (pagi_exp['with_lines'] and _(' and lines') or '', json_data['sde_pagination_page'], json_data['sde_pagination_id']),
+                            'data': json.loads(pagi_exp['pagination_json_text']),
+                        })
+                    else:
+                        raise osv.except_osv(_('Error'), _('No %s export data was found with the "sde_pagination_id" %s and the "sde_pagination_page" %s')
+                                             % (doc, json_data['sde_pagination_id'], json_data['sde_pagination_page']))
+                else:
+                    # Get the documents with the references given
+                    pick_ids, pick_names = [], []
+                    if json_data.get('pick_list') and isinstance(json_data['pick_list'], list):
+                        try:
+                            json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
+                        except:
+                            raise osv.except_osv(_('Error'),  _('One or more of the %s names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one')
+                                                 % (doc,))
+                        pick_names = json_data['pick_list']
+                        pick_ids = self.get_stock_picking_from_refs(cr, uid, pick_names, ['assigned'], pick_type, pick_subtype, context=context)
+                    else:
+                        pick_domain = [('state', '=', 'assigned'), ('type', '=', pick_type), ('subtype', '=', pick_subtype)]
+                        if pick_type == 'out' and pick_subtype == 'picking':
+                            pick_domain.append(('backorder_id', '!=', False))
+                        pick_ids = pick_obj.search(cr, uid, pick_domain, context=context)
+
+                    if not pick_ids:
+                        raise osv.except_osv(_('Error'), _('There is no Available %s to export') % (doc,))
+
+                    # Default number of lines per page is 100 if not specified
+                    lines_per_page = 100
+                    if json_data.get('lines_per_page'):
+                        try:
+                            json_data['lines_per_page'] = int(json_data['lines_per_page'])
+                        except:
+                            raise osv.except_osv(_('Error'), _('The main key "lines_per_page" must be an integer'))
+                        if json_data['lines_per_page'] <= 0:
+                            raise osv.except_osv(_('Error'), _('The main key "lines_per_page" must be above 0'))
+                        lines_per_page = json_data['lines_per_page']
+
+                    # Count the number of lines
+                    if with_lines:
+                        cr.execute("""SELECT COUNT(id) FROM stock_move WHERE picking_id IN %s AND state != 'cancel'""", (tuple(pick_ids),))
+                        nb_lines = cr.fetchone()[0]
+                    else:
+                        nb_lines = len(pick_ids)
+
+                    data = {}
+                    offset = 0
+                    if pick_type == 'out' and pick_subtype == 'standard':
+                        threaded_method = self.create_out_paginated_export
+                        for pick in self.get_out_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
+                            if not data.get(pick[0]):
+                                partner_data = [_('Supply Responsible')]
+                                address_data = []
+                                if pick[11]:
+                                    address_data.append(pick[11])
+                                if pick[12]:
+                                    address_data.append(pick[12])
+                                if pick[13]:
+                                    address_data.append(pick[13])
+                                if address_data:
+                                    partner_data.append(' '.join(address_data))
+                                if pick[14]:
+                                    partner_data.append(pick[14])
+
+                                data[pick[0]] = {
+                                    'origin': pick[1] or '',
+                                    'date': pick[2],
+                                    'partner_name': pick[3] or '',
+                                    'backorder_name': pick[4] or '',
+                                    'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
+                                    'reason_type': pick[6] and pick[7] and '%s %s' % (pick[6], pick[7]) or '',
+                                    'details': pick[8] or '',
+                                    'expected_ship_date': pick[9] or '',
+                                    'requestor': pick[10] or '',
+                                    'delivery_address': partner_data and '; '.join(partner_data) or '',
+                                    'latest_log': pick[15] or '',
+                                    'latest_log_date': pick[16] or '',
+                                }
+
+                            if with_lines and len(pick) > 16:
+                                if 'move_lines' not in data[pick[0]]:
+                                    data[pick[0]]['move_lines'] = []
+                                data[pick[0]]['move_lines'].append({
+                                    'line_number': pick[18],
+                                    'product_code': pick[19],
+                                    'product_name': pick[20],
+                                    'product_creator': pick[21],
+                                    'nomen_main_type': pick[22],
+                                    'comment': pick[23] or '',
+                                    'asset': pick[24] or '',
+                                    'kit': pick[25] or '',
+                                    'source_location': pick[26],
+                                    'destination_location': pick[27],
+                                    'product_qty': pick[28] or 0,
+                                    'qty_to_process': None,  # Left empty to force SDE to change the value
+                                    'uom': pick[29] or '',
+                                    'prodlot_id': pick[30] or '',
+                                    'expired_date': pick[31] or '',
+                                    'kc_check': pick[32] or False,
+                                    'dg_check': pick[33] == 'True' and _('True') or pick[34] == 'no_know' and _('Unknown') or _('False'),
+                                    'np_check': pick[34] or False,
+                                })
+                    else:
+                        threaded_method = self.create_picking_ticket_paginated_export
+                        for pick in self.get_picking_ticket_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
+                            if not data.get(pick[0]):
+                                partner_data = [pick[11], _('Supply Responsible')]
+                                address_data = []
+                                if pick[12]:
+                                    address_data.append(pick[12])
+                                if pick[13]:
+                                    address_data.append(pick[13])
+                                if pick[14]:
+                                    address_data.append(pick[14])
+                                if address_data:
+                                    partner_data.append(' '.join(address_data))
+                                if pick[15]:
+                                    partner_data.append(pick[15])
+
+                                data[pick[0]] = {
+                                    'date': pick[1],
+                                    'origin': pick[2] or '',
+                                    'client_po_ref': pick[3] or '',
+                                    'incoming_ref': pick[4] or '',
+                                    'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
+                                    'delivery_requested_date': pick[6] or '',
+                                    'fo_details': pick[7] or '',
+                                    'transport_type': pick[8] and LIST_TRANSPORT_TYPE[pick[8]] or '',
+                                    'priority': pick[9] and LIST_ORDER_PRIORITY[pick[9]] or '',
+                                    'ready_to_ship_date': pick[10] or '',
+                                    'delivery_address': partner_data and '; '.join(partner_data) or '',
+                                    'total_items': pick[16] or 0,
+                                    'latest_log': pick[17] or '',
+                                    'latest_log_date': pick[18] or '',
+                                }
+
+                            if with_lines and len(pick) > 20:
+                                if 'move_lines' not in data[pick[0]]:
+                                    data[pick[0]]['move_lines'] = []
+                                data[pick[0]]['move_lines'].append({
+                                    'line_number': pick[20],
+                                    'product_code': pick[21],
+                                    'product_name': pick[22],
+                                    'changed_product_code': pick[23] or '',
+                                    'comment': pick[24] or '',
+                                    'source_location': pick[25],
+                                    'product_qty': pick[26] or 0,
+                                    'qty_to_process': None,  # Left empty to force SDE to change the value
+                                    'prodlot_id': pick[27] or '',
+                                    'expired_date': pick[28] or '',
+                                    'kc_check': pick[29] or False,
+                                    'dg_check': pick[30] == 'True' and _('True') or pick[30] == 'no_know' and _('Unknown') or _('False'),
+                                    'np_check': pick[31] or False,
+                                })
+
+                    if nb_lines > lines_per_page:
+                        sde_pagi_id = self.pool.get('ir.sequence').get(cr, uid, 'sde.export.pagination')
+                        sde_pagi_page = 1
+                        last_page = math.ceil(nb_lines / lines_per_page)
+
+                        pagi_exp_obj.create(cr, uid, {'pagination_json_id': sde_pagi_id, 'pagination_json_text': json.dumps(data),
+                                                      'doc_type': export_type, 'page': sde_pagi_page, 'last_page': False,
+                                                      'with_lines': with_lines}, context=context)
+                        result.update({'sde_pagination_id': sde_pagi_id, 'sde_pagination_page': sde_pagi_page,
+                                       'sde_pagination_last_page': last_page})
+
+                        pagi_msg = _('. The export have been paginated into %s pages. If you want to retrieve the other pages, please use the "sde_pagination_id" data given') % (last_page,)
+
+                        # Create the remaining pages in the background
+                        while sde_pagi_page < last_page:
+                            sde_pagi_page += 1
+                            offset += lines_per_page
+                            threaded_exp_pagi = threading.Thread(target=threaded_method,
+                                                                 args=(cr, uid, pick_ids, sde_pagi_id, sde_pagi_page,
+                                                                 last_page, offset, lines_per_page, with_lines, context))
+                            threaded_exp_pagi.start()
+
+                    final_msg_pick = pick_names and ', '.join(pick_names) or _('%s %s') % (len(pick_ids), doc)
+                    if avchk_data:
+                        avchk_msg = _('The Availability Check has been successfully completed (%s/%s). ') \
+                                    % (avchk_data.nb_checked, avchk_data.nb_to_check)
+                    result.update({
+                        'data': data,
+                        'message': _('%sThe header%s data of %s have been exported%s')
+                                   % (avchk_msg, with_lines and _(' and lines') or '', final_msg_pick, pagi_msg)
+                    })
             else:
-                # Get the documents with the references given
-                pick_names = []
-                if json_data.get('pick_list') and isinstance(json_data['pick_list'], list):
-                    try:
-                        json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
-                    except:
-                        raise osv.except_osv(_('Error'),  _('One or more of the %s names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one')
-                                             % (doc,))
-                    pick_names = json_data['pick_list']
-                    pick_ids = self.get_stock_picking_from_refs(cr, uid, pick_names, ['assigned'], pick_type, pick_subtype, context=context)
+                if avchk_data.state == 'error':
+                    avchk_msg = (_('An error occurred during the Availability Check of %s (%s/%s): %s')
+                                 % (doc, avchk_data.nb_checked, avchk_data.nb_to_check, avchk_data.error_msg))
                 else:
-                    pick_domain = [('state', '=', 'assigned'), ('type', '=', pick_type), ('subtype', '=', pick_subtype)]
-                    if pick_type == 'out' and pick_subtype == 'picking':
-                        pick_domain.append(('backorder_id', '!=', False))
-                    pick_ids = pick_obj.search(cr, uid, pick_domain, context=context)
+                    avchk_msg = _('The Availability Check is still in progress (%s/%s)') % (avchk_data.nb_checked, avchk_data.nb_to_check)
+                result.update({'data': [], 'message': avchk_msg})
 
-                if not pick_ids:
-                    raise osv.except_osv(_('Error'), _('There is no Available %s to export') % (doc,))
-
-                # Default number of lines per page is 100 if not specified
-                lines_per_page = 100
-                if json_data.get('lines_per_page'):
-                    try:
-                        json_data['lines_per_page'] = int(json_data['lines_per_page'])
-                    except:
-                        raise osv.except_osv(_('Error'), _('The main key "lines_per_page" must be an integer'))
-                    if json_data['lines_per_page'] <= 0:
-                        raise osv.except_osv(_('Error'), _('The main key "lines_per_page" must be above 0'))
-                    lines_per_page = json_data['lines_per_page']
-
-                # Count the number of lines
-                if with_lines:
-                    cr.execute("""SELECT COUNT(id) FROM stock_move WHERE picking_id IN %s AND state != 'cancel'""", (tuple(pick_ids),))
-                    nb_lines = cr.fetchone()[0]
-                else:
-                    nb_lines = len(pick_ids)
-
-                data = {}
-                offset = 0
-                if pick_type == 'out' and pick_subtype == 'standard':
-                    threaded_method = self.create_out_paginated_export
-                    for pick in self.get_out_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
-                        if not data.get(pick[0]):
-                            partner_data = [_('Supply Responsible')]
-                            address_data = []
-                            if pick[11]:
-                                address_data.append(pick[11])
-                            if pick[12]:
-                                address_data.append(pick[12])
-                            if pick[13]:
-                                address_data.append(pick[13])
-                            if address_data:
-                                partner_data.append(' '.join(address_data))
-                            if pick[14]:
-                                partner_data.append(pick[14])
-
-                            data[pick[0]] = {
-                                'origin': pick[1] or '',
-                                'date': pick[2],
-                                'partner_name': pick[3] or '',
-                                'backorder_name': pick[4] or '',
-                                'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
-                                'reason_type': pick[6] and pick[7] and '%s %s' % (pick[6], pick[7]) or '',
-                                'details': pick[8] or '',
-                                'expected_ship_date': pick[9] or '',
-                                'requestor': pick[10] or '',
-                                'delivery_address': partner_data and '; '.join(partner_data) or '',
-                                'latest_log': pick[15] or '',
-                                'latest_log_date': pick[16] or '',
-                            }
-
-                        if with_lines and len(pick) > 16:
-                            if 'move_lines' not in data[pick[0]]:
-                                data[pick[0]]['move_lines'] = []
-                            data[pick[0]]['move_lines'].append({
-                                'line_number': pick[18],
-                                'product_code': pick[19],
-                                'product_name': pick[20],
-                                'product_creator': pick[21],
-                                'nomen_main_type': pick[22],
-                                'comment': pick[23] or '',
-                                'asset': pick[24] or '',
-                                'kit': pick[25] or '',
-                                'source_location': pick[26],
-                                'destination_location': pick[27],
-                                'product_qty': pick[28] or 0,
-                                'qty_to_process': None,  # Left empty to force SDE to change the value
-                                'uom': pick[29] or '',
-                                'prodlot_id': pick[30] or '',
-                                'expired_date': pick[31] or '',
-                                'kc_check': pick[32] or False,
-                                'dg_check': pick[33] == 'True' and _('True') or pick[34] == 'no_know' and _('Unknown') or _('False'),
-                                'np_check': pick[34] or False,
-                            })
-                else:
-                    threaded_method = self.create_picking_ticket_paginated_export
-                    for pick in self.get_picking_ticket_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
-                        if not data.get(pick[0]):
-                            partner_data = [pick[11], _('Supply Responsible')]
-                            address_data = []
-                            if pick[12]:
-                                address_data.append(pick[12])
-                            if pick[13]:
-                                address_data.append(pick[13])
-                            if pick[14]:
-                                address_data.append(pick[14])
-                            if address_data:
-                                partner_data.append(' '.join(address_data))
-                            if pick[15]:
-                                partner_data.append(pick[15])
-
-                            data[pick[0]] = {
-                                'date': pick[1],
-                                'origin': pick[2] or '',
-                                'client_po_ref': pick[3] or '',
-                                'incoming_ref': pick[4] or '',
-                                'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
-                                'delivery_requested_date': pick[6] or '',
-                                'fo_details': pick[7] or '',
-                                'transport_type': pick[8] and LIST_TRANSPORT_TYPE[pick[8]] or '',
-                                'priority': pick[9] and LIST_ORDER_PRIORITY[pick[9]] or '',
-                                'ready_to_ship_date': pick[10] or '',
-                                'delivery_address': partner_data and '; '.join(partner_data) or '',
-                                'total_items': pick[16] or 0,
-                                'latest_log': pick[17] or '',
-                                'latest_log_date': pick[18] or '',
-                            }
-
-                        if with_lines and len(pick) > 20:
-                            if 'move_lines' not in data[pick[0]]:
-                                data[pick[0]]['move_lines'] = []
-                            data[pick[0]]['move_lines'].append({
-                                'line_number': pick[20],
-                                'product_code': pick[21],
-                                'product_name': pick[22],
-                                'changed_product_code': pick[23] or '',
-                                'comment': pick[24] or '',
-                                'source_location': pick[25],
-                                'product_qty': pick[26] or 0,
-                                'qty_to_process': None,  # Left empty to force SDE to change the value
-                                'prodlot_id': pick[27] or '',
-                                'expired_date': pick[28] or '',
-                                'kc_check': pick[29] or False,
-                                'dg_check': pick[30] == 'True' and _('True') or pick[30] == 'no_know' and _('Unknown') or _('False'),
-                                'np_check': pick[31] or False,
-                            })
-
-                if nb_lines > lines_per_page:
-                    sde_pagi_id = self.pool.get('ir.sequence').get(cr, uid, 'sde.export.pagination')
-                    sde_pagi_page = 1
-                    last_page = math.ceil(nb_lines / lines_per_page)
-
-                    pagi_exp_obj.create(cr, uid, {'pagination_json_id': sde_pagi_id, 'pagination_json_text': json.dumps(data),
-                                                  'doc_type': export_type, 'page': sde_pagi_page, 'last_page': False,
-                                                  'with_lines': with_lines}, context=context)
-                    result.update({'sde_pagination_id': sde_pagi_id, 'sde_pagination_page': sde_pagi_page,
-                                   'sde_pagination_last_page': last_page})
-
-                    pagi_msg = _('. The export have been paginated into %s pages. If you want to retrieve the other pages, please use the "sde_pagination_id" data given') % (last_page,)
-
-                    # Create the remaining pages in the background
-                    while sde_pagi_page < last_page:
-                        sde_pagi_page += 1
-                        offset += lines_per_page
-                        threaded_exp_pagi = threading.Thread(target=threaded_method,
-                                                             args=(cr, uid, pick_ids, sde_pagi_id, sde_pagi_page,
-                                                             last_page, offset, lines_per_page, with_lines, context))
-                        threaded_exp_pagi.start()
-
-                final_msg_pick = pick_names and ', '.join(pick_names) or _('%s %s') % (len(pick_ids), doc)
-                result.update({
-                    'data': data,
-                    'message': _('The header%s data of %s have been exported%s') % (with_lines and _(' and lines') or '', final_msg_pick, pagi_msg)
-                })
         except Exception as e:
             # Rejection message to send back
             if isinstance(e, osv.except_osv):
@@ -1675,12 +1857,11 @@ class sde_availability_check(osv.osv):
 
     _columns = {
         'name': fields.char(string='SDE Check Availability Reference', size=32, required=True, readonly=True),
-        'state': fields.function(_get_state, method=True, type='selection', selection=[('progress', 'In progress'), ('done', 'Done'), ('error', 'Error')],
+        'state': fields.function(_get_state, method=True, type='selection', selection=[('progress', 'In progress'), ('done', 'Successfully Completed'), ('error', 'Error')],
                                  string='State', eadonly=True, store={'sde.availability.check': (lambda self, cr, uid, ids, c=None: ids, ['nb_checked'], 10)}),
         'doc_type': fields.selection(string='Document Type', selection=[('out', 'Delivery Order')], required=True, readonly=True),
-        'checked_pick_ids': fields.many2many('stock.picking', 'sde_availability_check_pick_rel', 'picking_id',
-                                             'sde_availability_check_id', string='Affected documents',
-                                             help='List of documents that had their Availability checked', readonly=True, order_by='id'),
+        'checked_pick_ids': fields.many2many('stock.picking', 'sde_availability_check_pick_rel', 'picking_id', 'sde_availability_check_id',
+                                             string='Affected documents', help='List of documents that had their Availability checked', readonly=True),
         'nb_checked': fields.integer(string='Number of checked documents', readonly=True),
         'nb_to_check': fields.integer(string='Number of documents to check', required=True, readonly=True),
         'error_msg': fields.text(string='Error Message', readonly=True),

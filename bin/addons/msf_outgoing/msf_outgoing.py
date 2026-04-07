@@ -3349,16 +3349,16 @@ class stock_picking(osv.osv):
             elif '-surplus' in out.name:
                 new_name += '-surplus'
 
-            # change subtype and name
-            default_vals = {'name': new_name,
-                            'subtype': 'picking',
-                            'converted_to_standard': False,
-                            'state': 'draft',
-                            'sequence_id': self.create_sequence(cr, uid, {'name': new_name,
-                                                                          'code': new_name,
-                                                                          'prefix': '',
-                                                                          'padding': 2}, context=context)
-                            }
+            # change subtype, name and remove the SDE flag
+            default_vals = {
+                'name': new_name,
+                'subtype': 'picking',
+                'converted_to_standard': False,
+                'state': 'draft',
+                'sequence_id': self.create_sequence(cr, uid, {'name': new_name, 'code': new_name, 'prefix': '',
+                                                              'padding': 2}, context=context),
+                'sde_updated': False
+            }
 
             self.write(cr, uid, [out.id], default_vals, context=context)
             wf_service = netsvc.LocalService("workflow")

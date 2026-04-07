@@ -227,7 +227,6 @@ class stock_incoming_processor(osv.osv):
         'manual_ito_id': fields.many2one('transport.order.in', 'Inbound Order Transport'),
         'imp_shipment_ref': fields.char(string='Ship Reference from the IN VI import', size=256, readonly=True),
         'imp_filename': fields.char(size=128, string='Filename', readonly=True),
-        'sde_updated': fields.boolean('Updated by SDE'),
     }
 
     _defaults = {
