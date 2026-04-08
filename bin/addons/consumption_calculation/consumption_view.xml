@@ -375,6 +375,7 @@
             model="stock.picking"
             name="incoming.consumption.xls"
             file="consumption_calculation/report/report_incoming_consumption_xls.mako"
+            target_filename='${eval(_get_stock_picking_report_name)}'
             report_type="webkit"
             header="False"
             auto="False"

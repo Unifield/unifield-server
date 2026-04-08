@@ -185,9 +185,8 @@ class stock_card_wizard(osv.osv_memory):
             inv_dom.append(('location_id', '=', location_id))
             pi_counting_dom.append(('inventory_id.location_id', '=', location_id))
         else:
-            domain.extend(['|',
-                           ('location_id.usage', 'in', location_usage),
-                           ('location_dest_id.usage', 'in', location_usage)])
+            default_loc_ids = self.pool.get('stock.location').search(cr, uid, [('active', 'in', ['t', 'f']), ('usage', 'in', location_usage)], context=context)
+            domain.extend(['|', ('location_id', 'in', default_loc_ids), ('location_dest_id', 'in', default_loc_ids)])
 
         # Lines from "old" physical inventories
         inv_line_ids = oldinv_line_obj.search(cr, uid, inv_dom, context=context)

@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import datetime
+import time
 
 from osv import osv
 from osv import fields
@@ -205,7 +205,7 @@ class purchase_order_followup(osv.osv_memory):
 
         return res
 
-    def export_get_file_name(self, cr, uid, ids, prefix='PO_Follow_Up', context=None):
+    def export_get_file_name(self, cr, uid, ids, prefix='PO Follow up', context=None):
         if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
@@ -213,10 +213,7 @@ class purchase_order_followup(osv.osv_memory):
         foup = self.browse(cr, uid, ids[0], context=context)
         if not foup or not foup.order_id or not foup.order_id.name:
             return False
-        dt_now = datetime.datetime.now()
-        po_name = "%s_%s_%d_%02d_%02d" % (prefix,
-                                          foup.order_id.name.replace('/', '_'),
-                                          dt_now.year, dt_now.month, dt_now.day)
+        po_name = "%s_%s_%s" % (prefix, foup.order_id.name.replace('/', '_'), time.strftime('%Y%m%d_%H_%M'))
         return po_name
 
     def export_xls(self, cr, uid, ids, context=None):

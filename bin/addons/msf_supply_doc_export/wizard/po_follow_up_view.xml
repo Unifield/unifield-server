@@ -11,7 +11,7 @@
 				<group colspan="2">
 					<field name="po_id" domain="[('rfq_ok', '=', False)]" />
 					<field name="po_date_from" />  <!-- need to do from / though on dates  -->
-					<field name="partner_id" />
+					<field name="partner_id" context="{'show_button_show_inactive': True}" />
 					<field name="po_date_thru" />
 					<field name="project_ref" />
 				</group>

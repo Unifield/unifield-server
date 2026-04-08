@@ -340,7 +340,7 @@ class stock_reception_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 3
 
-        data = {'ids': ids, 'context': context}
+        data = {'ids': ids, 'context': context, 'target_filename': _('Receptions Report_%s') % (time.strftime('%Y%m%d_%H_%M'),)}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'stock.reception.report_xls',
