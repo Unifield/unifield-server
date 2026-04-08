@@ -101,7 +101,12 @@ class wizard_out_import(osv.osv_memory):
 
         # Update the original move
         update_qty = proc_move_qty - new_qty
-        vals = {'ordered_quantity': update_qty, 'quantity': proc_move_qty > update_qty and update_qty or proc_move_qty}
+        vals = {'ordered_quantity': update_qty}
+        if context.get('sde_flow'):
+            # Prevent adding unexpected qty to process
+            vals['quantity'] = 0
+        else:
+            vals['quantity'] = proc_move_qty > update_qty and update_qty or proc_move_qty
         proc_move_obj.write(cr, uid, proc_move_id, vals, context=context)
 
         return new_proc_move_id
@@ -185,9 +190,12 @@ class wizard_out_import(osv.osv_memory):
 
         return data
 
-    def get_uom(self, cr, uid, ids, line_data, ordered_uom_category_id, context=None):
+    def get_uom(self, cr, uid, ids, line_data, ordered_uom_category_id, json_import, context=None):
         if context is None:
             context = {}
+
+        if json_import and not line_data.get('uom'):
+            raise osv.except_osv(_('Error'), _('Line %s: Data of key "uom" is mandatory') % (line_data['item'],))
 
         uom_obj = self.pool.get('product.uom')
         uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', line_data['uom']), ('category_id', '=', ordered_uom_category_id)],
@@ -226,6 +234,7 @@ class wizard_out_import(osv.osv_memory):
                 'kit': move.get('kit', ''),
                 'qty': move.get('qty', move.get('qty_to_process', 0.0)),
                 'qty_to_process': move.get('qty_to_process', 0.0),
+                'uom': move.get('uom', ''),
                 'batch': move.get('prodlot_id', ''),
                 'expiry_date': move.get('expired_date', ''),
             }
@@ -402,7 +411,7 @@ class wizard_out_import(osv.osv_memory):
                                              % (line_data['item'], line_data['code']))
 
                 # UoM
-                uom = self.get_uom(cr, uid, ids, line_data, proc_move.ordered_uom_category.id, context=context)
+                uom = self.get_uom(cr, uid, ids, line_data, proc_move.ordered_uom_category.id, json_import, context=context)
                 if proc_move.ordered_uom_id.id != uom.id:
                     to_write['uom_id'] = uom.id
                 if uom.rounding != 1:

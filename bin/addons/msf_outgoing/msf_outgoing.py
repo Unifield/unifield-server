@@ -3566,6 +3566,8 @@ class stock_picking(osv.osv):
                     'claim': picking.claim,
                     'claim_name': picking.claim_name
                 }
+                if proc_model == 'outgoing.delivery.processor':
+                    cp_vals['sde_updated'] = picking.sde_updated
                 context['allow_copy'] = True
 
                 new_picking_id = picking_obj.copy(cr, uid, picking.id, cp_vals, context=context)
@@ -3576,7 +3578,7 @@ class stock_picking(osv.osv):
             # At first we confirm the new picking (if necessary)
             pick_to_check = False
             if new_picking_id:
-                self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id, 'sde_update_msg': False}, context=context)
+                self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id, 'sde_update_msg': False, 'sde_updated': False}, context=context)
 
                 rw_name = context.get('rw_backorder_name', False)
                 update_vals = {}
