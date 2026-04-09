@@ -132,7 +132,7 @@ class register_creation(osv.osv_memory):
         period_id = wizard.period_id.id
         instance_id = wizard.instance_id.id
         prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
-        reg_type = ['bank', 'cheque', 'cash']
+        reg_type = ['bank', 'cheque', 'cash', 'other']
 
         for rtype in reg_type:
             # Search all register from previous period

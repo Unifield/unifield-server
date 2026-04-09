@@ -209,6 +209,8 @@ class account_journal(osv.osv):
 
             if analytic_ids:
                 value['value']['analytic_journal_id'] = analytic_ids[0]
+            value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
             if company.other_debit_account_id:
                 value['value']['default_debit_account_id'] = company.other_debit_account_id.id
             if company.other_credit_account_id:
