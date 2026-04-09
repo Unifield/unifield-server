@@ -142,10 +142,28 @@ class wizard_out_import(osv.osv_memory):
                     # Prevent modification of lines that are not Available
                     return False
 
-        raise osv.except_osv(
-            _('Error'), _('Line %s: Does not correspond to the ordered line. Please correct the Product Code %s')
-            % (line_data['item'], line_data['code'])
-        )
+        # To give a more specific error in case there is no match
+        sql_treated_lines = """"""
+        if treated_lines:
+            if len(treated_lines) == 1:
+                sql_treated_lines = """ AND mp.id != %s""" % (treated_lines[0],)
+            else:
+                sql_treated_lines = """ AND mp.id NOT IN %s""" % (tuple(treated_lines),)
+        cr.execute("""
+            SELECT mp.id 
+            FROM outgoing_delivery_move_processor mp LEFT JOIN stock_move m ON mp.move_id = m.id
+            WHERE mp.wizard_id = %s AND m.state = 'assigned' AND mp.line_number = %s
+        """ + sql_treated_lines, (wizard_id, line_data['item']))
+        if not cr.fetchone():
+            raise osv.except_osv(
+                _('Error'), _('Line %s: Does not correspond to the ordered line. Please correct the Line Number of Product Code %s')
+                            % (line_data['item'], line_data['code'])
+            )
+        else:
+            raise osv.except_osv(
+                _('Error'), _('Line %s: Does not correspond to the ordered line. Please correct the Product Code %s')
+                            % (line_data['item'], line_data['code'])
+            )
 
     def checks_on_batch(self, cr, uid, ids, product, line_data, context=None):
         if context is None:

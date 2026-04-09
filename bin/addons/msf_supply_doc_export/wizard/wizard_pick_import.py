@@ -195,12 +195,26 @@ class wizard_pick_import(osv.osv_memory):
                     # Prevent modification of confirmed (Not Available) line
                     return False
 
-        import_type = context.get('sde_flow') and _('the JSON data') or _('the import file')
-        raise osv.except_osv(
-            _('Error'),
-            _('The total quantity of line #%s in %s (%s) doesn\'t match with the total qty on screen')
-            % (line_data['item'], import_type, line_data['qty'])
-        )
+        # To give a more specific error in case there is no match
+        sql_treated_lines = """"""
+        if treated_lines:
+            if len(treated_lines) == 1:
+                sql_treated_lines = """ AND id != %s""" % (treated_lines[0],)
+            else:
+                sql_treated_lines = """ AND id NOT IN %s""" % (tuple(treated_lines),)
+        cr.execute("""
+            SELECT id FROM stock_move m WHERE picking_id = %s AND state = 'assigned' AND line_number = %s
+        """ + sql_treated_lines, (picking_id, line_data['item']))
+        if not cr.fetchone():
+            raise osv.except_osv(
+                _('Error'), _('Line %s: Does not correspond to the ordered line. Please correct the Line Number of Product Code %s')
+                            % (line_data['item'], line_data['code'])
+            )
+        else:
+            raise osv.except_osv(
+                _('Error'), _('Line %s: Does not correspond to the ordered line. Please correct the Product Code %s')
+                            % (line_data['item'], line_data['code'])
+            )
 
     def checks_on_batch(self, cr, uid, ids, product, line_data, context=None):
         if context is None:
