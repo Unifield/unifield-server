@@ -298,7 +298,7 @@ class wizard_pick_import(osv.osv_memory):
                 line_data['item'] = int(line_data['item'])
             except:
                 if json_import:
-                    raise osv.except_osv(_('Error'), _('Line %s: Data of key "line_number" must be an integer') % xls_line_number)
+                    raise osv.except_osv(_('Error'), _('Line %s: Key "line_number" must be an integer') % xls_line_number)
                 else:
                     raise osv.except_osv(_('Error'), _('File line %s: Column "Item" must be an integer') % xls_line_number)
 

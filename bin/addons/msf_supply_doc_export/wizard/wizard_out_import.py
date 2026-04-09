@@ -195,7 +195,7 @@ class wizard_out_import(osv.osv_memory):
             context = {}
 
         if json_import and not line_data.get('uom'):
-            raise osv.except_osv(_('Error'), _('Line %s: Data of key "uom" is mandatory') % (line_data['item'],))
+            raise osv.except_osv(_('Error'), _('Line %s: Key "uom" is mandatory') % (line_data['item'],))
 
         uom_obj = self.pool.get('product.uom')
         uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', line_data['uom']), ('category_id', '=', ordered_uom_category_id)],
@@ -306,7 +306,7 @@ class wizard_out_import(osv.osv_memory):
                 line_data['item'] = int(line_data['item'])
             except:
                 if json_import:
-                    raise osv.except_osv(_('Error'), _('Line %s: Data of key "line_number" must be an integer') % row_num)
+                    raise osv.except_osv(_('Error'), _('Line %s: Key "line_number" must be an integer') % row_num)
                 else:
                     raise osv.except_osv(_('Error'), _('File line %s: Column "Item" must be an integer') % row_num)
 
