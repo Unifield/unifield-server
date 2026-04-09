@@ -86,4 +86,6 @@ class bank_reconciliation(report_sxw.rml_parse):
 
 report_sxw.report_sxw('report.bank.reconciliation', 'account.bank.statement', 'addons/register_accounting/report/bank_reconciliation.rml', parser=bank_reconciliation)
 
+report_sxw.report_sxw('report.balance.reconciliation', 'account.bank.statement', 'addons/register_accounting/report/balance_reconciliation.rml', parser=bank_reconciliation)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
