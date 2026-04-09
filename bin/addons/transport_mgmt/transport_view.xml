@@ -245,6 +245,7 @@
                                 <tree string="Lines" editable="top">
                                     <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
                                     <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>
+                                    <field name="incoming_state" />
                                     <field name="parcels_nb" required="1"/>
                                     <field name="volume" />
                                     <field name="weight" />

@@ -1297,5 +1297,26 @@
         <record id="us_15252_non_service_prod_transport_flag" model="patch.scripts">
             <field name="method">us_15252_non_service_prod_transport_flag</field>
         </record>
+
+        <!-- UF41.0 -->
+        <record id="us_15433_delete_WACA_2025_fiscal_year" model="patch.scripts">
+            <field name="method">us_15433_delete_WACA_2025_fiscal_year</field>
+        </record>
+
+        <record id="us_12391_cleanup_rate_VEF_2016" model="patch.scripts">
+            <field name="method">us_12391_cleanup_rate_VEF_2016</field>
+        </record>
+
+        <record id="us_15432_fix_currencies_rounding" model="patch.scripts">
+            <field name="method">us_15432_fix_currencies_rounding</field>
+        </record>
+
+        <record id="us_15072_po_detail" model="patch.scripts">
+            <field name="method">us_15072_po_detail</field>
+        </record>
+
+        <record id="us_15639_update_description_ppl" model="patch.scripts">
+            <field name="method">us_15639_update_description_ppl</field>
+        </record>
     </data>
 </openerp>

@@ -690,7 +690,7 @@ SELECT res_id, touched
         if analytic_line.distrib_line_id:
             analytic_line.distrib_line_id.unlink(context=context)
 
-        return self.unlink(cr, uid, [res_id], context=context)
+        return self.unlink(cr, uid, [res_id], context={**context, 'from_message_unlink': True})
 
     @orm_method_overload
     def unlink(self, original_unlink, cr, uid, ids, context=None):
@@ -699,8 +699,6 @@ SELECT res_id, touched
         audit_rule_ids = self.check_audit(cr, uid, 'unlink')
         if audit_rule_ids:
             self.pool.get('audittrail.rule').audit_log(cr, uid, audit_rule_ids, self, ids, 'unlink', context=context)
-        if context.get('sync_message_execution'):
-            return original_unlink(self, cr, uid, ids, context=context)
 
         if self._name == 'ir.model.data' \
            and context.get('avoid_sdref_deletion'):
@@ -709,6 +707,12 @@ SELECT res_id, touched
                                     in self.browse(cr, uid, (ids if isinstance(ids, list) else [ids]), context=context)
                                        if not rec.module == 'sd'],
                                    context=context)
+
+        # condition <self._name not in ('account.analytic.line')> added to fix US-13993
+        # context.get('from_message_unlink') added to not forward deletion UF-2344
+        if context.get('sync_message_execution') and (
+                context.get('from_message_unlink') or self._name not in ('account.analytic.line')):
+            return original_unlink(self, cr, uid, ids, context=context)
 
         # In an update creation context, references are deleted normally
         # In an update execution context, references are kept, but no

@@ -253,7 +253,7 @@ class weekly_forecast_report(osv.osv):
         """
         datas = {
             'ids': ids,
-            'target_filename': _('Periodical Forecast Report'),
+            'target_filename': _('Periodical Forecast Report_%s') % (time.strftime('%Y%m%d_%H_%M'),),
         }
         return {
             'type': 'ir.actions.report.xml',
