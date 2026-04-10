@@ -158,10 +158,10 @@ class sde_import(osv.osv_memory):
                         sde_pagi_page = int(sde_pagi_page)
                     except ValueError:
                         sde_pagi_error = _('The page number must be an integer')
-                    sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    sde_pagi_ids = pagi_obj.search(cr, 1, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
                     if sde_pagi_ids:
                         sde_pagi_id = sde_pagi_ids[0]
-                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, context=context)
+                        sde_pagi = pagi_obj.read(cr, 1, sde_pagi_id, context=context)
                         if sde_pagi['state'] == 'done':
                             sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
                         elif sde_pagi_page - sde_pagi['page'] != 1:
@@ -209,7 +209,7 @@ class sde_import(osv.osv_memory):
                             }
                             if sde_pagi_end_msg:
                                 pagi_vals['state'] = 'done'
-                            pagi_obj.write(cr, uid, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_obj.write(cr, 1, sde_pagi_ids[0], pagi_vals, context=context)
                             pagi_msg = _('SDE pagination for %s updated%s with page %s') \
                                        % (json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
                     else:
@@ -236,7 +236,7 @@ class sde_import(osv.osv_memory):
                                 'page': 1,
                                 'last_modification': datetime.now(),
                             }
-                            sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            sde_pagi_id = pagi_obj.create(cr, 1, sde_pagi_vals, context=context)
                             pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
 
             if sde_pagi_error:
@@ -273,7 +273,7 @@ class sde_import(osv.osv_memory):
                 # create simulation screen to get the simulation report:
                 in_simu_obj.write(cr, uid, [simu_id], {'json_text': json_text, 'with_pack': True}, context=context)
 
-                in_simu_obj.launch_simulate(cr, uid, [simu_id], context=context)
+                in_simu_obj.launch_simulate(cr, 1, [simu_id], context=context)
                 file_res = pick_obj.generate_simulation_screen_report(cr, uid, simu_id, context=context)
 
                 simu_data = in_simu_obj.read(cr, uid, simu_id, ['import_error_ok', 'message'], context=context)
@@ -284,7 +284,7 @@ class sde_import(osv.osv_memory):
                     in_simu_obj.launch_import(cr, uid, [simu_id], context=context)
                     # Log the update
                     in_name = pick_obj.read(cr, uid, in_id, ['name'], context=context)['name']
-                    self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
+                    self.pool.get('sde.update.log').create(cr, 1, {'date': datetime.now(), 'doc_type': 'in', 'doc_ref': in_name}, context=context)
 
                 # attach the simulation report to the IN
                 self.pool.get('ir.attachment').create(cr, uid, {
@@ -577,10 +577,10 @@ class sde_import(osv.osv_memory):
                         sde_pagi_page = int(sde_pagi_page)
                     except ValueError:
                         sde_pagi_error = _('The page number must be an integer')
-                    sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    sde_pagi_ids = pagi_obj.search(cr, 1, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
                     if sde_pagi_ids:
                         sde_pagi_id = sde_pagi_ids[0]
-                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, context=context)
+                        sde_pagi = pagi_obj.read(cr, 1, sde_pagi_id, context=context)
                         if sde_pagi['state'] == 'done':
                             sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
                         elif sde_pagi_page - sde_pagi['page'] != 1:
@@ -602,7 +602,7 @@ class sde_import(osv.osv_memory):
                             }
                             if sde_pagi_end_msg:
                                 pagi_vals['state'] = 'done'
-                            pagi_obj.write(cr, uid, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_obj.write(cr, 1, sde_pagi_ids[0], pagi_vals, context=context)
                             pagi_msg = _('SDE pagination for %s updated%s with page %s') % (json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
                     else:
                         if sde_pagi_page != 1:
@@ -616,7 +616,7 @@ class sde_import(osv.osv_memory):
                                 'page': 1,
                                 'last_modification': datetime.now(),
                             }
-                            sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            sde_pagi_id = pagi_obj.create(cr, 1, sde_pagi_vals, context=context)
                             pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
 
             if sde_pagi_error:
@@ -659,7 +659,7 @@ class sde_import(osv.osv_memory):
                 pick_obj.write(cr, uid, pick_id, {'sde_updated': True}, context=context)
 
                 # Log the update
-                self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'pick', 'doc_ref': pick['name']}, context=context)
+                self.pool.get('sde.update.log').create(cr, 1, {'date': datetime.now(), 'doc_type': 'pick', 'doc_ref': pick['name']}, context=context)
             elif pagi_msg:
                 result['message'] = pagi_msg
         except Exception as e:
@@ -848,7 +848,7 @@ class sde_import(osv.osv_memory):
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'pick',
                      'page': page, 'last_page': page == last_page, 'with_lines': with_lines}
-        self.pool.get('sde.export.pagination').create(new_cr, uid, pagi_vals, context=context)
+        self.pool.get('sde.export.pagination').create(new_cr, 1, pagi_vals, context=context)
 
         new_cr.commit()
         new_cr.close(True)
@@ -1020,10 +1020,10 @@ class sde_import(osv.osv_memory):
                         sde_pagi_page = int(sde_pagi_page)
                     except ValueError:
                         sde_pagi_error = _('The page number must be an integer')
-                    sde_pagi_ids = pagi_obj.search(cr, uid, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    sde_pagi_ids = pagi_obj.search(cr, 1, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
                     if sde_pagi_ids:
                         sde_pagi_id = sde_pagi_ids[0]
-                        sde_pagi = pagi_obj.read(cr, uid, sde_pagi_id, context=context)
+                        sde_pagi = pagi_obj.read(cr, 1, sde_pagi_id, context=context)
                         if sde_pagi['state'] == 'done':
                             sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
                         elif sde_pagi_page - sde_pagi['page'] != 1:
@@ -1045,7 +1045,7 @@ class sde_import(osv.osv_memory):
                             }
                             if sde_pagi_end_msg:
                                 pagi_vals['state'] = 'done'
-                            pagi_obj.write(cr, uid, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_obj.write(cr, 1, sde_pagi_ids[0], pagi_vals, context=context)
                             pagi_msg = _('SDE pagination for %s updated%s with page %s') % (
                                 json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
                     else:
@@ -1060,7 +1060,7 @@ class sde_import(osv.osv_memory):
                                 'page': 1,
                                 'last_modification': datetime.now(),
                             }
-                            sde_pagi_id = pagi_obj.create(cr, uid, sde_pagi_vals, context=context)
+                            sde_pagi_id = pagi_obj.create(cr, 1, sde_pagi_vals, context=context)
                             pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
 
             if sde_pagi_error:
@@ -1107,8 +1107,7 @@ class sde_import(osv.osv_memory):
                 pick_obj.write(cr, uid, out_id, {'sde_updated': True}, context=context)
 
                 # Log the update
-                self.pool.get('sde.update.log').create(cr, uid, {'date': datetime.now(), 'doc_type': 'out',
-                                                                 'doc_ref': out['name']}, context=context)
+                self.pool.get('sde.update.log').create(cr, 1, {'date': datetime.now(), 'doc_type': 'out', 'doc_ref': out['name']}, context=context)
             elif pagi_msg:
                 result['message'] = pagi_msg
         except Exception as e:
@@ -1178,7 +1177,7 @@ class sde_import(osv.osv_memory):
             # Create sde.availability.check that will be updated every time the availability is checked on an OUT
             sde_avchk_name = self.pool.get('ir.sequence').get(cr, uid, 'sde.availability.check')
             sde_avchk_vals = {'name': sde_avchk_name, 'doc_type': 'out', 'nb_to_check': len(out_ids)}
-            sde_avchk_id = self.pool.get('sde.availability.check').create(cr, uid, sde_avchk_vals, context=context)
+            sde_avchk_id = self.pool.get('sde.availability.check').create(cr, 1, sde_avchk_vals, context=context)
 
             # Check the availability of each OUT one by one in the background
             threaded_exp_pagi = threading.Thread(target=self.sde_out_check_availability_update,
@@ -1372,7 +1371,7 @@ class sde_import(osv.osv_memory):
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'out',
                      'page': page, 'last_page': page == last_page, 'with_lines': with_lines}
-        self.pool.get('sde.export.pagination').create(new_cr, uid, pagi_vals, context=context)
+        self.pool.get('sde.export.pagination').create(new_cr, 1, pagi_vals, context=context)
 
         new_cr.commit()
         new_cr.close(True)
@@ -1406,7 +1405,7 @@ class sde_import(osv.osv_memory):
                 sde_avchk_vals.update({'state': 'error', 'error_msg': error_msg})
             finally:
                 sde_avchk_vals['nb_checked'] = nb_checked
-                sde_avchk_obj.write(new_cr, uid, sde_avchk_id, sde_avchk_vals, context=context)
+                sde_avchk_obj.write(new_cr, 1, sde_avchk_id, sde_avchk_vals, context=context)
                 new_cr.commit()
                 new_cr.close(True)
                 if error_msg:
@@ -1481,7 +1480,7 @@ class sde_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Please specify a pick_type and pick_subtype'))
 
         pick_obj = self.pool.get('stock.picking')
-        avchk_obj = self.pool.get('sde.availability.check')
+        sde_avchk_obj = self.pool.get('sde.availability.check')
         pagi_exp_obj = self.pool.get('sde.export.pagination')
 
         instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
@@ -1508,9 +1507,9 @@ class sde_import(osv.osv_memory):
             if json_data.get('sde_availability_check_id'):
                 # Check and get the availability check data
                 avchk_domain = [('doc_type', '=', export_type), ('name', '=', json_data['sde_availability_check_id'])]
-                avchk_ids = avchk_obj.search(cr, uid, avchk_domain, context=context)
+                avchk_ids = sde_avchk_obj.search(cr, 1, avchk_domain, context=context)
                 if avchk_ids:
-                    avchk_data = avchk_obj.browse(cr, uid, avchk_ids[0], context=context)
+                    avchk_data = sde_avchk_obj.browse(cr, 1, avchk_ids[0], context=context)
                     result.update({
                         'sde_availability_check_id': json_data['sde_availability_check_id'],
                         'nb_checked': avchk_data.nb_checked,
@@ -1535,9 +1534,9 @@ class sde_import(osv.osv_memory):
 
                     pagi_exp_domain = [('doc_type', '=', export_type), ('pagination_json_id', '=', json_data['sde_pagination_id']),
                                        ('page', '=', json_data['sde_pagination_page'])]
-                    pagi_exp_ids = pagi_exp_obj.search(cr, uid, pagi_exp_domain, context=context)
+                    pagi_exp_ids = pagi_exp_obj.search(cr, 1, pagi_exp_domain, context=context)
                     if pagi_exp_ids:
-                        pagi_exp = pagi_exp_obj.read(cr, uid, pagi_exp_ids[0], ['pagination_json_text', 'with_lines'], context=context)
+                        pagi_exp = pagi_exp_obj.read(cr, 1, pagi_exp_ids[0], ['pagination_json_text', 'with_lines'], context=context)
                         result.update({
                             'sde_pagination_id': json_data['sde_pagination_id'],
                             'sde_pagination_page': json_data['sde_pagination_page'],
@@ -1703,9 +1702,9 @@ class sde_import(osv.osv_memory):
                         sde_pagi_page = 1
                         last_page = math.ceil(nb_lines / lines_per_page)
 
-                        pagi_exp_obj.create(cr, uid, {'pagination_json_id': sde_pagi_id, 'pagination_json_text': json.dumps(data),
-                                                      'doc_type': export_type, 'page': sde_pagi_page, 'last_page': False,
-                                                      'with_lines': with_lines}, context=context)
+                        pagi_exp_obj.create(cr, 1, {'pagination_json_id': sde_pagi_id, 'pagination_json_text': json.dumps(data),
+                                                    'doc_type': export_type, 'page': sde_pagi_page, 'last_page': False,
+                                                    'with_lines': with_lines}, context=context)
                         result.update({'sde_pagination_id': sde_pagi_id, 'sde_pagination_page': sde_pagi_page,
                                        'sde_pagination_last_page': last_page})
 

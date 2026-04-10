@@ -5,8 +5,7 @@
         <record model="res.users" id="base.user_sde_tool">
             <field name="name">SDE Tool</field>
             <field name="login">sde_tool</field>
-            <field name="active" eval="False" />
-<!--            <field name="active" eval="True" />-->
+            <field name="active" eval="True" />
         </record>
 
         <!-- Sequences for sde.export.pagination -->
