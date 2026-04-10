@@ -152,7 +152,8 @@
 
                     <field name="date_invoice"/>
                     <field name="number"/>
-                    <field name="partner_id" groups="base.group_user"/>
+                    <field name="tax_identification_number" string="Partner TIN"/>
+                    <field name="partner_id" groups="base.group_user" string="Partner"/>
                     <field name="name"/>
                     <field name="journal_id" invisible="1"/>
                     <field name="period_id" invisible="1" groups="account.group_account_user"/>
@@ -690,6 +691,7 @@
 
                         <separator orientation="vertical"/>
                         <field name="number"/>
+                        <field name="tax_identification_number" string="Partner TIN"/>
                         <field name="partner_id"/>
                         <field name="origin"/>
                     </group>
