@@ -501,7 +501,7 @@ class signature_object(osv.osv):
 
         if to_unsign:
             # disable check if button has BAR (i.e: uid.realUid exists)
-            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'), check_super_unsign=True)
+            self.pool.get('signature.line')._action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'), check_super_unsign=True)
         if to_delete:
             self.pool.get('signature.line').write(cr, uid, to_delete, {'user_id': False, 'user_name': False},  context=context)
 
@@ -623,7 +623,7 @@ class signature_object(osv.osv):
 
         return True
 
-    def unsign_all(self, cr, uid, ids, context=None):
+    def _unsign_all(self, cr, uid, ids, context=None):
         """
         Unsign the signed lines
         """
@@ -640,8 +640,8 @@ class signature_object(osv.osv):
                 if line.signed:
                     to_unsign.append(line.id)
         if to_unsign:
-            # disable check if button has BAR (i.e: uid.realUid exists)
-            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'), check_super_unsign=True)
+            # disable check as it's expected to be in a case where all signatures must be removed
+            self.pool.get('signature.line')._action_unsign(cr, uid, to_unsign, context=context, check_ur=False)
 
         return True
 
@@ -775,8 +775,6 @@ class signature_line(osv.osv):
                 group_name = 'Sign_document_creator_finance'
             elif sign_line.signature_id.signature_res_model in ['purchase.order', 'stock.picking', 'sale.order']:
                 group_name = 'Sign_document_creator_supply'
-            elif sign_line.signature_id.signature_res_model == 'physical.inventory':
-                group_name = 'Sign_user'
             if not group_name or (group_name and not user_obj.check_user_has_group(cr, uid, group_name)):
                 raise osv.except_osv(_('Warning'), _("You are not allowed to remove this signature"))
             if not sign_line.signature_id.allowed_to_be_signed_unsigned:
@@ -913,9 +911,9 @@ class signature_line(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        return self.action_unsign(cr, uid, ids, context=context, check_ur=True, check_super_unsign=True, cascade_removal=cascade_removal)
+        return self._action_unsign(cr, uid, ids, context=context, check_ur=True, check_super_unsign=True, cascade_removal=cascade_removal)
 
-    def action_unsign(self, cr, uid, ids, context=None, check_ur=True, check_super_unsign=False, cascade_removal=False):
+    def _action_unsign(self, cr, uid, ids, context=None, check_ur=True, check_super_unsign=False, cascade_removal=False):
         '''
         check_ur: used when sign offline by sign creator
         '''
@@ -1671,8 +1669,8 @@ class signature_remove_signature_wizard(osv.osv_memory):
                 self.pool.get('signature.line').super_action_unsign(cr, uid, [wiz.signature_line_id.id], context=context,
                                                                     cascade_removal=wiz.cascade_removal)
             else:
-                self.pool.get('signature.line').action_unsign(cr, uid, [wiz.signature_line_id.id],
-                                                              context=context, cascade_removal=wiz.cascade_removal)
+                self.pool.get('signature.line')._action_unsign(cr, uid, [wiz.signature_line_id.id],
+                                                               context=context, cascade_removal=wiz.cascade_removal)
 
         return {'type': 'ir.actions.act_window_close'}
 

@@ -118,7 +118,7 @@ class account_analytic_line(osv.osv):
                                                store={
                                                    'account.analytic.line': (_get_analytic_reversal, ['name', 'reversal_origin'], 20),
                                                }),
-        'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
+        'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation", select=1),
         'is_reversal': fields.boolean('Reversal?'),
         'is_reallocated': fields.boolean('Reallocated?'),
         'ad_updated': fields.boolean('Analytic Distribution Updated'),

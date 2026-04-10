@@ -690,6 +690,16 @@ class real_average_consumption(osv.osv):
                         self.pool.get('real.average.consumption.line').write(cr, uid, var.id, {},context)
         return True
 
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name'], context=context)
+
+        return _('Real Consumption Report_%s_%s') % (obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
+
 real_average_consumption()
 
 
