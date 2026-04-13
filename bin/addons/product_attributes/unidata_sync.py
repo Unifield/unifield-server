@@ -1968,3 +1968,33 @@ class unidata_products_error(osv.osv):
         'type': 'product',
     }
 unidata_products_error()
+
+class unidata_auto_merge(osv.osv):
+    _name = 'unidata.auto_merge'
+    _order = 'date desc, id desc'
+    _rec_name = 'kept_code'
+
+    _columns = {
+        'date': fields.datetime('Date', required=1, select=1, readonly=1),
+        'non_kept_msfid': fields.integer('Non-kept MSFID', select=1, readonly=1),
+        'non_kept_code': fields.char('Non-kept Code', size=64, readonly=1),
+        'non_kept_product_id': fields.many2one('product.product', 'Product Non-kept', readonly=1),
+        'kept_msfid': fields.integer('Kept MSFID', select=1, readonly=1),
+        'kept_code': fields.char('Kept Code', size=64, readonly=1),
+        'kept_product_id': fields.many2one('product.product', 'Product Kept', readonly=1),
+        'first_date': fields.datetime('Date of first try', select=1, readonly=1),
+        'msg': fields.text('Error', readonly=1),
+        'log': fields.text('Full Log', readonly=1),
+        'state': fields.selection([('done', 'done'), ('ok', 'ok'), ('error', 'Error')], string='State', readonly=1),
+    }
+
+    _sql_constraints = [
+        ('unique_key', 'unique(kept_msfid, non_kept_msfid)', 'key already exists.')
+    ]
+
+    _defaults = {
+        'date': lambda *a, **b: fields.datetime.now(),
+        'first_date': lambda *a, **b: fields.datetime.now(),
+    }
+
+unidata_auto_merge()

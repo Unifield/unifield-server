@@ -576,7 +576,7 @@
             <field name="view_id" ref="unidata_project_missing_tree" />
         </record>
 
-        <menuitem name="MSL Projects with no link to UF" parent="unidata_main_menu" id="unidata_project_missing_menu" action="unidata_project_missing_action" sequence="30" />
+        <menuitem name="MSL Projects with no link to UF" parent="unidata_main_menu" id="unidata_project_missing_menu" action="unidata_project_missing_action" sequence="33" />
 
         <record model="ir.ui.view" id="msf_instance_missing_ud_search">
             <field name="name">msf.instance.missing.ud.search</field>
@@ -824,7 +824,76 @@
             <field name="context">{}</field>
         </record>
 
-        <menuitem name="UD Products incompatible with OC values" action="unidata_products_not_oc_value_action" id="unidata_products_not_oc_value_menu" parent="unidata_main_menu" sequence="27"/>
+        <record id="unidata_auto_merge_action" model="ir.actions.act_window">
+            <field name="name">Products auto merge</field>
+            <field name="res_model">unidata.auto_merge</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_auto_merge_form">
+            <field name="name">unidata.auto_merge.form</field>
+            <field name="model">unidata.auto_merge</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+             <form string="Product auto merge" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="date" />
+                    <field name="first_date" />
+                    <group colspan="4" col="6">
+                            <field name="non_kept_msfid"  />
+                            <field name="non_kept_code" />
+                    <field name="non_kept_product_id" />
+                                <field name="kept_msfid" />
+                    <field name="kept_code" />
+                    <field name="kept_product_id" />
+                    </group>
+                    <field name="log" colspan="4" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
+                    <field name="state" />
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_auto_merge_tree">
+            <field name="name">unidata.auto_merge.tree</field>
+            <field name="model">unidata.auto_merge</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <tree string="Products auto merge" hide_new_button="1" hide_delete_button="1" noteditable="1" colors="red:state=='error';grey:state=='ok'">
+                    <field name="date" />
+                    <field name="non_kept_msfid"  />
+                    <field name="non_kept_code" />
+                    <field name="kept_msfid" />
+                    <field name="kept_code" />
+                    <field name="msg" />
+                    <field name="state" />
+                    <field name="first_date" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_auto_merge__search">
+            <field name="name">unidata.auto_merge.search</field>
+            <field name="model">unidata.auto_merge</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Products auto merge">
+                    <filter name="merge_done" string="Done" domain="[('state', '=', 'done')]" icon="terp-check" />
+                    <filter name="merge_ko" string="Error" domain="[('state', '=', 'error')]" icon="gtk-cancel" />
+                    <field name="date" />
+                    <field name="non_kept_msfid"  />
+                    <field name="non_kept_code" />
+                    <field name="kept_msfid" />
+                    <field name="kept_code" />
+                    <field name="log" />
+                </search>
+            </field>
+        </record>
+        <menuitem name="Products auto merge" action="unidata_auto_merge_action" id="unidata_auto_merge_menu" parent="unidata_main_menu" sequence="30"/>
+
+        <menuitem name="UD Products incompatible with OC values" action="unidata_products_not_oc_value_action" id="unidata_products_not_oc_value_menu" parent="unidata_main_menu" sequence="40"/>
 
         <record id="unidata_default_product_value_action" model="ir.actions.act_window">
             <field name="name">OC Default values</field>
@@ -876,6 +945,6 @@
                 </search>
             </field>
         </record>
-        <menuitem name="OC Default Values" action="unidata_default_product_value_action" id="unidata_default_product_value_menu" parent="unidata_main_menu" sequence="27"/>
+        <menuitem name="OC Default Values" action="unidata_default_product_value_action" id="unidata_default_product_value_menu" parent="unidata_main_menu" sequence="50"/>
     </data>
 </openerp>
