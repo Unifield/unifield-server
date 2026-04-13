@@ -1872,8 +1872,6 @@ class product_attributes(osv.osv):
 
         logging.getLogger('UD deactivation').info('%d products deactivated, %d kept as active' % (len(ids), len(products_used)))
 
-        self.unidata_start_auto_merge(cr, uid, context=context)
-
         return True
 
     def unidata_start_auto_merge(self, cr, uid, context=None):

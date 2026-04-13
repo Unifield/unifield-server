@@ -1609,6 +1609,7 @@ class unidata_sync(osv.osv):
             raise osv.except_osv(_('Error'), _('A sync is already running ...'))
         try:
             self._start_ud_sync(cr, uid, context=context)
+            self.pool.get('product.product').unidata_start_auto_merge(cr, uid, context=context)
         finally:
             self._lock[cr.dbname].release()
 
