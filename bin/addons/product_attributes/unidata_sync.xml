@@ -893,6 +893,22 @@
         </record>
         <menuitem name="Products auto merge" action="unidata_auto_merge_action" id="unidata_auto_merge_menu" parent="unidata_main_menu" sequence="30"/>
 
+        <record id="open_product_from_automerge_action_server" model="ir.actions.server">
+            <field name="name">Products</field>
+            <field name="model_id" ref="model_unidata_auto_merge"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_product_from_automerge(context=context)</field>
+        </record>
+
+        <record id="open_product_from_automerge_link" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">unidata.auto_merge</field>
+            <field name="name">Products</field>
+            <field eval="'ir.actions.server,%d'%open_product_from_automerge_action_server" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+
         <menuitem name="UD Products incompatible with OC values" action="unidata_products_not_oc_value_action" id="unidata_products_not_oc_value_menu" parent="unidata_main_menu" sequence="40"/>
 
         <record id="unidata_default_product_value_action" model="ir.actions.act_window">

@@ -1997,4 +1997,23 @@ class unidata_auto_merge(osv.osv):
         'first_date': lambda *a, **b: fields.datetime.now(),
     }
 
+    def open_product_from_automerge(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if context.get('active_ids'):
+            ids = context['active_ids']
+        p_ids = []
+        if ids:
+            cr.execute('select non_kept_product_id, kept_product_id from unidata_auto_merge where id in %s', (tuple(ids), ))
+            for x in cr.fetchall():
+                p_ids += [x[0], x[1]]
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['tree', 'form'], context=context)
+        res['name'] = _('Auto merge products')
+        res['domain'] = [('active', 'in', ['t', 'f']), ('id', 'in', p_ids)]
+        res['target'] = 'current'
+        return res
+
 unidata_auto_merge()
