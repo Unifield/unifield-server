@@ -53,7 +53,7 @@
         'delete_old_supplier_catalogue_view.xml',
         'deactivate_phase_out_partners_view.xml',
         'msf_tools_view.xml',
-        'email_notification_view.xml',
+        'email_signature_notification_view.xml',
     ],
     'demo_xml': [
     ],
