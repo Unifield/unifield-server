@@ -1977,10 +1977,10 @@ class unidata_auto_merge(osv.osv):
 
     _columns = {
         'date': fields.datetime('Date', required=1, select=1, readonly=1),
-        'non_kept_msfid': fields.integer('Non-kept MSFID', select=1, readonly=1),
+        'non_kept_msfid': fields.integer('Non-kept MSFID', select=1, readonly=1, group_operator='no_group'),
         'non_kept_code': fields.char('Non-kept Code', size=64, readonly=1),
         'non_kept_product_id': fields.many2one('product.product', 'Product Non-kept', readonly=1),
-        'kept_msfid': fields.integer('Kept MSFID', select=1, readonly=1),
+        'kept_msfid': fields.integer('Kept MSFID', select=1, readonly=1, group_operator='no_group'),
         'kept_code': fields.char('Kept Code', size=64, readonly=1),
         'kept_product_id': fields.many2one('product.product', 'Product Kept', readonly=1),
         'first_date': fields.datetime('Date of first try', select=1, readonly=1),

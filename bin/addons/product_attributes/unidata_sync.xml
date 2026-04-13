@@ -889,6 +889,10 @@
                     <field name="kept_msfid" />
                     <field name="kept_code" />
                     <field name="log" />
+                    <newline />
+                    <group expand="1" string="Group By...">
+                        <filter string="Date" icon="terp-go-month" context="{'group_by':'date'}"/>
+                    </group>
                 </search>
             </field>
         </record>
