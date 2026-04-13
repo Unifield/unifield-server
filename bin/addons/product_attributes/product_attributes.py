@@ -1897,6 +1897,7 @@ class product_attributes(osv.osv):
 
 
         auto_merge_obj = self.pool.get('unidata.auto_merge')
+        auto_ids_to_exec = []
         for non_id, non_default_code, non_msfid, kept_id, kept_default_code, kept_msfid in cr.fetchall():
             logging.getLogger('Auto-Merge').info('kept: %s , non-kep: %s' % (kept_default_code, non_default_code))
             auto_ids = auto_merge_obj.search(cr, uid, [('non_kept_msfid', '=', non_msfid), ('kept_msfid', '=', kept_msfid)], context=context)
@@ -1914,26 +1915,10 @@ class product_attributes(osv.osv):
                 auto_merge_obj.write(cr, uid, auto_id, auto_data, context=context)
             else:
                 auto_id = auto_merge_obj.create(cr, uid, auto_data, context=context)
+            auto_ids_to_exec.append(auto_id)
 
-            cr.execute('SAVEPOINT unidata_auto_merge')
-            try:
-                self.merge_hq_product(cr, uid, kept_id, non_id, context=context)
-                auto_merge_obj.write(cr, uid, auto_id, {'state': 'done', 'msg': False}, context=context)
-            except Exception as e:
-                if isinstance(e, osv.except_osv):
-                    msg = e.value
-                else:
-                    msg = e
-
-                cr.execute('ROLLBACK TO SAVEPOINT unidata_auto_merge')
-                auto_merge_obj.write(cr, uid, auto_id, {
-                    'state': 'error',
-                    'msg': msg,
-                    'log': tools.misc.get_traceback(e),
-                }, context=context)
-            finally:
-                cr.execute('RELEASE SAVEPOINT unidata_auto_merge')
-
+        if auto_ids_to_exec:
+            auto_merge_obj.exec_auto_merge(cr, uid, auto_ids_to_exec, context=context)
 
         return True
 

@@ -2017,4 +2017,28 @@ class unidata_auto_merge(osv.osv):
         res['target'] = 'current'
         return res
 
+    def exec_auto_merge(self, cr, uid, ids, context=None):
+        prod_obj = self.pool.get('product.product')
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['non_kept_product_id', 'kept_product_id', 'state'], context=context):
+            if x.state != 'done':
+                try:
+                    cr.execute('SAVEPOINT unidata_auto_merge')
+                    prod_obj.merge_hq_product(cr, uid, x.kept_product_id.id, x.non_kept_product_id.id, context=context)
+                    self.write(cr, uid, x.id,  {'state': 'done', 'msg': False}, context=context)
+                except Exception as e:
+                    if isinstance(e, osv.except_osv):
+                        msg = e.value
+                    else:
+                        msg = e
+
+                    cr.execute('ROLLBACK TO SAVEPOINT unidata_auto_merge')
+                    self.write(cr, uid, x.id, {
+                        'state': 'error',
+                        'msg': msg,
+                        'log': tools.misc.get_traceback(e),
+                    }, context=context)
+                finally:
+                    cr.execute('RELEASE SAVEPOINT unidata_auto_merge')
+        return True
+
 unidata_auto_merge()
