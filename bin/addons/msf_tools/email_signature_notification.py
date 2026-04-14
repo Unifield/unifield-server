@@ -217,7 +217,7 @@ class email_signature_notification(osv.osv):
             # FIXME: ready_to_sign / allowed_to_be_signed_unsigned
             cr.execute("""
                 SELECT sgnl.user_id, json_agg(json_build_array(sgnl.id, sgn.signature_res_model,
-                                     COALESCE(s.name, po.name, p.name, acbs.name, COALESCE(inv.number, inv.origin, inv.supplier_reference), 
+                                     COALESCE(s.name, po.name, p.name, acbs.name, inv.number, inv.origin, inv.supplier_reference, 
                                               phys.ref, NULL), s.procurement_request, p.type, p.subtype, acj.type))
                 FROM signature_line sgnl
                     LEFT JOIN signature sgn ON sgnl.signature_id = sgn.id
@@ -233,7 +233,7 @@ class email_signature_notification(osv.osv):
                     LEFT JOIN account_journal invj ON inv.journal_id = invj.id
                     LEFT JOIN physical_inventory phys ON sgn.signature_res_id = phys.id AND sgn.signature_res_model = 'physical.inventory'
                 WHERE sgnl.user_id IS NOT NULL AND sgnl.signed = 'f' AND sgnl.is_active = 't' AND sgn.signed_off_line = 'f'
-                    AND sgn.signature_is_closed = 'f' AND (%s)
+                    AND sgn.signature_is_closed = 'f'
                 GROUP BY sgnl.user_id
             """, (' OR '.join(sql_wheres),))
 
@@ -261,9 +261,9 @@ class email_signature_notification(osv.osv):
                     elif sgnl[1] == 'account.bank.statement' and sgnl[6] is not None:
                         if sgnl[6] == 'cash':
                             cash_names.append(sgnl[2])
-                        if sgnl[6] == 'cheque':
+                        elif sgnl[6] == 'cheque':
                             cheque_names.append(sgnl[2])
-                        if sgnl[6] == 'bank':
+                        elif sgnl[6] == 'bank':
                             bank_names.append(sgnl[2])
                     elif sgnl[1] == 'account.invoice':
                         inv_names.append(sgnl[2])
@@ -293,7 +293,7 @@ class email_signature_notification_doc_applicability(osv.osv):
                                          ('account.bank.statement.cash', 'Cash Registers'),
                                          ('account.bank.statement.bank', 'Bank Registers'),
                                          ('account.bank.statement.cheque', 'Cheque Registers'),
-                                         ('account.invoice', 'Invoices'),
+                                         ('account.invoice', 'Supplier Invoices'),
                                          ('physical.inventory', 'Physical Inventories'),
                                      ], readonly=True),
         'active': fields.boolean(string='Active'),

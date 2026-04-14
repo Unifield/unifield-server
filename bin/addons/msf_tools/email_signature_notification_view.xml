@@ -89,8 +89,9 @@
                         <field name="reminder_active" />
                     </group>
 
+                    <separator colspan="4" string="Document Applicability" />
                     <field name="applicability_ids" nolabel="1" colspan="4">
-                        <tree string="Document Applicability" editable="top" hide_new_button="1" hide_delete_button="1">
+                        <tree editable="top" hide_new_button="1" hide_delete_button="1">
                             <field name="doc_type"/>
                             <field name="active"/>
                         </tree>
@@ -130,6 +131,18 @@ action = {
             <field name="key">action</field>
             <field name="model">ir.ui.menu</field>
             <field eval="ref('email_signature_notification_menu')" name="res_id"/>
+        </record>
+
+        <record id="email_signature_notification_doc_applicability_form_view" model="ir.ui.view">
+            <field name="name">email.signature.notification.doc.applicability.form.view</field>
+            <field name="model">email.signature.notification.doc.applicability</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Email Signature Notification Configuration Document Applicability" noteditable="1">
+                    <field name="doc_type" />
+                    <field name="active" />
+                </form>
+            </field>
         </record>
     </data>
 </openerp>
