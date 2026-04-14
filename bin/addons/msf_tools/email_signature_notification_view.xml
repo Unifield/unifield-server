@@ -90,7 +90,7 @@
                     </group>
 
                     <separator colspan="4" string="Document Applicability" />
-                    <field name="applicability_ids" nolabel="1" colspan="4">
+                    <field name="doc_applicability_ids" nolabel="1" colspan="4">
                         <tree editable="top" hide_new_button="1" hide_delete_button="1">
                             <field name="doc_type"/>
                             <field name="active"/>
