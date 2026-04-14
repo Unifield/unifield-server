@@ -366,7 +366,7 @@ class account_invoice(osv.osv):
         'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
         'is_partner_active': fields.related('partner_id', 'active', type='boolean', string='Partner Active', store=False, write_relate=False),
         'po_details': fields.char(size=86, string='PO Details'),
-        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15, string='Tax Identification Number', store=True, readonly=True),
+        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15, string='Tax Identification Number', store=False, readonly=True),
     }
     _defaults = {
         'type': _get_type,
