@@ -363,6 +363,8 @@ class Search(TinyInputWidget):
                         self.context[model_undsc + '_filter_' + attrs['name']] = values['filter_status'][attrs['name']]
                     elif 'search_default_' + attrs['name'] in self.context:
                         self.context[model_undsc + '_filter_' + attrs['name']] = self.context['search_default_' + attrs['name']]
+                    elif model_undsc + '_filter_' + attrs['name'] in self.context:
+                        self.context.pop(model_undsc + '_filter_' + attrs['name'])
 
                 attrs.update(
                     model=search_model,
