@@ -355,6 +355,15 @@ class Search(TinyInputWidget):
                 views.append(NewLine(**attrs))
 
             elif node.localName=='filter':
+                # Put in context which filter is used and its value when needed if it's allowed for the model
+                auth_models_filter_vals = ['sale.order.line']
+                if self.context.get('get_filter_vals') and attrs.get('name', '') and model and model in auth_models_filter_vals:
+                    model_undsc = model.replace('.', '_')
+                    if values and values.get('filter_status') and attrs['name'] in values['filter_status']:
+                        self.context[model_undsc + '_filter_' + attrs['name']] = values['filter_status'][attrs['name']]
+                    elif 'search_default_' + attrs['name'] in self.context:
+                        self.context[model_undsc + '_filter_' + attrs['name']] = self.context['search_default_' + attrs['name']]
+
                 attrs.update(
                     model=search_model,
                     default_domain=self.domain,

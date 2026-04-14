@@ -88,12 +88,124 @@ class patch_scripts(osv.osv):
             sde_tool_user_id = user_obj._get_sde_tool_user_id(cr)
             if sde_tool_user_id:
                 group_obj = self.pool.get('res.groups')
-                sync_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+                group_ids = [group_obj.search(cr, uid, [('name', '=', 'Sync / User')])]
                 sup_wh_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Warehouse_Manager')])
+                if sup_wh_man_group_ids:
+                    group_ids.append(sup_wh_man_group_ids[0])
                 sup_tr_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Transport_Manager')])
+                if sup_tr_man_group_ids:
+                    group_ids.append(sup_tr_man_group_ids[0])
 
-                user_obj.write(cr, uid, sde_tool_user_id, {'groups_id': [(6, 0, [sync_group_ids[0], sup_wh_man_group_ids[0], sup_tr_man_group_ids[0]])]}, context={})
+                user_obj.write(cr, uid, sde_tool_user_id, {'groups_id': [(6, 0, group_ids)]}, context={})
 
+        return True
+
+    def us_15072_po_detail(self, cr, uid, *a, **b):
+        """
+        Add the PO details to the invoice
+        """
+        cr.execute("""
+            UPDATE account_invoice AS ai
+            SET po_details = po.details
+            FROM stock_picking AS sp
+            JOIN purchase_order po ON sp.purchase_id = po.id
+            WHERE sp.id = ai.picking_id
+                AND ai.po_details IS NULL
+        """)
+        return True
+
+    def us_15432_fix_currencies_rounding(self, cr, uid, *a, **b):
+        """
+        Set the currencies rounding to 0.010000
+        """
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            currency_obj = self.pool.get('res.currency')
+
+            currency_ids = currency_obj.search(cr, uid, [
+                ('rounding', '=', 0)
+            ], context=None)
+
+            if currency_ids:
+                currency_obj.write(cr, uid, currency_ids, {
+                    'rounding': 0.01
+                }, context=None)
+
+        cr.execute("""
+            UPDATE res_currency
+            SET rounding = 0.010000
+                WHERE rounding = 0
+        """)
+        return True
+
+    def us_15433_delete_WACA_2025_fiscal_year(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if not entity_obj or entity_obj.get_entity(cr, uid).oc != 'waca':
+            return True
+
+        cr.execute("""
+            DELETE FROM
+                account_fiscalyear
+            WHERE
+                code = 'FY2025' and
+                id in (
+                    select res_id from ir_model_data where model='account.fiscalyear' and name='FY2025'
+                )
+        """)
+        if cr.rowcount:
+            self.log_info(cr, uid, "US-15433: FY 2025 deleted")
+        return True
+
+    def us_12391_cleanup_rate_VEF_2016(self, cr, uid, *a, **b):
+        # align OCB VEF 01/Jan/2016 rate ( 1st VEF entry is on 2016-02-29)
+        cr.execute("select * from ir_model_data d where d.model='res.currency.rate' and d.name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243', '8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
+        nb_rate = cr.rowcount
+        if nb_rate == 1:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
+            if cr.rowcount:
+                self.log_info(cr, uid, 'US-12391: VEF 01/Jan/2016 rate fixed')
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
+        elif nb_rate == 2:
+            cr.execute("delete from res_currency_rate where name='2016-01-01' and id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243')")
+            cr.execute("delete from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
+            self.log_info(cr, uid, 'US-12391: VEF 01/Jan/2016 rate duplicated')
+
+        # align OCBHT VEF 01/Feb/2016 rate ( no VEF entry on HT)
+        cr.execute("select * from ir_model_data d where d.model='res.currency.rate' and d.name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397', '8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
+        nb_rate = cr.rowcount
+        if nb_rate == 1:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
+            if cr.rowcount:
+                self.log_info(cr, uid, 'US-12391: VEF 01/Feb/2016 rate fixed')
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
+        elif nb_rate == 2:
+            cr.execute("delete from res_currency_rate where name='2016-02-01' and id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397')")
+            cr.execute("delete from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
+            self.log_info(cr, uid, 'US-12391: VEF 01/Feb/2016 rate duplicated')
+
+        # align OCB ZWL Jun/2016 rate sdref
+        cr.execute("select res_id from ir_model_data where name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/4586', 'b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094')")
+        nb_rate = cr.rowcount
+        if nb_rate == 1:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/4586' where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
+            if cr.rowcount:
+                self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 sdref name aligned')
+        elif nb_rate == 2:
+            cr.execute("delete from res_currency_rate where name='2016-06-01' and id in (select res_id from ir_model_data where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094')")
+            cr.execute("delete from ir_model_data where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
+            self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 duplicated')
+
+    def us_15639_update_description_ppl(self, cr, uid, *a, **b):
+        '''
+        Update the description_ppl field of Draft/Available pack_family_memory using the linked Pack's (stock_picking) details
+        '''
+        cr.execute("""
+            UPDATE pack_family_memory AS pf
+            SET description_ppl = p.details FROM stock_picking AS p
+            WHERE pf.draft_packing_id = p.id AND pf.state IN ('draft', 'assigned')
+        """)
+        self.log_info(cr, uid, 'US-15639: The Details of %s Pack Families have been updated' % (cr.rowcount,))
         return True
 
     # UF40.0
@@ -134,7 +246,7 @@ class patch_scripts(osv.osv):
                 if line.signed:
                     to_unsign.append(line.id)
         if to_unsign:
-            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, check_ur=False)
+            self.pool.get('signature.line')._action_unsign(cr, uid, to_unsign, check_ur=False)
         self.log_info(cr, uid, "US-15152: The signatures of %s non-closed/cancelled INs were removed" % (len(in_ids),))
 
         return True
@@ -7714,7 +7826,6 @@ class ir_model_data(osv.osv):
                                                  )
             os.rename(fp.name, "%sold" % fp.name)
             logger.warn('Set US-268 as executed')
-
 
 ir_model_data()
 

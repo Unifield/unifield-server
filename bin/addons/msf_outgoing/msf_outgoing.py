@@ -1940,6 +1940,26 @@ class shipment(osv.osv):
             ''', (tuple(context.get('button_selected_ids')), ))
         return True
 
+    def _get_freight_manifest_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name'], context=context)
+
+        return _('FM_%s_%s') % (obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
+
+    def _get_packing_list_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name'], context=context)
+
+        return _('PL_%s_%s') % (obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
+
     @jsonrpc_orm_exposed('shipment', 'generate_dispatched_packing_list_report')
     def generate_dispatched_packing_list_report(self, cr, uid, context=None):
         '''
@@ -2017,48 +2037,6 @@ class shipment2(osv.osv):
     add pack_family_ids
     '''
     _inherit = 'shipment'
-
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
-        '''
-        Change the delivery address when the partner change.
-        '''
-        v = {}
-        d = {}
-
-        if not partner_id:
-            v.update({'address_id': False})
-            address_id = False
-        elif address_id:
-            d.update({'address_id': [('partner_id', '=', partner_id)]})
-
-        addr = False
-        if address_id:
-            addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
-
-        if partner_id and (not address_id or (addr and addr.partner_id.id != partner_id)):
-            addr = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
-            if not addr.get('delivery'):
-                addr = addr.get('default')
-            else:
-                addr = addr.get('delivery')
-
-            address_id = addr
-
-            v.update({'address_id': addr})
-
-        if address_id:
-            error = self.on_change_address_id(cr, uid, ids, address_id, context=context)
-            if error:
-                error['value'] = {'address_id': False}
-                error['domain'] = d
-                return error
-
-        warning = {
-            'title': _('Warning'),
-            'message': _('The field you are modifying may impact the shipment mechanism, please check the correct process.'),
-        }
-
-        return {'value': v, 'domain': d, 'warning': warning}
 
     def on_change_shipper_name(self, cr, uid, ids, shipper_name):
         return {
@@ -4446,6 +4424,7 @@ class stock_picking(osv.osv):
                                                                                   'shipment_id': shipment_id,
                                                                                   'state': 'assigned',
                                                                                   'packing_list': picking.packing_list,
+                                                                                  'description_ppl': picking.details,
                                                                                   'parcel_comment': picking.description_ppl,
                                                                               }, context=context)
                     pack_move_data['shipment_line_id'] = ship_line_id
