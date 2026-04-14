@@ -217,7 +217,7 @@ class email_signature_notification(osv.osv):
             # FIXME: ready_to_sign / allowed_to_be_signed_unsigned
             cr.execute("""
                 SELECT sgnl.user_id, json_agg(json_build_array(sgnl.id, sgn.signature_res_model,
-                                     COALESCE(s.name, po.name, p.name, acbs.name, inv.supplier_reference || ' ' || inv.origin, 
+                                     COALESCE(s.name, po.name, p.name, acbs.name, COALESCE(inv.number, inv.origin, inv.supplier_reference), 
                                               phys.ref, NULL), s.procurement_request, p.type, p.subtype, acj.type))
                 FROM signature_line sgnl
                     LEFT JOIN signature sgn ON sgnl.signature_id = sgn.id
