@@ -59,6 +59,42 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_15685_populate_apr_reg_responsible(self, cr, uid, *a, **b):
+        cr.execute("""
+            insert into bank_statement_users_rel (statement_id, user_id)
+                select
+                    st_ap.id, rel1.user_id
+                from
+                    account_bank_statement st_ap
+                    left join account_period p_ap on p_ap.id = st_ap.period_id
+                    left join account_bank_statement prev on prev.id = st_ap.prev_reg_id
+                    left join bank_statement_users_rel rel1 on rel1.statement_id = prev.id
+                where
+                    prev.id is not null and
+                    rel1.user_id is not null and
+                    not exists (select * from bank_statement_users_rel rel where rel.statement_id = st_ap.id) and
+                    date_start='2026-04-01'
+            returning statement_id
+        """)
+        st_ids = set([x[0] for x in cr.fetchall()])
+        if st_ids:
+            cr.execute('''
+                select
+                    j.code, count(u.user_id)
+                from
+                    account_bank_statement st_ap, account_journal j, bank_statement_users_rel u
+                where
+                    st_ap.journal_id = j.id and
+                    u.statement_id = st_ap.id and
+                    st_ap.id in %s
+                group by j.code
+            ''', (tuple(st_ids), ))
+            for x in cr.fetchall():
+                self.log_info(cr, uid, "US-15685: Apr register %s, add %s users" % (x[0], x[1]))
+
+        return True
+
+
     # UF40.0
     def us_15252_non_service_prod_transport_flag(self, cr, uid, *a, **b):
         '''
