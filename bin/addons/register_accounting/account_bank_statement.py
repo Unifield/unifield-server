@@ -502,7 +502,7 @@ class account_bank_statement(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        if context.get('journal_type', False) and context.get('journal_type') == 'bank':
+        if context.get('journal_type', False) and context.get('journal_type') in ('bank', 'other'):
             for reg in self.browse(cr, uid, ids):
                 # Verify that the closing balance (balance_end_real) correspond to the calculated balance (balance_end)
                 # NB: UTP-187 reveals that some difference appears between balance_end_real and balance_end. These fields are float. And balance_end_real is calculated. In python this imply some difference.

@@ -43,7 +43,7 @@ class account_bank_statement(osv.osv):
                     inner join account_journal j on j.id = st.journal_id
                     inner join account_bank_statement next_st on next_st.prev_reg_id = st.id
                 where
-                    j.type = 'bank' and
+                    j.type in ('bank', 'other') and
                     st.id = %s and
                     st.closing_balance_frozen = 't'
             ''', (tuple(ids), ))

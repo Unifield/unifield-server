@@ -302,7 +302,7 @@ class account_account(osv.osv):
         arg = []
         for x in args:
             if x[0] and x[1] == '=' and x[2]:
-                if x[2] in ['cash', 'bank', 'cheque']:
+                if x[2] in ['cash', 'bank', 'cheque', 'other']:
                     arg.append(('restricted_area', '=', 'journals'))
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
