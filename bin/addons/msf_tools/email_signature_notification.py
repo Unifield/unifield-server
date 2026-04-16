@@ -162,7 +162,7 @@ class email_signature_notification(osv.osv):
             context = {}
         raise osv.except_osv(_('Error'), _('This task can not be deleted'))
 
-    def manual_run_email_signature_notification(self, cr, uid, ids, context=None, params=None):
+    def run_email_signature_reminder_notification(self, cr, uid, ids, context=None, params=None):
         if context is None:
             context = {}
         if params is None:
@@ -170,113 +170,222 @@ class email_signature_notification(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        return self.run_email_signature_notification(cr, uid, ids, context=context)
+        return self.run_email_signature_notification(cr, uid, ids, True, context=context)
 
-    def run_email_signature_notification(self, cr, uid, ids, context=None):
+    def run_email_signature_notification(self, cr, uid, ids, is_reminder=False, context=None):
         """
         For each signable signature line, create a single mail for each user describing which document need to be signed
+        A log will be added to the signature of each signature line affected
         """
         if context is None:
             context = {}
         if isinstance(ids, int):
             ids = [ids]
 
+        signl_obj = self.pool.get('signature.line')
+
         for email_sign_notif in self.browse(cr, uid, ids, context=context):
-            sql_wheres = []
+            if is_reminder:
+                # Only send a new reminder to signature lines that had their first reminder less than 30 days ago
+                sql_date_where = """signl.latest_reminder_sent_date IS NOT NULL AND EXTRACT(DAY FROM (NOW() - signl.latest_reminder_sent_date)) <= 30"""
+            else:
+                sql_date_where = """signl.first_reminder_sent_date IS NULL"""
+
+            sql_doc_wheres = []
             for doc_type in email_sign_notif.doc_applicability_ids:
                 if doc_type.active:
+                    # Each active type + same behavior as signature field "allowed_to_be_signed_unsigned"
                     if doc_type.doc_type == 'sale.order.fo':
-                        sql_wheres.append("""(sgn.signature_res_model = 'sale.order' AND s.procurement_request = 'f') AND
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'sale.order' AND s.procurement_request = 'f') AND
                         s.state IN ('draft', 'draft_p', 'validated', 'validated_p')""")
                     if doc_type.doc_type == 'sale.order.ir':
-                        sql_wheres.append("""(sgn.signature_res_model = 'sale.order' AND s.procurement_request = 't') AND
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'sale.order' AND s.procurement_request = 't') AND
                         s.state IN ('draft', 'draft_p', 'validated', 'validated_p')""")
                     if doc_type.doc_type == 'purchase.order':
-                        sql_wheres.append("""(sgn.signature_res_model = 'purchase.order' AND po.rfq_ok = 'f' AND 
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'purchase.order' AND po.rfq_ok = 'f' AND
                         po.state IN ('draft', 'draft_p', 'validated', 'validated_p') AND 
-                        (popar.partner_type != 'external' OR (sgn.doc_locked_for_sign = 't' AND popar.partner_type = 'external')))""")
+                        (popar.partner_type != 'external' OR (sign.doc_locked_for_sign = 't' AND popar.partner_type = 'external')))""")
                     if doc_type.doc_type == 'stock.picking.in':
-                        sql_wheres.append("""(sgn.signature_res_model = 'stock.picking' AND p.type = 'in' AND p.subtype = 'standard' AND 
-                        p.state = 'done')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'stock.picking' AND p.type = 'in' AND
+                        p.subtype = 'standard' AND p.state = 'done')""")
                     if doc_type.doc_type == 'stock.picking.int':
-                        sql_wheres.append("""(sgn.signature_res_model = 'stock.picking' AND p.type = 'internal' AND p.subtype = 'standard' AND 
-                        p.state IN ('confirmed', 'assigned'))""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'stock.picking' AND p.type = 'internal' AND
+                        p.subtype = 'standard' AND p.state IN ('confirmed', 'assigned'))""")
                     if doc_type.doc_type == 'stock.picking.out':
-                        sql_wheres.append("""(sgn.signature_res_model = 'stock.picking' AND p.type = 'out' AND p.subtype = 'standard')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'stock.picking' AND p.type = 'out' AND p.subtype = 'standard')""")
                     if doc_type.doc_type == 'stock.picking.pick':
-                        sql_wheres.append("""(sgn.signature_res_model = 'stock.picking' AND p.type = 'out' AND p.subtype = 'picking')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'stock.picking' AND p.type = 'out' AND p.subtype = 'picking')""")
                     if doc_type.doc_type == 'account.bank.statement.cash':
-                        sql_wheres.append("""(sgn.signature_res_model = 'account.bank.statement' AND acj.type = 'cash')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'account.bank.statement' AND acj.type = 'cash')""")
                     if doc_type.doc_type == 'account.bank.statement.bank':
-                        sql_wheres.append("""(sgn.signature_res_model = 'account.bank.statement' AND acj.type = 'bank')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'account.bank.statement' AND acj.type = 'bank')""")
                     if doc_type.doc_type == 'account.bank.statement.cheque':
-                        sql_wheres.append("""(sgn.signature_res_model = 'account.bank.statement' AND acj.type = 'cheque')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'account.bank.statement' AND acj.type = 'cheque')""")
                     if doc_type.doc_type == 'account.invoice':
-                        sql_wheres.append("""(sgn.signature_res_model = 'account.invoice' AND inv.type = 'in_invoice' AND invj.type = 'purchase')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'account.invoice' AND inv.type = 'in_invoice' AND
+                        invj.type = 'purchase')""")
                     if doc_type.doc_type == 'physical.inventory':
-                        sql_wheres.append("""(sgn.signature_res_model = 'physical.inventory' AND phys.state IN ('validated', 'confirmed'))""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'physical.inventory' AND
+                        phys.state IN ('validated', 'confirmed'))""")
 
-            if not sql_wheres:
+            if not sql_doc_wheres:
                 raise osv.except_osv(_('Error'), _('There is no active Document Applicability type selected for the Email Signature Notification'))
 
             cr.execute("""
-                SELECT sgnl.user_id, sgn.signature_res_model, sgnl.id
+                SELECT signl.user_id, u.name, u.user_email, u.signature_to, sign.id, sign.signature_res_model, signl.id,
                        COALESCE(s.name, po.name, p.name, acbs.name, inv.number, inv.origin, inv.supplier_reference, phys.ref, NULL),
                        s.procurement_request, p.type, p.subtype, acj.type
-                FROM signature_line sgnl
-                    LEFT JOIN signature sgn ON sgnl.signature_id = sgn.id
-                    LEFT JOIN signature_line osgnl ON osgnl.signature_id = sgnl.signature_id AND osgnl.is_active = 't' AND osgnl.signed = 'f'
-                    LEFT JOIN sale_order s ON sgn.signature_res_id = s.id AND sgn.signature_res_model = 'sale.order'
-                    LEFT JOIN purchase_order po ON sgn.signature_res_id = po.id AND sgn.signature_res_model = 'purchase.order'
+                FROM signature_line signl
+                    LEFT JOIN signature sign ON signl.signature_id = sign.id
+                    LEFT JOIN signature_line osignl ON osignl.signature_id = signl.signature_id AND osignl.is_active = 't' AND osignl.signed = 'f'
+                    LEFT JOIN res_users u ON signl.user_id = u.id
+                    LEFT JOIN sale_order s ON sign.signature_res_id = s.id AND sign.signature_res_model = 'sale.order'
+                    LEFT JOIN purchase_order po ON sign.signature_res_id = po.id AND sign.signature_res_model = 'purchase.order'
                     LEFT JOIN res_partner popar ON po.partner_id = popar.id
-                    LEFT JOIN stock_picking p ON sgn.signature_res_id = p.id AND sgn.signature_res_model = 'stock.picking'
-                    LEFT JOIN account_bank_statement acbs ON sgn.signature_res_id = acbs.id AND sgn.signature_res_model = 'account.bank.statement'
+                    LEFT JOIN stock_picking p ON sign.signature_res_id = p.id AND sign.signature_res_model = 'stock.picking'
+                    LEFT JOIN account_bank_statement acbs ON sign.signature_res_id = acbs.id AND sign.signature_res_model = 'account.bank.statement'
                     LEFT JOIN account_journal acj ON acbs.journal_id = acj.id
-                    LEFT JOIN account_invoice inv ON sgn.signature_res_id = inv.id AND sgn.signature_res_model = 'account.invoice'
+                    LEFT JOIN account_invoice inv ON sign.signature_res_id = inv.id AND sign.signature_res_model = 'account.invoice'
                     LEFT JOIN account_journal invj ON inv.journal_id = invj.id
-                    LEFT JOIN physical_inventory phys ON sgn.signature_res_id = phys.id AND sgn.signature_res_model = 'physical.inventory'
-                WHERE sgnl.user_id IS NOT NULL AND sgnl.signed = 'f' AND sgnl.is_active = 't' AND sgn.signed_off_line = 'f'
-                    AND sgn.signature_is_closed = 'f' AND (""" + ' OR '.join(sql_wheres) + """)
-                GROUP BY sgnl.user_id, sgn.signature_res_model, sgn.signature_res_id, sgnl.id, sgnl.prio, s.procurement_request, 
-                    s.name, po.name, p.name, acbs.name, inv.number, inv.origin, inv.supplier_reference, phys.ref, p.type, 
-                    p.subtype, acj.type
-                HAVING sgnl.prio <= MIN(osgnl.prio)
+                    LEFT JOIN physical_inventory phys ON sign.signature_res_id = phys.id AND sign.signature_res_model = 'physical.inventory'
+                WHERE signl.user_id IS NOT NULL AND signl.signed = 'f' AND signl.is_active = 't' AND sign.signed_off_line = 'f'
+                    AND sign.signature_is_closed = 'f' AND """ + sql_date_where + """ AND (""" + ' OR '.join(sql_doc_wheres) + """)
+                GROUP BY signl.user_id, u.name, u.user_email, u.signature_to, sign.id, sign.signature_res_model,
+                    sign.signature_res_id, signl.id, signl.prio, s.procurement_request, s.name, po.name, p.name, acbs.name,
+                    inv.number, inv.origin, inv.supplier_reference, phys.ref, p.type, p.subtype, acj.type
+                HAVING signl.prio <= MIN(osignl.prio)
             """)
 
             to_sign_by_user = {}
-            sgnl_to_update = []
-            for sgnl in cr.fetchall():
-                sgnl_to_update.append(sgnl[2])
-                if not to_sign_by_user.get(sgnl[0]):
-                    to_sign_by_user[sgnl[0]] = {'fo_names': [], 'ir_names': [], 'po_names': [], 'in_names': [],
-                                             'int_names': [], 'out_names': [], 'pick_names': [], 'cash_names': [],
-                                             'bank_names': [], 'cheque_names': [], 'inv_names': [], 'phys_names': []}
-                if sgnl[1] == 'sale.order' and sgnl[4] is not None and sgnl[4] == False:
-                    to_sign_by_user[sgnl[0]]['fo_names'].append(sgnl[3])
-                elif sgnl[1] == 'sale.order' and sgnl[4] is not None and sgnl[4] == True:
-                    to_sign_by_user[sgnl[0]]['ir_names'].append(sgnl[3])
-                elif sgnl[1] == 'purchase.order':
-                    to_sign_by_user[sgnl[0]]['po_names'].append(sgnl[3])
-                elif sgnl[1] == 'stock.picking' and sgnl[5] is not None and sgnl[6] is not None:
-                    if sgnl[5] == 'in' and sgnl[6] == 'standard':
-                        to_sign_by_user[sgnl[0]]['in_names'].append(sgnl[3])
-                    elif sgnl[5] == 'internal' and sgnl[6] == 'standard':
-                        to_sign_by_user[sgnl[0]]['int_names'].append(sgnl[3])
-                    elif sgnl[5] == 'out' and sgnl[6] == 'standard' and sgnl[3] not in to_sign_by_user[sgnl[0]]['out_names']:
-                        to_sign_by_user[sgnl[0]]['out_names'].append(sgnl[3])
-                    elif sgnl[5] == 'out' and sgnl[6] == 'picking' and sgnl[3] not in to_sign_by_user[sgnl[0]]['pick_names']:
-                        to_sign_by_user[sgnl[0]]['pick_names'].append(sgnl[3])
-                elif sgnl[1] == 'account.bank.statement' and sgnl[7] is not None:
-                    if sgnl[7] == 'cash' and sgnl[3] not in to_sign_by_user[sgnl[0]]['cash_names']:
-                        to_sign_by_user[sgnl[0]]['cash_names'].append(sgnl[3])
-                    elif sgnl[7] == 'bank' and sgnl[3] not in to_sign_by_user[sgnl[0]]['bank_names']:
-                        to_sign_by_user[sgnl[0]]['bank_names'].append(sgnl[3])
-                    elif sgnl[7] == 'cheque' and sgnl[3] not in to_sign_by_user[sgnl[0]]['cheque_names']:
-                        to_sign_by_user[sgnl[0]]['cheque_names'].append(sgnl[3])
-                elif sgnl[1] == 'account.invoice' and sgnl[3] not in to_sign_by_user[sgnl[0]]['inv_names']:
-                    to_sign_by_user[sgnl[0]]['inv_names'].append(sgnl[3])
-                elif sgnl[1] == 'physical.inventory':
-                    to_sign_by_user[sgnl[0]]['phys_names'].append(sgnl[3])
+            for signl in cr.fetchall():
+                if not to_sign_by_user.get(signl[0]):
+                    to_sign_by_user[signl[0]] = {'user_name': signl[1], 'user_email': signl[2], 'user_sign_end_date': signl[3],
+                                                'sign_ids': [], 'signl_ids': [], 'fo_names': [], 'ir_names': [], 'po_names': [],
+                                                'in_names': [], 'int_names': [], 'out_names': [], 'pick_names': [], 'cash_names': [],
+                                                'bank_names': [], 'cheque_names': [], 'inv_names': [], 'phys_names': []}
+                to_sign_by_user[signl[0]]['signl_ids'].append(signl[6])
+                if signl[4] not in to_sign_by_user[signl[0]]['sign_ids']:
+                    to_sign_by_user[signl[0]]['sign_ids'].append(signl[4])
+                if signl[5] == 'sale.order' and signl[8] is not None and signl[8] == False:
+                    to_sign_by_user[signl[0]]['fo_names'].append(signl[7])
+                elif signl[5] == 'sale.order' and signl[8] is not None and signl[8] == True:
+                    to_sign_by_user[signl[0]]['ir_names'].append(signl[7])
+                elif signl[5] == 'purchase.order':
+                    to_sign_by_user[signl[0]]['po_names'].append(signl[7])
+                elif signl[5] == 'stock.picking' and signl[9] is not None and signl[10] is not None:
+                    if signl[9] == 'in' and signl[10] == 'standard':
+                        to_sign_by_user[signl[0]]['in_names'].append(signl[7])
+                    elif signl[9] == 'internal' and signl[10] == 'standard':
+                        to_sign_by_user[signl[0]]['int_names'].append(signl[7])
+                    elif signl[9] == 'out' and signl[10] == 'standard' and signl[7] not in to_sign_by_user[signl[0]]['out_names']:
+                        to_sign_by_user[signl[0]]['out_names'].append(signl[7])
+                    elif signl[9] == 'out' and signl[10] == 'picking' and signl[7] not in to_sign_by_user[signl[0]]['pick_names']:
+                        to_sign_by_user[signl[0]]['pick_names'].append(signl[7])
+                elif signl[5] == 'account.bank.statement' and signl[11] is not None:
+                    if signl[11] == 'cash' and signl[7] not in to_sign_by_user[signl[0]]['cash_names']:
+                        to_sign_by_user[signl[0]]['cash_names'].append(signl[7])
+                    elif signl[11] == 'bank' and signl[7] not in to_sign_by_user[signl[0]]['bank_names']:
+                        to_sign_by_user[signl[0]]['bank_names'].append(signl[7])
+                    elif signl[11] == 'cheque' and signl[7] not in to_sign_by_user[signl[0]]['cheque_names']:
+                        to_sign_by_user[signl[0]]['cheque_names'].append(signl[7])
+                elif signl[5] == 'account.invoice' and signl[7] not in to_sign_by_user[signl[0]]['inv_names']:
+                    to_sign_by_user[signl[0]]['inv_names'].append(signl[7])
+                elif signl[5] == 'physical.inventory':
+                    to_sign_by_user[signl[0]]['phys_names'].append(signl[7])
+
+            instance_name = self.pool.get('res.users').browse(cr, uid, [uid], context=context)[0].company_id.instance_id.instance
+            for user_id in to_sign_by_user:
+                error_msg = ''
+                user_signl = to_sign_by_user[user_id]
+                try:
+                    if not to_sign_by_user[user_id].get('user_email'):
+                        raise osv.except_osv(_('Error'), _('User %s does not have an Email'))
+
+                    docs_string = """"""
+                    if user_signl.get('fo_names'):
+                        docs_string += _('\nDocument type: Field Orders (FO):')
+                        for doc_name in user_signl['fo_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('ir_names'):
+                        docs_string += _('\nDocument type: Internal Requests (IR):')
+                        for doc_name in user_signl['ir_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('po_names'):
+                        docs_string += _('\nDocument type: Purchase Orders (PO):')
+                        for doc_name in user_signl['po_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('in_names'):
+                        docs_string += _('\nDocument type: Incoming Shipments (IN):')
+                        for doc_name in user_signl['in_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('int_names'):
+                        docs_string += _('\nDocument type: Internal Moves (INT):')
+                        for doc_name in user_signl['int_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('out_names'):
+                        docs_string += _('\nDocument type: Delivery Orders (OUT):')
+                        for doc_name in user_signl['out_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('pick_names'):
+                        docs_string += _('\nDocument type: Picking Lists & Picking Tickets (PICK):')
+                        for doc_name in user_signl['pick_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('cash_names'):
+                        docs_string += _('\nDocument type: Cash Registers):')
+                        for doc_name in user_signl['cash_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('bank_names'):
+                        docs_string += _('\nDocument type: Bank Registers):')
+                        for doc_name in user_signl['bank_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('cheque_names'):
+                        docs_string += _('\nDocument type: Cheque Registers):')
+                        for doc_name in user_signl['cheque_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('inv_names'):
+                        docs_string += _('\nDocument type: Supplier Invoices (SI):')
+                        for doc_name in user_signl['inv_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('phys_names'):
+                        docs_string += _('\nDocument type: Physical Inventories (PI):')
+                        for doc_name in user_signl['phys_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+
+                    mail_template = _("""Dear %s,
+
+You have pending electronic signatures in UniField.
+Below is a summary of documents currently awaiting your signature. Only document types that are active in the configuration and for which at least one document is pending are displayed.
+
+Instance: %s
+%s
+Status: Signature pending
+
+Please log in to UniField to review and complete the required electronic signatures.
+%s
+This is an automated notification. If you have already signed a document after this e-mail was generated, no further action is required for that document.
+
+Thank you,
+UniField Team""" % (user_signl.get('user_name', _('UniField user')), instance_name, docs_string, ''))
+
+                    log_state = 'sent'
+                except Exception as e:
+                    if isinstance(e, osv.except_osv):
+                        error_msg = e.value
+                    else:
+                        error_msg = e.args and '. '.join(e.args) or e
+                    log_state = 'error'
+                finally:
+                    current_date = datetime.now()
+                    # Logs to be displayed on the signature tab
+                    # for sign_id in user_signl.get('sign_ids', []):
+                    #     log_vals = {'signature_id': sign_id, 'date': current_date, 'user_id': user_id, 'error_msg': error_msg, 'state': log_state}
+                    #     email_sign_obj.create(cr, uid, log_vals, context=context}
+                    # Put the necessary date on the affected signature lines
+                    if is_reminder:
+                        signl_obj.write(cr, uid, user_signl.get('signl_ids', []), {'latest_reminder_sent_date': current_date}, context=context)
+                    else:
+                        signl_obj.write(cr, uid, user_signl.get('signl_ids', []), {'first_reminder_sent_date': current_date,
+                                                                                   'latest_reminder_sent_date': current_date}, context=context)
 
         return True
 

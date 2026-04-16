@@ -82,7 +82,8 @@
                     <field name="delay" />
                     <field name="check_signature_expiry" />
                     <newline />
-                    <button name="manual_run_email_signature_notification" string="Run task manually" colspan="4" type="object" icon="gtk-execute" />
+                    <button name="run_email_signature_notification" string="Send initial Email manually" colspan="2" type="object" icon="gtk-execute" />
+                    <button name="run_email_signature_reminder_notification" string="Send reminder Email manually" colspan="2" type="object" icon="gtk-execute" />
 
                     <separator colspan="4" string="Reminder configuration" />
                     <group colspan="4" col="4"  attrs="{'readonly':[('active','=','False')]}">

@@ -740,6 +740,8 @@ class signature_line(osv.osv):
         'backup': fields.boolean('Back Up', readonly=1),
         'prio': fields.integer('Sign Order', readonly=1, select=1),
         'ready_to_sign': fields.function(_get_ready_to_sign, type='boolean', string='Ready to sign', method=1),
+        'first_reminder_sent_date': fields.datetime('Date of the first reminder E-mail sent'),
+        'latest_reminder_sent_date': fields.datetime('Date of the latest reminder E-mail sent'),
     }
 
     _defaults = {
