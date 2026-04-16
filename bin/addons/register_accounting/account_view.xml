@@ -229,6 +229,7 @@
                         <group col="6" colspan="4">
                             <field name="local_register" invisible="1"/>
                             <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
+                            <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                             <field name="journal_id" domain="[('type', '=', 'other'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
                             <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
