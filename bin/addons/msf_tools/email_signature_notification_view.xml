@@ -76,14 +76,14 @@
             <field name="model">email.signature.notification</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Email Signature Notification Configuration" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                <form string="Email Notification for Signatures Configuration" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     <separator colspan="4" string="Electronic Signature Notification Settings" />
                     <field name="active" />
                     <field name="delay" />
                     <field name="check_signature_expiry" />
                     <newline />
                     <button name="run_email_signature_notification" string="Send initial Email manually" colspan="2" type="object" icon="gtk-execute" />
-                    <button name="run_email_signature_reminder_notification" string="Send reminder Email manually" colspan="2" type="object" icon="gtk-execute" />
+                    <button name="run_email_signature_notification_reminder" string="Send reminder Email manually" colspan="2" type="object" icon="gtk-execute" />
 
                     <separator colspan="4" string="Reminder configuration" />
                     <group colspan="4" col="4"  attrs="{'readonly':[('active','=','False')]}">
@@ -116,16 +116,16 @@ action = {
             <field name="type">ir.actions.server</field>
             <field name="model_id" ref="model_email_signature_notification"/>
             <field name="condition">True</field>
-            <field name="name">Open Email Signature Notification Configuration</field>
+            <field name="name">Open Email Notification for Signatures Configuration</field>
         </record>
 
         <record id="email_signature_notification_menu" model="ir.ui.menu">
-            <field name="name">Email Signature Notification Configuration</field>
+            <field name="name">Email Notification for Signatures Configuration</field>
             <field name="parent_id" ref="msf_profile.email_main_menu"/>
             <field name="sequence" eval="15" />
         </record>
         <record id="ir_values_menuitem_email_signature_notification" model="ir.values">
-            <field name="name">Menuitem Email Signature Notification Configuration</field>
+            <field name="name">Menuitem Email Notification for Signatures Configuration</field>
             <field name="key2">tree_but_open</field>
             <field eval="1" name="object"/>
             <field name="value" eval="'ir.actions.server,%s' % ref('msf_tools.ir_actions_server_email_signature_notification')" />
@@ -139,7 +139,7 @@ action = {
             <field name="model">email.signature.notification.doc.applicability</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Email Signature Notification Configuration Document Applicability" noteditable="1">
+                <form string="Email Notification for Signatures Configuration Document Applicability" noteditable="1">
                     <field name="doc_type" />
                     <field name="active" />
                 </form>

@@ -1238,17 +1238,20 @@ class email_log(osv.osv):
 
     _columns = {
         'recipients': fields.char('Email Recipient(s)', size=512, required=True),
-        'subject': fields.char('Email Subject', size=256, required=True),
-        'body': fields.text('Email Body', required=True),
+        'subject': fields.char('Email Subject', size=256),
+        'body': fields.text('Email Body'),
         'state': fields.selection([('error', 'Error'), ('success', 'Success')], 'State', required=True),
         'result': fields.text('Final result', required=True),
         'failed_attempts': fields.integer('Number of failed attempts'),
         'sender_model_id': fields.many2one('ir.model', 'Object', required=1, ondelete='set null'),
+        'signature_id': fields.many2one('signature', string='Signature', readonly=True, ondelete='set null'),
         'date_sent': fields.datetime('Date sent', required=True),
         'user_id': fields.many2one('res.users', 'User generating the mail', required=True),
     }
 
     _defaults = {
+        'subject': '',
+        'body': '',
         'failed_attempts': 0
     }
 

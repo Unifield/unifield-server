@@ -254,6 +254,22 @@ class signature(osv.osv):
             res[sign['id']] = signee_user
         return res
 
+    def _get_email_signature_notif_active(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Check if the Email Notification for signatures is active
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        email_sign_notif_active = self.pool.get('email.signature.notification').\
+            search_exist(cr, uid, [('active', '=', True)], context=context)
+        for sign_id in ids:
+            res[sign_id] = email_sign_notif_active
+        return res
+
     _columns = {
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
         'signature_res_model': fields.char('Model', size=254, select=1),
@@ -270,7 +286,8 @@ class signature(osv.osv):
         'allowed_to_be_closed': fields.function(_get_allowed_to_be_closed, type='boolean', string='Allowed to be closed', method=1),
         'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
         'is_signee_user': fields.function(_get_is_signee_user, type='boolean', string='Is the current user Signee Only ?', method=1),
-        'email_signature_notif_log_ids': fields.one2many('email.signature.notification.log', 'signature_id', 'Email Notification Logs'),
+        'email_signature_notif_log_ids': fields.one2many('email.log', 'signature_id', 'Email Logs'),
+        'email_signature_notif_active': fields.function(_get_email_signature_notif_active, type='boolean', string='Email Notification for Signature is Active', method=1),
     }
 
     _defaults = {
@@ -464,7 +481,7 @@ class signature_object(osv.osv):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:
-                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed']:
+                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed', 'email_signature_notif_log_ids']:
                         if fvg.get('fields') and to_remove in fvg['fields']:
                             del fvg['fields'][to_remove]
                     parent_node = fields[0].getparent()
@@ -517,9 +534,9 @@ class signature_object(osv.osv):
         if default is None:
             default = {}
         fields_to_reset = [
-            'signature_id', 'signature_line_ids',
-            'signature_state', 'signed_off_line', 'signature_is_closed', 'signature_closed_date',
-            'signature_closed_user', 'signature_res_id', 'signature_res_model', 'doc_locked_for_sign'
+            'signature_id', 'signature_line_ids', 'signature_state', 'signed_off_line', 'signature_is_closed',
+            'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model',
+            'doc_locked_for_sign', 'email_signature_notif_log_ids'
         ]
         to_del = []
         for ftr in fields_to_reset:
@@ -955,7 +972,9 @@ class signature_line(osv.osv):
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False, 'doc_state': False}, context=context)
+        sign_line_vals = {'signed': False, 'date': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False,
+                          'doc_state': False, 'first_reminder_sent_date': False, 'latest_reminder_sent_date': False}
+        self.write(cr, root_uid, ids, sign_line_vals, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
 
         return True
@@ -1585,7 +1604,13 @@ class signature_setup(osv.osv_memory):
                         user_data.append('...')
                     raise osv.except_osv(_('Warning'), _('Signature cannot be deactivated: it is enabled on %d user(s). Please untick "Enable Signature" on users: %s') % (len(user_ids), ', '.join(user_data)))
 
-            for module, xmlid in [('useability_dashboard_and_menu', 'signature_follow_up_menu'), ('base', 'signature_image_menu'), ('useability_dashboard_and_menu', 'my_signature_menu')]:
+            signature_menus = [
+                ('msf_tools', 'email_signature_notification_menu'),
+                ('useability_dashboard_and_menu', 'signature_follow_up_menu'),
+                ('base', 'signature_image_menu'),
+                ('useability_dashboard_and_menu', 'my_signature_menu')
+            ]
+            for module, xmlid in signature_menus:
                 menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
 

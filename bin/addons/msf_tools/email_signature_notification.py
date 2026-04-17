@@ -31,7 +31,7 @@ from tools.translate import _
 
 class email_signature_notification(osv.osv):
     _name = 'email.signature.notification'
-    _description = 'Email Signature Notification'
+    _description = 'Email Notification for Signatures'
 
     _columns = {
         'active': fields.boolean(string='Active'),
@@ -62,7 +62,7 @@ class email_signature_notification(osv.osv):
 
         # Generate new ir.cron
         cron_vals = {
-            'name': _('Email Signature Notification'),
+            'name': _('Email Notification for Signatures'),
             'user_id': 1,
             'active': False,
             'interval_number': vals.get('delay') or 30,
@@ -77,7 +77,7 @@ class email_signature_notification(osv.osv):
 
         # Generate new ir.cron for reminder
         reminder_cron_vals = {
-            'name': _('Email Signature Notification Reminder'),
+            'name': _('Email Notification Reminder for Signatures'),
             'user_id': 1,
             'active': False,
             'interval_number': 1,
@@ -122,7 +122,7 @@ class email_signature_notification(osv.osv):
                 cron_obj.write(cr, uid, [cron_id], cron_vals, context=context)
             else:
                 cron_vals.update({
-                    'name': _('Email Signature Notification'),
+                    'name': _('Email Notification for Signatures'),
                     'user_id': 1,
                     'numbercall': -1,
                     'nextcall': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -143,7 +143,7 @@ class email_signature_notification(osv.osv):
                 cron_obj.write(cr, uid, [reminder_cron_id], reminder_cron_vals, context=context)
             else:
                 reminder_cron_vals.update({
-                    'name': _('Email Signature Notification Reminder'),
+                    'name': _('Email Notification Reminder for Signatures'),
                     'user_id': 1,
                     'numbercall': -1,
                     'nextcall': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -163,7 +163,7 @@ class email_signature_notification(osv.osv):
             context = {}
         raise osv.except_osv(_('Error'), _('This task can not be deleted'))
 
-    def run_email_signature_reminder_notification(self, cr, uid, ids, context=None):
+    def run_email_signature_notification_reminder(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, int):
@@ -182,6 +182,7 @@ class email_signature_notification(osv.osv):
             ids = [ids]
 
         signl_obj = self.pool.get('signature.line')
+        user_obj = self.pool.get('res.users')
 
         for email_sign_notif in self.browse(cr, uid, ids, context=context):
             if is_reminder:
@@ -228,7 +229,7 @@ class email_signature_notification(osv.osv):
                         phys.state IN ('validated', 'confirmed'))""")
 
             if not sql_doc_wheres:
-                raise osv.except_osv(_('Error'), _('There is no active Document Applicability type selected for the Email Signature Notification'))
+                raise osv.except_osv(_('Error'), _('There is no active Document Applicability type selected in the Email Notification for Signatures'))
 
             cr.execute("""
                 SELECT signl.user_id, u.name, u.user_email, u.signature_to, sign.id, sign.signature_res_model, signl.id,
@@ -247,8 +248,9 @@ class email_signature_notification(osv.osv):
                     LEFT JOIN account_invoice inv ON sign.signature_res_id = inv.id AND sign.signature_res_model = 'account.invoice'
                     LEFT JOIN account_journal invj ON inv.journal_id = invj.id
                     LEFT JOIN physical_inventory phys ON sign.signature_res_id = phys.id AND sign.signature_res_model = 'physical.inventory'
-                WHERE signl.user_id IS NOT NULL AND signl.signed = 'f' AND signl.is_active = 't' AND sign.signed_off_line = 'f'
-                    AND sign.signature_is_closed = 'f' AND """ + sql_date_where + """ AND (""" + ' OR '.join(sql_doc_wheres) + """)
+                WHERE signl.user_id IS NOT NULL AND u.signature_enabled = 't' AND signl.signed = 'f' AND signl.is_active = 't'
+                    AND sign.signed_off_line = 'f' AND sign.signature_is_closed = 'f' AND """ + sql_date_where + """
+                    AND (""" + ' OR '.join(sql_doc_wheres) + """)
                 GROUP BY signl.user_id, u.name, u.user_email, u.signature_to, sign.id, sign.signature_res_model,
                     sign.signature_res_id, signl.id, signl.prio, s.procurement_request, s.name, po.name, p.name, acbs.name,
                     inv.number, inv.origin, inv.supplier_reference, phys.ref, p.type, p.subtype, acj.type
@@ -292,11 +294,10 @@ class email_signature_notification(osv.osv):
                 elif signl[5] == 'physical.inventory':
                     to_sign_by_user[signl[0]]['phys_names'].append(signl[7])
 
-            instance_name = self.pool.get('res.users').browse(cr, uid, [uid], context=context)[0].company_id.instance_id.instance
-            expired_sign_user_ids = []
+            instance_name = user_obj.browse(cr, uid, [uid], context=context)[0].company_id.instance_id.instance
+            expired_sign_user_names = []
             for user_id in to_sign_by_user:
                 user_signl = to_sign_by_user[user_id]
-                log_state = 'sent'
                 error_msg = ''
                 current_date = datetime.now()
                 try:
@@ -305,8 +306,8 @@ class email_signature_notification(osv.osv):
                     if user_signl.get('user_sign_end_date') and current_date.strftime('%Y-%m-%d') > user_signl['user_sign_end_date']:
                         # Fill the list with user ids to send a list of users that have an expired signature but need
                         # to sign to users with the rights Sign_document_creator_finance and Sign_document_creator_supply
-                        if user_id not in expired_sign_user_ids:
-                            expired_sign_user_ids.append(user_id)
+                        if user_signl.get('user_name', _('UniField user')) not in expired_sign_user_names:
+                            expired_sign_user_names.append(user_signl.get('user_name', _('UniField user')))
                         continue
 
                     docs_string = """"""
@@ -362,36 +363,51 @@ class email_signature_notification(osv.osv):
                     sign_expiry_text = ''
                     if email_sign_notif.check_signature_expiry and user_signl.get('user_sign_end_date') and \
                             (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > user_signl['user_sign_end_date']:
-                        sign_expiry_text = _('Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.\n') \
+                        sign_expiry_text = _('\nYour signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
                                            % (datetime.strptime(user_signl['user_sign_end_date'], '%Y-%m-%d').strftime('%d/%m/%Y'),)
 
-                    mail_template = _("""Dear %s,
+                    if is_reminder:
+                        email_subject = _('UniField Reminder - Pending electronic signatures summary')
+                        first_line = _('This is a reminder that you still have pending electronic signatures in UniField.')
+                    else:
+                        email_subject = _('UniField - Pending electronic signatures summary')
+                        first_line = _('You have pending electronic signatures in UniField.')
 
-You have pending electronic signatures in UniField.
+                    email_body = _("""Dear %s,
+
+%s
 Below is a summary of documents currently awaiting your signature. Only document types that are active in the configuration and for which at least one document is pending are displayed.
 
 Instance: %s
 %s
-Status: Signature pending
-
-Please log in to UniField to review and complete the required electronic signatures.
 %s
+Please log in to UniField to review and complete the required electronic signatures.
+
 This is an automated notification. If you have already signed a document after this e-mail was generated, no further action is required for that document.
 
 Thank you,
-UniField Team""" % (user_signl.get('user_name', _('UniField user')), instance_name, docs_string, sign_expiry_text))
+UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line, instance_name, docs_string, sign_expiry_text)
+
+                    tools.email_send(False, [user_signl['user_email']], email_subject, email_body)
                 except Exception as e:
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
                     else:
                         error_msg = e.args and '. '.join(e.args) or e
-                    log_state = 'error'
                 finally:
                     # Logs to be displayed on the signature tab
                     for sign_id in user_signl.get('sign_ids', []):
-                        log_vals = {'signature_id': sign_id, 'type': is_reminder and 'reminder' or 'initial',
-                                    'date': current_date, 'user_id': user_id, 'error_msg': error_msg, 'state': log_state}
-                        self.pool.get('email.signature.notification.log').create(cr, uid, log_vals, context=context)
+                        email_log_vals = {
+                            'recipients': user_signl.get('user_email') or user_signl.get('user_name', _('UniField user')),
+                            'state': error_msg and 'error' or 'success',
+                            'result': error_msg and 'Some error(s) occurred while trying to send the email: %s' % (error_msg) \
+                                      or 'The email was sent successfully',
+                            'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+                            'signature_id': sign_id,
+                            'date_sent': current_date,
+                            'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+                        }
+                        self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
                     # Put the necessary date on the affected signature lines
                     if is_reminder:
                         signl_obj.write(cr, uid, user_signl.get('signl_ids', []), {'latest_reminder_sent_date': current_date}, context=context)
@@ -399,9 +415,46 @@ UniField Team""" % (user_signl.get('user_name', _('UniField user')), instance_na
                         signl_obj.write(cr, uid, user_signl.get('signl_ids', []), {'first_reminder_sent_date': current_date,
                                                                                    'latest_reminder_sent_date': current_date}, context=context)
 
-            if expired_sign_user_ids:
+            if expired_sign_user_names:
                 group_ids = self.pool.get('res.groups').search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
+                user_domain = [('id', '!=', 1), ('user_email', '!=', False), ('groups_id', 'in', group_ids)]
+                sign_doc_creator_ids = user_obj.search(cr, uid, user_domain, context=context)
+                if sign_doc_creator_ids:
+                    error_msg = ''
+                    email_doc_creators = [user['user_email'] for user in user_obj.read(cr, uid, sign_doc_creator_ids, ['user_email'], context=context)]
+                    try:
+                        exp_sign_user_list = ''
+                        for exp_user_name in expired_sign_user_names:
+                            exp_sign_user_list += '\n  • %s' % (exp_user_name,)
+                        email_subject = _('UniField - Expired signatures for users with pending signatures')
+                        email_body = _("""Dear Document Creator,
 
+The following users have pending electronic signatures in UniField but can not sign because their signature is expired:%s
+
+Please ensure that the necessary actions are taken to resolve the issue.
+
+This is an automated notification. If you have already resolved the after this e-mail was generated, no further action is required.
+
+Thank you,
+UniField Team""") % (exp_sign_user_list,)
+
+                        tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators)
+                    except Exception as e:
+                        if isinstance(e, osv.except_osv):
+                            error_msg = e.value
+                        else:
+                            error_msg = e.args and '. '.join(e.args) or e
+                    finally:
+                        email_log_vals = {
+                            'recipients': '; '.join(email_doc_creators),
+                            'state': error_msg and 'error' or 'success',
+                            'result': error_msg and 'Some error(s) occurred while trying to send the email: %s' \
+                                      % (error_msg,) or 'The email was sent successfully',
+                            'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+                            'date_sent': datetime.now(),
+                            'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+                        }
+                        self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
         return True
 
 
@@ -410,7 +463,7 @@ email_signature_notification()
 
 class email_signature_notification_doc_applicability(osv.osv):
     _name = 'email.signature.notification.doc.applicability'
-    _description = 'Email Signature Notification Document Applicability'
+    _description = 'Email Notification for Signatures Document Applicability'
 
     _columns = {
         'doc_type': fields.selection(string='Document Type',
@@ -429,7 +482,7 @@ class email_signature_notification_doc_applicability(osv.osv):
                                          ('physical.inventory', 'Physical Inventories'),
                                      ], readonly=True),
         'active': fields.boolean(string='Active'),
-        'email_sign_notif_id': fields.many2one('email.signature.notification', string='Email Signature Notification', readonly=True),
+        'email_sign_notif_id': fields.many2one('email.signature.notification', string='Email Notification for Signatures', readonly=True),
     }
 
     _defaults = {
@@ -438,24 +491,3 @@ class email_signature_notification_doc_applicability(osv.osv):
 
 
 email_signature_notification_doc_applicability()
-
-
-class email_signature_notification_log(osv.osv):
-    _name = 'email.signature.notification.log'
-    _description = 'Email Signature Notification Logs'
-
-    _columns = {
-        'signature_id': fields.many2one('signature', string='Signature', required=True, readonly=True),
-        'type': fields.selection(string='Type', selection=[('initial', 'Initial Email'), ('reminder', 'Reminder Email')], required=True, readonly=True),
-        'user_id': fields.many2one('res.users', string='Recipient', required=True, readonly=True),
-        'date': fields.datetime(string='Date sent', required=True, readonly=True),
-        'state': fields.selection(string='State', selection=[('sent', 'Sent'), ('error', 'Error')], readonly=True),
-        'error_msg': fields.text('Error Message', readonly=True),
-    }
-
-    _defaults = {
-        'state': 'sent',
-    }
-
-
-email_signature_notification_log()
