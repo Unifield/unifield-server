@@ -72,7 +72,7 @@
         <report
         id="open_advances_2"
         string="Open Advances"
-        view_ids="account.view_bank_statement_tree,account.view_bank_statement_form,register_accounting.view_cash_statement_tree,account.view_bank_statement_form2"
+        view_ids="account.view_bank_statement_tree,account.view_bank_statement_form,register_accounting.view_cash_statement_tree,account.view_bank_statement_form2,account.view_other_statement_tree,account.view_other_statement_form"
         target_filename="${_('Open Advances')}_${instance_id.code}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="open.advances.2"
@@ -103,7 +103,7 @@
         rml="register_accounting/report/liquidity_position_pdf.rml"
         header="False"
         auto="False"
-        menu="False"
+        menu="True"
         />
 
         <report id="fully_report"

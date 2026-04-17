@@ -132,7 +132,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
 
         period_title = self.period_title or ''
         # Cash and Bank registers
-        reg_types = ('cash', 'bank')
+        reg_types = ('cash', 'bank', 'other')
         params = {
             'period_title': period_title,
             'j_type': reg_types,
