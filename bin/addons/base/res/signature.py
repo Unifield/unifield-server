@@ -663,6 +663,109 @@ class signature_object(osv.osv):
 
         return True
 
+    def specific_email_signature_notification(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        email_sign_notif_obj = self.pool.get('email.signature.notifiation')
+        signl_obj = self.pool.get('signature.line')
+
+        for doc in self.browse(cr, uid, ids, context=context):
+            doc_type, doc_name = '', ''
+            if self._name == 'sale.order':
+                if doc.procurement_request:
+                    doc_type = _('Internal Requests (IR)')
+                else:
+                    doc_type = _('Field Orders (FO)')
+                doc_name = doc.name
+            elif self._name == 'purchase.order':
+                doc_type = _('Purchase Order (PO)')
+                doc_name = doc.name
+            elif self._name == 'stock.picking':
+                if doc.type == 'in' and doc.subtype == 'standard':
+                    doc_type = _('Incoming Shipments (IN)')
+                elif doc.type == 'internal' and doc.subtype == 'standard':
+                    doc_type = _('Internal Moves (INT)')
+                elif doc.type == 'out' and doc.subtype == 'standard':
+                    doc_type = _('Delivery Orders (OUT)')
+                elif doc.type == 'out' and doc.subtype == 'picking':
+                    doc_type = _('Picking Lists & Picking Tickets (PICK)')
+                doc_name = doc.name
+            elif self._name == 'account.bank.statement':
+                if doc.journal_id.type == 'cash':
+                    doc_type = _('Cash Registers')
+                    doc_where = """sign.signature_res_model = 'account.bank.statement' AND acj.type = 'cash'"""
+                elif doc.journal_id.type == 'bank':
+                    doc_type = _('Bank Registers')
+                elif doc.journal_id.type == 'cheque':
+                    doc_type = _('Cheque Registers')
+                doc_name = doc.name
+            elif self._name == 'account.invoice':
+                doc_type = _('Supplier Invoices (SI)')
+                doc_name = doc.number or doc.origin or doc.supplier_reference
+            elif self._name == 'physical.inventory':
+                doc_type = _('Physical Inventories (PI)')
+                doc_name = doc.ref
+
+            cr.execute("""
+                SELECT signl.id, u.name, u.user_email, signl.first_reminder_sent_date, u.signature_to
+                FROM signature_line signl
+                LEFT JOIN signature_line osignl ON osignl.signature_id = signl.signature_id AND osignl.is_active = 't' AND osignl.signed = 'f'
+                LEFT JOIN signature sign ON signl.signature_id = sign.id
+                LEFT JOIN res_users u ON signl.user_id = u.id
+                WHERE signl.signature_id = %s AND signl.user_id IS NOT NULL AND u.signature_enabled = 't' AND signl.signed = 'f'
+                    AND signl.is_active = 't' AND sign.signed_off_line = 'f' AND sign.signature_is_closed = 'f'
+                GROUP BY signl.id u.name, u.user_email, u.signature_to HAVING signl.prio <= MIN(osignl.prio)
+            """, (doc.signature_id.id,))
+            signl_data = cr.fetchone()
+            if signl_data[0]:
+                email_sign_notif_ids = email_sign_notif_obj.search(cr, uid, [('active', '=', 't')], context=context)
+                if email_sign_notif_ids:
+                    expired_sign_user_names = []
+                    error_msg = ''
+                    current_date = datetime.now()
+                    email_sign_notif = email_sign_notif_obj.read(cr, uid, email_sign_notif_ids[0], context=context)
+                    try:
+                        if not signl_data[1]:
+                            raise osv.except_osv(_('Error'), _('User %s does not have an Email') % (signl_data[2] or _('UniField user'),))
+                        if signl_data[4] and current_date.strftime('%Y-%m-%d') > signl_data[4]:
+                            # Fill the var with the username of the user having an expired signature but need
+                            # to sign to users with the rights Sign_document_creator_finance and Sign_document_creator_supply
+                            expired_sign_user_names = [signl_data[2] or _('UniField user')]
+                            continue
+
+                        email_subject = _('')
+                        email_body = _("""""")
+                    except Exception as e:
+                        if isinstance(e, osv.except_osv):
+                            error_msg = e.value
+                        else:
+                            error_msg = e.args and '. '.join(e.args) or e
+                    finally:
+                        # Logs to be displayed on the signature tab
+                        email_log_vals = {
+                            'recipients': signl_data[1] or signl_data[2] or _('UniField user'),
+                            'state': error_msg and 'error' or 'success',
+                            'result': error_msg and 'Some error(s) occurred while trying to send the email: %s' \
+                                      % (error_msg,) or 'The email was sent successfully',
+                            'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+                            'signature_id': doc.signature_id.id,
+                            'date_sent': current_date,
+                            'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+                        }
+                        self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+                        # Put the necessary date on the affected signature line
+                        if signl_data[3]:
+                            signl_obj.write(cr, uid, signl_data[0], {'latest_reminder_sent_date': current_date}, context=context)
+                        else:
+                            signl_obj.write(cr, uid, signl_data[0], {'first_reminder_sent_date': current_date,
+                                                                     'latest_reminder_sent_date': current_date}, context=context)
+
+                    if expired_sign_user_names:
+                        email_sign_notif_obj.email_expired_signatures(cr, uid, ids, expired_sign_user_names, context=context)
+
+        return True
+
 
 signature_object()
 

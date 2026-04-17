@@ -196,11 +196,11 @@ class email_signature_notification(osv.osv):
                 if doc_type.active:
                     # Each active type + same behavior as signature field "allowed_to_be_signed_unsigned"
                     if doc_type.doc_type == 'sale.order.fo':
-                        sql_doc_wheres.append("""(sign.signature_res_model = 'sale.order' AND s.procurement_request = 'f') AND
-                        s.state IN ('draft', 'draft_p', 'validated', 'validated_p')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'sale.order' AND s.procurement_request = 'f' AND
+                        s.state IN ('draft', 'draft_p', 'validated', 'validated_p'))""")
                     if doc_type.doc_type == 'sale.order.ir':
-                        sql_doc_wheres.append("""(sign.signature_res_model = 'sale.order' AND s.procurement_request = 't') AND
-                        s.state IN ('draft', 'draft_p', 'validated', 'validated_p')""")
+                        sql_doc_wheres.append("""(sign.signature_res_model = 'sale.order' AND s.procurement_request = 't' AND
+                        s.state IN ('draft', 'draft_p', 'validated', 'validated_p'))""")
                     if doc_type.doc_type == 'purchase.order':
                         sql_doc_wheres.append("""(sign.signature_res_model = 'purchase.order' AND po.rfq_ok = 'f' AND
                         po.state IN ('draft', 'draft_p', 'validated', 'validated_p') AND 
@@ -304,7 +304,7 @@ class email_signature_notification(osv.osv):
                     if not user_signl.get('user_email'):
                         raise osv.except_osv(_('Error'), _('User %s does not have an Email') % (user_signl.get('user_name', _('UniField user')),))
                     if user_signl.get('user_sign_end_date') and current_date.strftime('%Y-%m-%d') > user_signl['user_sign_end_date']:
-                        # Fill the list with user ids to send a list of users that have an expired signature but need
+                        # Fill the list with usernames to send a list of users that have an expired signature but need
                         # to sign to users with the rights Sign_document_creator_finance and Sign_document_creator_supply
                         if user_signl.get('user_name', _('UniField user')) not in expired_sign_user_names:
                             expired_sign_user_names.append(user_signl.get('user_name', _('UniField user')))
@@ -416,18 +416,28 @@ UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line
                                                                                    'latest_reminder_sent_date': current_date}, context=context)
 
             if expired_sign_user_names:
-                group_ids = self.pool.get('res.groups').search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
-                user_domain = [('id', '!=', 1), ('user_email', '!=', False), ('groups_id', 'in', group_ids)]
-                sign_doc_creator_ids = user_obj.search(cr, uid, user_domain, context=context)
-                if sign_doc_creator_ids:
-                    error_msg = ''
-                    email_doc_creators = [user['user_email'] for user in user_obj.read(cr, uid, sign_doc_creator_ids, ['user_email'], context=context)]
-                    try:
-                        exp_sign_user_list = ''
-                        for exp_user_name in expired_sign_user_names:
-                            exp_sign_user_list += '\n  • %s' % (exp_user_name,)
-                        email_subject = _('UniField - Expired signatures for users with pending signatures')
-                        email_body = _("""Dear Document Creator,
+                self.email_expired_signatures(cr, uid, ids, expired_sign_user_names, context=context)
+
+        return True
+
+    def email_expired_signatures(self, cr, uid, ids, usernames, context=None):
+        if context is None:
+            context = {}
+
+        user_obj = self.pool.get('res.users')
+
+        group_ids = self.pool.get('res.groups').search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
+        user_domain = [('id', '!=', 1), ('user_email', '!=', False), ('groups_id', 'in', group_ids)]
+        sign_doc_creator_ids = user_obj.search(cr, uid, user_domain, context=context)
+        if sign_doc_creator_ids:
+            error_msg = ''
+            email_doc_creators = [user['user_email'] for user in user_obj.read(cr, uid, sign_doc_creator_ids, ['user_email'], context=context)]
+            try:
+                exp_sign_user_list = ''
+                for exp_user_name in usernames:
+                    exp_sign_user_list += '\n  • %s' % (exp_user_name,)
+                email_subject = _('UniField - Expired signatures for users with pending signatures')
+                email_body = _("""Dear Document Creator,
 
 The following users have pending electronic signatures in UniField but can not sign because their signature is expired:%s
 
@@ -438,23 +448,24 @@ This is an automated notification. If you have already resolved the after this e
 Thank you,
 UniField Team""") % (exp_sign_user_list,)
 
-                        tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators)
-                    except Exception as e:
-                        if isinstance(e, osv.except_osv):
-                            error_msg = e.value
-                        else:
-                            error_msg = e.args and '. '.join(e.args) or e
-                    finally:
-                        email_log_vals = {
-                            'recipients': '; '.join(email_doc_creators),
-                            'state': error_msg and 'error' or 'success',
-                            'result': error_msg and 'Some error(s) occurred while trying to send the email: %s' \
-                                      % (error_msg,) or 'The email was sent successfully',
-                            'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
-                            'date_sent': datetime.now(),
-                            'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
-                        }
-                        self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+                tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators)
+            except Exception as e:
+                if isinstance(e, osv.except_osv):
+                    error_msg = e.value
+                else:
+                    error_msg = e.args and '. '.join(e.args) or e
+            finally:
+                email_log_vals = {
+                    'recipients': '; '.join(email_doc_creators),
+                    'state': error_msg and 'error' or 'success',
+                    'result': error_msg and 'Some error(s) occurred while trying to send the email: %s' \
+                              % (error_msg,) or 'The email was sent successfully',
+                    'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+                    'date_sent': datetime.now(),
+                    'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+                }
+                self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+
         return True
 
 
