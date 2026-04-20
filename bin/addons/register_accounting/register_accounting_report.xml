@@ -103,7 +103,7 @@
         rml="register_accounting/report/liquidity_position_pdf.rml"
         header="False"
         auto="False"
-        menu="True"
+        menu="False"
         />
 
         <report id="fully_report"

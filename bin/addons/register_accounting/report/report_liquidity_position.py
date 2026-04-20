@@ -106,7 +106,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_obj = pool.get('account.bank.statement')
         journal_obj = pool.get('account.journal')
         # bank and cash journals (for cheques, see getPendingCheques)
-        journal_ids = journal_obj.search(self.cr, self.uid, [('type', 'in', ['bank', 'cash'])], order='NO_ORDER')
+        journal_ids = journal_obj.search(self.cr, self.uid, [('type', 'in', ['bank', 'cash', 'other'])], order='NO_ORDER')
         args = [('period_id', '=', self.period_id), ('journal_id', 'in', journal_ids)]
         reg_ids = reg_obj.search(self.cr, self.uid, args, order='journal_id')
         regs = reg_obj.browse(self.cr, self.uid, reg_ids, context={'lang': self.localcontext.get('lang')})
@@ -146,7 +146,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             reg_bal = 0
             calc_bal = reg.msf_calculated_balance
             func_calc_bal = self.getConvert(currency.id, calc_bal)
-            if reg.journal_id.type == 'bank':
+            if reg.journal_id.type == 'bank' or reg.journal_id.type == 'other':
                 reg_bal = reg.balance_end_real
 
             elif reg.journal_id.type == 'cash':
