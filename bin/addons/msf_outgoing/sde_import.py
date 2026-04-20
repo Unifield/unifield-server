@@ -491,6 +491,16 @@ class sde_import(osv.osv_memory):
             return True
         return self.wizard_sde_picking_ticket_actions(cr, uid, ids, 'banner_msg', context=context)
 
+    def wizard_sde_picking_ticket_remove_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to remove a banner message on Picking Tickets
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_picking_ticket_actions(cr, uid, ids, 'remove_banner_msg', context=context)
+
     def wizard_sde_picking_ticket_export(self, cr, uid, ids, context=None):
         '''
         Method to use instead of the JSONRPC to export Picking
@@ -528,7 +538,9 @@ class sde_import(osv.osv_memory):
         if action == 'picking_import':
             result = self.sde_picking_ticket_import(cr, uid, sde_imp['json_text'], context=context)
         elif action == 'banner_msg':
-            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'pick', context=context)
+            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'pick', False, context=context)
+        elif action == 'remove_banner_msg':
+            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'pick', True, context=context)
         elif action == 'picking_export':
             result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'picking', with_lines=False, context=context)
         elif action == 'picking_export_lines':
@@ -685,7 +697,17 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        return self.sde_stock_picking_msg(cr, uid, json_text, 'pick', context=context)
+        return self.sde_stock_picking_msg(cr, uid, json_text, 'pick', False, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_remove_msg')
+    def sde_picking_ticket_remove_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to remove a 'SDE is updating' message on a list of Picking Tickets
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_msg(cr, uid, json_text, 'pick', True, context=context)
 
     @jsonrpc_orm_exposed('sde.import', 'sde_picking_ticket_export_lines')
     def sde_picking_ticket_export_lines(self, cr, uid, json_text, context=None):
@@ -920,6 +942,16 @@ class sde_import(osv.osv_memory):
             return True
         return self.wizard_sde_out_actions(cr, uid, ids, 'banner_msg', context=context)
 
+    def wizard_sde_out_remove_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to remove a banner message on OUTs
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_out_actions(cr, uid, ids, 'remove_banner_msg', context=context)
+
     def wizard_sde_out_check_availability(self, cr, uid, ids, context=None):
         '''
         Method to use instead of the JSONRPC to check the availability of OUTs
@@ -967,7 +999,9 @@ class sde_import(osv.osv_memory):
         if action == 'out_import':
             result = self.sde_out_import(cr, uid, sde_imp['json_text'], context=context)
         elif action == 'banner_msg':
-            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'out', context=context)
+            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'out', False, context=context)
+        elif action == 'remove_banner_msg':
+            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'out', True, context=context)
         elif action == 'check_availability':
             result = self.sde_out_check_availability(cr, uid, sde_imp['json_text'], context=context)
         elif action == 'out_export':
@@ -1133,7 +1167,17 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        return self.sde_stock_picking_msg(cr, uid, json_text, 'out', context=context)
+        return self.sde_stock_picking_msg(cr, uid, json_text, 'out', False, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_out_remove_msg')
+    def sde_out_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to remove a 'SDE is updating' message on a list of OUTs
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_msg(cr, uid, json_text, 'out', True, context=context)
 
     @jsonrpc_orm_exposed('sde.import', 'sde_out_check_availability')
     def sde_out_check_availability(self, cr, uid, json_text, context=None):
@@ -1416,7 +1460,7 @@ class sde_import(osv.osv_memory):
     # =============================================================================================================== #
     #                                                       ALL                                                       #
     # =============================================================================================================== #
-    def sde_stock_picking_msg(self, cr, uid, json_text, doc_type, context=None):
+    def sde_stock_picking_msg(self, cr, uid, json_text, doc_type, to_remove, context=None):
         '''
         Method used by the SDE script to set a 'SDE is updating' message on a list of Picking Tickets/OUTs
         '''
@@ -1455,11 +1499,15 @@ class sde_import(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('One or more of the %s names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one') % (doc,))
             pick_ids = self.get_stock_picking_from_refs(cr, uid, json_data['pick_list'], ['assigned'], pick_type, pick_subtype, context=context)
 
-            update_msg = _('This %s is currently being updated via SDE since %s, please avoid making any direct change in UniField') \
-                         % (doc, datetime.now().strftime('%d/%m/%Y %H:%M'),)
-            pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': update_msg}, context=context)
+            if to_remove:
+                pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': False}, context=context)
+            else:
+                update_msg = _('This %s is currently being updated via SDE since %s, please avoid making any direct change in UniField') \
+                             % (doc, datetime.now().strftime('%d/%m/%Y %H:%M'),)
+                pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': update_msg}, context=context)
 
-            result['message'] = _('The "updated via SDE" banner message has been put on the %s %s') % (doc, ', '.join(json_data['pick_list']),)
+            result['message'] = _('The "updated via SDE" banner message has been %s on the %s %s') \
+                                % (to_remove and _('removed') or _('put'), doc, ', '.join(json_data['pick_list']),)
         except Exception as e:
             # Rejection message to send back
             if isinstance(e, osv.except_osv):
