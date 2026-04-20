@@ -400,8 +400,8 @@ UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line
                         email_log_vals = {
                             'recipients': user_signl.get('user_email') or user_signl.get('user_name', _('UniField user')),
                             'state': error_msg and 'error' or 'success',
-                            'result': error_msg and 'Some error(s) occurred while trying to send the email: %s' % (error_msg) \
-                                      or 'The email was sent successfully',
+                            'result': error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) \
+                                      or _('The email was sent successfully'),
                             'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
                             'signature_id': sign_id,
                             'date_sent': current_date,
@@ -455,11 +455,12 @@ UniField Team""") % (exp_sign_user_list,)
                 else:
                     error_msg = e.args and '. '.join(e.args) or e
             finally:
+                msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or\
+                      _('The signature of %s is expired. The email was sent to users in the "Sign_document_creator_finance" and "Sign_document_creator_supply" successfully') % (', '.join(usernames)),
                 email_log_vals = {
                     'recipients': '; '.join(email_doc_creators),
                     'state': error_msg and 'error' or 'success',
-                    'result': error_msg and 'Some error(s) occurred while trying to send the email: %s' \
-                              % (error_msg,) or 'The email was sent successfully',
+                    'result': msg,
                     'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
                     'date_sent': datetime.now(),
                     'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,

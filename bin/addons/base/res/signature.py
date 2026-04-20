@@ -257,6 +257,7 @@ class signature(osv.osv):
     def _get_email_signature_notif_active(self, cr, uid, ids, field_name, args, context=None):
         '''
         Check if the Email Notification for signatures is active
+        For now, only the PO can manually send an email and see the email logs
         '''
         if context is None:
             context = {}
@@ -266,8 +267,12 @@ class signature(osv.osv):
         res = {}
         email_sign_notif_active = self.pool.get('email.signature.notification').\
             search_exist(cr, uid, [('active', '=', True)], context=context)
-        for sign_id in ids:
-            res[sign_id] = email_sign_notif_active
+        auth_models = ['purchase.order']
+        for sign in self.read(cr, uid, ids, ['signature_res_model'], context=context):
+            if sign['signature_res_model'] in auth_models:
+                res[sign['id']] = email_sign_notif_active
+            else:
+                res[sign['id']] = False
         return res
 
     _columns = {
@@ -715,7 +720,8 @@ class signature_object(osv.osv):
                 LEFT JOIN res_users u ON signl.user_id = u.id
                 WHERE signl.signature_id = %s AND signl.user_id IS NOT NULL AND u.signature_enabled = 't' AND signl.signed = 'f'
                     AND signl.is_active = 't' AND sign.signed_off_line = 'f' AND sign.signature_is_closed = 'f'
-                GROUP BY signl.id u.name, u.user_email, u.signature_to HAVING signl.prio <= MIN(osignl.prio)
+                GROUP BY signl.id, u.name, u.user_email, signl.first_reminder_sent_date, u.signature_to
+                HAVING signl.prio <= MIN(osignl.prio)
             """, (doc.signature_id.id,))
             signl_data = cr.fetchone()
             if signl_data[0]:
@@ -746,8 +752,8 @@ class signature_object(osv.osv):
                         email_log_vals = {
                             'recipients': signl_data[1] or signl_data[2] or _('UniField user'),
                             'state': error_msg and 'error' or 'success',
-                            'result': error_msg and 'Some error(s) occurred while trying to send the email: %s' \
-                                      % (error_msg,) or 'The email was sent successfully',
+                            'result': error_msg and _('Some error(s) occurred while trying to send the email: %s') \
+                                      % (error_msg,) or _('The email was sent successfully'),
                             'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
                             'signature_id': doc.signature_id.id,
                             'date_sent': current_date,
