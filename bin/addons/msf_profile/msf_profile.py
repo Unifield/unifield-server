@@ -60,6 +60,23 @@ class patch_scripts(osv.osv):
     }
 
     # UF41.0
+    def us_14532_email_signature_notification(self, cr, uid, *a, **b):
+        '''
+        Add the missing rights for manual signature request email
+        '''
+        if not cr.table_exists('sync_server_user_rights'):
+            # exclude sync server
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            for group_name, model, b_names in [
+                ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement', 'account.invoice', 'physical.inventory'], ['specific_email_signature_notification']),
+                ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order', 'physical.inventory'], ['specific_email_signature_notification'])
+            ]:
+                group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)], context=None)
+                if group_ids:
+                    bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
+                    bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+        return True
+
     def us_15072_po_detail(self, cr, uid, *a, **b):
         """
         Add the PO details to the invoice

@@ -107,6 +107,9 @@ class email_signature_notification(osv.osv):
             ids = [ids]
 
         cron_obj = self.pool.get('ir.cron')
+
+        if not vals.get('active'):
+            vals['reminder_active'] = False
         res = super(email_signature_notification, self).write(cr, uid, ids, vals, context=context)
 
         for email_sign_notif in self.browse(cr, uid, ids, context=context):
@@ -443,7 +446,7 @@ The following users have pending electronic signatures in UniField but can not s
 
 Please ensure that the necessary actions are taken to resolve the issue.
 
-This is an automated notification. If you have already resolved the after this e-mail was generated, no further action is required.
+This is an automated notification. If you have already resolved the issue after this e-mail was generated, no further action is required.
 
 Thank you,
 UniField Team""") % (exp_sign_user_list,)
@@ -500,6 +503,51 @@ class email_signature_notification_doc_applicability(osv.osv):
     _defaults = {
         'active': False,
     }
+
+    def active_doc_type(self, cr, uid, doc_type, doc_id, context=None):
+        """
+        Return True if the given document type is applicable for email notification for signatures
+        """
+        if context is None:
+            context = {}
+        res = False
+        if doc_type and doc_id:
+            doc_obj = self.pool.get(doc_type)
+            doc = doc_obj.browse(cr, uid, doc_id, context=context)
+            if doc:
+                doc_applicability_type = ''
+                if doc_type == 'sale.order':
+                    if doc.procurement_request:
+                        doc_applicability_type = 'sale.order.ir'
+                    else:
+                        doc_applicability_type = 'sale.order.fo'
+                elif doc_type == 'purchase.order':
+                    doc_applicability_type = 'purchase.order'
+                elif doc_type == 'stock.picking':
+                    if doc.type == 'in' and doc.subtype == 'standard':
+                        doc_applicability_type = 'stock.picking.in'
+                    elif doc.type == 'internal' and doc.subtype == 'standard':
+                        doc_applicability_type = 'stock.picking.int'
+                    elif doc.type == 'out' and doc.subtype == 'standard':
+                        doc_applicability_type = 'stock.picking.out'
+                    elif doc.type == 'out' and doc.subtype == 'picking':
+                        doc_applicability_type = 'stock.picking.pick'
+                elif doc_type == 'account.bank.statement':
+                    if doc.journal_id.type == 'cash':
+                        doc_applicability_type = 'account.bank.statement.cash'
+                    elif doc.journal_id.type == 'bank':
+                        doc_applicability_type = 'account.bank.statement.bank'
+                    elif doc.journal_id.type == 'cheque':
+                        doc_applicability_type = 'account.bank.statement.cheque'
+                elif doc_type == 'account.invoice':
+                    doc_applicability_type = 'account.invoice'
+                elif doc_type == 'physical.inventory':
+                    doc_applicability_type = 'physical.inventory'
+
+                if doc_applicability_type:
+                    res = self.search_exist(cr, uid, [('active', '=', 't'), ('doc_type', '=', doc_applicability_type)], context=context)
+
+        return res
 
 
 email_signature_notification_doc_applicability()
