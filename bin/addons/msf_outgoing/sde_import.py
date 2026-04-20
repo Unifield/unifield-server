@@ -1170,7 +1170,7 @@ class sde_import(osv.osv_memory):
         return self.sde_stock_picking_msg(cr, uid, json_text, 'out', False, context=context)
 
     @jsonrpc_orm_exposed('sde.import', 'sde_out_remove_msg')
-    def sde_out_msg(self, cr, uid, json_text, context=None):
+    def sde_out_remove_msg(self, cr, uid, json_text, context=None):
         '''
         Method used by the SDE script to remove a 'SDE is updating' message on a list of OUTs
         '''
