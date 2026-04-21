@@ -40,7 +40,7 @@ class email_signature_notification(osv.osv):
         'reminder_active': fields.boolean(string='Reminder Active'),
         'reminder_cron_id': fields.many2one('ir.cron', string='Associated cron job for the reminder', readonly=True),
         'check_signature_expiry': fields.boolean(string='Signature Expiration Reminder', help='If checked, will add an additional message in the email when the signature is expired or will expire in the next 30 days'),
-        'doc_applicability_ids': fields.one2many('email.signature.notification.doc.applicability', 'email_sign_notif_id', string='Document applicability', help='Documents impacted by the signature notifications', domain=[('active', 'in', ['t', 'f'])]),
+        'doc_applicability_ids': fields.one2many('email.signature.notification.doc.applicability', 'email_sign_notif_id', string='Document Applicability', help='Documents impacted by the signature notifications', domain=[('active', 'in', ['t', 'f'])]),
     }
 
     _defaults = {
@@ -343,15 +343,15 @@ class email_signature_notification(osv.osv):
                         for doc_name in user_signl['pick_names']:
                             docs_string += '\n  • %s' % (doc_name,)
                     if user_signl.get('cash_names'):
-                        docs_string += _('\nDocument type: Cash Registers):')
+                        docs_string += _('\nDocument type: Cash Registers:')
                         for doc_name in user_signl['cash_names']:
                             docs_string += '\n  • %s' % (doc_name,)
                     if user_signl.get('bank_names'):
-                        docs_string += _('\nDocument type: Bank Registers):')
+                        docs_string += _('\nDocument type: Bank Registers:')
                         for doc_name in user_signl['bank_names']:
                             docs_string += '\n  • %s' % (doc_name,)
                     if user_signl.get('cheque_names'):
-                        docs_string += _('\nDocument type: Cheque Registers):')
+                        docs_string += _('\nDocument type: Cheque Registers:')
                         for doc_name in user_signl['cheque_names']:
                             docs_string += '\n  • %s' % (doc_name,)
                     if user_signl.get('inv_names'):
@@ -366,7 +366,7 @@ class email_signature_notification(osv.osv):
                     sign_expiry_text = ''
                     if email_sign_notif.check_signature_expiry and user_signl.get('user_sign_end_date') and \
                             (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > user_signl['user_sign_end_date']:
-                        sign_expiry_text = _('\nYour signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
+                        sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
                                            % (datetime.strptime(user_signl['user_sign_end_date'], '%Y-%m-%d').strftime('%d/%m/%Y'),)
 
                     if is_reminder:
@@ -399,18 +399,18 @@ UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line
                         error_msg = e.args and '. '.join(e.args) or e
                 finally:
                     # Logs to be displayed on the signature tab
-                    for sign_id in user_signl.get('sign_ids', []):
-                        email_log_vals = {
-                            'recipients': user_signl.get('user_email') or user_signl.get('user_name', _('UniField user')),
-                            'state': error_msg and 'error' or 'success',
-                            'result': error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) \
-                                      or _('The email was sent successfully'),
-                            'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
-                            'signature_id': sign_id,
-                            'date_sent': current_date,
-                            'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
-                        }
-                        self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+                    email_log_vals = {
+                        'recipients': user_signl.get('user_email') or user_signl.get('user_name', _('UniField user')),
+                        'recipient_names': user_signl.get('user_name', _('UniField user')),
+                        'state': error_msg and 'error' or 'success',
+                        'result': error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) \
+                                  or _('The email was sent successfully'),
+                        'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+                        'signature_ids': [(6, 0, user_signl.get('sign_ids', []))],
+                        'date_sent': current_date,
+                        'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+                    }
+                    self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
                     # Put the necessary date on the affected signature lines
                     if is_reminder:
                         signl_obj.write(cr, uid, user_signl.get('signl_ids', []), {'latest_reminder_sent_date': current_date}, context=context)
@@ -434,7 +434,10 @@ UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line
         sign_doc_creator_ids = user_obj.search(cr, uid, user_domain, context=context)
         if sign_doc_creator_ids:
             error_msg = ''
-            email_doc_creators = [user['user_email'] for user in user_obj.read(cr, uid, sign_doc_creator_ids, ['user_email'], context=context)]
+            name_doc_creators, email_doc_creators = [], []
+            for user in user_obj.read(cr, uid, sign_doc_creator_ids, ['user_name', 'user_email'], context=context):
+                name_doc_creators.append(user['user_name'])
+                email_doc_creators.append(user['user_email'])
             try:
                 exp_sign_user_list = ''
                 for exp_user_name in usernames:
@@ -462,6 +465,7 @@ UniField Team""") % (exp_sign_user_list,)
                       _('The signature of %s is expired. The email was sent to users in the "Sign_document_creator_finance" and "Sign_document_creator_supply" successfully') % (', '.join(usernames)),
                 email_log_vals = {
                     'recipients': '; '.join(email_doc_creators),
+                    'recipient_names': '; '.join(name_doc_creators),
                     'state': error_msg and 'error' or 'success',
                     'result': msg,
                     'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],

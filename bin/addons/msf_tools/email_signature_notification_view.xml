@@ -145,5 +145,33 @@ action = {
                 </form>
             </field>
         </record>
+
+
+        <record id="ir_actions_server_signature_email_log" model="ir.actions.server">
+            <field name="code">
+action = self.view_signature_email_logs(cr, uid, ids, context=context)
+            </field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_email_log"/>
+            <field name="condition">True</field>
+            <field name="name">Open Signature email logs</field>
+        </record>
+
+        <record id="signature_email_log_menu" model="ir.ui.menu">
+            <field name="name">Signature email logs</field>
+            <field name="parent_id" ref="email_log_menu"/>
+            <field name="sequence" eval="2" />
+        </record>
+        <record id="ir_values_menuitem_signature_email_log" model="ir.values">
+            <field name="name">Menuitem Signature email logs</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('msf_tools.ir_actions_server_signature_email_log')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('signature_email_log_menu')" name="res_id"/>
+        </record>
     </data>
 </openerp>

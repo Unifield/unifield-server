@@ -71,7 +71,7 @@
             <field name="signature_is_closed" />
         </group>
         <group colspan="6" attrs="{'invisible': [('email_signature_notif_active', '=', False)]}">
-            <field name="email_signature_notif_log_ids" readonly="1" nolabel="1" colspan="6">
+            <field name="email_log_ids" readonly="1" nolabel="1" colspan="6">
                 <tree string="Email logs">
                     <field name="recipients" />
                     <field name="date_sent" />

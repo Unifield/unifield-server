@@ -54,6 +54,7 @@
         'deactivate_phase_out_partners_view.xml',
         'msf_tools_view.xml',
         'email_signature_notification_view.xml',
+        'report/signature_email_logs_report_view.xml',
     ],
     'demo_xml': [
     ],

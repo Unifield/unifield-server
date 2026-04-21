@@ -9,6 +9,7 @@ from tools.misc import _register_log
 from lxml import etree
 from datetime import datetime
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 from report.render.rml2pdf import customfonts
 from PIL import Image, ImageDraw, ImageFont
@@ -294,7 +295,7 @@ class signature(osv.osv):
         'allowed_to_be_closed': fields.function(_get_allowed_to_be_closed, type='boolean', string='Allowed to be closed', method=1),
         'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
         'is_signee_user': fields.function(_get_is_signee_user, type='boolean', string='Is the current user Signee Only ?', method=1),
-        'email_signature_notif_log_ids': fields.one2many('email.log', 'signature_id', 'Email Logs'),
+        'email_log_ids': fields.many2many('email.log', 'signature_email_log_rel', 'signature_id', 'email_log_id', string='Email Logs'),
         'email_signature_notif_active': fields.function(_get_email_signature_notif_active, type='boolean', string='Email Notification for Signature is Active', method=1),
     }
 
@@ -688,7 +689,7 @@ class signature_object(osv.osv):
                     doc_type = _('Field Orders (FO)')
                 doc_name = doc.name
             elif self._name == 'purchase.order':
-                doc_type = _('Purchase Order (PO)')
+                doc_type = _('Purchase Orders (PO)')
                 doc_name = doc.name
             elif self._name == 'stock.picking':
                 if doc.type == 'in' and doc.subtype == 'standard':
@@ -733,6 +734,7 @@ class signature_object(osv.osv):
                     error_msg = ''
                     current_date = datetime.now()
                     instance_name = self.pool.get('res.users').browse(cr, uid, [uid], context=context)[0].company_id.instance_id.instance
+                    email_sign_notif = email_sign_notif_obj.read(cr, uid, email_sign_notif_ids[0], context=context)
                     try:
                         if not signl_data[1]:
                             raise osv.except_osv(_('Error'), _('User %s does not have an Email') % (signl_data[2] or _('UniField user'),))
@@ -743,19 +745,25 @@ class signature_object(osv.osv):
                                 expired_sign_user_names.append(signl_data[2] or _('UniField user'))
                             continue
 
+                        sign_expiry_text = ''
+                        if email_sign_notif['check_signature_expiry'] and signl_data[4] and \
+                                (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > signl_data[4]:
+                            sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
+                                               % (datetime.strptime(signl_data[4], '%Y-%m-%d').strftime('%d/%m/%Y'),)
+
                         email_subject = _('UniField - Your signature has been requested on a document')
                         email_body = _("""Dear %s,
 
-Someone has requested that you sign a document:
+You are requested to sign a document:
   • Instance: %s
   • Document: %s - %s
 
 Please log in to UniField to review and complete the required electronic signature.
-
+%s
 If you have already signed the document after this e-mail was generated, no further action is required for that document.
 
 Thank you,
-UniField Team""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name)
+UniField Team""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name, sign_expiry_text)
 
                         tools.email_send(False, [signl_data[1]], email_subject, email_body)
                     except Exception as e:
@@ -767,11 +775,12 @@ UniField Team""") % (signl_data[2] or _('UniField user'), instance_name, doc_typ
                         # Logs to be displayed on the signature tab
                         email_log_vals = {
                             'recipients': signl_data[1] or signl_data[2] or _('UniField user'),
+                            'recipient_names': signl_data[2] or _('UniField user'),
                             'state': error_msg and 'error' or 'success',
                             'result': error_msg and _('Some error(s) occurred while trying to send the email: %s') \
                                       % (error_msg,) or _('The email was sent successfully'),
-                            'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
-                            'signature_id': doc.signature_id.id,
+                            'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', 'email.signature.notification')])[0],
+                            'signature_ids': [(6, 0, [doc.signature_id.id])],
                             'date_sent': current_date,
                             'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
                         }
