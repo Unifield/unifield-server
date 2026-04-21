@@ -27832,19 +27832,6 @@ msgstr ""
 msgid "This Period"
 msgstr ""
 
-#. module: msf_outgoing
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
-msgid "The first sequence must start with 1"
-msgstr ""
-
 #. module: base
 #: selection:base.language.install,lang:0
 msgid "Dutch / Nederlands"
