@@ -101,6 +101,9 @@
             </field>
         </record>
 
+
+        <menuitem id="email_main_menu" name="Email" parent="base.menu_config" sequence="10025" />
+
         <record id="ir_actions_server_email_signature_notification" model="ir.actions.server">
             <field name="code">
 res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'email_signature_notification_default')
@@ -121,7 +124,7 @@ action = {
 
         <record id="email_signature_notification_menu" model="ir.ui.menu">
             <field name="name">Email Notification for Signatures Configuration</field>
-            <field name="parent_id" ref="msf_profile.email_main_menu"/>
+            <field name="parent_id" ref="email_main_menu"/>
             <field name="sequence" eval="15" />
         </record>
         <record id="ir_values_menuitem_email_signature_notification" model="ir.values">
