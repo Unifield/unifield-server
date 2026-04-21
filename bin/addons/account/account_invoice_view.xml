@@ -200,11 +200,12 @@
                                                     '&amp;', ('type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True)]}"
                         />
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
-                        <field name="fiscal_position" groups="base.group_extended" widget="selection"/>
+                        <field name="tax_identification_number" readonly="1" />
+<!--                        <field name="fiscal_position" groups="base.group_extended" widget="selection"/>-->
                         <newline/>
                         <field name="document_date" />
                         <field name="date_invoice"/>
-                        <group colspan="2" col="1" />
+                        <field name="business_registration_number" readonly="1" />
                     </group>
                     <newline />
                     <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
