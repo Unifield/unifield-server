@@ -295,7 +295,6 @@ class signature(osv.osv):
         'allowed_to_be_closed': fields.function(_get_allowed_to_be_closed, type='boolean', string='Allowed to be closed', method=1),
         'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
         'is_signee_user': fields.function(_get_is_signee_user, type='boolean', string='Is the current user Signee Only ?', method=1),
-        'email_log_ids': fields.many2many('email.log', 'signature_email_log_rel', 'signature_id', 'email_log_id', string='Email Logs'),
         'email_signature_notif_active': fields.function(_get_email_signature_notif_active, type='boolean', string='Email Notification for Signature is Active', method=1),
     }
 

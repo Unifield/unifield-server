@@ -1273,3 +1273,15 @@ class email_log(osv.osv):
 
 
 email_log()
+
+
+class signature(osv.osv):
+    _name = 'signature'
+    _inherit = 'signature'
+
+    _columns = {
+        'email_log_ids': fields.many2many('email.log', 'signature_email_log_rel', 'signature_id', 'email_log_id', string='Email Logs'),
+    }
+
+
+signature()
