@@ -3300,6 +3300,9 @@ class stock_picking(osv.osv):
                                                                           'prefix': '',
                                                                           'padding': 2}, context=context)
                             }
+            if out.sale_id and out.sale_id.location_requestor_id and out.sale_id.location_requestor_id.usage == 'customer' \
+                    and out.sale_id.location_requestor_id.location_category == 'consumption_unit':
+                default_vals['ext_cu'] = out.sale_id.location_requestor_id.id
 
             self.write(cr, uid, [out.id], default_vals, context=context)
             wf_service = netsvc.LocalService("workflow")

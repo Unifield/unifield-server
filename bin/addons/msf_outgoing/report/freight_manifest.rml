@@ -410,7 +410,7 @@
                     <para style="TextInformation"></para>
                 </td>
                 <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation"><b>Destination Location</b></para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>
@@ -436,10 +436,10 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation">[[ getDestLoc(objects[0].id) ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformation"></para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>
