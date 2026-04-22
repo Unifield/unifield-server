@@ -179,7 +179,7 @@
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation3" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="11.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="9.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation5" fontName="Helvetica-Bold" fontSize="7.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
 
 
@@ -436,7 +436,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ getDestLoc(objects[0].id) ]]</para>
+                    <para style="TextInformation4">[[ getDestLoc(objects[0].id) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>
