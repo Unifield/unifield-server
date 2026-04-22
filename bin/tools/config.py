@@ -114,6 +114,7 @@ class configmanager(object):
             'create_db_dir_for_attachment': True,
             'sync_user_login': False,
             'sync_user_password': False,
+            'no_signature_email': False,
         }
 
         self.blacklist_for_save = set(["publisher_warranty_url", "load_language", "netrpc", "netrpc_gzip", "netrpc_interface", "netrpc_port", "xmlrpcs_port", "xmlrpcs_interface", "db_name_file"])

@@ -489,7 +489,7 @@ class signature_object(osv.osv):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:
-                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed', 'email_signature_notif_log_ids']:
+                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed', 'email_log_ids']:
                         if fvg.get('fields') and to_remove in fvg['fields']:
                             del fvg['fields'][to_remove]
                     parent_node = fields[0].getparent()
@@ -544,7 +544,7 @@ class signature_object(osv.osv):
         fields_to_reset = [
             'signature_id', 'signature_line_ids', 'signature_state', 'signed_off_line', 'signature_is_closed',
             'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model',
-            'doc_locked_for_sign', 'email_signature_notif_log_ids'
+            'doc_locked_for_sign', 'email_log_ids'
         ]
         to_del = []
         for ftr in fields_to_reset:
@@ -744,14 +744,16 @@ class signature_object(osv.osv):
                                 expired_sign_user_names.append(signl_data[2] or _('UniField user'))
                             continue
 
-                        sign_expiry_text = ''
-                        if email_sign_notif['check_signature_expiry'] and signl_data[4] and \
-                                (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > signl_data[4]:
-                            sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
-                                               % (datetime.strptime(signl_data[4], '%Y-%m-%d').strftime('%d/%m/%Y'),)
+                        # Only send the email if the config allows it
+                        if not tools.config.get('no_signature_email'):
+                            sign_expiry_text = ''
+                            if email_sign_notif['check_signature_expiry'] and signl_data[4] and \
+                                    (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > signl_data[4]:
+                                sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
+                                                   % (datetime.strptime(signl_data[4], '%Y-%m-%d').strftime('%d/%m/%Y'),)
 
-                        email_subject = _('UniField - Your signature has been requested on a document')
-                        email_body = _("""Dear %s,
+                            email_subject = _('UniField - Your signature has been requested on a document')
+                            email_body = _("""Dear %s,
 
 You are requested to sign a document:
   • Instance: %s
@@ -764,7 +766,7 @@ If you have already signed the document after this e-mail was generated, no furt
 Thank you,
 UniField Team""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name, sign_expiry_text)
 
-                        tools.email_send(False, [signl_data[1]], email_subject, email_body)
+                            tools.email_send(False, [signl_data[1]], email_subject, email_body)
                     except Exception as e:
                         if isinstance(e, osv.except_osv):
                             error_msg = e.value

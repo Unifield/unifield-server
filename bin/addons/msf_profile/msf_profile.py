@@ -62,9 +62,20 @@ class patch_scripts(osv.osv):
     # UF41.0
     def us_14532_email_signature_notification(self, cr, uid, *a, **b):
         '''
+        Give default access read rights to all users for email.signature.notification and
+            email.signature.notification.doc.applicability at HQ level
         Add the missing rights for manual signature request email
         Hide the email.signature.notification configuration menu if necessary
         '''
+        if _get_instance_level(self, cr, uid) == 'hq':
+            for model in ['email.signature.notification', 'email.signature.notification.doc.applicability']:
+                model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model)])
+                self.pool.get('ir.model.access').create(cr, uid, {
+                    'name': 'common',
+                    'model_id': model_id[0],
+                    'perm_read': True,
+                })
+
         if not cr.table_exists('sync_server_user_rights'):
             # exclude sync server
             bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')

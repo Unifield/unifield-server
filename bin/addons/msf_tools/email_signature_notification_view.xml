@@ -3,69 +3,69 @@
     <data noupdate="1">
         <!-- The 2 associated ir_cron will be created during the task creation -->
         <record id="email_signature_notification_default" model="email.signature.notification">
-            <field name="active">False</field>
-            <field name="reminder_active">False</field>
+            <field name="active" eval="False"/>
+            <field name="reminder_active" eval="False"/>
         </record>
 
         <!-- All documents types that are signable are added to the configuration -->
         <record id="email_sig_notif_doc_applicability_fo" model="email.signature.notification.doc.applicability">
             <field name="doc_type">sale.order.fo</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_ir" model="email.signature.notification.doc.applicability">
             <field name="doc_type">sale.order.ir</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_po" model="email.signature.notification.doc.applicability">
             <field name="doc_type">purchase.order</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_in" model="email.signature.notification.doc.applicability">
             <field name="doc_type">stock.picking.in</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_int" model="email.signature.notification.doc.applicability">
             <field name="doc_type">stock.picking.int</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_out" model="email.signature.notification.doc.applicability">
             <field name="doc_type">stock.picking.out</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_pick" model="email.signature.notification.doc.applicability">
             <field name="doc_type">stock.picking.pick</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_cash" model="email.signature.notification.doc.applicability">
             <field name="doc_type">account.bank.statement.cash</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_bank" model="email.signature.notification.doc.applicability">
             <field name="doc_type">account.bank.statement.bank</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_cheque" model="email.signature.notification.doc.applicability">
             <field name="doc_type">account.bank.statement.cheque</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_invoice" model="email.signature.notification.doc.applicability">
             <field name="doc_type">account.invoice</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
         <record id="email_sig_notif_doc_applicability_phys" model="email.signature.notification.doc.applicability">
             <field name="doc_type">physical.inventory</field>
-            <field name="active">False</field>
+            <field name="active" eval="False"/>
             <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
         </record>
     </data>
