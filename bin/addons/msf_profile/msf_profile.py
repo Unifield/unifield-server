@@ -63,6 +63,7 @@ class patch_scripts(osv.osv):
     def us_14532_email_signature_notification(self, cr, uid, *a, **b):
         '''
         Add the missing rights for manual signature request email
+        Hide the email.signature.notification configuration menu if necessary
         '''
         if not cr.table_exists('sync_server_user_rights'):
             # exclude sync server
@@ -75,6 +76,12 @@ class patch_scripts(osv.osv):
                 if group_ids:
                     bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
                     bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+
+        setup_config = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup_config:
+            menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'email_signature_notification_menu')[1]
+            self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': setup_config.signature})
+
         return True
 
     def us_15072_po_detail(self, cr, uid, *a, **b):
