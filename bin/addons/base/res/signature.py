@@ -50,6 +50,12 @@ list_sign = {
         ('fr_report', _('Signature 1 - full report'), True, 1),
         ('mr_report', _('Signature 2 - full report'), True, 1),
     ],
+    'account.bank.statement.other': [
+        ('fr', _('Signature 1 - reconciliation'), True, 1),
+        ('mr', _('Signature 2 - reconciliation'), True, 1),
+        ('fr_report', _('Signature 1 - full report'), True, 1),
+        ('mr_report', _('Signature 2 - full report'), True, 1),
+    ],
     'account.bank.statement.cheque': [
         ('fr_report', _('Signature 1 - full report'), True, 1),
         ('mr_report', _('Signature 2 - full report'), True, 1),
@@ -98,7 +104,7 @@ saved_name = {
 saved_value = {
     'purchase.order': lambda doc: round(doc.amount_total, 2),
     'sale.order': lambda doc: doc.procurement_request and round(doc.ir_total_amount, 2) or round(doc.functional_amount_total, 2),
-    'account.bank.statement': lambda doc: doc.journal_id.type in ('bank', 'cheque') and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
+    'account.bank.statement': lambda doc: doc.journal_id.type in ('bank', 'cheque', 'other') and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
     'account.invoice': lambda doc: round(doc.amount_total, 2),
     'stock.picking': lambda doc: False,
     'physical.inventory': lambda doc: doc.discrepancy_lines_value,
