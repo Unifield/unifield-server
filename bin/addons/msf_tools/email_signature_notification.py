@@ -313,72 +313,70 @@ class email_signature_notification(osv.osv):
                             expired_sign_user_names.append(user_signl.get('user_name', _('UniField user')))
                         continue
 
-                    # Only send the email if the config allows it
-                    if not tools.config.get('no_signature_email'):
-                        docs_string = """"""
-                        if user_signl.get('fo_names'):
-                            docs_string += _('\nDocument type: Field Orders (FO):')
-                            for doc_name in user_signl['fo_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('ir_names'):
-                            docs_string += _('\nDocument type: Internal Requests (IR):')
-                            for doc_name in user_signl['ir_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('po_names'):
-                            docs_string += _('\nDocument type: Purchase Orders (PO):')
-                            for doc_name in user_signl['po_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('in_names'):
-                            docs_string += _('\nDocument type: Incoming Shipments (IN):')
-                            for doc_name in user_signl['in_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('int_names'):
-                            docs_string += _('\nDocument type: Internal Moves (INT):')
-                            for doc_name in user_signl['int_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('out_names'):
-                            docs_string += _('\nDocument type: Delivery Orders (OUT):')
-                            for doc_name in user_signl['out_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('pick_names'):
-                            docs_string += _('\nDocument type: Picking Lists & Picking Tickets (PICK):')
-                            for doc_name in user_signl['pick_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('cash_names'):
-                            docs_string += _('\nDocument type: Cash Registers:')
-                            for doc_name in user_signl['cash_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('bank_names'):
-                            docs_string += _('\nDocument type: Bank Registers:')
-                            for doc_name in user_signl['bank_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('cheque_names'):
-                            docs_string += _('\nDocument type: Cheque Registers:')
-                            for doc_name in user_signl['cheque_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('inv_names'):
-                            docs_string += _('\nDocument type: Supplier Invoices (SI):')
-                            for doc_name in user_signl['inv_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
-                        if user_signl.get('phys_names'):
-                            docs_string += _('\nDocument type: Physical Inventories (PI):')
-                            for doc_name in user_signl['phys_names']:
-                                docs_string += '\n  • %s' % (doc_name,)
+                    docs_string = """"""
+                    if user_signl.get('fo_names'):
+                        docs_string += _('\nDocument type: Field Orders (FO):')
+                        for doc_name in user_signl['fo_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('ir_names'):
+                        docs_string += _('\nDocument type: Internal Requests (IR):')
+                        for doc_name in user_signl['ir_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('po_names'):
+                        docs_string += _('\nDocument type: Purchase Orders (PO):')
+                        for doc_name in user_signl['po_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('in_names'):
+                        docs_string += _('\nDocument type: Incoming Shipments (IN):')
+                        for doc_name in user_signl['in_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('int_names'):
+                        docs_string += _('\nDocument type: Internal Moves (INT):')
+                        for doc_name in user_signl['int_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('out_names'):
+                        docs_string += _('\nDocument type: Delivery Orders (OUT):')
+                        for doc_name in user_signl['out_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('pick_names'):
+                        docs_string += _('\nDocument type: Picking Lists & Picking Tickets (PICK):')
+                        for doc_name in user_signl['pick_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('cash_names'):
+                        docs_string += _('\nDocument type: Cash Registers:')
+                        for doc_name in user_signl['cash_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('bank_names'):
+                        docs_string += _('\nDocument type: Bank Registers:')
+                        for doc_name in user_signl['bank_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('cheque_names'):
+                        docs_string += _('\nDocument type: Cheque Registers:')
+                        for doc_name in user_signl['cheque_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('inv_names'):
+                        docs_string += _('\nDocument type: Supplier Invoices (SI):')
+                        for doc_name in user_signl['inv_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
+                    if user_signl.get('phys_names'):
+                        docs_string += _('\nDocument type: Physical Inventories (PI):')
+                        for doc_name in user_signl['phys_names']:
+                            docs_string += '\n  • %s' % (doc_name,)
 
-                        sign_expiry_text = ''
-                        if email_sign_notif.check_signature_expiry and user_signl.get('user_sign_end_date') and \
-                                (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > user_signl['user_sign_end_date']:
-                            sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
-                                               % (datetime.strptime(user_signl['user_sign_end_date'], '%Y-%m-%d').strftime('%d/%m/%Y'),)
+                    sign_expiry_text = ''
+                    if email_sign_notif.check_signature_expiry and user_signl.get('user_sign_end_date') and \
+                            (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > user_signl['user_sign_end_date']:
+                        sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
+                                           % (datetime.strptime(user_signl['user_sign_end_date'], '%Y-%m-%d').strftime('%d/%m/%Y'),)
 
-                        if is_reminder:
-                            email_subject = _('UniField Reminder - Pending electronic signatures summary')
-                            first_line = _('This is a reminder that you still have pending electronic signatures in UniField.')
-                        else:
-                            email_subject = _('UniField - Pending electronic signatures summary')
-                            first_line = _('You have pending electronic signatures in UniField.')
+                    if is_reminder:
+                        email_subject = _('UniField Reminder - Pending electronic signatures summary')
+                        first_line = _('This is a reminder that you still have pending electronic signatures in UniField.')
+                    else:
+                        email_subject = _('UniField - Pending electronic signatures summary')
+                        first_line = _('You have pending electronic signatures in UniField.')
 
-                        email_body = _("""Dear %s,
+                    email_body = _("""Dear %s,
 
 %s
 Below is a summary of documents currently awaiting your signature. Only document types that are active in the configuration and for which at least one document is pending are displayed.
@@ -393,7 +391,7 @@ This is an automated notification. If you have already signed a document after t
 Thank you,
 UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line, instance_name, docs_string, sign_expiry_text)
 
-                        tools.email_send(False, [user_signl['user_email']], email_subject, email_body)
+                    tools.email_send(False, [user_signl['user_email']], email_subject, email_body)
                 except Exception as e:
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
@@ -441,13 +439,11 @@ UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line
                 name_doc_creators.append(user['user_name'])
                 email_doc_creators.append(user['user_email'])
             try:
-                # Only send the email if the config allows it
-                if not tools.config.get('no_signature_email'):
-                    exp_sign_user_list = ''
-                    for exp_user_name in usernames:
-                        exp_sign_user_list += '\n  • %s' % (exp_user_name,)
-                    email_subject = _('UniField - Expired signatures for users with pending signatures')
-                    email_body = _("""Dear Document Creator,
+                exp_sign_user_list = ''
+                for exp_user_name in usernames:
+                    exp_sign_user_list += '\n  • %s' % (exp_user_name,)
+                email_subject = _('UniField - Expired signatures for users with pending signatures')
+                email_body = _("""Dear Document Creator,
 
 The following users have pending electronic signatures in UniField but can not sign because their signature is expired:%s
 
@@ -458,7 +454,7 @@ This is an automated notification. If you have already resolved the issue after 
 Thank you,
 UniField Team""") % (exp_sign_user_list,)
 
-                    tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators)
+                tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators)
             except Exception as e:
                 if isinstance(e, osv.except_osv):
                     error_msg = e.value

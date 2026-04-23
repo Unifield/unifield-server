@@ -1280,7 +1280,7 @@ class signature(osv.osv):
     _inherit = 'signature'
 
     _columns = {
-        'email_log_ids': fields.many2many('email.log', 'signature_email_log_rel', 'signature_id', 'email_log_id', string='Email Logs'),
+        'email_log_ids': fields.many2many('email.log', 'signature_email_log_rel', 'signature_id', 'email_log_id', string='Email Logs', order_by='date_sent desc'),
     }
 
 

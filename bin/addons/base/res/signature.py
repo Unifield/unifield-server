@@ -744,16 +744,14 @@ class signature_object(osv.osv):
                                 expired_sign_user_names.append(signl_data[2] or _('UniField user'))
                             continue
 
-                        # Only send the email if the config allows it
-                        if not tools.config.get('no_signature_email'):
-                            sign_expiry_text = ''
-                            if email_sign_notif['check_signature_expiry'] and signl_data[4] and \
-                                    (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > signl_data[4]:
-                                sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
-                                                   % (datetime.strptime(signl_data[4], '%Y-%m-%d').strftime('%d/%m/%Y'),)
+                        sign_expiry_text = ''
+                        if email_sign_notif['check_signature_expiry'] and signl_data[4] and \
+                                (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > signl_data[4]:
+                            sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
+                                               % (datetime.strptime(signl_data[4], '%Y-%m-%d').strftime('%d/%m/%Y'),)
 
-                            email_subject = _('UniField - Your signature has been requested on a document')
-                            email_body = _("""Dear %s,
+                        email_subject = _('UniField - Your signature has been requested on a document')
+                        email_body = _("""Dear %s,
 
 You are requested to sign a document:
   • Instance: %s
@@ -766,7 +764,7 @@ If you have already signed the document after this e-mail was generated, no furt
 Thank you,
 UniField Team""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name, sign_expiry_text)
 
-                            tools.email_send(False, [signl_data[1]], email_subject, email_body)
+                        tools.email_send(False, [signl_data[1]], email_subject, email_body)
                     except Exception as e:
                         if isinstance(e, osv.except_osv):
                             error_msg = e.value
