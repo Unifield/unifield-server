@@ -117,7 +117,8 @@ class signature_follow_up(osv.osv):
         'doc_type': fields.selection([
             ('purchase.order', 'Purchase Order (PO)'), ('sale.order.fo', 'Field Order (FO)'),
             ('sale.order.ir', 'Internal Request (IR)'), ('account.bank.statement.cash', 'Cash Register'),
-            ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.cheque', 'Cheque Register'),
+            ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.other', 'Other Register'),
+            ('account.bank.statement.cheque', 'Cheque Register'),
             ('account.invoice.si', 'Supplier Invoice (SI)'), ('account.invoice.donation', 'Donation'),
             ('stock.picking.in', 'Incoming Shipment (IN)'), ('stock.picking.int', 'Internal Move (INT)'),
             ('stock.picking.out', 'Delivery Order (Out)'), ('stock.picking.pick', 'Picking Ticket (Pick)'),
