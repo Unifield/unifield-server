@@ -1609,6 +1609,7 @@ class unidata_sync(osv.osv):
             raise osv.except_osv(_('Error'), _('A sync is already running ...'))
         try:
             self._start_ud_sync(cr, uid, context=context)
+            self.pool.get('product.product').unidata_start_auto_merge(cr, uid, context=context)
         finally:
             self._lock[cr.dbname].release()
 
@@ -1968,3 +1969,76 @@ class unidata_products_error(osv.osv):
         'type': 'product',
     }
 unidata_products_error()
+
+class unidata_auto_merge(osv.osv):
+    _name = 'unidata.auto_merge'
+    _order = 'date desc, id desc'
+    _rec_name = 'kept_code'
+
+    _columns = {
+        'date': fields.datetime('Date', required=1, select=1, readonly=1),
+        'non_kept_msfid': fields.integer('Non-kept MSFID', select=1, readonly=1, group_operator='no_group'),
+        'non_kept_code': fields.char('Non-kept Code', size=64, readonly=1),
+        'non_kept_product_id': fields.many2one('product.product', 'Product Non-kept', readonly=1),
+        'kept_msfid': fields.integer('Kept MSFID', select=1, readonly=1, group_operator='no_group'),
+        'kept_code': fields.char('Kept Code', size=64, readonly=1),
+        'kept_product_id': fields.many2one('product.product', 'Product Kept', readonly=1),
+        'first_date': fields.datetime('Date of first try', select=1, readonly=1),
+        'msg': fields.text('Error', readonly=1),
+        'log': fields.text('Full Log', readonly=1),
+        'state': fields.selection([('done', 'done'), ('ok', 'ok'), ('error', 'Error')], string='State', readonly=1),
+    }
+
+    _sql_constraints = [
+        ('unique_key', 'unique(kept_msfid, non_kept_msfid)', 'key already exists.')
+    ]
+
+    _defaults = {
+        'date': lambda *a, **b: fields.datetime.now(),
+        'first_date': lambda *a, **b: fields.datetime.now(),
+    }
+
+    def open_product_from_automerge(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if context.get('active_ids'):
+            ids = context['active_ids']
+        p_ids = []
+        if ids:
+            cr.execute('select non_kept_product_id, kept_product_id from unidata_auto_merge where id in %s', (tuple(ids), ))
+            for x in cr.fetchall():
+                p_ids += [x[0], x[1]]
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['tree', 'form'], context=context)
+        res['name'] = _('Auto merge products')
+        res['domain'] = [('active', 'in', ['t', 'f']), ('id', 'in', p_ids)]
+        res['target'] = 'current'
+        return res
+
+    def exec_auto_merge(self, cr, uid, ids, context=None):
+        prod_obj = self.pool.get('product.product')
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['non_kept_product_id', 'kept_product_id', 'state'], context=context):
+            if x.state != 'done':
+                try:
+                    cr.execute('SAVEPOINT unidata_auto_merge')
+                    prod_obj.merge_hq_product(cr, uid, x.kept_product_id.id, x.non_kept_product_id.id, context=context)
+                    self.write(cr, uid, x.id,  {'state': 'done', 'msg': False}, context=context)
+                except Exception as e:
+                    if isinstance(e, osv.except_osv):
+                        msg = e.value
+                    else:
+                        msg = e
+
+                    cr.execute('ROLLBACK TO SAVEPOINT unidata_auto_merge')
+                    self.write(cr, uid, x.id, {
+                        'state': 'error',
+                        'msg': msg,
+                        'log': tools.misc.get_traceback(e),
+                    }, context=context)
+                finally:
+                    cr.execute('RELEASE SAVEPOINT unidata_auto_merge')
+        return True
+
+unidata_auto_merge()

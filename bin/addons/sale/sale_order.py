@@ -982,7 +982,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 product_obj = self.pool.get('product.product')
                 for order in self.browse(cr, uid, ids):
                     for line in order.order_line:
-                        if line.product_id:
+                        if line.product_id and line.state not in ('cancel', 'cancel_r'):
                             res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order'})
                             if test:
                                 res.setdefault('value', {}).update({'partner_order_id': False, 'partner_shipping_id': False, 'partner_invoice_id': False})
