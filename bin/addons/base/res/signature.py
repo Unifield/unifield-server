@@ -270,10 +270,8 @@ class signature(osv.osv):
         email_sign_notif_doc_appl_obj = self.pool.get('email.signature.notification.doc.applicability')
         email_sign_notif_active = self.pool.get('email.signature.notification').\
             search_exist(cr, uid, [('active', '=', True)], context=context)
-        auth_models = ['purchase.order']
         for sign in self.read(cr, uid, ids, ['signature_res_model', 'signature_res_id'], context=context):
-            if sign['signature_res_model'] in auth_models and \
-                    email_sign_notif_doc_appl_obj.active_doc_type(cr, uid, sign['signature_res_model'], sign['signature_res_id'], context=context):
+            if email_sign_notif_doc_appl_obj.active_doc_type(cr, uid, sign['signature_res_model'], sign['signature_res_id'], context=context):
                 res[sign['id']] = email_sign_notif_active
             else:
                 res[sign['id']] = False
@@ -727,7 +725,7 @@ class signature_object(osv.osv):
                 HAVING signl.prio <= MIN(osignl.prio)
             """, (doc.signature_id.id,))
             signl_data = cr.fetchone()
-            if signl_data[0]:
+            if signl_data and signl_data[0]:
                 email_sign_notif_ids = email_sign_notif_obj.search(cr, uid, [('active', '=', 't')], context=context)
                 if email_sign_notif_ids:
                     error_msg = ''
