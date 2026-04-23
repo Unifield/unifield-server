@@ -435,8 +435,8 @@ UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line
         if sign_doc_creator_ids:
             error_msg = ''
             name_doc_creators, email_doc_creators = [], []
-            for user in user_obj.read(cr, uid, sign_doc_creator_ids, ['user_name', 'user_email'], context=context):
-                name_doc_creators.append(user['user_name'])
+            for user in user_obj.read(cr, uid, sign_doc_creator_ids, ['name', 'user_email'], context=context):
+                name_doc_creators.append(user['name'])
                 email_doc_creators.append(user['user_email'])
             try:
                 exp_sign_user_list = ''
