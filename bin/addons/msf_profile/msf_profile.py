@@ -80,7 +80,7 @@ class patch_scripts(osv.osv):
             # exclude sync server
             bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
             for group_name, model, b_names in [
-                ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement', 'account.invoice', 'physical.inventory'], ['specific_email_signature_notification']),
+                ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement', 'physical.inventory'], ['specific_email_signature_notification']),
                 ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order', 'physical.inventory'], ['specific_email_signature_notification'])
             ]:
                 group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)], context=None)
