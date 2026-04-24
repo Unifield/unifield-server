@@ -43,7 +43,7 @@ class wizard_export_vi_finance(osv.osv_memory):
 
     def get_active_export_ids(self, cr, uid, context=None):
         instance = self.pool.get('res.company')._get_instance_record(cr, uid)
-        if not instance or instance.instance not in ('HQ_OCA', 'OCP_HQ'):
+        if not instance or instance.instance not in ('HQ_OCA', 'OCP_HQ', 'HQ_UBUNTU'):
             return False
 
         return self.pool.get('automated.export').search(cr, uid, [('active', '=', True), ('function_id.model_id', '=', self._name)], context=context)

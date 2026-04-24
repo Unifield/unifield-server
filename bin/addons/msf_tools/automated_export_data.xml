@@ -19,5 +19,11 @@
             <field name="method_to_call">auto_export_vi</field>
             <field name="disable_cron" eval="True" />
         </record>
+        <record id="auto_export_fnct_ubuntu_finance_vi" model="automated.export.function">
+            <field name="name">Export to HQ system (Ubuntu) - Not yet exported</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'ubuntu.export.wizard')]" />
+            <field name="method_to_call">auto_export_vi</field>
+            <field name="disable_cron" eval="True" />
+        </record>
     </data>
 </openerp>

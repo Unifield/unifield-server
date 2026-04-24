@@ -21,7 +21,6 @@
 
 from osv import fields
 from osv import osv
-from tools.translate import _
 from account_override import finance_export
 
 from time import strftime
@@ -29,6 +28,9 @@ from time import strptime
 
 import netsvc
 import base64
+
+from . import wizard_hq_report_oca
+
 
 class finance_hq_vi(osv.osv_memory):
     _name = 'finance.hq.vi'
@@ -148,7 +150,7 @@ class ocb_export_wizard(osv.osv_memory):
     def onchange_instance_id(self, cr, uid, ids, context=None):
         return {'value': {'period_id': False}}
 
-    def button_export(self, cr, uid, ids, context=None):
+    def _prepare_report(self, cr, uid, ids, report_name, report_file_name, context=None):
         """
         Launch a report to generate the ZIP file.
         """
@@ -167,36 +169,62 @@ class ocb_export_wizard(osv.osv_memory):
             # Get projects below instance
             data['form'].update({'instance_id': wizard.instance_id.id,})
             data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
-        period_name = ''
         if wizard.period_id:
             data['form'].update({'period_id': wizard.period_id.id})
-            period_name = strftime('%Y%m', strptime(wizard.period_id.date_start, '%Y-%m-%d'))
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})
 
-        target_file_name_pattern = '%s_%s_formatted data UF to OCB HQ system'
-        data['target_filename'] = target_file_name_pattern % (
-            wizard.instance_id and wizard.instance_id.code or '',
-            period_name)
+        data['target_filename'] = report_file_name
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': data['target_filename'],
-            'report_name': 'hq.ocb',
+            'report_name': report_name,
         }, context=context)
         context['background_id'] = background_id
         context['background_time'] = 2
 
-        report_name = _('Export to HQ system (OCB)')
         finance_export.log_vi_exported(self, cr, uid, report_name, wizard.id, data['target_filename'])
 
         data['context'] = context
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'hq.ocb',
+            'report_name': report_name,
             'datas': data,
             'context': context,
         }
 
+    def button_export(self, cr, uid, ids, context=None):
+        report_name = 'hq.ocb'
+        period_name = ''
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        if wizard.period_id:
+            period_name = strftime('%Y%m', strptime(wizard.period_id.date_start, '%Y-%m-%d'))
+
+        report_file_name = '%s_%s_formatted data UF to OCB HQ system' % (
+            wizard.instance_id and wizard.instance_id.code or '',
+            period_name
+        )
+        return self._prepare_report(cr, uid, ids, report_name, report_file_name, context)
+
 ocb_export_wizard()
+
+class ubuntu_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
+    _name = 'ubuntu.export.wizard'
+    _inherit = 'ocb.export.wizard'
+
+    def button_export(self, cr, uid, ids, context=None):
+        report_name = 'hq.ubuntu'
+        period_name = ''
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        if wizard.period_id:
+            dt = strptime(wizard.period_id.date_start, '%Y-%m-%d')
+            period_name = '%sP%02d' % (strftime('%Y', dt), wizard.period_id.number)
+        report_file_name = '%s_%s_formatted data D365 import.zip' % (
+            wizard.instance_id and wizard.instance_id.code[0:3] or '',
+            period_name
+        )
+        return self._prepare_report(cr, uid, ids, report_name, report_file_name, context)
+
+ubuntu_export_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
