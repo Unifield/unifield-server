@@ -752,7 +752,10 @@ class sde_import(osv.osv_memory):
                 m.expired_date, -- 29
                 pcc.cold_chain, -- 30 kc_check
                 pp.dangerous_goods, -- 31 dg_check
-                pp.controlled_substance -- 32 np_check
+                pp.controlled_substance, -- 32 np_check
+                pp.id, -- 33
+                l.id, -- 34
+                lot.id -- 35
             """
             sql_lines_join = """
                 LEFT JOIN product_product pp ON m.product_id = pp.id
@@ -763,7 +766,8 @@ class sde_import(osv.osv_memory):
                 LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
             """
             sql_lines_group = """, m.id,  m.line_number, pp.default_code, pt.name, sl.product_id, m.comment, l.name, 
-                m.product_qty, lot.name, m.expired_date, pcc.cold_chain, pp.dangerous_goods, pp.controlled_substance"""
+                m.product_qty, lot.name, m.expired_date, pcc.cold_chain, pp.dangerous_goods, pp.controlled_substance,
+                pp.id, l.id, lot.id"""
             sql_lines_order = ', m.line_number, m.id'
         cr.execute("""
             SELECT
@@ -859,6 +863,7 @@ class sde_import(osv.osv_memory):
                     'changed_product_code': pick[24] or '',
                     'comment': pick[25] or '',
                     'source_location': pick[26],
+                    'qty_in_stock': self.get_qty_available(new_cr, uid, pick[33], pick[34], pick[35], context=context) or 0,
                     'product_qty': pick[27] or 0,
                     'qty_to_process': None,  # Left empty to force SDE to change the value
                     'prodlot_id': pick[28] or '',
@@ -1736,6 +1741,7 @@ class sde_import(osv.osv_memory):
                                     'changed_product_code': pick[24] or '',
                                     'comment': pick[25] or '',
                                     'source_location': pick[26],
+                                    'qty_in_stock': self.get_qty_available(cr, uid, pick[33], pick[34], pick[35], context=context) or 0,
                                     'product_qty': pick[27] or 0,
                                     'qty_to_process': None,  # Left empty to force SDE to change the value
                                     'prodlot_id': pick[28] or '',
@@ -1822,6 +1828,21 @@ class sde_import(osv.osv_memory):
                                  % ('/'.join([PICKING_STATE[state] for state in states]), doc, ', '.join(not_found),))
 
         return pick_ids
+
+    def get_qty_available(self, cr, uid, product_id, location_id, prodlot_id, context=None):
+        """
+        Get the available quantity for a move, with the product id and the info put in the context
+        """
+        if context is None:
+            context = {}
+
+        if location_id:
+            context.update({'location': location_id, 'location_id': location_id, 'prodlot_id': prodlot_id})
+
+        prod = self.pool.get('product.product').read(cr, uid, product_id, ['qty_available'], context=context)
+        qty_available = prod and prod['qty_available'] or 0.00
+
+        return qty_available
 
 
 sde_import()
