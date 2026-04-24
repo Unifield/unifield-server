@@ -34,6 +34,9 @@ import requests
 from . import unidata_sync
 import json
 
+LIMIT_NSL_PROD_MERGE = 5
+
+
 class product_section_code(osv.osv):
     _name = "product.section.code"
     _rec_name = 'section'
@@ -658,10 +661,22 @@ class product_attributes(osv.osv):
         for arg in args:
             if arg[1] != '=':
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
+            cond = ["pis.code = 'unidata'"]
             if arg[2]:
-                dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('replace_product_id', '=', False)]
+                cond.extend(["p.active = 't'", "p.standard_ok IN ('non_standard', 'standard')"])
+                having = "COUNT(pmrel.product_merged_from_id) = 0"
             else:
-                dom = [('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]
+                cond.append("p.standard_ok = 'non_standard_local'")
+                having = "COUNT(pmrel.product_merged_from_id) < %s" % (LIMIT_NSL_PROD_MERGE,)
+            cr.execute("""
+                SELECT p.id FROM product_product p
+                    LEFT JOIN product_international_status pis ON p.international_status=pis.id
+                    LEFT JOIN product_merged_from_rel pmrel ON p.id = pmrel.product_id
+                WHERE """ + ' AND '.join(cond) + """
+                GROUP BY p.id HAVING """ + having)
+            prods = cr.fetchall()
+            if prods:
+                dom = [('id', 'in', [prod[0] for prod in prods])]
 
         return dom
 
@@ -692,7 +707,7 @@ class product_attributes(osv.osv):
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
             prod_domain = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True),
-                           ('replace_product_id', '!=', False), ('standard_ok', '!=', 'non_standard_local')]
+                           ('replace_product_ids', '!=', False), ('standard_ok', '!=', 'non_standard_local')]
             for _id in self.search(cr, uid, prod_domain, context=context):
                 res[_id] = True
 
@@ -712,14 +727,21 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
         if context.get('sync_update_execution') or self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            dom = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('replace_product_id', '=', False)]
-            if context.get('sync_update_execution'):
-                # UD prod deactivated in coordo + merge + sync : proj does not see the deactivation
-                dom += [('active', 'in', ['t', 'f'])]
-            else:
-                dom += ['|', '&', ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'), '&', ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
-            for p_id in self.search(cr, uid, dom, context=context):
-                res[p_id] = True
+            active_needed = ""
+            # UD prod deactivated in coordo + merge + sync : proj does not see the deactivation
+            if not context.get('sync_update_execution'):
+                active_needed = "p.active = 't' AND "
+            cr.execute("""
+                SELECT p.id FROM product_product p
+                    LEFT JOIN product_international_status pis ON p.international_status=pis.id
+                    LEFT JOIN product_merged_from_rel pmrel ON p.id = pmrel.product_id
+                WHERE p.id IN %s AND pis.code = 'unidata'
+                GROUP BY p.id 
+                HAVING (""" + active_needed + """p.standard_ok IN ('non_standard', 'standard') AND COUNT(pmrel.product_merged_from_id) = 0)
+                        OR (p.standard_ok = 'non_standard_local' AND COUNT(pmrel.product_merged_from_id) < %s)
+            """, (tuple(ids), LIMIT_NSL_PROD_MERGE))
+            for prod in cr.fetchall():
+                res[prod[0]] = True
         return res
 
     def _get_nsl_merged(self, cr, uid, ids, field_name, args, context=None):
@@ -1223,7 +1245,9 @@ class product_attributes(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'nsl_merged': fields.function(_get_nsl_merged, method=True, type='boolean', string='UD / NSL merged'),
         'local_product_merged': fields.boolean('Local Merged', help='Local Product Merged with another Local Product', readonly=1),
+        # FIXME: Remove many2one after UF41.0
         'replace_product_id': fields.many2one('product.product', string='Merged from', select=1),
+        'merge_from_count': fields.integer(string='Count the number of times the product was merged from', readonly=1),
         'replaced_by_product_id': fields.many2one('product.product', string='Merged to'),
         'allow_merge': fields.function(_get_allow_merge, type='boolean', method=True, string="UD Allow merge"),
         'uf_write_date': fields.datetime(_('Write date')),
@@ -2735,7 +2759,7 @@ class product_attributes(osv.osv):
         if default is None:
             default = {}
 
-        to_reset_list = ['replace_product_id', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id',
+        to_reset_list = ['replace_product_id', 'replace_product_ids', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id',
                          'kept_initial_product_id', 'unidata_merged', 'unidata_merge_date', 'local_merged_product']
         for to_reset in to_reset_list:
             if to_reset not in default:
@@ -3378,7 +3402,7 @@ class product_attributes(osv.osv):
         if merge_type == 'section':
             new_write_data = {'is_kept_product': True}
         else:
-            new_write_data = {'active': True, 'replace_product_id': old_prod_id}
+            new_write_data = {'active': True, 'replace_product_ids': [(4, old_prod_id)]}
 
         if not kept_data['old_code']:
             new_write_data['old_code'] = old_prod_data['default_code']
