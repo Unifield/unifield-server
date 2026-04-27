@@ -675,6 +675,7 @@ class sde_import(osv.osv_memory):
             elif pagi_msg:
                 result['message'] = pagi_msg
         except Exception as e:
+            cr.rollback()
             # Rejection message to send back
             if isinstance(e, osv.except_osv):
                 error_msg = e.value
@@ -743,31 +744,35 @@ class sde_import(osv.osv_memory):
                 m.line_number, -- 21
                 pp.default_code, -- 22
                 pt.name, -- 23
+                pis.name, -- 24
+                pno.name, -- 25
                 CASE WHEN m.sale_line_id IS NOT NULL AND sl.product_id != m.product_id 
-                    THEN CONCAT(pp.default_code, ' [', pt.name, ']') ELSE '' END, -- 24
-                m.comment, -- 25
-                l.name, -- 26
-                m.product_qty, -- 27
-                lot.name, -- 28
-                m.expired_date, -- 29
-                pcc.cold_chain, -- 30 kc_check
-                pp.dangerous_goods, -- 31 dg_check
-                pp.controlled_substance, -- 32 np_check
-                pp.id, -- 33
-                l.id, -- 34
-                lot.id -- 35
+                    THEN CONCAT(pp.default_code, ' [', pt.name, ']') ELSE '' END, -- 26
+                m.comment, -- 27
+                l.name, -- 28
+                m.product_qty, -- 29
+                lot.name, -- 30
+                m.expired_date, -- 31
+                pcc.cold_chain, -- 32 kc_check
+                pp.dangerous_goods, -- 33 dg_check
+                pp.controlled_substance, -- 34 np_check
+                pp.id, -- 35
+                l.id, -- 36
+                lot.id -- 37
             """
             sql_lines_join = """
                 LEFT JOIN product_product pp ON m.product_id = pp.id
                 LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
                 LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
+                LEFT JOIN product_international_status pis ON pp.international_status = pis.id
+                LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
                 LEFT JOIN sale_order_line sl ON m.sale_line_id = sl.id
                 LEFT JOIN stock_location l ON m.location_id = l.id
                 LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
             """
-            sql_lines_group = """, m.id,  m.line_number, pp.default_code, pt.name, sl.product_id, m.comment, l.name, 
-                m.product_qty, lot.name, m.expired_date, pcc.cold_chain, pp.dangerous_goods, pp.controlled_substance,
-                pp.id, l.id, lot.id"""
+            sql_lines_group = """, m.id,  m.line_number, pp.default_code, pt.name, sl.product_id, pis.name, pno.name,
+                m.comment, l.name, m.product_qty, lot.name, m.expired_date, pcc.cold_chain, pp.dangerous_goods,
+                pp.controlled_substance, pp.id, l.id, lot.id"""
             sql_lines_order = ', m.line_number, m.id'
         cr.execute("""
             SELECT
@@ -860,17 +865,19 @@ class sde_import(osv.osv_memory):
                     'line_number': pick[21],
                     'product_code': pick[22],
                     'product_name': pick[23],
-                    'changed_product_code': pick[24] or '',
-                    'comment': pick[25] or '',
-                    'source_location': pick[26],
-                    'qty_in_stock': self.get_qty_available(new_cr, uid, pick[33], pick[34], pick[35], context=context) or 0,
-                    'product_qty': pick[27] or 0,
+                    'product_creator': pick[24],
+                    'nomen_main_type': pick[25],
+                    'changed_product_code': pick[26] or '',
+                    'comment': pick[27] or '',
+                    'source_location': pick[28],
+                    'qty_in_stock': self.get_qty_available(new_cr, uid, pick[35], pick[36], pick[37], context=context) or 0,
+                    'product_qty': pick[29] or 0,
                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                    'prodlot_id': pick[28] or '',
-                    'expired_date': pick[29] or '',
-                    'kc_check': pick[30] or False,
-                    'dg_check': pick[31] == 'True' and _('True') or pick[31] == 'no_know' and _('Unknown') or _('False'),
-                    'np_check': pick[32] or False,
+                    'prodlot_id': pick[30] or '',
+                    'expired_date': pick[31] or '',
+                    'kc_check': pick[32] or False,
+                    'dg_check': pick[33] == 'True' and _('True') or pick[33] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': pick[34] or False,
                 })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'pick',
@@ -1150,6 +1157,7 @@ class sde_import(osv.osv_memory):
             elif pagi_msg:
                 result['message'] = pagi_msg
         except Exception as e:
+            cr.rollback()
             # Rejection message to send back
             if isinstance(e, osv.except_osv):
                 error_msg = e.value
@@ -1738,17 +1746,19 @@ class sde_import(osv.osv_memory):
                                     'line_number': pick[21],
                                     'product_code': pick[22],
                                     'product_name': pick[23],
-                                    'changed_product_code': pick[24] or '',
-                                    'comment': pick[25] or '',
-                                    'source_location': pick[26],
-                                    'qty_in_stock': self.get_qty_available(cr, uid, pick[33], pick[34], pick[35], context=context) or 0,
-                                    'product_qty': pick[27] or 0,
+                                    'product_creator': pick[24],
+                                    'nomen_main_type': pick[25],
+                                    'changed_product_code': pick[26] or '',
+                                    'comment': pick[27] or '',
+                                    'source_location': pick[28],
+                                    'qty_in_stock': self.get_qty_available(cr, uid, pick[35], pick[36], pick[37], context=context) or 0,
+                                    'product_qty': pick[29] or 0,
                                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                                    'prodlot_id': pick[28] or '',
-                                    'expired_date': pick[29] or '',
-                                    'kc_check': pick[30] or False,
-                                    'dg_check': pick[31] == 'True' and _('True') or pick[31] == 'no_know' and _('Unknown') or _('False'),
-                                    'np_check': pick[32] or False,
+                                    'prodlot_id': pick[30] or '',
+                                    'expired_date': pick[31] or '',
+                                    'kc_check': pick[32] or False,
+                                    'dg_check': pick[33] == 'True' and _('True') or pick[33] == 'no_know' and _('Unknown') or _('False'),
+                                    'np_check': pick[34] or False,
                                 })
 
                     if nb_lines > lines_per_page:
