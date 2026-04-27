@@ -28,7 +28,7 @@ class wizard_out_import(osv.osv_memory):
                     data['qty'] = float(data['qty'])
                 except:
                     if json_import:
-                        raise osv.except_osv(_('Error'), _('Line %s: Key "qty_to_process" must be a number') % data['item'])
+                        raise osv.except_osv(_('Error'), _('Line %s: Key "product_qty" must be a number') % data['item'])
                     else:
                         raise osv.except_osv(_('Error'), _('Line %s: Column "Ordered Qty" must be a number') % data['item'])
 
@@ -250,7 +250,7 @@ class wizard_out_import(osv.osv_memory):
                 'code': move.get('product_code', ''),
                 'asset': move.get('asset', ''),
                 'kit': move.get('kit', ''),
-                'qty': move.get('qty', move.get('qty_to_process', 0.0)),
+                'qty': move.get('product_qty', 0.0),
                 'qty_to_process': move.get('qty_to_process', 0.0),
                 'uom': move.get('uom', ''),
                 'batch': move.get('prodlot_id', ''),

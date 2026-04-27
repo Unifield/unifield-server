@@ -51,6 +51,21 @@ PICKING_STATE = {
     'delivered': _('Delivered'),
     'received': _('Received'),
 }
+PICKING_LINE_STATE = {
+    'confirmed': _('Not Available'),
+    'assigned': _('Available'),
+    'empty': _('Empty'),
+    'processed': _('Processed'),
+    'mixed': _('Partially available'),
+}
+MOVE_STATE = {
+    'draft': _('Draft'),
+    'waiting': _('Waiting'),
+    'confirmed': _('Not Available'),
+    'assigned': _('Available'),
+    'done': _('Done'),
+    'cancel': _('Cancelled'),
+}
 
 
 class sde_import(osv.osv_memory):
@@ -668,7 +683,8 @@ class sde_import(osv.osv_memory):
                     final_msg = final_msg + _('. The lines number %s were ignored during the import') % (', '.join(imp_res),)
                 result['message'] = final_msg
 
-                pick_obj.write(cr, uid, pick_id, {'sde_updated': True}, context=context)
+                # Set the PICK as sde_updated and remove the banner message
+                pick_obj.write(cr, uid, pick_id, {'sde_updated': True, 'sde_update_msg': False}, context=context)
 
                 # Log the update
                 self.pool.get('sde.update.log').create(cr, 1, {'date': datetime.now(), 'doc_type': 'pick', 'doc_ref': pick['name']}, context=context)
@@ -683,8 +699,6 @@ class sde_import(osv.osv_memory):
                 error_msg = e.args and '. '.join(e.args) or e
             result.update({'error': True, 'message': error_msg})
         finally:
-            # Remove the banner message
-            pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': False}, context=context)
             if 'sde_flow' in context:
                 context.pop('sde_flow')
 
@@ -740,25 +754,26 @@ class sde_import(osv.osv_memory):
         sql_lines_col, sql_lines_join, sql_lines_group, sql_lines_order = '', '', '', ''
         if with_lines:  # Additional data for the lines
             sql_lines_col = """,
-                m.id, -- 20
-                m.line_number, -- 21
-                pp.default_code, -- 22
-                pt.name, -- 23
-                pis.name, -- 24
-                pno.name, -- 25
+                m.id, -- 22
+                m.line_number, -- 23
+                pp.default_code, -- 24
+                pt.name, -- 25
+                pis.name, -- 26
+                pno.name, -- 27
                 CASE WHEN m.sale_line_id IS NOT NULL AND sl.product_id != m.product_id 
-                    THEN CONCAT(pp.default_code, ' [', pt.name, ']') ELSE '' END, -- 26
-                m.comment, -- 27
-                l.name, -- 28
-                m.product_qty, -- 29
-                lot.name, -- 30
-                m.expired_date, -- 31
-                pcc.cold_chain, -- 32 kc_check
-                pp.dangerous_goods, -- 33 dg_check
-                pp.controlled_substance, -- 34 np_check
-                pp.id, -- 35
-                l.id, -- 36
-                lot.id -- 37
+                    THEN CONCAT(pp.default_code, ' [', pt.name, ']') ELSE '' END, -- 28
+                m.comment, -- 29
+                l.name, -- 30
+                m.product_qty, -- 31
+                lot.name, -- 32
+                m.expired_date, -- 33
+                pcc.cold_chain, -- 34 kc_check
+                pp.dangerous_goods, -- 35 dg_check
+                pp.controlled_substance, -- 36 np_check
+                m.state, -- 37
+                pp.id, -- 38
+                l.id, -- 39
+                lot.id -- 40
             """
             sql_lines_join = """
                 LEFT JOIN product_product pp ON m.product_id = pp.id
@@ -772,7 +787,7 @@ class sde_import(osv.osv_memory):
             """
             sql_lines_group = """, m.id,  m.line_number, pp.default_code, pt.name, sl.product_id, pis.name, pno.name,
                 m.comment, l.name, m.product_qty, lot.name, m.expired_date, pcc.cold_chain, pp.dangerous_goods,
-                pp.controlled_substance, pp.id, l.id, lot.id"""
+                pp.controlled_substance, m.state, pp.id, l.id, lot.id"""
             sql_lines_order = ', m.line_number, m.id'
         cr.execute("""
             SELECT
@@ -794,8 +809,10 @@ class sde_import(osv.osv_memory):
                 addr.phone, -- 15
                 COUNT(DISTINCT(m.line_number)), -- 16
                 p.sde_updated, -- 17
-                MAX(a.log), -- 18
-                MAX(a.timestamp) -- 19
+                p.state, -- 18
+                p.line_state, -- 19
+                MAX(a.log), -- 20
+                MAX(a.timestamp) -- 21
                 """ + sql_lines_col + """
             FROM stock_move m
                 LEFT JOIN stock_picking p ON m.picking_id = p.id
@@ -806,10 +823,11 @@ class sde_import(osv.osv_memory):
                 LEFT JOIN res_partner_address addr ON p.address_id = addr.id
                 LEFT JOIN res_country co ON addr.country_id = co.id
                 """ + sql_lines_join + """
-            WHERE p.id IN %s AND m.state != 'cancel'
+            WHERE p.id IN %s
             GROUP BY p.id, p.name, p.date, p.origin, s.client_order_ref, inc.name, p.order_category,
                 s.delivery_requested_date, COALESCE(s.details, p.details), s.transport_type, s.priority,
-                s.ready_to_ship_date, par.name, addr.street, addr.street2, co.name, addr.phone, p.sde_updated""" + sql_lines_group + """
+                s.ready_to_ship_date, par.name, addr.street, addr.street2, co.name, addr.phone, p.sde_updated, p.state,
+                p.line_state""" + sql_lines_group + """
             ORDER BY p.id""" + sql_lines_order + """ OFFSET %s LIMIT %s
         """, (tuple(ids), offset, limit))
 
@@ -854,30 +872,33 @@ class sde_import(osv.osv_memory):
                     'delivery_address': partner_data and '; '.join(partner_data) or '',
                     'total_items': pick[16] or 0,
                     'updated_by_sde': pick[17] or False,
-                    'latest_log': pick[18] or '',
-                    'latest_log_date': pick[19] or '',
+                    'state': pick[18] and PICKING_STATE[pick[18]] or '',
+                    'line_state': pick[19] and PICKING_LINE_STATE[pick[19]] or '',
+                    'latest_log': pick[20] or '',
+                    'latest_log_date': pick[21] or '',
                 }
 
-            if with_lines and len(pick) > 21:
+            if with_lines and len(pick) > 22:
                 if 'move_lines' not in data[pick[0]]:
                     data[pick[0]]['move_lines'] = []
                 data[pick[0]]['move_lines'].append({
-                    'line_number': pick[21],
-                    'product_code': pick[22],
-                    'product_name': pick[23],
-                    'product_creator': pick[24],
-                    'nomen_main_type': pick[25],
-                    'changed_product_code': pick[26] or '',
-                    'comment': pick[27] or '',
-                    'source_location': pick[28],
-                    'qty_in_stock': self.get_qty_available(new_cr, uid, pick[35], pick[36], pick[37], context=context) or 0,
-                    'product_qty': pick[29] or 0,
+                    'line_number': pick[23],
+                    'product_code': pick[24],
+                    'product_name': pick[25],
+                    'product_creator': pick[26],
+                    'nomen_main_type': pick[27],
+                    'changed_product_code': pick[28] or '',
+                    'comment': pick[29] or '',
+                    'source_location': pick[30],
+                    'qty_in_stock': self.get_qty_available(new_cr, uid, pick[38], pick[39], pick[40], context=context) or 0,
+                    'qty': pick[31] or 0,
                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                    'prodlot_id': pick[30] or '',
-                    'expired_date': pick[31] or '',
-                    'kc_check': pick[32] or False,
-                    'dg_check': pick[33] == 'True' and _('True') or pick[33] == 'no_know' and _('Unknown') or _('False'),
-                    'np_check': pick[34] or False,
+                    'prodlot_id': pick[32] or '',
+                    'expired_date': pick[33] or '',
+                    'kc_check': pick[34] or False,
+                    'dg_check': pick[35] == 'True' and _('True') or pick[35] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': pick[36] or False,
+                    'state': pick[37] and MOVE_STATE[pick[37]] or '',
                 })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'pick',
@@ -1150,7 +1171,8 @@ class sde_import(osv.osv_memory):
                     final_msg = final_msg + _('. The lines number %s were ignored during the import') % (', '.join(imp_res),)
                 result['message'] = final_msg
 
-                pick_obj.write(cr, uid, out_id, {'sde_updated': True}, context=context)
+                # Set the OUT as sde_updated and remove the banner message
+                pick_obj.write(cr, uid, out_id, {'sde_updated': True, 'sde_update_msg': False}, context=context)
 
                 # Log the update
                 self.pool.get('sde.update.log').create(cr, 1, {'date': datetime.now(), 'doc_type': 'out', 'doc_ref': out['name']}, context=context)
@@ -1165,8 +1187,6 @@ class sde_import(osv.osv_memory):
                 error_msg = e.args and '. '.join(e.args) or e
             result.update({'error': True, 'message': error_msg})
         finally:
-            # Remove the banner message
-            pick_obj.write(cr, uid, out_ids, {'sde_update_msg': False}, context=context)
             if 'sde_flow' in context:
                 context.pop('sde_flow')
 
@@ -1287,24 +1307,25 @@ class sde_import(osv.osv_memory):
         sql_lines_col, sql_lines_join, sql_lines_group, sql_lines_order = '', '', '', ''
         if with_lines:  # Additional data for the lines
             sql_lines_col = """,
-                    m.id, -- 18
-                    m.line_number, -- 19
-                    pp.default_code, -- 20
-                    pt.name, -- 21
-                    pis.name, -- 22
-                    pno.name, -- 23
-                    m.comment, -- 24
-                    pas.name, -- 25
-                    k.composition_reference, -- 26
-                    l.name, -- 27
-                    l2.name, -- 28
-                    m.product_qty, -- 29
-                    u.name, -- 30
-                    lot.name, -- 31
-                    m.expired_date, -- 32
-                    pcc.cold_chain, -- 33 kc_check
-                    pp.dangerous_goods, -- 34 dg_check
-                    pp.controlled_substance -- 35 np_check
+                    m.id, -- 19
+                    m.line_number, -- 20
+                    pp.default_code, -- 21
+                    pt.name, -- 22
+                    pis.name, -- 23
+                    pno.name, -- 24
+                    m.comment, -- 25
+                    pas.name, -- 26
+                    k.composition_reference, -- 27
+                    l.name, -- 28
+                    l2.name, -- 29
+                    m.product_qty, -- 30
+                    u.name, -- 31
+                    lot.name, -- 33
+                    m.expired_date, -- 33
+                    pcc.cold_chain, -- 34 kc_check
+                    pp.dangerous_goods, -- 35 dg_check
+                    pp.controlled_substance, -- 36 np_check
+                    m.state -- 37
                 """
             sql_lines_join = """
                     LEFT JOIN product_product pp ON m.product_id = pp.id
@@ -1321,7 +1342,7 @@ class sde_import(osv.osv_memory):
                 """
             sql_lines_group = """, m.id, m.line_number, pp.default_code, pt.name, pis.name, pno.name, m.comment, pas.name,
                     k.composition_reference, l.name, l2.name, m.product_qty, u.name, lot.name, m.expired_date, pcc.cold_chain,
-                    pp.dangerous_goods, pp.controlled_substance"""
+                    pp.dangerous_goods, pp.controlled_substance, m.state"""
             sql_lines_order = ', m.line_number, m.id'
         cr.execute("""
                 SELECT
@@ -1341,8 +1362,9 @@ class sde_import(osv.osv_memory):
                     co.name, -- 13
                     addr.phone, -- 14
                     p.sde_updated, -- 15
-                    MAX(a.log), -- 16
-                    MAX(a.timestamp) -- 17
+                    p.state, -- 16
+                    MAX(a.log), -- 17
+                    MAX(a.timestamp) -- 18
                     """ + sql_lines_col + """
                 FROM stock_move m
                     LEFT JOIN stock_picking p ON m.picking_id = p.id
@@ -1353,9 +1375,10 @@ class sde_import(osv.osv_memory):
                     LEFT JOIN res_partner_address addr ON p.address_id = addr.id
                     LEFT JOIN res_country co ON addr.country_id = co.id
                     """ + sql_lines_join + """
-                WHERE p.id IN %s AND m.state != 'cancel'
+                WHERE p.id IN %s
                 GROUP BY p.id, p.name, p.origin, p.date, par.name, pb.name, p.order_category, rt.code, rt.name, p.details, 
-                    p.min_date, p.requestor, addr.street, addr.street2, co.name, addr.phone, p.sde_updated""" + sql_lines_group + """
+                    p.min_date, p.requestor, addr.street, addr.street2, co.name, addr.phone, p.sde_updated, p.state
+                    """ + sql_lines_group + """
                 ORDER BY p.id""" + sql_lines_order + """ OFFSET %s LIMIT %s
             """, (tuple(ids), offset, limit))
 
@@ -1398,32 +1421,34 @@ class sde_import(osv.osv_memory):
                     'requestor': out[10] or '',
                     'delivery_address': partner_data and '; '.join(partner_data) or '',
                     'updated_by_sde': out[15] or False,
-                    'latest_log': out[16] or '',
-                    'latest_log_date': out[17] or '',
+                    'state': out[16] and PICKING_STATE[out[16]] or '',
+                    'latest_log': out[17] or '',
+                    'latest_log_date': out[18] or '',
                 }
 
-            if with_lines and len(out) > 17:
+            if with_lines and len(out) > 18:
                 if 'move_lines' not in data[out[0]]:
                     data[out[0]]['move_lines'] = []
                 data[out[0]]['move_lines'].append({
-                    'line_number': out[19],
-                    'product_code': out[20],
-                    'product_name': out[21],
-                    'product_creator': out[22],
-                    'nomen_main_type': out[23],
-                    'comment': out[24] or '',
-                    'asset': out[25] or '',
-                    'kit': out[26] or '',
-                    'source_location': out[27],
-                    'destination_location': out[28],
-                    'product_qty': out[29] or 0,
+                    'line_number': out[20],
+                    'product_code': out[21],
+                    'product_name': out[22],
+                    'product_creator': out[23],
+                    'nomen_main_type': out[24],
+                    'comment': out[25] or '',
+                    'asset': out[26] or '',
+                    'kit': out[27] or '',
+                    'source_location': out[28],
+                    'destination_location': out[29],
+                    'product_qty': out[30] or 0,
                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                    'uom': out[30] or '',
-                    'prodlot_id': out[31] or '',
-                    'expired_date': out[32] or '',
-                    'kc_check': out[33] or False,
-                    'dg_check': out[34] == 'True' and _('True') or out[34] == 'no_know' and _('Unknown') or _('False'),
-                    'np_check': out[35] or False,
+                    'uom': out[31] or '',
+                    'prodlot_id': out[32] or '',
+                    'expired_date': out[33] or '',
+                    'kc_check': out[34] or False,
+                    'dg_check': out[35] == 'True' and _('True') or out[35] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': out[36] or False,
+                    'state': out[37] and MOVE_STATE[out[37]] or '',
                 })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'out',
@@ -1611,6 +1636,9 @@ class sde_import(osv.osv_memory):
                 else:
                     # Get the documents with the references given
                     pick_ids, pick_names = [], []
+                    states = ['assigned']
+                    if export_type == 'pick':
+                        states.append('confirmed')
                     if json_data.get('pick_list') and isinstance(json_data['pick_list'], list):
                         try:
                             json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
@@ -1618,15 +1646,16 @@ class sde_import(osv.osv_memory):
                             raise osv.except_osv(_('Error'),  _('One or more of the %s names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one')
                                                  % (doc,))
                         pick_names = json_data['pick_list']
-                        pick_ids = self.get_stock_picking_from_refs(cr, uid, pick_names, ['assigned'], pick_type, pick_subtype, context=context)
+                        pick_ids = self.get_stock_picking_from_refs(cr, uid, pick_names, states, pick_type, pick_subtype, context=context)
                     else:
-                        pick_domain = [('state', '=', 'assigned'), ('type', '=', pick_type), ('subtype', '=', pick_subtype)]
+                        pick_domain = [('state', 'in', states), ('type', '=', pick_type), ('subtype', '=', pick_subtype)]
                         if pick_type == 'out' and pick_subtype == 'picking':
                             pick_domain.append(('backorder_id', '!=', False))
                         pick_ids = pick_obj.search(cr, uid, pick_domain, context=context)
 
                     if not pick_ids:
-                        raise osv.except_osv(_('Error'), _('There is no Available %s to export') % (doc,))
+                        raise osv.except_osv(_('Error'), _('There is no %s %s to export')
+                                             % ('/'.join([PICKING_STATE[state] for state in states]), doc))
 
                     # Default number of lines per page is 100 if not specified
                     lines_per_page = 100
@@ -1650,59 +1679,61 @@ class sde_import(osv.osv_memory):
                     offset = 0
                     if pick_type == 'out' and pick_subtype == 'standard':
                         threaded_method = self.create_out_paginated_export
-                        for pick in self.get_out_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
-                            if not data.get(pick[0]):
+                        for out in self.get_out_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
+                            if not data.get(out[0]):
                                 partner_data = [_('Supply Responsible')]
                                 address_data = []
-                                if pick[11]:
-                                    address_data.append(pick[11])
-                                if pick[12]:
-                                    address_data.append(pick[12])
-                                if pick[13]:
-                                    address_data.append(pick[13])
+                                if out[11]:
+                                    address_data.append(out[11])
+                                if out[12]:
+                                    address_data.append(out[12])
+                                if out[13]:
+                                    address_data.append(out[13])
                                 if address_data:
                                     partner_data.append(' '.join(address_data))
-                                if pick[14]:
-                                    partner_data.append(pick[14])
+                                if out[14]:
+                                    partner_data.append(out[14])
 
-                                data[pick[0]] = {
-                                    'origin': pick[1] or '',
-                                    'date': pick[2],
-                                    'partner_name': pick[3] or '',
-                                    'backorder_name': pick[4] or '',
-                                    'order_category': pick[5] and LIST_ORDER_CATEGORY[pick[5]] or '',
-                                    'reason_type': pick[6] and pick[7] and '%s %s' % (pick[6], pick[7]) or '',
-                                    'details': pick[8] or '',
-                                    'expected_ship_date': pick[9] or '',
-                                    'requestor': pick[10] or '',
+                                data[out[0]] = {
+                                    'origin': out[1] or '',
+                                    'date': out[2],
+                                    'partner_name': out[3] or '',
+                                    'backorder_name': out[4] or '',
+                                    'order_category': out[5] and LIST_ORDER_CATEGORY[out[5]] or '',
+                                    'reason_type': out[6] and out[7] and '%s %s' % (out[6], out[7]) or '',
+                                    'details': out[8] or '',
+                                    'expected_ship_date': out[9] or '',
+                                    'requestor': out[10] or '',
                                     'delivery_address': partner_data and '; '.join(partner_data) or '',
-                                    'updated_by_sde': pick[15] or False,
-                                    'latest_log': pick[16] or '',
-                                    'latest_log_date': pick[17] or '',
+                                    'updated_by_sde': out[15] or False,
+                                    'state': out[16] and PICKING_STATE[out[16]] or '',
+                                    'latest_log': out[17] or '',
+                                    'latest_log_date': out[18] or '',
                                 }
 
-                            if with_lines and len(pick) > 17:
-                                if 'move_lines' not in data[pick[0]]:
-                                    data[pick[0]]['move_lines'] = []
-                                data[pick[0]]['move_lines'].append({
-                                    'line_number': pick[19],
-                                    'product_code': pick[20],
-                                    'product_name': pick[21],
-                                    'product_creator': pick[22],
-                                    'nomen_main_type': pick[23],
-                                    'comment': pick[24] or '',
-                                    'asset': pick[25] or '',
-                                    'kit': pick[26] or '',
-                                    'source_location': pick[27],
-                                    'destination_location': pick[28],
-                                    'product_qty': pick[29] or 0,
+                            if with_lines and len(out) > 18:
+                                if 'move_lines' not in data[out[0]]:
+                                    data[out[0]]['move_lines'] = []
+                                data[out[0]]['move_lines'].append({
+                                    'line_number': out[20],
+                                    'product_code': out[21],
+                                    'product_name': out[22],
+                                    'product_creator': out[23],
+                                    'nomen_main_type': out[24],
+                                    'comment': out[25] or '',
+                                    'asset': out[26] or '',
+                                    'kit': out[27] or '',
+                                    'source_location': out[28],
+                                    'destination_location': out[29],
+                                    'product_qty': out[30] or 0,
                                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                                    'uom': pick[30] or '',
-                                    'prodlot_id': pick[31] or '',
-                                    'expired_date': pick[32] or '',
-                                    'kc_check': pick[33] or False,
-                                    'dg_check': pick[34] == 'True' and _('True') or pick[34] == 'no_know' and _('Unknown') or _('False'),
-                                    'np_check': pick[35] or False,
+                                    'uom': out[31] or '',
+                                    'prodlot_id': out[32] or '',
+                                    'expired_date': out[33] or '',
+                                    'kc_check': out[34] or False,
+                                    'dg_check': out[35] == 'True' and _('True') or out[35] == 'no_know' and _('Unknown') or _('False'),
+                                    'np_check': out[36] or False,
+                                    'state': out[37] and MOVE_STATE[out[37]] or '',
                                 })
                     else:
                         threaded_method = self.create_picking_ticket_paginated_export
@@ -1735,30 +1766,33 @@ class sde_import(osv.osv_memory):
                                     'delivery_address': partner_data and '; '.join(partner_data) or '',
                                     'total_items': pick[16] or 0,
                                     'updated_by_sde': pick[17] or False,
-                                    'latest_log': pick[18] or '',
-                                    'latest_log_date': pick[19] or '',
+                                    'state': pick[18] and PICKING_STATE[pick[18]] or '',
+                                    'line_state': pick[19] and PICKING_LINE_STATE[pick[19]] or '',
+                                    'latest_log': pick[20] or '',
+                                    'latest_log_date': pick[21] or '',
                                 }
 
-                            if with_lines and len(pick) > 21:
+                            if with_lines and len(pick) > 22:
                                 if 'move_lines' not in data[pick[0]]:
                                     data[pick[0]]['move_lines'] = []
                                 data[pick[0]]['move_lines'].append({
-                                    'line_number': pick[21],
-                                    'product_code': pick[22],
-                                    'product_name': pick[23],
-                                    'product_creator': pick[24],
-                                    'nomen_main_type': pick[25],
-                                    'changed_product_code': pick[26] or '',
-                                    'comment': pick[27] or '',
-                                    'source_location': pick[28],
-                                    'qty_in_stock': self.get_qty_available(cr, uid, pick[35], pick[36], pick[37], context=context) or 0,
-                                    'product_qty': pick[29] or 0,
+                                    'line_number': pick[23],
+                                    'product_code': pick[24],
+                                    'product_name': pick[25],
+                                    'product_creator': pick[26],
+                                    'nomen_main_type': pick[27],
+                                    'changed_product_code': pick[28] or '',
+                                    'comment': pick[29] or '',
+                                    'source_location': pick[30],
+                                    'qty_in_stock': self.get_qty_available(cr, uid, pick[38], pick[39], pick[40], context=context) or 0,
+                                    'qty': pick[31] or 0,
                                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                                    'prodlot_id': pick[30] or '',
-                                    'expired_date': pick[31] or '',
-                                    'kc_check': pick[32] or False,
-                                    'dg_check': pick[33] == 'True' and _('True') or pick[33] == 'no_know' and _('Unknown') or _('False'),
-                                    'np_check': pick[34] or False,
+                                    'prodlot_id': pick[32] or '',
+                                    'expired_date': pick[33] or '',
+                                    'kc_check': pick[34] or False,
+                                    'dg_check': pick[35] == 'True' and _('True') or pick[35] == 'no_know' and _('Unknown') or _('False'),
+                                    'np_check': pick[36] or False,
+                                    'state': pick[37] and MOVE_STATE[pick[37]] or '',
                                 })
 
                     if nb_lines > lines_per_page:
