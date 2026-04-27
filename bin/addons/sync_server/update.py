@@ -31,6 +31,7 @@ import logging
 from tools.safe_eval import safe_eval as eval
 import threading
 from sync_common import add_sdref_column, fancy_integer
+from psycopg2 import IntegrityError
 
 class SavePullerCache(object):
     def __init__(self, model):
@@ -315,7 +316,7 @@ class update(osv.osv):
             cr.execute("SAVEPOINT update_creation")
             try:
                 return self.create(cr, uid, data, context=context)
-            except:
+            except IntegrityError:
                 cr.execute("ROLLBACK TO SAVEPOINT update_creation")
             else:
                 cr.execute("RELEASE SAVEPOINT update_creation")
