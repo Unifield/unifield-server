@@ -84,7 +84,7 @@
         </initialize>
 
         <paraStyle name="Standard" fontName="Helvetica" fontSize="7.0" spaceAfter="10"/>
-        
+
 		<!-- Header font style -->
         <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
@@ -435,7 +435,7 @@
                     <para style="TextInformation1"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation1"> </para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.partner_id.tax_identification_number and 'TIN : %s' % objects[0].partner_address_id.partner_id.tax_identification_number or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation1"> </para>
@@ -466,7 +466,7 @@
                     <para style="TextInformation1"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation1"> </para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.partner_id.business_registration_number and 'RCCM : %s' % objects[0].partner_address_id.partner_id.business_registration_number or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation1"> </para>
@@ -766,7 +766,7 @@
                 </td>
             </tr>
         </blockTable>
- 
+
         <blockTable colWidths="122.0,170.0,170.0,170.0,169.0,169.0" style="StatusTable">
             <tr>
                 <td>
@@ -872,5 +872,5 @@
         </blockTable>
 
     </story>
-    
+
 </document>

@@ -157,6 +157,8 @@ class purchase_order(osv.osv):
         'transport_customs_fees_ids': fields.function(_get_transport_docs_customs, method=True, type='one2many', relation='transport.order.customs.fees', string='Inbound/Outbound Transport Orders for Customs Fees'),
         'transport_transport_fees_ids': fields.function(_get_transport_docs_transport, method=True, type='one2many', relation='transport.order.transport.fees', string='Inbound/Outbound Transport Orders for Transport Fees'),
         'transport_active': fields.function(misc.get_transport_active, method=True, type='boolean', string='Transport Management active'),
+        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15, string='Supplier TIN', store=False, readonly=True),
+        'business_registration_number': fields.related('partner_id', 'business_registration_number', type='char', size=15, string='Supplier RCCM', store=False, readonly=True),
     }
 
     _defaults = {
