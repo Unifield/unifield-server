@@ -62,9 +62,9 @@ class patch_scripts(osv.osv):
     # UF41.0
     def us_15197_replace_product_id_into_counter(self, cr, uid, *a, **b):
         """
-        Count the number of times a product is merged instead of storing the product info
+        Count the number of times a product is merged into instead of storing the product info
         """
-        cr.execute("""UPDATE product_product SET merge_from_count = 1 WHERE replace_product_id IS NOT NULL""")
+        cr.execute("""UPDATE product_product SET nb_merge_from = 1 WHERE replace_product_id IS NOT NULL""")
         return True
 
     def us_15072_po_detail(self, cr, uid, *a, **b):

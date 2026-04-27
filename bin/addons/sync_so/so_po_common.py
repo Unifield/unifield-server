@@ -368,7 +368,7 @@ class so_po_common(osv.osv_memory):
         return header_result
 
     def check_merge(self, cr, uid, prod_id):
-        local_merged = self.pool.get('product.product').search(cr, uid, [('replace_product_ids', '=', prod_id), ('active', 'in', ['t', 'f'])])
+        local_merged = self.pool.get('product.product').search(cr, uid, [('replace_product_id', '=', prod_id), ('active', 'in', ['t', 'f'])])
         if local_merged:
             prod_id = local_merged[0]
 
