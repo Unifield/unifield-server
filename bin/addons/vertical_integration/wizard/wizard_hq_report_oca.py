@@ -113,6 +113,7 @@ class wizard_export_vi_finance(osv.osv_memory):
                         year=strptime(period_state.period_id.date_start, '%Y-%m-%d').tm_year,
                         month=period_state.period_id.number or 0,
                         date=time.strftime('%Y%m%d%H%M%S'),
+                        instance3char=period_state.instance_id.code[0:3],
                     )
                     if period_state.already_exported:
                         file_name = 'reopen_%s' % file_name

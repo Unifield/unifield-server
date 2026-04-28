@@ -292,7 +292,7 @@ class hq_report_ubuntu(report_sxw.report_sxw):
             if not rows:
                 break
             for row in rows:
-                if row['object'] == 'account.analytic.line':
+                if row['object'] == 'account_analytic_line':
                     ajis.add(row['id'])
                     amls.add(row['account_move_line_id'])
                 else:
@@ -312,7 +312,7 @@ class hq_report_ubuntu(report_sxw.report_sxw):
 
 
                 kes_rate = 0
-                if rate:
+                if row.get('kes_rate') and rate:
                     kes_rate = round(row['kes_rate'] / rate, 6)
 
                 line = [

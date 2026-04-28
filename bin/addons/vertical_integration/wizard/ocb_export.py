@@ -213,6 +213,10 @@ class ubuntu_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
     _name = 'ubuntu.export.wizard'
     _inherit = 'ocb.export.wizard'
 
+    _export_filename = '{instance3char}_Y{year}P{month:02d}_formatted_data_D365_import_{date}.zip'
+    _export_report_name = 'report.hq.ubuntu'
+
+
     def button_export(self, cr, uid, ids, context=None):
         report_name = 'hq.ubuntu'
         period_name = ''
