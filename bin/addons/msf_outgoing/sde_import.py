@@ -891,7 +891,7 @@ class sde_import(osv.osv_memory):
                     'comment': pick[29] or '',
                     'source_location': pick[30],
                     'qty_in_stock': self.get_qty_available(new_cr, uid, pick[38], pick[39], pick[40], context=context) or 0,
-                    'qty': pick[31] or 0,
+                    'product_qty': pick[31] or 0,
                     'qty_to_process': None,  # Left empty to force SDE to change the value
                     'prodlot_id': pick[32] or '',
                     'expired_date': pick[33] or '',
@@ -1785,7 +1785,7 @@ class sde_import(osv.osv_memory):
                                     'comment': pick[29] or '',
                                     'source_location': pick[30],
                                     'qty_in_stock': self.get_qty_available(cr, uid, pick[38], pick[39], pick[40], context=context) or 0,
-                                    'qty': pick[31] or 0,
+                                    'product_qty': pick[31] or 0,
                                     'qty_to_process': None,  # Left empty to force SDE to change the value
                                     'prodlot_id': pick[32] or '',
                                     'expired_date': pick[33] or '',
