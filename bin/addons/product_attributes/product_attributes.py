@@ -34,9 +34,6 @@ import requests
 from . import unidata_sync
 import json
 
-LIMIT_NSL_PROD_MERGE = 5
-
-
 class product_section_code(osv.osv):
     _name = "product.section.code"
     _rec_name = 'section'
@@ -662,9 +659,9 @@ class product_attributes(osv.osv):
             if arg[1] != '=':
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
             if arg[2]:
-                dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('nb_merge_from', '=', 0)]
+                dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
             else:
-                dom = [('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'), ('nb_merge_from', '<', LIMIT_NSL_PROD_MERGE)]
+                dom = [('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local')]
 
         return dom
 
@@ -718,10 +715,10 @@ class product_attributes(osv.osv):
             dom = [('id', 'in', ids), ('international_status', '=', 'UniData')]
             if context.get('sync_update_execution'):
                 # UD prod deactivated in coordo + merge + sync : proj does not see the deactivation
-                dom += [('nb_merge_from', '=', 0), ('active', 'in', ['t', 'f'])]
+                dom += [('active', 'in', ['t', 'f'])]
             else:
-                dom += ['|', '&', '&', ('nb_merge_from', '<', LIMIT_NSL_PROD_MERGE), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'),
-                        '&', '&', ('nb_merge_from', '=', 0), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
+                dom += ['|', '&', ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'),
+                        '&', ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
             for p_id in self.search(cr, uid, dom, context=context):
                 res[p_id] = True
         return res
@@ -3539,10 +3536,9 @@ class product_attributes(osv.osv):
         # generate terms on translations export
         [_('Merge Product non-kept product'), _('Merge Product kept product')]
 
-
+        _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
+        _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
         if merge_type == 'section':
-            _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
-            _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
             if not context.get('sync_update_execution') or instance_level == 'coordo':
                 merge_data = {'new_product_id': kept_id, 'old_product_id': old_prod_id, 'level': 'section'}
                 new_ctx = context.copy()
