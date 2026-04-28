@@ -442,7 +442,29 @@
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s118"/>
-</Row>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="12">
+    <Cell ss:MergeAcross="1" ss:StyleID="s124"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s16"><Data ss:Type="String">${_('Destination Location:')|x}</Data></Cell>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s118"/>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="12">
+    <Cell ss:MergeAcross="1" ss:StyleID="s124"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${p['ppl'].ext_cu and p['ppl'].ext_cu.name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s118"/>
+   </Row>
    % if not p['pf']:
    <Row>
        <Cell ss:StyleID="NoPack" ss:MergeAcross="11"><Data ss:Type="String">${_('NO PACK FAMILIES IN THIS PPL')|x}</Data></Cell>
