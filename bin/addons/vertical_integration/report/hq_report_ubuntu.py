@@ -298,7 +298,8 @@ class hq_report_ubuntu(report_sxw.report_sxw):
                 else:
                     amls.add(row['id'])
 
-                if row['journal_type'] in ('cur_adj', 'accrual', 'revaluation'):
+                # general is used as accrual for AJIs
+                if row['journal_type'] in ('cur_adj', 'accrual', 'revaluation', 'general'):
                     rate = 1
                     debit = row['func_debit']
                     credit = row['func_credit']
