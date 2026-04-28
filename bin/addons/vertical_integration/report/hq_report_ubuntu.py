@@ -256,7 +256,7 @@ class hq_report_ubuntu(report_sxw.report_sxw):
             ('G/L Account', ),
             ('UF Budget Line', ),
             ('Country Program', ),
-            ('Cost Centre', ),
+            ('Cost Center', ),
             ('Funding Pool', False) ,
             ('Third Party', ),
             ('Employee ID', ),
