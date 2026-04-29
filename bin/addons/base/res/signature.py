@@ -294,10 +294,12 @@ class signature(osv.osv):
         'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
         'is_signee_user': fields.function(_get_is_signee_user, type='boolean', string='Is the current user Signee Only ?', method=1),
         'email_signature_notif_active': fields.function(_get_email_signature_notif_active, type='boolean', string='Email Notification for Signature is Active', method=1),
+        'email_signature_fully_signed': fields.boolean('An email has been sent because the document is fully signed', readonly=True),
     }
 
     _defaults = {
         'doc_locked_for_sign': False,
+        'email_signature_fully_signed': False,
     }
 
     _sql_constraints = [
@@ -487,7 +489,7 @@ class signature_object(osv.osv):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:
-                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed', 'email_log_ids']:
+                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed', 'email_log_ids', 'email_signature_fully_signed']:
                         if fvg.get('fields') and to_remove in fvg['fields']:
                             del fvg['fields'][to_remove]
                     parent_node = fields[0].getparent()
@@ -542,7 +544,7 @@ class signature_object(osv.osv):
         fields_to_reset = [
             'signature_id', 'signature_line_ids', 'signature_state', 'signed_off_line', 'signature_is_closed',
             'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model',
-            'doc_locked_for_sign', 'email_log_ids'
+            'doc_locked_for_sign', 'email_log_ids', 'email_signature_fully_signed'
         ]
         to_del = []
         for ftr in fields_to_reset:

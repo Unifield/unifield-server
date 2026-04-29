@@ -421,6 +421,10 @@ UniField Team""") % (user_signl.get('user_name', _('UniField user')), first_line
             if expired_sign_user_names:
                 self.email_expired_signatures(cr, uid, ids, expired_sign_user_names, context=context)
 
+            # Send an email for fully signed documents to document creators
+            if not is_reminder:
+                self.email_fully_signed_doc(cr, uid, ids, sql_doc_wheres, context=context)
+
         return True
 
     def email_expired_signatures(self, cr, uid, ids, usernames, context=None):
@@ -473,6 +477,178 @@ UniField Team""") % (exp_sign_user_list,)
                     'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
                 }
                 self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+
+        return True
+
+    def email_fully_signed_doc(self, cr, uid, ids, sql_doc_wheres, context=None):
+        if context is None:
+            context = {}
+
+        if not sql_doc_wheres:
+            raise osv.except_osv(_('Error'), _('There is no active Document Applicability type selected in the Email Notification for Signatures'))
+
+        group_obj = self.pool.get('res.groups')
+        user_obj = self.pool.get('res.users')
+
+        group_supply_ids = group_obj.search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
+        group_finance_ids = group_obj.search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
+        sign_doc_creator_supply_ids, sign_doc_creator_finance_ids = [], []
+        if group_supply_ids:
+            sign_doc_creator_supply_ids = user_obj.search(cr, uid, [('id', '!=', 1), ('user_email', '!=', False),
+                                                                    ('groups_id', '=', group_supply_ids[0])], context=context)
+        if group_finance_ids:
+            sign_doc_creator_finance_ids = user_obj.search(cr, uid, [('id', '!=', 1), ('user_email', '!=', False),
+                                                                     ('groups_id', '=', group_finance_ids[0])], context=context)
+        if sign_doc_creator_supply_ids or sign_doc_creator_finance_ids:
+            name_doc_creators_supply, email_doc_creators_supply = [], []
+            for user in user_obj.read(cr, uid, sign_doc_creator_supply_ids, ['name', 'user_email'], context=context):
+                name_doc_creators_supply.append(user['name'])
+                email_doc_creators_supply.append(user['user_email'])
+            name_doc_creators_finance, email_doc_creators_finance = [], []
+            for user in user_obj.read(cr, uid, sign_doc_creator_finance_ids, ['name', 'user_email'], context=context):
+                name_doc_creators_finance.append(user['name'])
+                email_doc_creators_finance.append(user['user_email'])
+
+            cr.execute("""
+                SELECT sign.id, sign.signature_res_model,
+                       COALESCE(s.name, po.name, p.name, acbs.name, inv.number, inv.origin, inv.supplier_reference, phys.ref, NULL),
+                       s.procurement_request, p.type, p.subtype, acj.type
+                FROM signature sign
+                    LEFT JOIN sale_order s ON sign.signature_res_id = s.id AND sign.signature_res_model = 'sale.order'
+                    LEFT JOIN purchase_order po ON sign.signature_res_id = po.id AND sign.signature_res_model = 'purchase.order'
+                    LEFT JOIN res_partner popar ON po.partner_id = popar.id
+                    LEFT JOIN stock_picking p ON sign.signature_res_id = p.id AND sign.signature_res_model = 'stock.picking'
+                    LEFT JOIN account_bank_statement acbs ON sign.signature_res_id = acbs.id AND sign.signature_res_model = 'account.bank.statement'
+                    LEFT JOIN account_journal acj ON acbs.journal_id = acj.id
+                    LEFT JOIN account_invoice inv ON sign.signature_res_id = inv.id AND sign.signature_res_model = 'account.invoice'
+                    LEFT JOIN account_journal invj ON inv.journal_id = invj.id
+                    LEFT JOIN physical_inventory phys ON sign.signature_res_id = phys.id AND sign.signature_res_model = 'physical.inventory'
+                WHERE sign.signature_state = 'signed' AND email_signature_fully_signed = 'f'
+                    AND (""" + ' OR '.join(sql_doc_wheres) + """)
+                GROUP BY sign.id, sign.signature_res_model, sign.signature_res_id, s.procurement_request, s.name, 
+                    po.name, p.name, acbs.name, inv.number, inv.origin, inv.supplier_reference, phys.ref, p.type, 
+                    p.subtype, acj.type
+            """)
+
+            fo_names, ir_names, po_names, in_names, int_names, out_names, pick_names = [], [], [], [], [], [], []
+            cash_names, bank_names, cheque_names, inv_names = [], [], [], []
+            phys_names = []
+            for sign in cr.fetchall():
+                if sign[1] == 'sale.order' and sign[3] is not None:
+                    if not sign[3]:
+                        fo_names.append(sign[2])
+                    else:
+                        ir_names.append(sign[2])
+                elif sign[1] == 'purchase.order':
+                    po_names.append(sign[2])
+                elif sign[1] == 'stock.picking' and sign[4] is not None and sign[5] is not None:
+                    if sign[4] == 'in' and sign[5] == 'standard':
+                        in_names.append(sign[2])
+                    elif sign[4] == 'internal' and sign[5] == 'standard':
+                        int_names.append(sign[2])
+                    elif sign[4] == 'out' and sign[5] == 'standard':
+                        out_names.append(sign[2])
+                    elif sign[4] == 'out' and sign[5] == 'picking':
+                        pick_names.append(sign[2])
+                elif sign[1] == 'account.bank.statement' and sign[6] is not None:
+                    if sign[6] == 'cash':
+                        cash_names.append(sign[2])
+                    elif sign[6] == 'bank':
+                        bank_names.append(sign[2])
+                    elif sign[6] == 'cheque':
+                        cheque_names.append(sign[2])
+                elif sign[1] == 'account.invoice':
+                    inv_names.append(sign[2])
+                elif sign[1] == 'physical.inventory':
+                    phys_names.append(sign[2])
+
+            docs_string_supply, docs_string_finance = """""", """"""
+            if fo_names:
+                docs_string_supply += _('\nDocument type: Field Orders (FO):')
+                for doc_name in fo_names:
+                    docs_string_supply += '\n  • %s' % (doc_name,)
+            if ir_names:
+                docs_string_supply += _('\nDocument type: Internal Requests (IR):')
+                for doc_name in ir_names:
+                    docs_string_supply += '\n  • %s' % (doc_name,)
+            if po_names:
+                docs_string_supply += _('\nDocument type: Purchase Orders (PO):')
+                for doc_name in po_names:
+                    docs_string_supply += '\n  • %s' % (doc_name,)
+            if in_names:
+                docs_string_supply += _('\nDocument type: Incoming Shipments (IN):')
+                for doc_name in in_names:
+                    docs_string_supply += '\n  • %s' % (doc_name,)
+            if int_names:
+                docs_string_supply += _('\nDocument type: Internal Moves (INT):')
+                for doc_name in int_names:
+                    docs_string_supply += '\n  • %s' % (doc_name,)
+            if out_names:
+                docs_string_supply += _('\nDocument type: Delivery Orders (OUT):')
+                for doc_name in out_names:
+                    docs_string_supply += '\n  • %s' % (doc_name,)
+            if pick_names:
+                docs_string_supply += _('\nDocument type: Picking Lists & Picking Tickets (PICK):')
+                for doc_name in pick_names:
+                    docs_string_supply += '\n  • %s' % (doc_name,)
+            if cash_names:
+                docs_string_finance += _('\nDocument type: Cash Registers:')
+                for doc_name in cash_names:
+                    docs_string_finance += '\n  • %s' % (doc_name,)
+            if bank_names:
+                docs_string_finance += _('\nDocument type: Bank Registers:')
+                for doc_name in bank_names:
+                    docs_string_finance += '\n  • %s' % (doc_name,)
+            if cheque_names:
+                docs_string_finance += _('\nDocument type: Cheque Registers:')
+                for doc_name in cheque_names:
+                    docs_string_finance += '\n  • %s' % (doc_name,)
+            if inv_names:
+                docs_string_finance += _('\nDocument type: Supplier Invoices (SI):')
+                for doc_name in inv_names:
+                    docs_string_finance += '\n  • %s' % (doc_name,)
+            if phys_names:
+                docs_string_supply += _('\nDocument type: Physical Inventories (PI):')
+                docs_string_finance += _('\nDocument type: Physical Inventories (PI):')
+                for doc_name in 'phys_names':
+                    docs_string_supply += '\n  • %s' % (doc_name,)
+                    docs_string_finance += '\n  • %s' % (doc_name,)
+
+            # if docs_string_supply:
+            #     try:
+            #         email_subject = _('UniField - Expired signatures for users with pending signatures')
+            #         email_body = _("""Dear Document Creator,
+            #
+            #     The following users have pending electronic signatures in UniField but can not sign because their signature is expired:%s
+            #
+            #     Please ensure that the necessary actions are taken to resolve the issue.
+            #
+            #     This is an automated notification. If you have already resolved the issue after this e-mail was generated, no further action is required.
+            #
+            #     Thank you,
+            #     UniField Team""") % (exp_sign_user_list,)
+            #
+            #         tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators)
+            #     except Exception as e:
+            #         if isinstance(e, osv.except_osv):
+            #             error_msg = e.value
+            #         else:
+            #             error_msg = e.args and '. '.join(e.args) or e
+            #     finally:
+            #         msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or \
+            #               _('The signature of %s is expired. The email was sent to users in the "Sign_document_creator_finance" and "Sign_document_creator_supply" successfully') % (
+            #                   ', '.join(usernames)),
+            #         email_log_vals = {
+            #             'recipients': '; '.join(email_doc_creators),
+            #             'recipient_names': '; '.join(name_doc_creators),
+            #             'state': error_msg and 'error' or 'success',
+            #             'result': msg,
+            #             'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+            #             'date_sent': datetime.now(),
+            #             'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+            #         }
+            #         self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+
 
         return True
 
