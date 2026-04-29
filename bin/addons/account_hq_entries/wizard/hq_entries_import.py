@@ -262,7 +262,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Document date (document_date), Amount (amount),
         # and Account (account_id) and 3rd Party and CC
         unicity_fields = [
-            'name', 'ref', 'date', 'document_date', 'amount', 'account_id',
+            'name', 'ref', 'document_date', 'amount', 'account_id',
             'cost_center_id',
         ]
 
