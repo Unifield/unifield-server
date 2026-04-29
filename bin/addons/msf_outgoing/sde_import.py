@@ -1152,14 +1152,21 @@ class sde_import(osv.osv_memory):
                 if not json_data.get('move_lines'):
                     raise osv.except_osv(_('Error'), _('The main key "move_lines" is mandatory and should not be empty'))
 
-                # Reset the existing saved data before import
-                draft_out_proc_ids = out_proc_obj.search(cr, uid, [('picking_id', '=', out_id), ('draft', '=', True)], context=context)
-                if draft_out_proc_ids:
-                    out_proc_obj.do_reset(cr, uid, draft_out_proc_ids, context=context)
-
-                # Create outgoing.delivery.processor and its lines
-                out_proc_id = out_proc_obj.create(cr, uid, {'picking_id': out_id}, context=context)
-                out_proc_obj.create_lines(cr, uid, out_proc_id, context=context)
+                # Get the existing saved data
+                out_proc_ids = out_proc_obj.search(cr, uid, [('picking_id', '=', out_id), ('draft', '=', True)], context=context)
+                if not out_proc_ids:
+                    # Create outgoing.delivery.processor and its lines
+                    out_proc_id = out_proc_obj.create(cr, uid, {'picking_id': out_id}, context=context)
+                    out_proc_obj.create_lines(cr, uid, out_proc_id, context=context)
+                else:
+                    out_proc_id = out_proc_ids[0]
+                    # Reset the data of the imported lines on the existing wizard
+                    lines_to_reset = []
+                    for move_data in json_data['move_lines']:
+                        if isinstance(move_data.get('line_number', False), int) and move_data['line_number'] not in lines_to_reset:
+                            lines_to_reset.append(move_data['line_number'])
+                    if lines_to_reset:
+                        self.reset_out_proc_lines(cr, uid, [out_proc_id], lines_to_reset, context=context)
 
                 # Import the data
                 wiz_id = wiz_imp_obj.create(cr, uid, {'processor_id': out_proc_id, 'json_text': json_text}, context=context)
@@ -1492,6 +1499,47 @@ class sde_import(osv.osv_memory):
                 new_cr.close(True)
                 if error_msg:
                     break
+
+        return True
+
+    def reset_out_proc_lines(self, cr, uid, ids, line_numbers, context=None):
+        '''
+        For each move of the Outgoing Delivery Processor whose line_number is in the import, reset as much data as possible:
+            - Merge the quantities of split lines and delete the splits
+            - Remove any asset, kit and BN/ED info
+            - Sum the quantities and set the quantity to process at 0
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        proc_move_obj = self.pool.get('outgoing.delivery.move.processor')
+
+        ln_sql = ""
+        if line_numbers:
+            if len(line_numbers) == 1:
+                ln_sql = " AND line_number = %s" % (line_numbers[0],)
+            else:
+                ln_sql = " AND line_number IN %s" % (tuple(line_numbers),)
+        cr.execute("""
+           SELECT id, wizard_id, line_number, ordered_quantity
+           FROM outgoing_delivery_move_processor WHERE wizard_id IN %s AND ordered_quantity != 0
+        """ + ln_sql, (tuple(ids),))
+        data = {}
+        to_del = []
+        for x in cr.fetchall():
+            key = (x[1], x[2])
+            if key not in data:
+                data[key] = {'ordered_quantity': 0, 'master': x[0]}
+            else:
+                to_del.append(x[0])
+            data[key]['ordered_quantity'] += x[3]
+        for key in data:
+            proc_move_vals = {'ordered_quantity': data[key]['ordered_quantity'], 'quantity': 0, 'asset': False,
+                              'composition_list_id': False, 'prodlot_id': False, 'expired_date': False}
+            proc_move_obj.write(cr, uid, data[key]['master'], proc_move_vals, context=context)
+        proc_move_obj.unlink(cr, uid, to_del, context=context)
 
         return True
 
