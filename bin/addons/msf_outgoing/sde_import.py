@@ -1636,6 +1636,9 @@ class sde_import(osv.osv_memory):
                 else:
                     # Get the documents with the references given
                     pick_ids, pick_names = [], []
+                    states = ['assigned']
+                    if export_type ==  'pick':
+                        states.append('confirmed')
                     if json_data.get('pick_list') and isinstance(json_data['pick_list'], list):
                         try:
                             json_data['pick_list'] = [str(pick_name).strip() for pick_name in json_data['pick_list']]
@@ -1643,15 +1646,16 @@ class sde_import(osv.osv_memory):
                             raise osv.except_osv(_('Error'),  _('One or more of the %s names in the key "pick_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one')
                                                  % (doc,))
                         pick_names = json_data['pick_list']
-                        pick_ids = self.get_stock_picking_from_refs(cr, uid, pick_names, ['assigned'], pick_type, pick_subtype, context=context)
+                        pick_ids = self.get_stock_picking_from_refs(cr, uid, pick_names, states, pick_type, pick_subtype, context=context)
                     else:
-                        pick_domain = [('state', '=', 'assigned'), ('type', '=', pick_type), ('subtype', '=', pick_subtype)]
+                        pick_domain = [('state', 'in', states), ('type', '=', pick_type), ('subtype', '=', pick_subtype)]
                         if pick_type == 'out' and pick_subtype == 'picking':
                             pick_domain.append(('backorder_id', '!=', False))
                         pick_ids = pick_obj.search(cr, uid, pick_domain, context=context)
 
                     if not pick_ids:
-                        raise osv.except_osv(_('Error'), _('There is no Available %s to export') % (doc,))
+                        raise osv.except_osv(_('Error'), _('There is no %s %s to export')
+                                             % ('/'.join([PICKING_STATE[state] for state in states]), doc))
 
                     # Default number of lines per page is 100 if not specified
                     lines_per_page = 100
