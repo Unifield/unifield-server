@@ -295,11 +295,13 @@ class signature(osv.osv):
         'is_signee_user': fields.function(_get_is_signee_user, type='boolean', string='Is the current user Signee Only ?', method=1),
         'email_signature_notif_active': fields.function(_get_email_signature_notif_active, type='boolean', string='Email Notification for Signature is Active', method=1),
         'email_signature_fully_signed': fields.boolean('An email has been sent because the document is fully signed', readonly=True),
+        'email_signature_manual_notif': fields.boolean('An email has been sent because of a manual request', readonly=True),
     }
 
     _defaults = {
         'doc_locked_for_sign': False,
         'email_signature_fully_signed': False,
+        'email_signature_manual_notif': False,
     }
 
     _sql_constraints = [
@@ -489,7 +491,9 @@ class signature_object(osv.osv):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:
-                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed', 'email_log_ids', 'email_signature_fully_signed']:
+                    fields_to_remove = ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed',
+                                        'email_log_ids', 'email_signature_fully_signed', 'email_signature_manual_notif']
+                    for to_remove in fields_to_remove:
                         if fvg.get('fields') and to_remove in fvg['fields']:
                             del fvg['fields'][to_remove]
                     parent_node = fields[0].getparent()
@@ -544,7 +548,7 @@ class signature_object(osv.osv):
         fields_to_reset = [
             'signature_id', 'signature_line_ids', 'signature_state', 'signed_off_line', 'signature_is_closed',
             'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model',
-            'doc_locked_for_sign', 'email_log_ids', 'email_signature_fully_signed'
+            'doc_locked_for_sign', 'email_log_ids', 'email_signature_fully_signed', 'email_signature_manual_notif'
         ]
         to_del = []
         for ftr in fields_to_reset:
@@ -765,6 +769,8 @@ Thank you,
 UniField Team""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name, sign_expiry_text)
 
                         tools.email_send(False, [signl_data[1]], email_subject, email_body)
+
+                        self.write(cr, uid, doc.id, {'email_signature_manual_notif': True}, context=context)
                     except Exception as e:
                         if isinstance(e, osv.except_osv):
                             error_msg = e.value
@@ -1002,6 +1008,10 @@ class signature_line(osv.osv):
         desc = "Signature added on role %s" % (sign_line.name, )
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, '', new, 'create', context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
+
+        # Set the flag to False so specific email can be re-sent on the same signature
+        self.pool.get('signature').write(cr, root_uid, [sign_line.signature_id.id], {'email_signature_manual_notif': False}, context=context)
+
         return True
 
     def super_unsign_confim(self, cr, uid, ids, context=None, super_unsign_wizard=False):
@@ -1109,6 +1119,10 @@ class signature_line(osv.osv):
                           'doc_state': False, 'first_reminder_sent_date': False, 'latest_reminder_sent_date': False}
         self.write(cr, root_uid, ids, sign_line_vals, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
+
+        # Set the flags to False so specific email can be re-sent on the same signature
+        sign_vals = {'email_signature_fully_signed': False, 'email_signature_manual_notif': False}
+        self.pool.get('signature').write(cr, root_uid, [sign_line.signature_id.id], sign_vals, context=context)
 
         return True
 

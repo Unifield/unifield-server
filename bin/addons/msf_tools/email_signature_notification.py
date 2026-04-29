@@ -466,7 +466,7 @@ UniField Team""") % (exp_sign_user_list,)
                     error_msg = e.args and '. '.join(e.args) or e
             finally:
                 msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or\
-                      _('The signature of %s is expired. The email was sent to users in the "Sign_document_creator_finance" and "Sign_document_creator_supply" successfully') % (', '.join(usernames)),
+                      _('The signature of %s is expired. The email was sent to users in the "Sign_document_creator_finance" and "Sign_document_creator_supply" groups successfully') % (', '.join(usernames)),
                 email_log_vals = {
                     'recipients': '; '.join(email_doc_creators),
                     'recipient_names': '; '.join(name_doc_creators),
@@ -481,6 +481,10 @@ UniField Team""") % (exp_sign_user_list,)
         return True
 
     def email_fully_signed_doc(self, cr, uid, ids, sql_doc_wheres, context=None):
+        '''
+        Send up to 2 mails to users in the Sign_document_creator_supply or Sign_document_creator_finance group to list
+        the documents which have been fully signed but haven't had this email sent yet
+        '''
         if context is None:
             context = {}
 
@@ -490,8 +494,8 @@ UniField Team""") % (exp_sign_user_list,)
         group_obj = self.pool.get('res.groups')
         user_obj = self.pool.get('res.users')
 
-        group_supply_ids = group_obj.search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
-        group_finance_ids = group_obj.search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
+        group_supply_ids = group_obj.search(cr, uid, [('name', '=', 'Sign_document_creator_supply')])
+        group_finance_ids = group_obj.search(cr, uid, [('name', '=', 'Sign_document_creator_finance')])
         sign_doc_creator_supply_ids, sign_doc_creator_finance_ids = [], []
         if group_supply_ids:
             sign_doc_creator_supply_ids = user_obj.search(cr, uid, [('id', '!=', 1), ('user_email', '!=', False),
@@ -530,10 +534,12 @@ UniField Team""") % (exp_sign_user_list,)
                     p.subtype, acj.type
             """)
 
+            sign_ids = []
             fo_names, ir_names, po_names, in_names, int_names, out_names, pick_names = [], [], [], [], [], [], []
             cash_names, bank_names, cheque_names, inv_names = [], [], [], []
             phys_names = []
             for sign in cr.fetchall():
+                sign_ids.append(sign[0])
                 if sign[1] == 'sale.order' and sign[3] is not None:
                     if not sign[3]:
                         fo_names.append(sign[2])
@@ -614,41 +620,79 @@ UniField Team""") % (exp_sign_user_list,)
                     docs_string_supply += '\n  • %s' % (doc_name,)
                     docs_string_finance += '\n  • %s' % (doc_name,)
 
-            # if docs_string_supply:
-            #     try:
-            #         email_subject = _('UniField - Expired signatures for users with pending signatures')
-            #         email_body = _("""Dear Document Creator,
-            #
-            #     The following users have pending electronic signatures in UniField but can not sign because their signature is expired:%s
-            #
-            #     Please ensure that the necessary actions are taken to resolve the issue.
-            #
-            #     This is an automated notification. If you have already resolved the issue after this e-mail was generated, no further action is required.
-            #
-            #     Thank you,
-            #     UniField Team""") % (exp_sign_user_list,)
-            #
-            #         tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators)
-            #     except Exception as e:
-            #         if isinstance(e, osv.except_osv):
-            #             error_msg = e.value
-            #         else:
-            #             error_msg = e.args and '. '.join(e.args) or e
-            #     finally:
-            #         msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or \
-            #               _('The signature of %s is expired. The email was sent to users in the "Sign_document_creator_finance" and "Sign_document_creator_supply" successfully') % (
-            #                   ', '.join(usernames)),
-            #         email_log_vals = {
-            #             'recipients': '; '.join(email_doc_creators),
-            #             'recipient_names': '; '.join(name_doc_creators),
-            #             'state': error_msg and 'error' or 'success',
-            #             'result': msg,
-            #             'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
-            #             'date_sent': datetime.now(),
-            #             'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
-            #         }
-            #         self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+            instance_name = user_obj.browse(cr, uid, [uid], context=context)[0].company_id.instance_id.instance
+            error_msg = ''
+            if docs_string_supply:
+                try:
+                    email_subject = _('UniField - Supply electronic signatures completed')
+                    email_body = _("""Dear Supply Document Creator,
 
+Below is a summary of supply documents which have been fully signed. Only document types that are active in the configuration are displayed.
+
+Instance: %s
+%s
+
+This is an automated notification. Any subsequent actions related to those documents will follow standard UniField workflows.
+
+Thank you,
+UniField Team""") % (instance_name, docs_string_supply)
+
+                    tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators_supply)
+                except Exception as e:
+                    if isinstance(e, osv.except_osv):
+                        error_msg = e.value
+                    else:
+                        error_msg = e.args and '. '.join(e.args) or e
+                finally:
+                    msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or \
+                          _('The email was sent to users in the "Sign_document_creator_supply" group successfully'),
+                    email_log_vals = {
+                        'recipients': '; '.join(email_doc_creators_supply),
+                        'recipient_names': '; '.join(name_doc_creators_supply),
+                        'state': error_msg and 'error' or 'success',
+                        'result': msg,
+                        'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+                        'date_sent': datetime.now(),
+                        'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+                    }
+                    self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+            error_msg = ''
+            if docs_string_finance:
+                try:
+                    email_subject = _('UniField - Finance electronic signatures completed')
+                    email_body = _("""Dear Finance Document Creator,
+
+Below is a summary of finance documents which have been fully signed. Only document types that are active in the configuration are displayed.
+
+Instance: %s
+%s
+
+This is an automated notification. Any subsequent actions related to those documents will follow standard UniField workflows.
+
+Thank you,
+UniField Team""") % (instance_name, docs_string_finance)
+
+                    tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators_finance)
+                except Exception as e:
+                    if isinstance(e, osv.except_osv):
+                        error_msg = e.value
+                    else:
+                        error_msg = e.args and '. '.join(e.args) or e
+                finally:
+                    msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or \
+                          _('The email was sent to users in the "Sign_document_creator_finance" group successfully'),
+                    email_log_vals = {
+                        'recipients': '; '.join(email_doc_creators_finance),
+                        'recipient_names': '; '.join(name_doc_creators_finance),
+                        'state': error_msg and 'error' or 'success',
+                        'result': msg,
+                        'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', self._name)])[0],
+                        'date_sent': datetime.now(),
+                        'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+                    }
+                    self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+
+            self.pool.get('signature').write(cr, uid, sign_ids, {'email_signature_fully_signed': True}, context=context)
 
         return True
 

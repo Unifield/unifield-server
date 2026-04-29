@@ -62,12 +62,14 @@ class patch_scripts(osv.osv):
     # UF41.0
     def us_14532_email_signature_notification(self, cr, uid, *a, **b):
         '''
-        Give default access read rights to all users for email.signature.notification and
-            email.signature.notification.doc.applicability at HQ level
+        Give default access read rights to all users and read+write rights to Sync_Config group for
+            email.signature.notification and email.signature.notification.doc.applicability at HQ level
         Add the missing rights for manual signature request email
         Hide the email.signature.notification configuration menu if necessary
         '''
+        group_obj = self.pool.get('res.groups')
         if _get_instance_level(self, cr, uid) == 'hq':
+            sc_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync_Config')])
             for model in ['email.signature.notification', 'email.signature.notification.doc.applicability']:
                 model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model)])
                 self.pool.get('ir.model.access').create(cr, uid, {
@@ -75,6 +77,14 @@ class patch_scripts(osv.osv):
                     'model_id': model_id[0],
                     'perm_read': True,
                 })
+                if sc_group_ids:
+                    self.pool.get('ir.model.access').create(cr, uid, {
+                        'name': 'Sync_Config',
+                        'model_id': model_id[0],
+                        'groups': [(6, 0, sc_group_ids)],
+                        'perm_read': True,
+                        'perm_write': True,
+                    })
 
         if not cr.table_exists('sync_server_user_rights'):
             # exclude sync server
@@ -83,7 +93,7 @@ class patch_scripts(osv.osv):
                 ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement', 'physical.inventory'], ['specific_email_signature_notification']),
                 ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order', 'physical.inventory'], ['specific_email_signature_notification'])
             ]:
-                group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)], context=None)
+                group_ids = group_obj.search(cr, uid, [('name', '=', group_name)], context=None)
                 if group_ids:
                     bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
                     bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})

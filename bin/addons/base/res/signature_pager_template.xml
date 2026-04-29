@@ -38,7 +38,7 @@
             <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="4" />
         </group>
         <group colspan="2" col="7">
-            <button name="specific_email_signature_notification" type="object" string="Send request to sign" attrs="{'invisible': ['|', '|', '|', '|', '|', ('signature_res_model', '!=', 'purchase.order'), ('email_signature_notif_active', '=', False), ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False), '&amp;', ('allowed_to_be_locked', '=', True), ('doc_locked_for_sign', '=', False)]}" icon="terp-mail-message-new" colspan="2" />
+            <button name="specific_email_signature_notification" type="object" string="Send request to sign" attrs="{'invisible': ['|', ('signature_res_model', '!=', 'purchase.order'), ('email_signature_notif_active', '=', False)], 'readonly': ['|', '|', '|', '|', ('email_signature_manual_notif', '=', True), ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False), '&amp;', ('allowed_to_be_locked', '=', True), ('doc_locked_for_sign', '=', False)]}" icon="terp-mail-message-new" colspan="2" />
         </group>
         <newline />
         <field name="signature_res_model" invisible="1" />
@@ -49,6 +49,7 @@
         <field name="doc_locked_for_sign" invisible="1" />
         <field name="is_signee_user" invisible="1" />
         <field name="email_signature_notif_active" invisible="1" />
+        <field name="email_signature_manual_notif" invisible="1" />
         <field name="signature_line_ids" readonly="1" nolabel="1" colspan="6" on_change="sig_line_change()" mode="tree">
             <tree string="Signatures">
                 <field name="name" />
