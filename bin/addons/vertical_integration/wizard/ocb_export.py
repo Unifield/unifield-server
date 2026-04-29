@@ -230,5 +230,35 @@ class ubuntu_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
         )
         return self._prepare_report(cr, uid, ids, report_name, report_file_name, context)
 
+    def _get_defaults_values(self, cr, uid, field, context=None):
+        instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+        if instance and instance.level == 'coordo':
+            if field == 'instance_id':
+                return instance.id
+            period_obj = self.pool.get('account.period')
+            last_closed_id = period_obj.search(
+                cr, uid,
+                [('state', 'in', ['done', 'mission-closed']), ('number', '>', 0), ('number', '<', 16)],
+                limit=1,
+                order='date_start desc, number desc',
+                context=context
+            )
+            if last_closed_id:
+                if field == 'fiscalyear_id':
+                    return period_obj.browse(cr, uid, last_closed_id[0], fields_to_fetch='fiscalyear_id').fiscalyear_id.id
+                if field == 'period_id':
+                    return last_closed_id[0]
+            return False
+        else:
+            if field == 'fiscalyear_id':
+                return self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=context)
+            return False
+
+    _defaults = {
+        'fiscalyear_id': lambda self, cr, uid, c: self._get_defaults_values(cr, uid, 'fiscalyear_id', context=c),
+        'period_id': lambda self, cr, uid, c: self._get_defaults_values(cr, uid, 'period_id', context=c),
+        'instance_id': lambda self, cr, uid, c: self._get_defaults_values(cr, uid, 'instance_id', context=c),
+    }
+
 ubuntu_export_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

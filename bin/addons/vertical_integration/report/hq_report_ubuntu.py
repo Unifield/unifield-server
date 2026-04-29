@@ -260,13 +260,13 @@ class hq_report_ubuntu(report_sxw.report_sxw):
             ('Funding Pool', False) ,
             ('Third Party', ),
             ('Employee ID', ),
-            ('Exchange Rate', ),
             ('Booking Debit', ),
             ('Booking Credit', ),
             ('Booking Currency', ),
             ('Functionnal Debit', False),
             ('Functionnal Credit', False),
             ('Functionnal Currency', False),
+            ('%s rate' % company_curr, ),
             ('KES rate', ),
         ]
 
@@ -299,7 +299,7 @@ class hq_report_ubuntu(report_sxw.report_sxw):
                     amls.add(row['id'])
 
                 # general is used as accrual for AJIs
-                if row['journal_type'] in ('cur_adj', 'accrual', 'revaluation', 'general'):
+                if row['journal_type'] in ('cur_adj', 'revaluation'):
                     rate = 1
                     debit = row['func_debit']
                     credit = row['func_credit']
@@ -332,13 +332,13 @@ class hq_report_ubuntu(report_sxw.report_sxw):
                     row.get('fp', ''),
                     row['partner_txt'],
                     row['employee_id'],
-                    rate,
                     debit,
                     credit,
                     currency,
                     row['func_debit'],
                     row['func_credit'],
                     company_curr,
+                    rate,
                     kes_rate
                 ]
 
