@@ -751,24 +751,26 @@ class signature_object(osv.osv):
                         sign_expiry_text = ''
                         if email_sign_notif['check_signature_expiry'] and signl_data[4] and \
                                 (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > signl_data[4]:
-                            sign_expiry_text = _('\nSignature status: Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
+                            sign_expiry_text = _('<b>Signature status:</b> Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
                                                % (datetime.strptime(signl_data[4], '%Y-%m-%d').strftime('%d/%m/%Y'),)
 
                         email_subject = _('UniField - Your signature has been requested on a document')
-                        email_body = _("""Dear %s,
+                        email_body = _("""<div>Dear %s,</div>
+<br/>
+<div>You are requested to sign a document:</div>
+<ul>
+  <li><b>Instance:</b> %s</li>
+  <li><b>Document:</b> %s - %s</li>
+</ul>
+<br/>
+<div>Please log in to UniField to review and complete the required electronic signature.</div>
+<div>%s</div>
+<div>If you have already signed the document after this e-mail was generated, no further action is required for that document.</div>
+<br/>
+<div>Thank you,</div>
+<div>UniField Team</div>""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name, sign_expiry_text)
 
-You are requested to sign a document:
-  • Instance: %s
-  • Document: %s - %s
-
-Please log in to UniField to review and complete the required electronic signature.
-%s
-If you have already signed the document after this e-mail was generated, no further action is required for that document.
-
-Thank you,
-UniField Team""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name, sign_expiry_text)
-
-                        tools.email_send(False, [signl_data[1]], email_subject, email_body)
+                        tools.email_send(False, [signl_data[1]], email_subject, email_body, subtype='html')
 
                         self.write(cr, uid, doc.id, {'email_signature_manual_notif': True}, context=context)
                     except Exception as e:
@@ -1375,6 +1377,8 @@ class signature_add_user_wizard(osv.osv_memory):
                               '%s %s' % (wiz['login_%d' %x].login or '', wiz['login_%d' %x].esignature_id and wiz['login_%d' %x].esignature_id.legal_name or ''),
                               'write', context
                               )
+                # Remove email.signature.notification data when the user is changed
+                line_data.update({'first_reminder_sent_date': False, 'latest_reminder_sent_date': False})
             if line_data['backup'] != wiz['line_id_%d' %x].backup:
                 _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model,
                               'Sign backup on %s (%s)' % (wiz['line_id_%d' %x].name, wiz['login_%d' %x].login or ''),
