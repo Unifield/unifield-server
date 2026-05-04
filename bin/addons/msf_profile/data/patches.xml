@@ -1298,6 +1298,11 @@
             <field name="method">us_15252_non_service_prod_transport_flag</field>
         </record>
 
+        <!-- UF40.1 -->
+        <record id="us_15685_populate_apr_reg_responsible" model="patch.scripts">
+            <field name="method">us_15685_populate_apr_reg_responsible</field>
+        </record>
+
         <!-- UF41.0 -->
         <record id="us_15433_delete_WACA_2025_fiscal_year" model="patch.scripts">
             <field name="method">us_15433_delete_WACA_2025_fiscal_year</field>

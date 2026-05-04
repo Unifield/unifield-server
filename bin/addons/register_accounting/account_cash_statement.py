@@ -66,12 +66,11 @@ class account_cash_statement(osv.osv):
             if period and period.state == 'created':
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Register is created') % (period.name,))
 
-        # Observe register state
         prev_reg = False
         prev_reg_id = vals.get('prev_reg_id', False)
-        if journal.type == 'bank' and prev_reg_id:
-            prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['balance_end_real', 'closing_balance_frozen'], context=context)[0]
-            if prev_reg.closing_balance_frozen:
+        if prev_reg_id:
+            prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['balance_end_real', 'closing_balance_frozen', 'responsible_ids', 'signature_id'], context=context)[0]
+            if journal.type == 'bank' and prev_reg.closing_balance_frozen:
                 # if previous register closing balance is frozen, then retrieving previous closing balance
                 vals.update({'balance_start': prev_reg.balance_end_real})
 

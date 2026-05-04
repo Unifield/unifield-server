@@ -3849,30 +3849,6 @@ msgstr "Días de cierre"
 msgid "If checked, the location is a virtual location."
 msgstr "Si está marcado, la ubicación es una ubicación virtual."
 
-#. modules: return_claim, msf_outgoing, stock_override, kit
-#: selection:assign.to.kit.line,integrity_status:0
-#: selection:kit.selection.line,integrity_status:0
-#: selection:kit.selection.sale.line,integrity_status:0
-#: selection:substitute.item,integrity_status_func_substitute_item:0
-#: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
-#: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
-msgid "The first sequence must start with 1"
-msgstr "La primera secuencia debe comenzar con 1"
-
 #. module: msf_accrual
 #: help:account.move.line,accrual:0
 msgid "If true, this line was created by an accrual generation."
@@ -11559,15 +11535,6 @@ msgstr "Analytic Lines (Free 2) from Journal Items"
 msgid "%s (copy)"
 msgstr "%s (copiar)"
 
-#. module: kit
-#: selection:assign.to.kit.line,integrity_status:0
-#: selection:kit.selection.line,integrity_status:0
-#: selection:kit.selection.sale.line,integrity_status:0
-#: selection:substitute.item,integrity_status_func_substitute_item:0
-#: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-msgid "A gap exists in the sequence: previous sequence is missing"
-msgstr "Existe una brecha en la secuencia: falta la secuencia anterior"
-
 #. modules: sync_remote_warehouse, sync_client, base, msf_button_access_rights, msf_profile
 #: sql_constraint:ir.model.data:0
 #: sql_constraint:ir.model.data:0
@@ -16242,25 +16209,6 @@ msgstr "America / Boa_Vista"
 #: field:ir.module.category,module_nr:0
 msgid "Number of Modules"
 msgstr "Número de módulos"
-
-#. modules: return_claim, msf_outgoing, stock_override
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
-#: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
-msgid "A gap exists in the sequence: previous sequence is missing"
-msgstr "Hay una brecha en la secuencia: falta la secuencia anterior"
 
 #. module: base
 #: selection:res.config.users,context_tz:0

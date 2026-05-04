@@ -764,6 +764,38 @@ class account_move_line(osv.osv):
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial,
                                                       type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
         'asset_line_id': fields.many2one('product.asset.line', 'Asset Line', readonly=1, ondelete='restrict'),
+        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15,
+                                                    string='3RD Party Partner TIN', store={
+                'account.move.line': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['partner_id'],
+                    10
+                ),
+                'res.partner': (
+                    lambda self, cr, uid, ids, c=None: self.pool.get('account.move.line').search(
+                        cr, uid, [('partner_id', 'in', ids)], context=c
+                    ),
+                    ['tax_identification_number'],
+                    20
+                ),
+            },
+            readonly=True
+        ),
+        'business_registration_number': fields.related('partner_id', 'business_registration_number', type='char',
+                                                       size=15, string='3RD Party Partner RCCM', store={
+                'account.move.line': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['partner_id'],
+                    10
+                ),
+                'res.partner': (
+                    lambda self, cr, uid, ids, c=None: self.pool.get('account.move.line').search(
+                        cr, uid, [('partner_id', 'in', ids)], context=c
+                    ),
+                    ['business_registration_number'],
+                    20
+                ),
+            }, readonly=True),
     }
 
     def _get_currency(self, cr, uid, context=None):

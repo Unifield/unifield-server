@@ -2546,7 +2546,7 @@ class purchase_order(osv.osv):
             # Check the restriction of product in lines
             for order in self.browse(cr, uid, ids):
                 for line in order.order_line:
-                    if line.product_id:
+                    if line.product_id and line.state not in ('cancel', 'cancel_r'):
                         res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': partner_id})
                         if test:
                             res.setdefault('value', {}).update({'partner_address_id': False})

@@ -443,7 +443,7 @@ class account_invoice(osv.osv):
             elif context.get('journal_type', False) == 'inkind':
                 partner_string = _('Donor')
             elif context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
-                partner_string = _('Supplier')
+                partner_string = _('Partner')
             else:
                 partner_string = _('Customer')
             for node in nodes:
