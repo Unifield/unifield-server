@@ -81,16 +81,10 @@ class ppl_processor(osv.osv):
         check pack sequences integrity
         sequences is a list of tuples: [(from, to, internal_id), ...]
         """
-        missing_ids = []
         to_smaller_ids = []
         overlap_ids = []
-        gap_ids = []
         # Sort the sequence according to from value
         sequences = sorted(sequences, key=lambda seq: seq[0])
-
-        # Rule #1, the first from value must be equal o 1
-        if sequences[0][0] != 1:
-            missing_ids.append(sequences[0][2])
 
         # Go through the list of sequences applying the rules
         for i in range(len(sequences)):
@@ -108,19 +102,11 @@ class ppl_processor(osv.osv):
                     if seq[0] < seqb[1] + 1:
                         overlap_ids.append(seq[2])
                         sequences[i] = (min(seq[0], seqb[0]), seqb[1], seqb[2])
-                    elif seq[0] > seqb[1] + 1:
-                        gap_ids.append(seq[2])
             # rule #4: to[i] >= from[i]
             if not (seq[1] >= seq[0]):
                 to_smaller_ids.append(seq[2])
         ok = True
         import_ppl_errors = ''
-        if missing_ids:
-            if ppl_move_obj:
-                ppl_move_obj.write(cr, uid, missing_ids, {field: 'missing_1'}, context=context)
-            else:
-                import_ppl_errors += _('The first From pack must be equal to 1.\n')
-            ok = False
 
         if to_smaller_ids:
             if ppl_move_obj:
@@ -136,14 +122,6 @@ class ppl_processor(osv.osv):
             else:
                 import_ppl_errors += _('The sequence From pack - To Pack of line(s) %s overlaps a previous one.\n') \
                     % (', '.join(['%s' % (x,) for x in overlap_ids]))
-            ok = False
-
-        if gap_ids:
-            if ppl_move_obj:
-                ppl_move_obj.write(cr, uid, gap_ids, {field: 'gap'}, context=context)
-            else:
-                import_ppl_errors += _('A gap exists with the sequence From pack - To Pack of line(s) %s.\n') \
-                    % (', '.join(['%s' % (x,) for x in gap_ids]))
             ok = False
 
         if not ppl_move_obj:

@@ -1874,6 +1874,55 @@ class product_attributes(osv.osv):
 
         return True
 
+    def unidata_start_auto_merge(self, cr, uid, context=None):
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            return False
+
+
+        cr.execute("update unidata_auto_merge set state='ok', msg='' where state='error'")
+        cr.execute('''
+            select
+                non.id, non.default_code, non.msfid, kept.id, kept.default_code, kept.msfid
+            from
+                product_product non, product_product kept, product_international_status c
+            where
+                c.id = non.international_status and
+                non.golden_status = 'Merged' and
+                non.merge_to_msfid is not null and
+                non.merge_to_msfid = kept.msfid and
+                c.code = 'unidata' and
+                kept.active = 't' and
+                non.active = 't'
+        ''')
+
+
+        auto_merge_obj = self.pool.get('unidata.auto_merge')
+        auto_ids_to_exec = []
+        for non_id, non_default_code, non_msfid, kept_id, kept_default_code, kept_msfid in cr.fetchall():
+            logging.getLogger('Auto-Merge').info('kept: %s , non-kep: %s' % (kept_default_code, non_default_code))
+            auto_ids = auto_merge_obj.search(cr, uid, [('non_kept_msfid', '=', non_msfid), ('kept_msfid', '=', kept_msfid)], context=context)
+            auto_data = {
+                'non_kept_msfid': non_msfid,
+                'non_kept_code': non_default_code,
+                'non_kept_product_id': non_id,
+                'kept_msfid': kept_msfid,
+                'kept_code': kept_default_code,
+                'kept_product_id': kept_id,
+                'date': fields.datetime.now(),
+            }
+            if auto_ids:
+                auto_id = auto_ids[0]
+                auto_merge_obj.write(cr, uid, auto_id, auto_data, context=context)
+            else:
+                auto_id = auto_merge_obj.create(cr, uid, auto_data, context=context)
+            auto_ids_to_exec.append(auto_id)
+
+        if auto_ids_to_exec:
+            auto_merge_obj.exec_auto_merge(cr, uid, auto_ids_to_exec, context=context)
+
+        return True
+
+
     def unidata_products_used(self, cr, uid, ids):
         if not ids:
             return set()
@@ -3169,6 +3218,10 @@ class product_attributes(osv.osv):
         failed = []
         for f in fields_to_check:
             if old_values[f] != new_values[f]:
+                if level != 'coordo' and f == 'nomen_manda_0':
+                    srv_log_ids = self.pool.get('product.nomenclature').search(cr, uid, [('name', 'in', ['SRV', 'LOG']), ('type', '=', 'mandatory'), ('level', '=', 0)], context=context)
+                    if old_values[f][0] in srv_log_ids and new_values[f][0] in srv_log_ids:
+                        continue
                 failed.append(f)
 
         if failed:
@@ -3317,8 +3370,7 @@ class product_attributes(osv.osv):
         if instance_level != 'project':
             block_msg = self.check_same_value( cr, uid,  kept_id, old_prod_id, level=merge_type, blocker=True, context=context)
             if block_msg:
-                prod_data = self.read(cr, uid, [kept_id, old_prod_id], ['default_code'], context=context)
-                errors.append(_('%s\nProducts: %s and %s') % (block_msg, prod_data[0]['default_code'], prod_data[1]['default_code']))
+                errors.append(block_msg)
 
         if errors:
             raise osv.except_osv(_('Error'), "\n".join(errors))
@@ -3378,6 +3430,8 @@ class product_attributes(osv.osv):
                 ('product_merged', 'old_product_id'),
                 ('standard_price_track_changes', 'product_id'),
                 ('product_product', 'kept_initial_product_id'),
+                ('unidata_auto_merge', 'non_kept_product_id'),
+                ('unidata_auto_merge', 'kept_product_id'),
             ]
         }
 

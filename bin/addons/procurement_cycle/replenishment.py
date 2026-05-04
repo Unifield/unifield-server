@@ -3658,8 +3658,8 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
         for line in calc.order_calc_line_ids:
             existing_line[(line.product_id.default_code, line.segment_id.name_seg)] = line.id
 
-        qty_col = 20
-        comment_col = 23
+        qty_col = 21
+        comment_col = 24
         idx = -1
 
         error = []
@@ -3669,7 +3669,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
             # header
             if idx < 8:
                 # Check if the lines' header is at line 8, to ensure that the right export is used
-                if idx == 7 and (row.cells[0].data != _('Product code') or row.cells[10].data != _('Eta For next Pipeline') or
+                if idx == 7 and (row.cells[0].data != _('Product code') or row.cells[11].data != _('Eta For next Pipeline') or
                                  row.cells[qty_col].data != _('Agreed Order Qty') or row.cells[comment_col].data != _('Order Qty Comment')):
                     raise osv.except_osv(_('Error'), _('Wrong format: Order Calc Excel Export template must be used'))
                 continue
