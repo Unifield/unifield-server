@@ -633,6 +633,7 @@ class signature_object(osv.osv):
     def unlock_doc_for_sign(self, cr, uid, ids, context=None):
         """
         Allow the document to be editable, but un-sign it in the process
+        Remove the email_signature flags to allow full signature and manual notification emails to be sent again
         """
         if context is None:
             context = {}
@@ -648,8 +649,8 @@ class signature_object(osv.osv):
             to_unsign.append(x[0])
         if to_unsign:
             self.pool.get('signature.line').super_action_unsign(cr, uid, to_unsign, context=context)
-
-        self.write(cr, uid, ids, {'doc_locked_for_sign': False}, context=context)
+        sign_vals = {'doc_locked_for_sign': False, 'email_signature_fully_signed': False, 'email_signature_manual_notif': False}
+        self.write(cr, uid, ids, sign_vals, context=context)
 
         return True
 
