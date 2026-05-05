@@ -15,7 +15,7 @@
             			<field name="product_id_substitute" />
             			<field name="source_location_id" attrs="{'required': [('step_substitute', '=', 'de_kitting')]}"
             				context="{'product_id':product_id_substitute, 'prodlot_id':lot_id_substitute, 'specific_rules_tree_view':True, 'compute_child':False}" />
-                        <field name="destination_location_id"
+                        <field name="destination_location_id" attrs="{'required': [('step_substitute', 'in', ['kcl_remove_items', 'substitute', 'de_kitting'])]}"
                         	context="{'product_id':product_id_substitute, 'prodlot_id':lot_id_substitute, 'specific_rules_tree_view':True, 'compute_child':False}" />
                         <field name="step_substitute" invisible="True" />
                     </group>

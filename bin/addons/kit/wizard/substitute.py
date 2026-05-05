@@ -358,8 +358,7 @@ class substitute(osv.osv_memory):
             # confirm - force availability and validate the internal picking
             self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
 
-        res = kit_obj.modify_expiry_date(cr, uid, kit_ids, context=context)
-        return res
+        return {'type': 'ir.actions.act_window_close'}
 
     def do_remove_items(self, cr, uid, ids, context=None):
         '''
@@ -722,7 +721,7 @@ class substitute(osv.osv_memory):
                 'step_substitute': fields.char(string='Step', size=1024, readonly=True),
                 'product_id_substitute': fields.many2one('product.product', string='Product', readonly=True),
                 'lot_id_substitute': fields.many2one('stock.production.lot', string='Batch Nb', readonly=True),
-                'destination_location_id': fields.many2one('stock.location', string='Destination Location of Items', domain=[('usage', '=', 'internal')], required=True),
+                'destination_location_id': fields.many2one('stock.location', string='Destination Location of Items', domain=[('usage', '=', 'internal')]),
                 'source_location_id': fields.many2one('stock.location', string='Source Location of Kit', domain=[('usage', '=', 'internal')]),
                 # m2m
                 'composition_item_ids': fields.many2many('substitute.item.mirror', 'substitute_items_rel', 'wizard_id', 'item_id', string='Items to replace'),
