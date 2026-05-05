@@ -358,7 +358,9 @@ class substitute(osv.osv_memory):
             # confirm - force availability and validate the internal picking
             self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
 
-        return {'type': 'ir.actions.act_window_close'}
+        # Modify expiry date step
+        res = kit_obj.modify_expiry_date(cr, uid, kit_ids, context=context)
+        return res
 
     def do_remove_items(self, cr, uid, ids, context=None):
         '''
@@ -402,7 +404,9 @@ class substitute(osv.osv_memory):
             # confirm - force availability and validate the internal picking
             self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
 
-        return {'type': 'ir.actions.act_window_close'}
+        # Modify expiry date step
+        res = kit_obj.modify_expiry_date(cr, uid, kit_ids, context=context)
+        return res
 
     def do_substitute(self, cr, uid, ids, context=None):
         '''
