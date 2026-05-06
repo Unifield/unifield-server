@@ -56,6 +56,12 @@ class import_table_currencies(osv.osv_memory):
         currency_rate_obj = self.pool.get('res.currency.rate')
 
         if 'active_id' in context:
+            currency_table_obj = self.pool.get('res.currency.table')
+            currency_table = currency_table_obj.browse(cr, uid, context['active_id'], context=context)
+            if currency_table.state == 'closed':
+                raise osv.except_osv(_('Error'),
+                                     _('You cannot import rates because the currency table is closed.'))
+
             for wizard in self.browse(cr, uid, ids, context=context):
                 if not wizard.import_file:
                     raise osv.except_osv(_('Warning'),

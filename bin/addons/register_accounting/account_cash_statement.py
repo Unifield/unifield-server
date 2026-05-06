@@ -66,12 +66,11 @@ class account_cash_statement(osv.osv):
             if period and period.state == 'created':
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Register is created') % (period.name,))
 
-        # Observe register state
         prev_reg = False
         prev_reg_id = vals.get('prev_reg_id', False)
-        if journal.type == 'bank' and prev_reg_id:
-            prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['balance_end_real', 'closing_balance_frozen'], context=context)[0]
-            if prev_reg.closing_balance_frozen:
+        if prev_reg_id:
+            prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['balance_end_real', 'closing_balance_frozen', 'responsible_ids', 'signature_id'], context=context)[0]
+            if journal.type == 'bank' and prev_reg.closing_balance_frozen:
                 # if previous register closing balance is frozen, then retrieving previous closing balance
                 vals.update({'balance_start': prev_reg.balance_end_real})
 
@@ -155,6 +154,8 @@ class account_cash_statement(osv.osv):
                     raise osv.except_osv(_('Warning'), _('All entries must be hard posted before closing CashBox!'))
         # Then verify that another Cash Register exists
         for st in self.browse(cr, uid, ids, context=context):
+            if st.period_id and st.period_id.number == 12 and (st.open_advance_amount != 0 or st.unrecorded_expenses_amount != 0):
+                raise osv.except_osv(_('Error'), _('In the December records, "Unrecorded Advances" and "Unrecorded Expenses" must be equal to zero.'))
             st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
             if len(st_prev_ids) > 1:
                 raise osv.except_osv(_('Error'), _('A problem occurred: More than one register have this one as previous register!'))

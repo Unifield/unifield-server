@@ -2211,7 +2211,7 @@ class account_tax(osv.osv):
                 return pooler.get_pool(cr.dbname).get('decimal.precision').computation_get(cr, 1, 'Account')
 
             res = pooler.get_pool(cr.dbname).get('decimal.precision').precision_get(cr, 1, 'Account')
-            return (16, res+2)
+            return (16, res+6)
         return change_digit_tax
 
     _name = 'account.tax'

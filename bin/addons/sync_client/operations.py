@@ -28,7 +28,7 @@ from histogram import Histogram
 from datetime import datetime
 
 LINUX_PROCESS_LIST = ['openerp-server.py', 'openerp-web.py']
-WINDOWS_PROCESS_LIST = ['openerp-server.exe', 'openerp-web.exe', 'postgres.exe', 'revprox.exe']
+WINDOWS_PROCESS_LIST = ['openerp-server.py', 'openerp-web.py', 'postgres.exe', 'revprox.exe']
 
 
 class ratelimit():
@@ -187,6 +187,8 @@ class operations_event(osv.osv, ratelimit):
                                       ('process', '=', proc_name)],
                                      order='time',
                                      context=context)
+        if not mem_ids:
+            return False
         mem_read = mem_usg_obj.read(cr, uid, mem_ids, ['memory_usage', 'time'], context=context)
         mem_list = [x['memory_usage'] for x in mem_read]
         avg_mem = float(sum(mem_list)/len(mem_list))/1024/1024
@@ -228,13 +230,14 @@ class operations_event(osv.osv, ratelimit):
 
         for proc_name in proc_name_list:
             mem_info = self.get_memory_information(cr, uid, proc_name, context=context)
-            vals = {
-                'time': now,
-                'instance': instance,
-                'kind': proc_name,
-                'data': mem_info
-            }
-            self.create(cr, uid, vals, context=context)
+            if mem_info:
+                vals = {
+                    'time': now,
+                    'instance': instance,
+                    'kind': proc_name,
+                    'data': mem_info
+                }
+                self.create(cr, uid, vals, context=context)
         self.pool.get('memory.usage').purge(cr, uid, instance=instance)
 
 operations_event()
@@ -369,48 +372,44 @@ class memory_usage(osv.osv, ratelimit):
         """Override create in order to respect the rate limit."""
         ratelimit.create(self, cr, uid, vals, context=context)
 
-    def get_proc_name_list(self, proc_name):
+    def get_memory_usage(self):
         """return a list of process matching proc_name
         """
-        proc_list = [proc for proc in psutil.process_iter() if proc.name() == proc_name]
+        memory = {}
         if os.name != 'nt':
             import getpass
             current_user_name = getpass.getuser()
-            if not proc_list:
-                proc_list = []
-                for proc in psutil.process_iter():
-                    if proc.username() != current_user_name:
-                        continue
-                    try:
-                        command_list = proc.cmdline()
-                        if len(command_list) >1 \
-                                and command_list[0] == 'python'\
-                                and proc_name in command_list[1]:
-                            proc_list.append(proc)
-                    except psutil.ZombieProcess:
-                        pass
-        return proc_list
+            proc_name_list = LINUX_PROCESS_LIST
+        else:
+            current_user_name = False
+            proc_name_list = WINDOWS_PROCESS_LIST
 
-    def get_memory_usage(self, proc_name):
-        """return a int representing the memory usage in bytes
-        """
-        proc_list = self.get_proc_name_list(proc_name)
-        memory_usage = 0
-        for proc in proc_list:
-            memory_usage += proc.memory_info()[0]
-        return memory_usage
+        for proc in psutil.process_iter(['cmdline', 'name', 'username', 'memory_info']):
+            try:
+                proc_name = proc.name()
+                if proc_name in proc_name_list:
+                    memory[proc_name] = memory.setdefault(proc_name, 0) + proc.memory_info()[0]
+                elif current_user_name and proc.username() != current_user_name:
+                    continue
+                else:
+                    command_list = proc.cmdline()
+
+                    if len(command_list) >1 and 'python' in command_list[0]:
+                        for to_search in proc_name_list:
+                            if to_search in ' '.join(command_list[1:]):
+                                memory[to_search] = memory.setdefault(to_search, 0) + proc.memory_info()[0]
+                                break
+            except (psutil.NoSuchProcess, psutil.ZombieProcess, psutil.AccessDenied):
+                pass
+
+        return memory
 
     def create_memory_entries(self, cr, uid, context=None):
         """create entries for all process to monitor
         """
-        if os.name == 'nt':
-            proc_name_list = WINDOWS_PROCESS_LIST
-        else:
-            proc_name_list = LINUX_PROCESS_LIST
 
         instance = self._get_inst(cr, uid)
-        for proc_name in proc_name_list:
-            memory_usg = self.get_memory_usage(proc_name)
+        for proc_name, memory_usg in self.get_memory_usage().items():
             now = fields.datetime.now()
             vals = {
                 'time': now,

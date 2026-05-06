@@ -154,6 +154,11 @@ class product_mass_update(osv.osv):
 
         return super(product_mass_update, self).copy(cr, uid, id, default=default, context=context)
 
+    def onchange_active_product(self, cr, uid, ids, active_product):
+        if active_product == 'no':
+            return {'value': {'product_state': False}}
+        return {'value': {}}
+
     def onchange_inc_check(self, cr, uid, ids, empty_inc_account):
         if empty_inc_account:
             return {'value': {'property_account_income': False}}
@@ -387,7 +392,7 @@ class product_mass_update(osv.osv):
 
             if not not_deactivated and not not_activated:
                 prod_obj.write(cr, uid, [prod.id for prod in p_mass_upd.product_ids], vals, context=context)
-                user_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).id
+                real_user = hasattr(uid, 'realUid') and uid.realUid or uid
 
                 # Unlink existing errors
                 errors_ids = upd_errors_obj.search(cr, uid, [('p_mass_upd_id', '=', p_mass_upd.id)], context=context)
@@ -397,7 +402,7 @@ class product_mass_update(osv.osv):
                     'has_not_deactivable': False,
                     'has_not_activable': False,
                     'date_done': time.strftime('%Y-%m-%d %H:%M'),
-                    'user_id': user_id,
+                    'user_id': real_user,
                     'state': 'done',
                     'message': '',
                 }

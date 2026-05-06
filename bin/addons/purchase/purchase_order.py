@@ -1498,9 +1498,9 @@ class purchase_order(osv.osv):
                             new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id, tax_line.amount, round=False)
                             tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
 
-                    # Reset signature
-                    self.pool.get('signature').write(cr, uid, order.signature_id.id, {'signed_off_line': False, 'signature_is_closed': False}, context=context)
-                    self.unsign_all(cr, uid, ids, context=context)
+                    # Reset signature, using admin user because there is no write rights by default on the signature object
+                    super(purchase_order, self).write(cr, 1, order.id, {'signed_off_line': False, 'signature_is_closed': False}, context=context)
+                    self._unsign_all(cr, uid, order.id, context=context)
 
 
         return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
@@ -2546,7 +2546,7 @@ class purchase_order(osv.osv):
             # Check the restriction of product in lines
             for order in self.browse(cr, uid, ids):
                 for line in order.order_line:
-                    if line.product_id:
+                    if line.product_id and line.state not in ('cancel', 'cancel_r'):
                         res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': partner_id})
                         if test:
                             res.setdefault('value', {}).update({'partner_address_id': False})
