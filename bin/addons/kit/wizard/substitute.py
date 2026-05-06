@@ -873,7 +873,7 @@ class substitute_item(osv.osv_memory):
         else:
             ctx['prodlot_id'] = False
         qty = 0.0
-        if step_substitute != 'substitute':
+        if step_substitute not in ['kcl_add_items', 'substitute']:
             product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=ctx)
             qty = product_obj.qty_allocable
         # update the result
