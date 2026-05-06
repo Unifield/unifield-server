@@ -71,6 +71,7 @@ def no_session_refresh():
 
 def cookie_fix_312_session_persistent_flag():
     """Fix cherrypy 3.1.2 tools.session.persistant = False"""
+
     from addons.openerp.utils import rpc
     name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
     if cherrypy.request.config.get('tools.sessions.persistent', True):
@@ -83,4 +84,13 @@ def cookie_fix_312_session_persistent_flag():
         return True
     cherrypy.response.cookie['session_expired'] = ''
     return True
+
 cherrypy.tools.fix_312_session_persistent = cherrypy.Tool('before_finalize', cookie_fix_312_session_persistent_flag)
+
+def remove_cherrypy_header():
+    try:
+        cherrypy.response.headers['Server'] = ''
+    except (KeyError, AttributeError):
+        pass
+cherrypy.tools.remove_cherrypy_header = cherrypy.Tool('before_finalize', remove_cherrypy_header)
+cherrypy.tools.remove_cherrypy_header_error = cherrypy.Tool('before_error_response', remove_cherrypy_header)
