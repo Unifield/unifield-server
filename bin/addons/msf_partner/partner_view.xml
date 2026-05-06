@@ -218,7 +218,7 @@
                             </group>
                             <field colspan="4" mode="form,tree" name="address" nolabel="1" select="1" height="260">
                                 <form string="Partner Contacts">
-                                    <field name="partner_type" invisible="1"/>
+                                    <field name="ext_partner_make_required" invisible="1"/>
                                     <newline/>
                                       <group colspan="2" col="4">
                                         <separator string="Postal Address" colspan="4" col="4" />
@@ -228,7 +228,7 @@
                                         <field name="street2" colspan="4"/>
                                         <field name="zip"/>
                                         <field name="city"/>
-                                        <field name="country_id" completion="1" attrs="{'required': [('partner_type', '=', 'external')]}"/>
+                                        <field name="country_id" completion="1" attrs="{'required': [('ext_partner_make_required', '=', True)]}"/>
                                         <field name="state_id"/>
                                      </group>
                                      <group colspan="2" col="2">
