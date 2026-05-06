@@ -32,7 +32,6 @@ import decimal_precision as dp
 import logging
 import math
 from osv.orm import browse_record
-from lxml import etree
 
 # Common method used on stock.location.instance and stock.location
 def _get_used_in_config(self, cr, uid, ids, field_names, arg, context=None):
@@ -439,23 +438,6 @@ class stock_location(osv.osv):
         if 'moved_location' not in default:
             default['moved_location'] = False
         return super(stock_location, self).copy(cr, uid, id, default, context)
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        '''
-        Hide active/inactive filters in some search views
-        '''
-        if context is None:
-            context = {}
-
-        res = super(stock_location, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-
-        if view_type == 'search' and context.get('display_active_filter'):
-            root = etree.fromstring(res['arch'])
-            for field in root.xpath('//group[@name="display_active_filter"]'):
-                field.set('invisible', '0')
-                res['arch'] = etree.tostring(root, encoding='unicode')
-
-        return res
 
     def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
         return kwargs.get('result', None)
