@@ -1283,14 +1283,11 @@ class users(osv.osv):
 
             cr = pooler.get_db(db_name).cursor()
 
-            cr.execute("""
-                       SELECT id
-                       FROM res_users
-                       WHERE LOWER(login) = LOWER(%s)
-                         AND active = TRUE
-                         AND user_email = %s
-                       """, (login, email))
-            user_ids = [row[0] for row in cr.fetchall()]
+            user_ids = self.search(cr, 1, [
+                ('login', '=', login.lower()),
+                ('active', '=', True),
+                ('user_email', '=', email),
+            ], context=context)
 
             if not user_ids:
                 raise Exception(
@@ -1496,7 +1493,7 @@ class users(osv.osv):
 
         user_ids = self.search(cr, 1, [
             ('reset_password_token', '=', token),
-            ('login', '=', login),
+            ('login', '=', login.lower()),
             ('active', '=', True),
             ('user_email', '=', email),
             ('reset_password_date', '>=', limit_str),
