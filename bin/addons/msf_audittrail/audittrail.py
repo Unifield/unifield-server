@@ -873,7 +873,7 @@ class audittrail_rule(osv.osv):
                             # Prevent password field to be plainly stored in Connection Manager and Auto Import/Export
                             if field in ['password', 'ftp_password']:
                                 if context and context.get('from_reset_password'):
-                                    description = 'Password from token'
+                                    description = 'Password from temp code'
                                 old_value, new_value = '********', '********'
                             line.update({
                                 'field_id': fields_to_trace[field].id,

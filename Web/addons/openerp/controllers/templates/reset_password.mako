@@ -58,7 +58,7 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="label"><label for="token">${_("Token:")}</label></td>
+                                    <td class="label"><label for="token">${_("Temporary code:")}</label></td>
                                     <td style="padding: 3px;">
                                         <input type="password" id="token" name="token" class="db_user_pass"
                                                value="${data.get('token','')}" autocomplete="off"/>

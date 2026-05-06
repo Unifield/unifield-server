@@ -1283,11 +1283,14 @@ class users(osv.osv):
 
             cr = pooler.get_db(db_name).cursor()
 
-            user_ids = self.search(cr, 1, [
-                ('login', '=', login),
-                ('active', '=', True),
-                ('user_email', '=', email),
-            ], context=context)
+            cr.execute("""
+                       SELECT id
+                       FROM res_users
+                       WHERE LOWER(login) = LOWER(%s)
+                         AND active = TRUE
+                         AND user_email = %s
+                       """, (login, email))
+            user_ids = [row[0] for row in cr.fetchall()]
 
             if not user_ids:
                 raise Exception(
@@ -1313,26 +1316,37 @@ class users(osv.osv):
             cr.commit()
 
             body = _("""
-                Password reset request
-                A request has been received to reset your password.
-                -This password reset request is valid for the next 6 hours.
-                Otherwise you will need to renew your request for a new password via UF login screen.
-                
-                Here are the details of your account:
-                User login %s
-                Temporary code: %s
-                Please note this temporary code will only be valid 6 hours.
-                Please return to UF login page and click on link "Forgotten password?". In this screen click
-                button "Add temporary code". Fill in details there.
-                
-                If it was not you who has triggered this password reset, please contact your IT - security
-                responsible to alert them.
+                <p><strong>Password reset request</strong></p>
+            
+                <p>A request has been received to reset your password.</p>
+            
+                <p>This password reset request is valid for the next 6 hours.</p>
+            
+                <p>Otherwise you will need to renew your request for a new password via UF login screen.</p>
+            
+                <p>Here are the details of your account:</p>
+                <ul>
+                    <li><strong>User login:</strong> %s</li>
+                    <li><strong>Temporary code:</strong> %s</li>
+                </ul>
+            
+                <p>Please note this temporary code will only be valid 6 hours.</p>
+            
+                <p>
+                    Please return to UF login page and click on <strong>button</strong> "Forgotten password?".<br>
+                    In this screen click button "Add temporary code". Fill in details there.
+                </p>
+            
+                <p>
+                    If it was not you who has triggered this password reset, please contact your IT - security
+                    responsible to alert them.
+                </p>
             """) % (user.login, token)
 
             try:
                 tools.email_send(email_from=None, email_to=[email],
                                  subject=_("[UniField] Account password reset"),
-                                 body=body)
+                                 body=body, subtype="html")
                 state = 'success'
                 result = 'Email sent successfully'
 
@@ -1347,10 +1361,10 @@ class users(osv.osv):
                 Otherwise you will need to renew your request for a new password via UF login screen.
 
                 Here are the details of your account:
-                User login %s
+                User login: %s
                 Temporary code: **********
                 Please note this temporary code will only be valid 6 hours.
-                Please return to UF login page and click on link "Forgotten password?". In this screen click
+                Please return to UF login page and click on button "Forgotten password?". In this screen click
                 button "Add temporary code". Fill in details there.
 
                 If it was not you who has triggered this password reset, please contact your IT - security
@@ -1394,28 +1408,53 @@ class users(osv.osv):
             context["lang"] = users[0].context_lang or "en_MF"
 
         login_lines = ""
+        login_line_without_html = ""
         for user in users:
-            login_lines += "login %s\n" % user.login
+            login_lines += "<li><strong>Login:</strong> %s</li>" % user.login
+            login_line_without_html += "Login: %s\n" % user.login
 
         body = _("""
-                Request to retrieve forgotten user login information
-                A request has been received to identify your user login.
+            <p><strong>Request to retrieve forgotten user login information</strong></p>
             
-                Here are the details of user login(s) linked to this email address for the selected instance:
+            <p>A request has been received to identify your user login.</p>
             
-                %s
+            <p>Here are the details of user login(s) linked to this email address for the selected instance:</p>
             
+            <ul>
+                %(logins)s
+            </ul>
+            
+            <p>
                 To log in using correct login, please return to UniField login page and proceed as usual.
+            </p>
             
+            <p>
                 If it was not you who has triggered this login request, please contact your IT security responsible.
-        """) % login_lines
+            </p>
+        """) % {
+            "logins": login_lines
+        }
+
+        body_without_html = _("""
+            Request to retrieve forgotten user login information
+            A request has been received to identify your user login.
+        
+            Here are the details of user login(s) linked to this email address for the selected instance:
+        
+            %s
+        
+            To log in using correct login, please return to UniField login page and proceed as usual.
+        
+            If it was not you who has triggered this login request, please contact your IT security responsible.
+        """) % login_line_without_html
 
         try:
             tools.email_send(
                 email_from=None,
                 email_to=[email],
                 subject=_("[UniField] User Account Login identification"),
-                body=body
+                body=body,
+                subtype="html"
             )
 
             state = 'success'
@@ -1431,7 +1470,7 @@ class users(osv.osv):
         email_log_obj.create(cr, 1, {
             'recipients': email,
             'subject': "[UniField] User Account Login identification",
-            'body': body,
+            'body': body_without_html,
             'state': state,
             'result': result,
             'failed_attempts': 0 if state == 'success' else 1,

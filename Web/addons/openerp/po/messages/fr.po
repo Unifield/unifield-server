@@ -1754,8 +1754,8 @@ msgstr "Envoyer"
 msgid "Change password"
 msgstr "Changer le mot de passe"
 
-msgid "Token:"
-msgstr "Code :"
+msgid "Temporary code:"
+msgstr "Code temporaire :"
 
 msgid "Token:"
 msgstr "Code :"
