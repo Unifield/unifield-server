@@ -659,9 +659,9 @@ class product_attributes(osv.osv):
             if arg[1] != '=':
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
             if arg[2]:
-                dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('replace_product_id', '=', False)]
+                dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
             else:
-                dom = [('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]
+                dom = [('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local')]
 
         return dom
 
@@ -692,7 +692,7 @@ class product_attributes(osv.osv):
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
             prod_domain = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True),
-                           ('replace_product_id', '!=', False), ('standard_ok', '!=', 'non_standard_local')]
+                           ('nb_merge_from', '!=', 0), ('standard_ok', '!=', 'non_standard_local')]
             for _id in self.search(cr, uid, prod_domain, context=context):
                 res[_id] = True
 
@@ -712,12 +712,13 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
         if context.get('sync_update_execution') or self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            dom = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('replace_product_id', '=', False)]
+            dom = [('id', 'in', ids), ('international_status', '=', 'UniData')]
             if context.get('sync_update_execution'):
                 # UD prod deactivated in coordo + merge + sync : proj does not see the deactivation
                 dom += [('active', 'in', ['t', 'f'])]
             else:
-                dom += ['|', '&', ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'), '&', ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
+                dom += ['|', '&', ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'),
+                        '&', ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
             for p_id in self.search(cr, uid, dom, context=context):
                 res[p_id] = True
         return res
@@ -1223,7 +1224,9 @@ class product_attributes(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'nsl_merged': fields.function(_get_nsl_merged, method=True, type='boolean', string='UD / NSL merged'),
         'local_product_merged': fields.boolean('Local Merged', help='Local Product Merged with another Local Product', readonly=1),
+        # FIXME: Remove many2one after UF41.0
         'replace_product_id': fields.many2one('product.product', string='Merged from', select=1),
+        'nb_merge_from': fields.integer(string='Count the number of times the product was merged from', readonly=1),
         'replaced_by_product_id': fields.many2one('product.product', string='Merged to'),
         'allow_merge': fields.function(_get_allow_merge, type='boolean', method=True, string="UD Allow merge"),
         'uf_write_date': fields.datetime(_('Write date')),
@@ -2739,7 +2742,7 @@ class product_attributes(osv.osv):
         if default is None:
             default = {}
 
-        to_reset_list = ['replace_product_id', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id',
+        to_reset_list = ['replace_product_id', 'nb_merge_from', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id',
                          'kept_initial_product_id', 'unidata_merged', 'unidata_merge_date', 'local_merged_product']
         for to_reset in to_reset_list:
             if to_reset not in default:
@@ -3336,9 +3339,12 @@ class product_attributes(osv.osv):
 
         kept_context = context.copy()
         kept_context['lang'] = 'en_US'
-        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'standard_ok', 'international_status', 'finance_price'], context=kept_context)
+        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id',
+                                                 'standard_price', 'qty_available', 'active', 'standard_ok', 'international_status',
+                                                 'finance_price', 'nb_merge_from'], context=kept_context)
 
-        old_fields_to_read = ['default_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'can_be_hq_merged', 'international_status', 'standard_ok', 'finance_price']
+        old_fields_to_read = ['default_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active',
+                              'can_be_hq_merged', 'international_status', 'standard_ok', 'finance_price']
         if merge_type != 'section':
             old_fields_to_read = list(set(old_fields_to_read).union(self.merged_fields_to_keep))
 
@@ -3382,7 +3388,7 @@ class product_attributes(osv.osv):
         if merge_type == 'section':
             new_write_data = {'is_kept_product': True}
         else:
-            new_write_data = {'active': True, 'replace_product_id': old_prod_id}
+            new_write_data = {'active': True, 'nb_merge_from': kept_data['nb_merge_from'] + 1}
 
         if not kept_data['old_code']:
             new_write_data['old_code'] = old_prod_data['default_code']
@@ -3534,10 +3540,9 @@ class product_attributes(osv.osv):
         # generate terms on translations export
         [_('Merge Product non-kept product'), _('Merge Product kept product')]
 
-
+        _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
+        _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
         if merge_type == 'section':
-            _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
-            _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
             if not context.get('sync_update_execution') or instance_level == 'coordo':
                 merge_data = {'new_product_id': kept_id, 'old_product_id': old_prod_id, 'level': 'section'}
                 new_ctx = context.copy()

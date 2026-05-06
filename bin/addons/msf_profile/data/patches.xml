@@ -1327,5 +1327,9 @@
         <record id="us_14587_15419_15645_sde_changes" model="patch.scripts">
             <field name="method">us_14587_15419_15645_sde_changes</field>
         </record>
+
+        <record id="us_15197_replace_product_id_into_counter" model="patch.scripts">
+            <field name="method">us_15197_replace_product_id_into_counter</field>
+        </record>
     </data>
 </openerp>
