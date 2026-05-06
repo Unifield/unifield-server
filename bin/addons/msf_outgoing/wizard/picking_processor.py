@@ -140,6 +140,7 @@ class stock_picking_processor(osv.osv):
         ),
         'alert_msl_mml': fields.char(size=512, string="Contains non-conform MML/MSL", readonly=1),
         'partial_process_sign': fields.boolean('Partial process warning if signature'),
+        'sde_updated': fields.boolean('Updated by SDE'),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):

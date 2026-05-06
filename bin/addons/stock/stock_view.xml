@@ -812,6 +812,7 @@
                     <field name="details" truncate="15"/>
                     <field name="order_category" />
                     <field name="reason_type_id" />
+                    <field name="sde_updated"/>
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="backorder_id" groups="base.group_extended"/>

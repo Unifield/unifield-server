@@ -1323,5 +1323,9 @@
         <record id="us_15639_update_description_ppl" model="patch.scripts">
             <field name="method">us_15639_update_description_ppl</field>
         </record>
+
+        <record id="us_14587_15419_15645_sde_changes" model="patch.scripts">
+            <field name="method">us_14587_15419_15645_sde_changes</field>
+        </record>
     </data>
 </openerp>
