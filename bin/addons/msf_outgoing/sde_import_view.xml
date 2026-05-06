@@ -6,7 +6,6 @@
             <field name="name">SDE Tool</field>
             <field name="login">sde_tool</field>
             <field name="active" eval="True" />
-            <field name="context_lang">en_US</field>
         </record>
 
         <!-- Sequences for sde.export.pagination -->
