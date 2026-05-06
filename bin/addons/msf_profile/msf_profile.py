@@ -88,7 +88,10 @@ class patch_scripts(osv.osv):
             sde_tool_user_id = user_obj._get_sde_tool_user_id(cr)
             if sde_tool_user_id:
                 group_obj = self.pool.get('res.groups')
-                group_ids = [group_obj.search(cr, uid, [('name', '=', 'Sync / User')])]
+                sync_user_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+                group_ids = []
+                if sync_user_ids:
+                    group_ids.append(sync_user_ids[0])
                 sup_wh_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Warehouse_Manager')])
                 if sup_wh_man_group_ids:
                     group_ids.append(sup_wh_man_group_ids[0])
