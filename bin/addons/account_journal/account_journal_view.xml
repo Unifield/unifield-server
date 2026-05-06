@@ -40,13 +40,13 @@
                                    attrs="{'required': [('type', 'not in', ('situation', 'stock'))],
                                            'readonly': [('has_entries', '=', True)]}"/>
                             <field name="bank_account_name"
-                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                                   attrs="{'invisible': ['&amp;', ('type', '!=', 'bank'), ('type', '!=', 'other')]}"/>
                             <field name="bank_account_number"
-                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                                   attrs="{'invisible': ['&amp;', ('type', '!=', 'bank'), ('type', '!=', 'other')]}"/>
                             <field name="bank_swift_code"
-                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                                   attrs="{'invisible': ['&amp;', ('type', '!=', 'bank'), ('type', '!=', 'other')]}"/>
                             <field name="bank_address"
-                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                                   attrs="{'invisible': ['&amp;', ('type', '!=', 'bank'), ('type', '!=', 'other')]}"/>
                             <field name="bank_journal_id"
                                    attrs="{'invisible': [('type', '!=', 'cheque')],
                                            'required': [('type', '=', 'cheque')],
@@ -54,7 +54,7 @@
                         </group>
                         <group colspan="4" col="4">
                             <label string="" colspan="2"/>
-                            <button name="button_delete_journal" attrs="{'invisible': [('type', 'not in', ['cash', 'bank', 'cheque'])]}" string="Delete this journal and all attached registers" type="object" icon="gtk-undelete" confirm="This will first DELETE all registers linked to this journal then DELETE this journal. Are you sure?" colspan="2"/>
+                            <button name="button_delete_journal" attrs="{'invisible': [('type', 'not in', ['cash', 'bank', 'cheque', 'other'])]}" string="Delete this journal and all attached registers" type="object" icon="gtk-undelete" confirm="This will first DELETE all registers linked to this journal then DELETE this journal. Are you sure?" colspan="2"/>
                         </group>
                     </form>
                 </form>

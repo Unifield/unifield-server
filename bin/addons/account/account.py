@@ -812,7 +812,7 @@ class account_journal(osv.osv):
                 journal_type = self.browse(cr, uid, journal_id, fields_to_fetch=['type'], context=context).type or ''
             if journal_type != 'cheque':
                 vals['bank_journal_id'] = False
-            if journal_type != 'bank':
+            if journal_type not in ['bank', 'other']:
                 vals.update({'bank_account_name': '',
                              'bank_account_number': '',
                              'bank_swift_code': '',

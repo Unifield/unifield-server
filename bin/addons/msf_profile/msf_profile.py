@@ -7664,6 +7664,24 @@ class patch_scripts(osv.osv):
         cr.execute(update_name_and_code)
         cr.execute(update_translation)
 
+    def us_15107_other_analytic_journal(self, cr, uid, *a, **b):
+        """"
+        Create the mobile money analytic journal OFIN
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
+        cr.execute("""
+                   INSERT INTO account_analytic_journal (name, code, active, company_id, type, instance_id,
+                                                         is_current_instance)
+                   VALUES ('Other Financial Institutions',
+                           'OFIN',
+                           TRUE,
+                           1,
+                           'cash',
+                           %s,
+                           TRUE);
+                   """, (instance,))
+        return True
+
     def launch_patch_scripts(self, cr, uid, *a, **b):
         ps_obj = self.pool.get('patch.scripts')
         ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
