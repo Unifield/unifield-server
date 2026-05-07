@@ -1400,7 +1400,7 @@ class users(osv.osv):
 
         user_ids = self.search(cr, 1, [
             ('active', '=', True),
-            ('user_email', 'ilike', email),
+            ('user_email', '=ilike', email),
         ], context=context)
 
         if not user_ids:
