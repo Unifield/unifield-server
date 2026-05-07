@@ -186,10 +186,12 @@
                     </group>
                     <group col="7" colspan="2">
                     	<button name="action_cancel" string="Cancel" type="object" icon="gtk-cancel" attrs="{'invisible': [('state', 'not in', ['draft'])]}" />
-                    	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
-                    	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('state', '!=', 'completed')]}" />
+						<button name="add_items" type="object" string="Add Items" icon="gtk-add" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', 'not in', ['draft', 'completed'])]}" />
+						<button name="remove_items" type="object" string="Remove Items" icon="gtk-remove" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', 'not in', ['draft', 'completed'])]}" />
+						<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('state', '!=', 'completed')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': [('state', '!=', 'completed')]}" />
-                        <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': [('state', '!=', 'completed')]}" />
+                        <button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
+						<button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': [('state', '!=', 'completed')]}" />
                     	<button name="reactivate_kit" string="Re-activate" type="object" icon="gtk-undo" attrs="{'invisible': [('state', '!=', 'done')]}" />
 					</group>
             	</form>

@@ -60,6 +60,55 @@ class patch_scripts(osv.osv):
     }
 
     # UF41.0
+    def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
+        '''
+        Hide the 4 Single Data Entry menus used for manual actions. Then menus will need be manually activated if
+        someone want to test SDE from Unifield
+        Give the new user "sde_tool" the Groups "Sync / User", "Sup_Warehouse_Manager" and "Sup_Transport_Manager"
+        '''
+        # Hide the menu
+        menu_obj = self.pool.get('ir.ui.menu')
+
+        sde_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_main_menu')[1]
+        sde_tools_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_menu')[1]
+        sde_pagi_imp_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_import_menu')[1]
+        sde_pagi_exp_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_export_menu')[1]
+        sde_avchk_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_availability_check_menu')[1]
+
+        menu_obj.write(cr, uid, sde_menu_id, {'active': False}, context={})
+        menu_ids = [sde_tools_menu_id, sde_pagi_imp_menu_id, sde_pagi_exp_menu_id, sde_avchk_menu_id]
+        menu_obj.write(cr, uid, menu_ids, {'active': False}, context={})
+
+        # SQL request to activate the menus, then restart the server
+        # UPDATE ir_ui_menu SET active = 't' WHERE id IN (SELECT res_id FROM ir_model_data WHERE name IN ('sde_import_menu', 'sde_import_main_menu', 'sde_paginated_import_menu', 'sde_paginated_export_menu', 'sde_availability_check_menu'));
+
+        # Set the needed Groups to "sde_tool" user, exclude sync server
+        if not cr.table_exists('sync_server_user_rights'):
+            user_obj = self.pool.get('res.users')
+            sde_tool_user_id = user_obj._get_sde_tool_user_id(cr)
+            if sde_tool_user_id:
+                group_obj = self.pool.get('res.groups')
+                sync_user_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+                group_ids = []
+                if sync_user_ids:
+                    group_ids.append(sync_user_ids[0])
+                sup_wh_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Warehouse_Manager')])
+                if sup_wh_man_group_ids:
+                    group_ids.append(sup_wh_man_group_ids[0])
+                sup_tr_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Transport_Manager')])
+                if sup_tr_man_group_ids:
+                    group_ids.append(sup_tr_man_group_ids[0])
+
+                user_obj.write(cr, uid, sde_tool_user_id, {'groups_id': [(6, 0, group_ids)]}, context={})
+        return True
+
+    def us_15197_replace_product_id_into_counter(self, cr, uid, *a, **b):
+        """
+        Count the number of times a product is merged into instead of storing the product info
+        """
+        cr.execute("""UPDATE product_product SET nb_merge_from = 1 WHERE replace_product_id IS NOT NULL""")
+        return True
+
     def us_15072_po_detail(self, cr, uid, *a, **b):
         """
         Add the PO details to the invoice
@@ -7897,13 +7946,6 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def _get_default_ctx_lang(self, cr, uid, context=None):
-        config_obj = self.pool.get('unifield.setup.configuration')
-        if config_obj.search_exists(cr, uid, [], context=context):
-            # if not record, get_config create a record
-            # incorrect in case of user creation during install
-            config_lang = config_obj.get_config(cr, uid).lang_id
-            if config_lang:
-                return config_lang
         if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
             return 'en_MF'
         return 'en_US'

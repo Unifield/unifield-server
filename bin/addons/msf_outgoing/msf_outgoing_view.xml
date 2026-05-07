@@ -169,6 +169,7 @@
                     <field name="order_category" string="Order\nCategory"/>
                     <field name="incoming_id" />
                     <field name="overall_qty" invisible="True" />
+                    <field name="sde_updated"/>
                     <field name="date"/>
                     <field name="min_date" string="Expected\nPick Date" />
                     <field name="state"/>
@@ -193,13 +194,14 @@
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
                             <field name="partner_id2" readonly="1" />
-                            <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
+                            <field name="ext_cu" readonly="1" string="Destination Location"/>
                             <field name="address_id" colspan="2" context="{'contact_display':'partner'}"
                                    domain="[('partner_id', '=', partner_id2)]"
                                    attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': ['|', '|', ('state', 'in', ['done', 'cancel']), ('partner_id2', '=', False), ('from_ir', '=', True)]}" />
-                            <field name="backorder_id" readonly="1" string="Original PICK" />
+                            <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
                             <field name="reason_type_id" widget="selection" readonly="1" />
                             <field name="order_category" />
+                            <field name="backorder_id" readonly="1" string="Original PICK" />
                         </group>
 
                         <group colspan="2" col="2">
@@ -430,6 +432,11 @@
                             <field name="move_type" invisible="1"/>
                             <field name="type" invisible="1"/>
                             <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                            <newline />
+                            <group colspan="4" attrs="{'invisible': ['|', ('backorder_id', '=', False), ('sde_updated', '=', False)]}">
+                                <field name="sde_updated" readonly="1"/>
+                                <button name="reset_sde_updated_flag" states="assigned" string="Reset SDE update" type="object" icon="gtk-refresh" />
+                            </group>
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
@@ -449,6 +456,20 @@
                         </page>
                         &signature_template;
                     </notebook>
+                    <group>
+                        <field name="sde_update_msg" invisible="1"/>
+                        <html>
+                            <p id="sde_update_banner_msg" style="display:none; position:fixed; min-width:100%%; z-index:1000; left:0; top:0; text-align:center; padding: 10px 1px; background: red none repeat scroll 0 0; color:white; font-weight:bold; font-size:1.6em" />
+
+                            <script language="javascript">
+                                var sde_update_msg = $('#sde_update_msg').val() || $('#sde_update_msg').text();
+                                if (sde_update_msg) {
+                                    $('#sde_update_banner_msg').html(sde_update_msg);
+                                    $('#sde_update_banner_msg').show();
+                                }
+                            </script>
+                        </html>
+                    </group>
                 </form>
             </field>
         </record>
@@ -509,6 +530,7 @@
 						<field name="date" />
 						<field name="min_date" />
 						<field name="product_id" />
+						<field name="sde_updated" />
                     </group>
                     <newline />
                     <group string="State of lines" col="8" colspan="4">
@@ -692,14 +714,15 @@
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
                             <field name="partner_id2" readonly="1" />
-                            <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" on_change="change_packing_list(packing_list)"/>
+                            <field name="ext_cu" readonly="1" string="Destination Location"/>
                             <field name="address_id" colspan="2" context="{'contact_display':'partner'}"
                                    attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': ['|', ('partner_id2', '=', False), ('from_ir', '=', True)]}"
                                    domain="[('partner_id', '=', partner_id2)]"
                             />
+                            <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" on_change="change_packing_list(packing_list)"/>
+                            <field name="backorder_id" readonly="1" />
                             <field name="order_category" />
                             <field name="invoice_state" invisible="1" />
-                            <field name="backorder_id" readonly="1" />
                             <field name="reason_type_id" widget="selection" readonly="1"/>
                             <field name="num_of_packs" />
                             <field name="total_volume" />

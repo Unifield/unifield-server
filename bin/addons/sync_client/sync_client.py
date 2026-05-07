@@ -1434,6 +1434,12 @@ class Entity(osv.osv):
                 logger.replace(logger_index, 'Processing Export to HQ system (OCP)')
                 logger.write()
             self._logger.info('Processing Export to HQ system (OCP)')
+        elif self.pool.get('ubuntu.export.wizard').launch_auto_export(cr, uid, context=context):
+            if logger:
+                logger_index = logger.append()
+                logger.replace(logger_index, 'Processing Export to HQ system (Ubuntu) - Not yet exported')
+                logger.write()
+            self._logger.info('Processing Export to HQ system (Ubuntu) - Not yet exported')
         return True
 
     @sync_process()
