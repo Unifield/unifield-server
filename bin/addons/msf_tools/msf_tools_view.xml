@@ -59,10 +59,24 @@
             <field name="res_model">email.log</field>
             <field name="view_mode">tree,form</field>
             <field name="view_type">form</field>
-            <field name="domain">[('sender_model_id.model', '=', 'automated.import.job')]</field>
+            <field name="domain">
+                [('sender_model_id.model', '=', 'automated.import.job')]
+            </field>
+        </record>
+
+        <record id="action_password_reset_email_log" model="ir.actions.act_window">
+            <field name="name">Password reset email logs</field>
+            <field name="res_model">email.log</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_type">form</field>
+            <field name="domain">
+                [('sender_model_id.model', '=', 'res.users')]
+            </field>
         </record>
 
         <menuitem id="auto_import_email_log_menu" name="Auto-import email logs" action="action_auto_import_email_log"
+                  parent="email_log_menu" sequence="1" />
+        <menuitem id="password_reset_email_log_menu" name="Password reset email logs" action="action_password_reset_email_log"
                   parent="email_log_menu" sequence="1" />
     </data>
 </openerp>
