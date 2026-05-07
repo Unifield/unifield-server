@@ -1283,10 +1283,16 @@ class users(osv.osv):
 
             cr = pooler.get_db(db_name).cursor()
 
+            if not login or not isinstance(login, str):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The login must be a non-empty string')
+                )
+
             user_ids = self.search(cr, 1, [
                 ('login', '=', login.lower()),
                 ('active', '=', True),
-                ('user_email', '=', email),
+                ('user_email', 'ilike', email),
             ], context=context)
 
             if not user_ids:
@@ -1394,7 +1400,7 @@ class users(osv.osv):
 
         user_ids = self.search(cr, 1, [
             ('active', '=', True),
-            ('user_email', '=', email),
+            ('user_email', 'ilike', email),
         ], context=context)
 
         if not user_ids:
@@ -1491,11 +1497,17 @@ class users(osv.osv):
 
         limit_str = limit.strftime('%Y-%m-%d %H:%M:%S')
 
+        if not login or not isinstance(login, str):
+            raise osv.except_osv(
+                _('Error'),
+                _('The login must be a non-empty string')
+            )
+
         user_ids = self.search(cr, 1, [
             ('reset_password_token', '=', token),
             ('login', '=', login.lower()),
             ('active', '=', True),
-            ('user_email', '=', email),
+            ('user_email', 'ilike', email),
             ('reset_password_date', '>=', limit_str),
         ], context=context)
 
