@@ -1320,6 +1320,8 @@ class signature_set_user(osv.osv_memory):
 
         msg = ustr(wiz.legal_name)
         if wiz.new_signature_import:
+            pdf_img_format, pdf_img_transparency = False, False
+            nb_pdf_images = 0
             if wiz.pdf_import:
                 # Create a temporary file to use it with pypdf
                 temp_file = BytesIO()
@@ -1329,11 +1331,16 @@ class signature_set_user(osv.osv_memory):
                     reader = PdfReader(temp_file)
                     page = reader.pages[0]
                     # Only check what is recognized as image
+                    img_size = 0
                     for image_file_object in page.images:
                         # The TIFF (Tagged Image File Format) images are ignored
-                        if image_file_object.image.format in ('JPEG', 'PNG'):
-                            img_data = image_file_object.data
-                            break
+                        if image_file_object.image.format in ('JPEG', 'JPEG2000', 'PNG'):
+                            nb_pdf_images += 1
+                            # We take the smaller image in case the actual signature is separated from the document image
+                            if not img_size or img_size > image_file_object.image.height + image_file_object.image.width:
+                                img_data = image_file_object.data
+                                pdf_img_format = image_file_object.image.format
+                                pdf_img_transparency = image_file_object.image.has_transparency_data
                 finally:
                     temp_file.close()
                 if img_data is None:
@@ -1347,6 +1354,16 @@ class signature_set_user(osv.osv_memory):
 
             # Grayscale of the imported image
             gray_img = cv2.cvtColor(img_imp, cv2.COLOR_BGR2GRAY)
+
+            # Put the transparency back and convert it to white pixels
+            if pdf_img_transparency:
+                _tmp, alpha = cv2.threshold(gray_img, 32, 255, cv2.THRESH_BINARY)
+                b, g, r = cv2.split(img_imp)
+                rgba = [b, g, r, alpha]
+                img_transparency = cv2.merge(rgba, img_imp)
+                trans_mask = img_transparency[:, :, 3] < 32
+                img_transparency[trans_mask] = [255, 255, 255, 255]
+                img_imp = cv2.cvtColor(img_transparency, cv2.COLOR_BGRA2BGR)
 
             # Adding a blur to reduce the noise
             blurred = cv2.GaussianBlur(gray_img, (5, 5), 0)
@@ -1378,6 +1395,8 @@ class signature_set_user(osv.osv_memory):
                 extra_w = int(w * 0.02)
                 extra_h = int(h * 0.07)
                 final_img = img_imp[y + extra_h: y + h - extra_h, x + extra_w: x + w - extra_w]
+            elif nb_pdf_images > 1 or pdf_img_format == 'JPEG2000':
+                final_img = img_imp
             else:
                 raise osv.except_osv(_('Warning'), _('The signature could not be found in the file, please make sure to follow the instructions at the top of the template'))
 
