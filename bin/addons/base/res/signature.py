@@ -9,10 +9,12 @@ from tools.misc import _register_log
 from lxml import etree
 from datetime import datetime
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 from report.render.rml2pdf import customfonts
 from PIL import Image, ImageDraw, ImageFont
 import base64
+import tools
 from io import BytesIO
 import cv2
 import numpy
@@ -254,6 +256,27 @@ class signature(osv.osv):
             res[sign['id']] = signee_user
         return res
 
+    def _get_email_signature_notif_active(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Check if the Email Notification for signatures is active
+        For now, only the PO can manually send an email and see the email logs
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        email_sign_notif_doc_appl_obj = self.pool.get('email.signature.notification.doc.applicability')
+        email_sign_notif_active = self.pool.get('email.signature.notification').\
+            search_exist(cr, uid, [('active', '=', True)], context=context)
+        for sign in self.read(cr, uid, ids, ['signature_res_model', 'signature_res_id'], context=context):
+            if email_sign_notif_doc_appl_obj.active_doc_type(cr, uid, sign['signature_res_model'], sign['signature_res_id'], context=context):
+                res[sign['id']] = email_sign_notif_active
+            else:
+                res[sign['id']] = False
+        return res
+
     _columns = {
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
         'signature_res_model': fields.char('Model', size=254, select=1),
@@ -270,10 +293,15 @@ class signature(osv.osv):
         'allowed_to_be_closed': fields.function(_get_allowed_to_be_closed, type='boolean', string='Allowed to be closed', method=1),
         'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
         'is_signee_user': fields.function(_get_is_signee_user, type='boolean', string='Is the current user Signee Only ?', method=1),
+        'email_signature_notif_active': fields.function(_get_email_signature_notif_active, type='boolean', string='Email Notification for Signature is Active', method=1),
+        'email_signature_fully_signed': fields.boolean('An email has been sent because the document is fully signed', readonly=True),
+        'email_signature_manual_notif': fields.boolean('An email has been sent because of a manual request', readonly=True),
     }
 
     _defaults = {
         'doc_locked_for_sign': False,
+        'email_signature_fully_signed': False,
+        'email_signature_manual_notif': False,
     }
 
     _sql_constraints = [
@@ -463,7 +491,9 @@ class signature_object(osv.osv):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:
-                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed']:
+                    fields_to_remove = ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed',
+                                        'email_log_ids', 'email_signature_fully_signed', 'email_signature_manual_notif']
+                    for to_remove in fields_to_remove:
                         if fvg.get('fields') and to_remove in fvg['fields']:
                             del fvg['fields'][to_remove]
                     parent_node = fields[0].getparent()
@@ -516,9 +546,9 @@ class signature_object(osv.osv):
         if default is None:
             default = {}
         fields_to_reset = [
-            'signature_id', 'signature_line_ids',
-            'signature_state', 'signed_off_line', 'signature_is_closed', 'signature_closed_date',
-            'signature_closed_user', 'signature_res_id', 'signature_res_model', 'doc_locked_for_sign'
+            'signature_id', 'signature_line_ids', 'signature_state', 'signed_off_line', 'signature_is_closed',
+            'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model',
+            'doc_locked_for_sign', 'email_log_ids', 'email_signature_fully_signed', 'email_signature_manual_notif'
         ]
         to_del = []
         for ftr in fields_to_reset:
@@ -603,6 +633,7 @@ class signature_object(osv.osv):
     def unlock_doc_for_sign(self, cr, uid, ids, context=None):
         """
         Allow the document to be editable, but un-sign it in the process
+        Remove the email_signature flags to allow full signature and manual notification emails to be sent again
         """
         if context is None:
             context = {}
@@ -618,8 +649,8 @@ class signature_object(osv.osv):
             to_unsign.append(x[0])
         if to_unsign:
             self.pool.get('signature.line').super_action_unsign(cr, uid, to_unsign, context=context)
-
-        self.write(cr, uid, ids, {'doc_locked_for_sign': False}, context=context)
+        sign_vals = {'doc_locked_for_sign': False, 'email_signature_fully_signed': False, 'email_signature_manual_notif': False}
+        self.write(cr, uid, ids, sign_vals, context=context)
 
         return True
 
@@ -642,6 +673,135 @@ class signature_object(osv.osv):
         if to_unsign:
             # disable check as it's expected to be in a case where all signatures must be removed
             self.pool.get('signature.line')._action_unsign(cr, uid, to_unsign, context=context, check_ur=False)
+
+        return True
+
+    def specific_email_signature_notification(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        email_sign_notif_obj = self.pool.get('email.signature.notification')
+        signl_obj = self.pool.get('signature.line')
+
+        expired_sign_user_names = []
+        for doc in self.browse(cr, uid, ids, context=context):
+            doc_type, doc_name = '', ''
+            if self._name == 'sale.order':
+                if doc.procurement_request:
+                    doc_type = _('Internal Requests (IR)')
+                else:
+                    doc_type = _('Field Orders (FO)')
+                doc_name = doc.name
+            elif self._name == 'purchase.order':
+                doc_type = _('Purchase Orders (PO)')
+                doc_name = doc.name
+            elif self._name == 'stock.picking':
+                if doc.type == 'in' and doc.subtype == 'standard':
+                    doc_type = _('Incoming Shipments (IN)')
+                elif doc.type == 'internal' and doc.subtype == 'standard':
+                    doc_type = _('Internal Moves (INT)')
+                elif doc.type == 'out' and doc.subtype == 'standard':
+                    doc_type = _('Delivery Orders (OUT)')
+                elif doc.type == 'out' and doc.subtype == 'picking':
+                    doc_type = _('Picking Lists & Picking Tickets (PICK)')
+                doc_name = doc.name
+            elif self._name == 'account.bank.statement':
+                if doc.journal_id.type == 'cash':
+                    doc_type = _('Cash Registers')
+                elif doc.journal_id.type == 'bank':
+                    doc_type = _('Bank Registers')
+                elif doc.journal_id.type == 'cheque':
+                    doc_type = _('Cheque Registers')
+                doc_name = doc.name
+            elif self._name == 'account.invoice':
+                doc_type = _('Supplier Invoices (SI)')
+                doc_name = doc.number or doc.origin or doc.supplier_reference
+            elif self._name == 'physical.inventory':
+                doc_type = _('Physical Inventories (PI)')
+                doc_name = doc.ref
+
+            cr.execute("""
+                SELECT signl.id, u.user_email, u.name, signl.first_reminder_sent_date, u.signature_to
+                FROM signature_line signl
+                LEFT JOIN signature_line osignl ON osignl.signature_id = signl.signature_id AND osignl.is_active = 't' AND osignl.signed = 'f'
+                LEFT JOIN signature sign ON signl.signature_id = sign.id
+                LEFT JOIN res_users u ON signl.user_id = u.id
+                WHERE signl.signature_id = %s AND signl.user_id IS NOT NULL AND u.signature_enabled = 't' AND signl.signed = 'f'
+                    AND signl.is_active = 't' AND sign.signed_off_line = 'f' AND sign.signature_is_closed = 'f'
+                GROUP BY signl.id, u.user_email, u.name, signl.first_reminder_sent_date, u.signature_to
+                HAVING signl.prio <= MIN(osignl.prio)
+            """, (doc.signature_id.id,))
+            signl_data = cr.fetchone()
+            if signl_data and signl_data[0]:
+                email_sign_notif_ids = email_sign_notif_obj.search(cr, uid, [('active', '=', 't')], context=context)
+                if email_sign_notif_ids:
+                    error_msg = ''
+                    current_date = datetime.now()
+                    instance_name = self.pool.get('res.users').browse(cr, uid, [uid], context=context)[0].company_id.instance_id.instance
+                    email_sign_notif = email_sign_notif_obj.read(cr, uid, email_sign_notif_ids[0], context=context)
+                    try:
+                        if not signl_data[1]:
+                            raise osv.except_osv(_('Error'), _('User %s does not have an Email') % (signl_data[2] or _('UniField user'),))
+                        if signl_data[4] and current_date.strftime('%Y-%m-%d') > signl_data[4]:
+                            # Fill the var with the username of the user having an expired signature but need
+                            # to sign to users with the rights Sign_document_creator_finance and Sign_document_creator_supply
+                            if signl_data[2] or _('UniField user') not in expired_sign_user_names:
+                                expired_sign_user_names.append(signl_data[2] or _('UniField user'))
+                            continue
+
+                        sign_expiry_text = ''
+                        if email_sign_notif['check_signature_expiry'] and signl_data[4] and \
+                                (datetime.now() + relativedelta(days=30)).strftime('%Y-%m-%d') > signl_data[4]:
+                            sign_expiry_text = _('<b>Signature status:</b> Your signature will expire the %s, please take the necessary actions to either take care of the pending signatures or update your signature.') \
+                                % (datetime.strptime(signl_data[4], '%Y-%m-%d').strftime('%d/%m/%Y'),)
+
+                        email_subject = _('UniField - Your signature has been requested on a document')
+                        email_body = _("""<div>Dear %s,</div>
+<br/>
+<div>You are requested to sign a document:</div>
+<ul>
+  <li><b>Instance:</b> %s</li>
+  <li><b>Document:</b> %s - %s</li>
+</ul>
+<br/>
+<div>Please log in to UniField to review and complete the required electronic signature.</div>
+<div>%s</div>
+<div>If you have already signed the document after this e-mail was generated, no further action is required for that document.</div>
+<br/>
+<div>Thank you,</div>
+<div>UniField Team</div>""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name, sign_expiry_text)
+
+                        tools.email_send(False, [signl_data[1]], email_subject, email_body, subtype='html')
+
+                        self.write(cr, uid, doc.id, {'email_signature_manual_notif': True}, context=context)
+                    except Exception as e:
+                        if isinstance(e, osv.except_osv):
+                            error_msg = e.value
+                        else:
+                            error_msg = e.args and '. '.join(e.args) or e
+                    finally:
+                        # Logs to be displayed on the signature tab
+                        email_log_vals = {
+                            'recipients': signl_data[1] or signl_data[2] or _('UniField user'),
+                            'recipient_names': signl_data[2] or _('UniField user'),
+                            'state': error_msg and 'error' or 'success',
+                            'result': error_msg and _('Some error(s) occurred while trying to send the email: %s') \
+                            % (error_msg,) or _('The email was sent successfully'),
+                            'sender_model_id': self.pool.get('ir.model').search(cr, 1, [('model', '=', 'email.signature.notification')])[0],
+                            'signature_ids': [(6, 0, [doc.signature_id.id])],
+                            'date_sent': current_date,
+                            'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+                        }
+                        self.pool.get('email.log').create(cr, uid, email_log_vals, context=context)
+                        # Put the necessary date on the affected signature line
+                        if signl_data[3]:
+                            signl_obj.write(cr, uid, signl_data[0], {'latest_reminder_sent_date': current_date}, context=context)
+                        else:
+                            signl_obj.write(cr, uid, signl_data[0], {'first_reminder_sent_date': current_date,
+                                                                     'latest_reminder_sent_date': current_date}, context=context)
+
+        if expired_sign_user_names:
+            email_sign_notif_obj.email_expired_signatures(cr, uid, ids, expired_sign_user_names, context=context)
 
         return True
 
@@ -740,6 +900,8 @@ class signature_line(osv.osv):
         'backup': fields.boolean('Back Up', readonly=1),
         'prio': fields.integer('Sign Order', readonly=1, select=1),
         'ready_to_sign': fields.function(_get_ready_to_sign, type='boolean', string='Ready to sign', method=1),
+        'first_reminder_sent_date': fields.datetime('Date of the first reminder E-mail sent'),
+        'latest_reminder_sent_date': fields.datetime('Date of the latest reminder E-mail sent'),
     }
 
     _defaults = {
@@ -849,6 +1011,10 @@ class signature_line(osv.osv):
         desc = "Signature added on role %s" % (sign_line.name, )
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, '', new, 'create', context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
+
+        # Set the flag to False so specific email can be re-sent on the same signature
+        self.pool.get('signature').write(cr, root_uid, [sign_line.signature_id.id], {'email_signature_manual_notif': False}, context=context)
+
         return True
 
     def super_unsign_confim(self, cr, uid, ids, context=None, super_unsign_wizard=False):
@@ -952,8 +1118,14 @@ class signature_line(osv.osv):
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False, 'doc_state': False}, context=context)
+        sign_line_vals = {'signed': False, 'date': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False,
+                          'doc_state': False, 'first_reminder_sent_date': False, 'latest_reminder_sent_date': False}
+        self.write(cr, root_uid, ids, sign_line_vals, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
+
+        # Set the flags to False so specific email can be re-sent on the same signature
+        sign_vals = {'email_signature_fully_signed': False, 'email_signature_manual_notif': False}
+        self.pool.get('signature').write(cr, root_uid, [sign_line.signature_id.id], sign_vals, context=context)
 
         return True
 
@@ -1206,6 +1378,8 @@ class signature_add_user_wizard(osv.osv_memory):
                               '%s %s' % (wiz['login_%d' %x].login or '', wiz['login_%d' %x].esignature_id and wiz['login_%d' %x].esignature_id.legal_name or ''),
                               'write', context
                               )
+                # Remove email.signature.notification data when the user is changed
+                line_data.update({'first_reminder_sent_date': False, 'latest_reminder_sent_date': False})
             if line_data['backup'] != wiz['line_id_%d' %x].backup:
                 _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model,
                               'Sign backup on %s (%s)' % (wiz['line_id_%d' %x].name, wiz['login_%d' %x].login or ''),
@@ -1601,7 +1775,13 @@ class signature_setup(osv.osv_memory):
                         user_data.append('...')
                     raise osv.except_osv(_('Warning'), _('Signature cannot be deactivated: it is enabled on %d user(s). Please untick "Enable Signature" on users: %s') % (len(user_ids), ', '.join(user_data)))
 
-            for module, xmlid in [('useability_dashboard_and_menu', 'signature_follow_up_menu'), ('base', 'signature_image_menu'), ('useability_dashboard_and_menu', 'my_signature_menu')]:
+            signature_menus = [
+                ('msf_tools', 'email_signature_notification_menu'),
+                ('useability_dashboard_and_menu', 'signature_follow_up_menu'),
+                ('base', 'signature_image_menu'),
+                ('useability_dashboard_and_menu', 'my_signature_menu')
+            ]
+            for module, xmlid in signature_menus:
                 menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
 

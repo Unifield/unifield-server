@@ -62,7 +62,7 @@
             <field name="domain">[('sender_model_id.model', '=', 'automated.import.job')]</field>
         </record>
 
-        <menuitem id="auot_import_email_log_menu" name="Auto-import email logs" action="action_auto_import_email_log"
+        <menuitem id="auto_import_email_log_menu" name="Auto-import email logs" action="action_auto_import_email_log"
                   parent="email_log_menu" sequence="1" />
     </data>
 </openerp>

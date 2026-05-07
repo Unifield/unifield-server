@@ -724,9 +724,12 @@ def email_send(email_from, email_to, subject, body, email_cc=None, email_bcc=Non
 
     `email_to`: a sequence of addresses to send the mail to.
     """
+    # Config parameter preventing emails to be sent
+    if config.get('no_email_send'):
+        return True
+
     if x_headers is None:
         x_headers = {}
-
 
     if not (email_from or config['email_from']):
         raise ValueError("Sending an email requires either providing a sender "
