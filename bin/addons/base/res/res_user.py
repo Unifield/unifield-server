@@ -1318,33 +1318,21 @@ class users(osv.osv):
             }, context=context)
             cr.commit()
 
-            body = _("""
-                <p><strong>Password reset request</strong></p>
-            
-                <p>A request has been received to reset your password.</p>
-            
-                <p>This password reset request is valid for the next 6 hours.</p>
-            
-                <p>Otherwise you will need to renew your request for a new password via UF login screen.</p>
-            
-                <p>Here are the details of your account:</p>
-                <ul>
-                    <li><strong>User login:</strong> %s</li>
-                    <li><strong>Temporary code:</strong> %s</li>
-                </ul>
-            
-                <p>Please note this temporary code will only be valid 6 hours.</p>
-            
-                <p>
-                    Please return to UF login page and click on <strong>button</strong> "Forgotten password?".<br>
-                    In this screen click button "Add temporary code". Fill in details there.
-                </p>
-            
-                <p>
-                    If it was not you who has triggered this password reset, please contact your IT - security
-                    responsible to alert them.
-                </p>
-            """) % (user.login, token)
+            body = _(
+                "<p><strong>Password reset request</strong></p>"
+                "<p>A request has been received to reset your password.</p>"
+                "<p>This password reset request is valid for the next 6 hours.</p>"
+                "<p>Otherwise you will need to renew your request for a new password via UF login screen.</p>"
+                "<p>Here are the details of your account:</p>"
+                "<ul>"
+                "    <li><strong>User login:</strong> %s</li>"
+                "    <li><strong>Temporary code:</strong> %s</li>"
+                "</ul>"
+                "<p>Please note this temporary code will only be valid 6 hours.</p>"
+                "<p>Please return to UF login page and click on button \"Forgotten password?\".<br>"
+                "In this screen click button \"Add temporary code\". Fill in details there.</p>"
+                "<p>If it was not you who has triggered this password reset, please contact your IT - security responsible to alert them.</p>"
+            ) % (user.login, token)
 
             try:
                 tools.email_send(email_from=None, email_to=[email],
@@ -1379,7 +1367,7 @@ class users(osv.osv):
 
             email_log_obj.create(cr, 1, {
                 'recipients': email,
-                'subject': "[UniField] Account password reset",
+                'subject': _("[UniField] Account password reset"),
                 'body': body_without_token,
                 'state': state,
                 'result': result,
@@ -1416,25 +1404,16 @@ class users(osv.osv):
             login_lines += "<li><strong>Login:</strong> %s</li>" % user.login
             login_line_without_html += "Login: %s\n" % user.login
 
-        body = _("""
-            <p><strong>Request to retrieve forgotten user login information</strong></p>
-            
-            <p>A request has been received to identify your user login.</p>
-            
-            <p>Here are the details of user login(s) linked to this email address for the selected instance:</p>
-            
-            <ul>
-                %(logins)s
-            </ul>
-            
-            <p>
-                To log in using correct login, please return to UniField login page and proceed as usual.
-            </p>
-            
-            <p>
-                If it was not you who has triggered this login request, please contact your IT security responsible.
-            </p>
-        """) % {
+        body = _(
+            "<p><strong>Request to retrieve forgotten user login information</strong></p>"
+            "<p>A request has been received to identify your user login.</p>"
+            "<p>Here are the details of user login(s) linked to this email address for the selected instance:</p>"
+            "<ul>"
+            "    %(logins)s"
+            "</ul>"
+            "<p>To log in using correct login, please return to UniField login page and proceed as usual.</p>"
+            "<p>If it was not you who has triggered this login request, please contact your IT security responsible.</p>"
+        ) % {
             "logins": login_lines
         }
 
@@ -1472,7 +1451,7 @@ class users(osv.osv):
 
         email_log_obj.create(cr, 1, {
             'recipients': email,
-            'subject': "[UniField] User Account Login identification",
+            'subject': _("[UniField] User Account Login identification"),
             'body': body_without_html,
             'state': state,
             'result': result,
