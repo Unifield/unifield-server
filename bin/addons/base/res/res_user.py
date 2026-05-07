@@ -1292,7 +1292,7 @@ class users(osv.osv):
             user_ids = self.search(cr, 1, [
                 ('login', '=', login.lower()),
                 ('active', '=', True),
-                ('user_email', 'ilike', email),
+                ('user_email', '=ilike', email),
             ], context=context)
 
             if not user_ids:
@@ -1507,7 +1507,7 @@ class users(osv.osv):
             ('reset_password_token', '=', token),
             ('login', '=', login.lower()),
             ('active', '=', True),
-            ('user_email', 'ilike', email),
+            ('user_email', '=ilike', email),
             ('reset_password_date', '>=', limit_str),
         ], context=context)
 
