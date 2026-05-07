@@ -96,40 +96,56 @@ class stock_expired_damaged_report(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        move_obj = self.pool.get('stock.move')
         data_obj = self.pool.get('ir.model.data')
 
         for report in self.browse(cr, uid, ids, context=context):
-            move_domain = [
-                ('type', '=', 'internal'),
-                ('picking_id.state', '=', 'done'),
-            ]
+            sql_append = []
+            sql_cond = {}
 
             if report.date_from:
-                move_domain.append(('date', '>=', report.date_from))
+                sql_append.append('m.date >= %(date_from)s')
+                sql_cond['date_from'] = report.date_from
 
             if report.date_to:
-                move_domain.append(('date', '<=', report.date_to))
+                sql_append.append('m.date <= %(date_to)s')
+                sql_cond['date_to'] = report.date_to
 
             if report.location_id:
-                move_domain.append(('location_id', '=', report.location_id.id))
+                sql_append.append('l.id = %(location_id)s')
+                sql_cond['location_id'] = report.location_id.id
             else:
-                move_domain.append(('location_id.usage', '=', 'internal'))
+                sql_append.append("l.usage = 'internal'")
 
             if report.location_dest_id:
-                move_domain.append(('location_dest_id', '=', report.location_dest_id.id))
+                sql_append.append('l2.id = %(location_dest_id)s')
+                sql_cond['location_dest_id'] = report.location_dest_id.id
             else:
-                move_domain.extend(['|', ('location_dest_id.quarantine_location', '=', True),
-                                    ('location_dest_id.destruction_location', '=', True)])
+                sql_append.append("(l2.quarantine_location = 't' OR l2.destruction_location = 't')")
 
             if report.nomen_manda_0:
-                move_domain.append(('product_id.nomen_manda_0', '=', report.nomen_manda_0.id))
+                sql_append.append('pp.nomen_manda_0 = %(nomen_manda_0)s')
+                sql_cond['nomen_manda_0'] = report.nomen_manda_0.id
 
             reason_types_ids = self._get_reason_types(cr, uid, report)
             if reason_types_ids:
-                move_domain.append(('reason_type_id', 'in', reason_types_ids))
+                sql_append.append('pp.reason_type_id IN %(reason_type_id)s')
+                sql_cond['reason_type_id'] = reason_types_ids
 
-            move_ids = move_obj.search(cr, uid, move_domain, order='picking_id, line_number', context=context)
+            sql = """
+                SELECT DISTINCT(m.id), p.id, m.line_number FROM stock_move m
+                    LEFT JOIN stock_picking p ON m.picking_id=p.id
+                    LEFT JOIN stock_location l ON m.location_id=l.id
+                    LEFT JOIN stock_location l2 ON m.location_dest_id=l2.id
+                    LEFT JOIN product_product pp ON m.product_id=pp.id
+                    LEFT JOIN product_template pt ON pp.product_tmpl_id=pt.id
+                    WHERE m.type = 'internal' AND p.state = 'done'
+            """
+            if sql_append:
+                sql += ' AND %s' % (' AND '.join(sql_append),)
+            sql += """ ORDER BY p.id, m.line_number"""
+            cr.execute(sql, sql_cond)
+
+            move_ids = [x[0] for x in cr.fetchall()]
 
             if not move_ids:
                 raise osv.except_osv(
