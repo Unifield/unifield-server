@@ -128,8 +128,8 @@ class stock_expired_damaged_report(osv.osv):
 
             reason_types_ids = self._get_reason_types(cr, uid, report)
             if reason_types_ids:
-                sql_append.append('pp.reason_type_id IN %(reason_type_id)s')
-                sql_cond['reason_type_id'] = reason_types_ids
+                sql_append.append('m.reason_type_id IN %(reason_type_id)s')
+                sql_cond['reason_type_id'] = tuple(reason_types_ids)
 
             sql = """
                 SELECT DISTINCT(m.id), p.id, m.line_number FROM stock_move m
