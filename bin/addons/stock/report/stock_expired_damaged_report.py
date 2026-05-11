@@ -123,7 +123,7 @@ class stock_expired_damaged_report(osv.osv):
                 sql_append.append("(l2.quarantine_location = 't' OR l2.destruction_location = 't')")
 
             if report.nomen_manda_0:
-                sql_append.append('pp.nomen_manda_0 = %(nomen_manda_0)s')
+                sql_append.append('pt.nomen_manda_0 = %(nomen_manda_0)s')
                 sql_cond['nomen_manda_0'] = report.nomen_manda_0.id
 
             reason_types_ids = self._get_reason_types(cr, uid, report)
