@@ -212,13 +212,31 @@
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='General']" position="replace">
                         <page string="General">
+                            <script language="javascript">
+                                set_country_required = function(init) {
+                                    partner_field = $(':input[name=partner_type]');
+                                    country_field =  $(':input[name=address\\/country_id]');
+
+                                    if (partner_field.length  &amp;&amp; country_field.length) {
+                                        var required = partner_field.val() == 'external'
+                                        form_setRequired(country_field[0], false, required);
+                                        if (init) {
+                                            partner_field.change(set_country_required);
+                                        }
+                                    }
+                                }
+
+                                $(document).ready(function() {
+                                    set_country_required(true);
+                                });
+
+                            </script>
                             <group colspan="4" col="8">
                                 <field name="instance_creator" colspan="2"/>
                                 <group colspan="6" />
                             </group>
                             <field colspan="4" mode="form,tree" name="address" nolabel="1" select="1" height="260">
                                 <form string="Partner Contacts">
-                                    <field name="ext_partner_make_required" invisible="1"/>
                                     <newline/>
                                       <group colspan="2" col="4">
                                         <separator string="Postal Address" colspan="4" col="4" />
@@ -228,7 +246,7 @@
                                         <field name="street2" colspan="4"/>
                                         <field name="zip"/>
                                         <field name="city"/>
-                                        <field name="country_id" completion="1" attrs="{'required': [('ext_partner_make_required', '=', True)]}"/>
+                                        <field name="country_id" completion="1" />
                                         <field name="state_id"/>
                                      </group>
                                      <group colspan="2" col="2">

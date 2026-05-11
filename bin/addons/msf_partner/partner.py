@@ -1303,32 +1303,11 @@ res_partner()
 class res_partner_address(osv.osv):
     _inherit = 'res.partner.address'
 
-    def _get_ext_partner_make_required(self, cr, uid, ids, field_name, args, context=None):
-        """
-        Set value to True on non-Local Market External Partners
-        """
-        if not ids:
-            return {}
-        if context is None:
-            context = {}
-        if isinstance(ids, int):
-            ids = [ids]
-
-        res = {}
-        local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
-        for address in self.browse(cr, uid, ids, fields_to_fetch=['partner_id'], context=context):
-            if address.partner_id and address.partner_id.partner_type == 'external' and address.partner_id.id != local_market_id:
-                res[address.id] = True
-            else:
-                res[address.id] = False
-        return res
-
     _columns = {
         'office_name': fields.char(
             string='Office name',
             size=128,
         ),
-        'ext_partner_make_required': fields.function(_get_ext_partner_make_required, type='boolean', method=True, string='The External Partner makes some fields required', help='Only on non-Local Market Partners'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
