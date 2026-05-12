@@ -826,15 +826,16 @@ class stock_picking(osv.osv):
         all_pack_info = {}
 
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
-            # Delete draft
-            if wizard.draft:
-                inc_proc_obj.write(cr, uid, wizard.id, {'draft': False}, context=context)
-
             if wizard.register_a_claim and wizard.claim_type in ['return', 'missing']:
                 in_out_updated = False
             if not wizard.physical_reception_date:
                 wizard.physical_reception_date = time.strftime('%Y-%m-%d %H:%M:%S')
             picking_id = wizard.picking_id.id
+
+            # Remove "draft" in processors linked to the IN
+            draft_wiz_ids = inc_proc_obj.search(cr, uid, [('picking_id', '=', picking_id), ('draft', '=', True)], context=context)
+            if draft_wiz_ids:
+                inc_proc_obj.write(cr, uid, draft_wiz_ids, {'draft': False}, context=context)
 
             in_forced = wizard.picking_id.state == 'assigned' and \
                 not wizard.register_a_claim and \
