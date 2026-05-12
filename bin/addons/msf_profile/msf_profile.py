@@ -7991,8 +7991,9 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def _get_default_ctx_lang(self, cr, uid, context=None):
-        if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
-            return 'en_MF'
+        for lang in ['en_MF', 'fr_MF', 'sp_MF']:
+            if self.pool.get('res.lang').search_exists(cr, uid, [('translatable','=',True), ('code', '=', lang)]):
+                return lang
         return 'en_US'
 
     def set_default_partner_lang(self, cr, uid, context=None):
