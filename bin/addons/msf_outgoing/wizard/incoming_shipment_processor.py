@@ -325,9 +325,6 @@ class stock_incoming_processor(osv.osv):
         if not ids:
             raise osv.except_osv(_('Error'), _('No wizard found !'))
 
-        # Delete drafts
-        self.write(cr, uid, ids, {'draft': False}, context=context)
-
         to_unlink = []
 
         picking_id = None

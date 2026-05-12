@@ -826,6 +826,10 @@ class stock_picking(osv.osv):
         all_pack_info = {}
 
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
+            # Delete draft
+            if wizard.draft:
+                inc_proc_obj.write(cr, uid, wizard.id, {'draft': False}, context=context)
+
             if wizard.register_a_claim and wizard.claim_type in ['return', 'missing']:
                 in_out_updated = False
             if not wizard.physical_reception_date:
