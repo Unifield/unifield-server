@@ -1316,6 +1316,16 @@ class users(osv.osv):
                 _('The values entered above are for a synched user, the password reset functionality is not possible for this user type. Please contact your UF referent/UF support via the ticketing system.')
             )
 
+        same_email_user_ids = self.search(cr, 1, [
+            ('active', '=', True),
+            ('user_email', '=ilike', email),
+        ], context=context)
+
+        if len(same_email_user_ids) > 1:
+            raise Exception(
+                _('The values entered above are for a user whose email address is used by multiple user accounts, the password reset functionality is not possible for this user type. Please contact your UF referent/UF support via the ticketing system.')
+            )
+
         token = ''.join(random.choices(string.digits, k=10))
         now = time.strftime('%Y-%m-%d %H:%M:%S')
 
