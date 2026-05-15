@@ -322,11 +322,19 @@ class res_partner(osv.osv):
         res = {}
         oc = ''
         entity_obj = self.pool.get('sync.client.entity')
+
+        local_market_id = 0
+        try:
+            local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
+        except ValueError:
+            pass
+
+
         if entity_obj:
             oc = entity_obj.get_entity(cr, uid).oc
         for partner in self.read(cr, uid, ids, ['name', 'partner_type'], context=context):
             allowed = False
-            if partner['partner_type'] == 'external' and \
+            if partner['id'] != local_market_id and partner['partner_type'] == 'external' and \
                     (oc != 'ocb' or (oc == 'ocb' and not re.match('^E[0-9]{3} ', partner['name']))):
                 allowed = True
             res[partner['id']] = allowed
@@ -1126,7 +1134,15 @@ class res_partner(osv.osv):
             if partner_type != 'external':
                 r.update({'can_be_msf_entity': False, 'is_msf_entity': False, 'msf_entity': False})
             else:
-                r['can_be_msf_entity'] = True
+                local_market_id = 0
+                try:
+                    local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
+                except ValueError:
+                    pass
+                if ids and ids[0] == local_market_id:
+                    r['can_be_msf_entity'] = False
+                else:
+                    r['can_be_msf_entity'] = True
 
         return {'value': r}
 
