@@ -128,6 +128,8 @@ class product_mass_update(osv.osv):
             vals['property_account_income'] = False
         if 'empty_exp_account' in vals and vals['empty_exp_account']:
             vals['property_account_expense'] = False
+        if 'active_product' in vals and vals['active_product'] == 'no':
+            vals['product_state'] = False
 
         return super(product_mass_update, self).write(cr, user, ids, vals, context)
 

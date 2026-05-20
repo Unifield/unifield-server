@@ -41,7 +41,7 @@
             <button name="specific_email_signature_notification" type="object" string="Send request to sign" attrs="{'invisible': ['|', ('signature_res_model', '!=', 'purchase.order'), ('email_signature_notif_active', '=', False)], 'readonly': ['|', '|', '|', '|', '|', ('email_signature_manual_notif', '=', True), ('signature_state', '=', 'signed'), ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False), '&amp;', ('allowed_to_be_locked', '=', True), ('doc_locked_for_sign', '=', False)]}" icon="terp-mail-message-new" colspan="2" />
         </group>
         <newline />
-        <field name="signature_res_model" invisible="1" />
+        <field name="signature_res_model" invisible="1" readonly="1" />
         <field name="allowed_to_manage_user" invisible="1" />
         <field name="allowed_to_be_signed_unsigned" invisible="1" />
         <field name="allowed_to_be_locked" invisible="1" />

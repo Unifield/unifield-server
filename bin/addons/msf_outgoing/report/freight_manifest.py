@@ -73,7 +73,10 @@ class freight_manifest(report_sxw.rml_parse):
                 LEFT JOIN stock_picking ppl ON pf.ppl_id=ppl.id
                 LEFT JOIN stock_location l ON ppl.ext_cu=l.id
             WHERE pf.shipment_id = %s""", (shipment_id,))
-        loc_names = [x[0] for x in self.cr.fetchall()]
+        loc_names = []
+        for x in self.cr.fetchall():
+            if x[0]:
+                loc_names.append(x[0])
         return '; '.join(loc_names)
 
     # BKLG_84
