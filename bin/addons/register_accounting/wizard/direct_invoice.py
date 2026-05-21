@@ -224,10 +224,10 @@ class wizard_account_invoice(osv.osv):
         for move in absl.move_ids:
             for aml in move.line_id:
                 if (
-                    aml.debit == 0.00 and
-                    aml.credit == 0.00 and
-                    aml.debit_currency == 0.00 and
-                    aml.credit_currency == 0.00
+                    abs(aml.debit) < 0.0001 and
+                    abs(aml.credit) < 0.0001 and
+                    abs(aml.debit_currency) < 0.0001 and
+                    abs(aml.credit_currency) < 0.0001
                 ):
                     raise osv.except_osv(
                         _('Warning'),

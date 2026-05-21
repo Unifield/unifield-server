@@ -1608,8 +1608,8 @@ class account_move(osv.osv):
         for move in self.browse(cursor, user, ids, context=context):
             top = None
             for line in move.line_id:
-                if (line.debit == 0.00 and line.credit == 0.00 and
-                    line.debit_currency == 0.00 and line.credit_currency == 0.00
+                if (abs(line.debit) < 0.0001 and abs(line.credit) < 0.0001 and
+                    abs(line.debit_currency) < 0.0001 and (line.credit_currency) < 0.0001
                 ):
                     raise osv.except_osv(
                         _('Error'),

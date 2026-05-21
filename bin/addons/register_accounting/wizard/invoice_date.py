@@ -86,7 +86,7 @@ class wizard_invoice_date(osv.osv_memory):
                     debit_curr = aml.debit_currency
                     credit_curr = aml.credit_currency
 
-                    if not debit and not credit and not debit_curr and not credit_curr:
+                    if abs(debit) < 0.0001 and abs(credit) < 0.0001 and abs(debit_curr) < 0.0001 and abs(credit_curr) < 0.0001:
                         raise osv.except_osv(
                             _('Error'),
                             _('Invoice line "%s" has all debit/credit amounts equal to zero.')

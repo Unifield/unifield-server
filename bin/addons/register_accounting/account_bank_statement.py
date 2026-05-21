@@ -2465,8 +2465,8 @@ class account_bank_statement_line(osv.osv):
             functional_in = absl.functional_in
             functional_out = absl.functional_out
 
-            if (amount_in == 0.00 and amount_out == 0.00 and
-                    functional_in == 0.00 and functional_out == 0.00):
+            if (abs(amount_in) < 0.0001 and abs(amount_out) < 0.0001 and
+                    abs(functional_in) < 0.0001 and abs(functional_out) < 0.0001):
                 raise osv.except_osv(
                     _('Error'),
                     _('Entry "%s" has all total debit/credit '
