@@ -222,18 +222,23 @@ class wizard_account_invoice(osv.osv):
         absl = absl_obj.browse(cr, uid, reg_line_id, context=context)
 
         for move in absl.move_ids:
+            total_debit = 0.0
+            total_credit = 0.0
+            total_debit_currency = 0.0
+            total_credit_currency = 0.0
             for aml in move.line_id:
-                if (
-                    abs(aml.debit) < 0.0001 and
-                    abs(aml.credit) < 0.0001 and
-                    abs(aml.debit_currency) < 0.0001 and
-                    abs(aml.credit_currency) < 0.0001
-                ):
-                    raise osv.except_osv(
-                        _('Warning'),
-                        _('Entry "%s" has all total debit/credit '
-                          'amounts equal to zero.') % (aml.name)
-                    )
+                total_debit += aml.debit or 0.0
+                total_credit += aml.credit or 0.0
+                total_debit_currency += aml.debit_currency or 0.0
+                total_credit_currency += aml.credit_currency or 0.0
+            if (abs(total_debit) < 0.0001 and abs(total_credit) < 0.0001 and
+                abs(total_debit_currency) < 0.0001 and abs(total_credit_currency) < 0.0001
+            ):
+                raise osv.except_osv(
+                    _('Warning'),
+                    _('Entry "%s" has all total debit/credit '
+                      'amounts equal to zero.') % (aml.name)
+                )
 
         # Link invoice and register_line
         inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
