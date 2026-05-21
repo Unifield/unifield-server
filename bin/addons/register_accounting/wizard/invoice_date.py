@@ -76,6 +76,22 @@ class wizard_invoice_date(osv.osv_memory):
 
             inv_obj.write(cr, uid, [wiz.invoice_id.id], values)
             wf_service.trg_validate(uid, 'account.invoice', wiz.invoice_id.id, 'invoice_open', cr)
+            invoice = inv_obj.browse(cr, uid, wiz.invoice_id.id, context=context)
+
+            if invoice.move_id:
+                for aml in invoice.move_id.line_id:
+
+                    debit = aml.debit
+                    credit = aml.credit
+                    debit_curr = aml.debit_currency
+                    credit_curr = aml.credit_currency
+
+                    if not debit and not credit and not debit_curr and not credit_curr:
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('Invoice line "%s" has all debit/credit amounts equal to zero.')
+                            % (aml.name)
+                        )
 
         return { 'type': 'ir.actions.act_window_close', }
 

@@ -1608,6 +1608,14 @@ class account_move(osv.osv):
         for move in self.browse(cursor, user, ids, context=context):
             top = None
             for line in move.line_id:
+                if (line.debit == 0.00 and line.credit == 0.00 and
+                    line.debit_currency == 0.00 and line.credit_currency == 0.00
+                ):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Journal Item "%s" has all debit/credit amounts equal to zero.')
+                        % (line.name)
+                    )
                 account = line.account_id
                 while account:
                     account2 = account

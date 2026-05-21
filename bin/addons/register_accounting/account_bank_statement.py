@@ -2459,6 +2459,19 @@ class account_bank_statement_line(osv.osv):
 
         # browse all statement lines for creating move lines
         absls = self.browse(cr, 1, list(set(ids)), context=context)
+        for absl in absls:
+            amount_in = absl.amount_in
+            amount_out = absl.amount_out
+            functional_in = absl.functional_in
+            functional_out = absl.functional_out
+
+            if (amount_in == 0.00 and amount_out == 0.00 and
+                    functional_in == 0.00 and functional_out == 0.00):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Entry "%s" has all total debit/credit '
+                      'amounts equal to zero.') % (absl.name)
+                )
         # check the register state only once as it is the same for all lines
         if absls:
             self._check_register_open(absls[0].statement_id, "post", context)
