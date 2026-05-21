@@ -44,6 +44,8 @@ class configmanager(object):
 
     __lock = Lock()
 
+    smtp_keys = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_ssl_ignore_cert', 'smtp_user', 'smtp_password']
+
     def __init__(self, fname=None):
         self.options = {
             'email_from':False,
@@ -86,10 +88,11 @@ class configmanager(object):
             'pidfile': None,
             'logfile': None,
             'logrotate': True,
-            'smtp_server': 'localhost',
+            'smtp_server': '',
             'smtp_user': False,
             'smtp_port':25,
             'smtp_ssl':False,
+            'smtp_ssl_ignore_cert': False,
             'smtp_password': False,
             'stop_after_init': False,   # this will stop the server after initialization
             'syslog' : False,
@@ -215,6 +218,7 @@ class configmanager(object):
         group.add_option('--smtp-ssl', dest='smtp_ssl', action='store_true', help='specify the SMTP server support SSL or not')
         group.add_option('--smtp-user', dest='smtp_user', help='specify the SMTP username for sending email')
         group.add_option('--smtp-password', dest='smtp_password', help='specify the SMTP password for sending email')
+        group.add_option('--smtp-ssl-ignore-cert', dest='smtp_ssl_ignore_cert', action='store_true', help='Do not verify certificate')
         parser.add_option_group(group)
 
         group = optparse.OptionGroup(parser, "Database related options")
@@ -589,6 +593,22 @@ class configmanager(object):
 
         with open(self.rcfile, 'w') as configfile:
             config_file_parser.write(configfile)
+
+    def _save_smtp_config(self, config_data):
+        if not self.rcfile or not os.path.exists(config.rcfile):
+            return False
+
+        with self.__lock:
+            config_file_parser = self._load_current()
+            for k in config.smtp_keys:
+                self.options[k] = config_data.get(k, False)
+                if k == 'smtp_password' and config_data.get('smtp_password'):
+                    config_file_parser['options']['smtp_password'] = str(b64encode(bytes(config_data['smtp_password'], 'utf8')), 'utf8')
+                else:
+                    config_file_parser['options'][k] = str(config_data.get(k, False))
+
+            with open(self.rcfile, 'w') as configfile:
+                config_file_parser.write(configfile)
 
     def add_db_name(self, db_name):
         if not db_name or not self.rcfile or not os.path.exists(config.rcfile) or (config['db_name_file'] and db_name in config['db_name_file'].split(',')):

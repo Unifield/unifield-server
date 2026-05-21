@@ -8019,44 +8019,52 @@ class email_configuration(osv.osv):
     _name = 'email.configuration'
     _description = 'Email configuration'
 
+    def _get_config(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        data = {}
+        for d in tools.config.smtp_keys:
+            data[d] = tools.config.get(d) or False
+        for _id in ids:
+            res[_id] = data
+        return res
+
     _columns = {
-        'smtp_server': fields.char('SMTP Server', size=512, required=True),
-        'email_from': fields.char('Email From', size=512, required=True),
-        'smtp_port': fields.integer('SMTP Port', required=True),
-        'smtp_ssl': fields.boolean('Use TLS/SSL'),
-        'smtp_ssl_ignore_cert': fields.boolean('Do not verify certificate'),
-        'smtp_user': fields.char('SMTP User', size=512),
-        'smtp_password': fields.char('SMTP Password', size=512),
+        'smtp_server': fields.function(_get_config, type='char', string='SMTP Server', required=True, method=True, multi='smtp'),
+        'email_from': fields.function(_get_config, type='char', string='Email From', required=True, method=True, multi='smtp'),
+        'smtp_port': fields.function(_get_config, type='integer', string='SMTP Port', required=True, method=True, multi='smtp'),
+        'smtp_ssl': fields.function(_get_config, type='boolean', string='Use TLS/SSL', method=True, multi='smtp'),
+        'smtp_ssl_ignore_cert': fields.function(_get_config, type='boolean', string='Do not verify certificate', method=True, multi='smtp'),
+        'smtp_user': fields.function(_get_config, type='char', string='SMTP User', size=512, method=True, multi='smtp'),
+        'smtp_password': fields.function(_get_config, type='char', string='SMTP Password', size=512, method=True, multi='smtp'),
         'destination_test': fields.char('Email Destination Test', size=512),
     }
     _defaults = {
-        'smtp_port': 25,
-        'smtp_ssl': False,
     }
 
-    def set_config(self, cr):
-        data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password']
-
-        if cr.column_exists('email_configuration', 'smtp_ssl_ignore_cert'):
-            data.append('smtp_ssl_ignore_cert')
-
-        cr.execute("""select %s from email_configuration
-            limit 1""" % ','.join(data))  # not_a_user_entry
-        res = cr.fetchone()
-        if res:
-            for i, key in enumerate(data):
-                tools.config[key] = res[i] or False
-        return True
-
     def __init__(self, pool, cr):
-        super(email_configuration, self).__init__(pool, cr)
-        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
-        if cr.rowcount:
-            self.set_config(cr)
+        if cr.column_exists('email_configuration', 'smtp_server') and \
+                (not tools.config.get('smtp_server') or tools.config.get('smtp_server') in ('127.0.0.1', 'localhost')):
+            # migration script from db to config file
+            cr.execute("""
+            select
+                smtp_server, email_from, smtp_port, smtp_ssl, smtp_user, smtp_password, smtp_ssl_ignore_cert
+            from
+               email_configuration
+            """)
 
-    def _update_email_config(self, cr, uid, ids, context=None):
-        self.set_config(cr)
-        return True
+            x = cr.dictfetchone()
+            if x and x['smtp_server'] and x['smtp_server'] != '127.0.0.1' and x['smtp_server'] != 'localhost':
+                tools.config._save_smtp_config(x)
+
+        super(email_configuration, self).__init__(pool, cr)
+
+    def create(self, cr, uid, vals, context=None):
+        tools.config._save_smtp_config(vals)
+        return super(email_configuration, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        tools.config._save_smtp_config(vals)
+        return super(email_configuration, self).write(cr, uid, ids, vals, context)
 
     def test_email(self, cr, uid, ids, context=None):
         cr.execute('select destination_test from email_configuration limit 1')
@@ -8077,7 +8085,6 @@ class email_configuration(osv.osv):
         return True
 
     _constraints = [
-        (_update_email_config, 'Always true: update email configuration', [])
     ]
 email_configuration()
 

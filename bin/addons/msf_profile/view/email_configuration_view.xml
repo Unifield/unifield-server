@@ -23,18 +23,18 @@
         <field name="arch" type="xml">
             <form string="Email configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                 <group colspan="4" col="10">
-                    <field name="smtp_server" colspan="8"/>
-                    <field name="smtp_port"/>
+                    <field name="smtp_server" colspan="8" readonly="0" />
+                    <field name="smtp_port" readonly="0" />
                 </group>
                 <group colspan="4" col="4">
-                    <field name="email_from" colspan="4" />
+                    <field name="email_from" colspan="4" readonly="0" />
                     <group colspan="2" col="4">
-                        <field name="smtp_ssl"/>
-                        <field name="smtp_ssl_ignore_cert" attrs="{'invisible': [('smtp_ssl', '=', False)]}" />
+                        <field name="smtp_ssl" readonly="0"/>
+                        <field name="smtp_ssl_ignore_cert" readonly="0" attrs="{'invisible': [('smtp_ssl', '=', False)]}" />
                     </group>
                     <newline />
-                    <field name="smtp_user"/>
-                    <field name="smtp_password" password="True"/>
+                    <field name="smtp_user" readonly="0" />
+                    <field name="smtp_password" password="True" readonly="0"/>
                 </group>
                 <newline />
                 <separator colspan="4" string="Test the connection" />
