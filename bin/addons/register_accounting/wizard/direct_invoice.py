@@ -237,7 +237,7 @@ class wizard_account_invoice(osv.osv):
                 raise osv.except_osv(
                     _('Warning'),
                     _('Entry "%s" has all total debit/credit '
-                      'amounts equal to zero.') % (aml.name)
+                      'amounts equal to zero.') % (move.name)
                 )
 
         # Link invoice and register_line

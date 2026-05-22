@@ -1632,8 +1632,8 @@ class account_move(osv.osv):
             ):
                 raise osv.except_osv(
                     _('Error'),
-                    _('Journal Item "%s" has all debit/credit amounts equal to zero.')
-                    % (line.name)
+                    _('Journal Entry "%s" has all debit/credit amounts equal to zero.')
+                    % (move.name)
                 )
         return self.post(cursor, user, ids, context=context)
 

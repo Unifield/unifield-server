@@ -95,7 +95,7 @@ class wizard_invoice_date(osv.osv_memory):
                     raise osv.except_osv(
                         _('Error'),
                         _('Invoice line "%s" has all debit/credit amounts equal to zero.')
-                        % (aml.name)
+                        % (invoice.name)
                     )
 
         return { 'type': 'ir.actions.act_window_close', }
