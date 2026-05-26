@@ -59,6 +59,18 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF42.0
+    def us_15663_15664_customs_transport_fees_state(self, cr, uid, *a, **b):
+        """
+        Set the state of Customs/Transport fees to Validated if they have been validated, to Draft otherwise
+        """
+        cr.execute("""UPDATE transport_order_customs_fees SET state = 'draft' WHERE validated = 'f'""")
+        cr.execute("""UPDATE transport_order_customs_fees SET state = 'validated' WHERE validated = 't'""")
+        cr.execute("""UPDATE transport_order_transport_fees SET state = 'draft' WHERE validated = 'f'""")
+        cr.execute("""UPDATE transport_order_transport_fees SET state = 'validated' WHERE validated = 't'""")
+
+        return True
+
     # UF41.0
     def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
         '''
