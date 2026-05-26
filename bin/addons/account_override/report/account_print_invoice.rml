@@ -221,7 +221,7 @@
           <para style="terp_default_8">Tel. : [[ (o.address_invoice_id and o.address_invoice_id.phone) or removeParentNode('para') ]]</para>
           <para style="terp_default_8">Fax : [[ (o.address_invoice_id and o.address_invoice_id.fax) or removeParentNode('para') ]]</para>
           <para style="terp_default_8">VAT : [[ (o.partner_id and o.partner_id.vat) or removeParentNode('para') ]]</para>
-          <para style="terp_default_8">TIN : [[ (o.partner_id and o.partner_id.tax_identification_number) or removeParentNode('para') ]]</para>
+          <para style="terp_default_8">[[ (o.partner_id and o.partner_id.tax_identification_number) and (translate('TIN') + ' : ' + o.partner_id.tax_identification_number) or removeParentNode('para') ]]</para>
           <para style="terp_default_8">RCCM : [[ (o.partner_id and o.partner_id.business_registration_number) or removeParentNode('para') ]]</para>
         </td>
       </tr>

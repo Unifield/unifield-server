@@ -435,7 +435,9 @@
                     <para style="TextInformation1"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_address_id.partner_id.tax_identification_number and 'TIN : %s' % objects[0].partner_address_id.partner_id.tax_identification_number or '' ]]</para>
+                    <para style="TextInformation">
+                        [[ objects[0].partner_address_id.partner_id.tax_identification_number and translate('TIN') + ' : ' + objects[0].partner_address_id.partner_id.tax_identification_number or '' ]]
+                    </para>
                 </td>
                 <td>
                     <para style="TextInformation1"> </para>
