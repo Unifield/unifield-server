@@ -771,14 +771,14 @@ class signature_object(osv.osv):
 <div>Thank you,</div>
 <div>UniField Team</div>""") % (signl_data[2] or _('UniField user'), instance_name, doc_type, doc_name, sign_expiry_text)
 
-                        tools.email_send(False, [signl_data[1]], email_subject, email_body, subtype='html')
+                        tools.email_send(False, [signl_data[1]], email_subject, email_body, subtype='html', raise_error=True)
 
                         self.write(cr, uid, doc.id, {'email_signature_manual_notif': True}, context=context)
                     except Exception as e:
                         if isinstance(e, osv.except_osv):
                             error_msg = e.value
                         else:
-                            error_msg = e.args and '. '.join(e.args) or e
+                            error_msg = e
                     finally:
                         # Logs to be displayed on the signature tab
                         email_log_vals = {
