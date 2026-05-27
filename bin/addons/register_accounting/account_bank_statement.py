@@ -2466,19 +2466,14 @@ class account_bank_statement_line(osv.osv):
             total_functional_out = 0.0
 
             for absl in absls:
-                total_in += absl.amount_in or 0.0
-                total_out += absl.amount_out or 0.0
-                total_functional_in += absl.functional_in or 0.0
-                total_functional_out += absl.functional_out or 0.0
-
-            if (abs(total_in) < 0.0001 and abs(total_out) < 0.0001 and
-                abs(total_functional_in) < 0.0001 and abs(total_functional_out) < 0.0001
-            ):
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Entry "%s" has all total debit/credit '
-                      'amounts equal to zero.') % (absl.name)
-                )
+                if (abs(absl.amount_in) < 0.0001 and abs(absl.amount_out) < 0.0001 and
+                    abs(absl.functional_in) < 0.0001 and abs(absl.functional_out) < 0.0001
+                ):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Entry "%s" has all total debit/credit '
+                          'amounts equal to zero.') % (absl.name)
+                    )
         # check the register state only once as it is the same for all lines
         if absls:
             self._check_register_open(absls[0].statement_id, "post", context)
