@@ -722,7 +722,7 @@ class audittrail_rule(osv.osv):
         for rule in self.browse(cr, uid, ids, context=context):
             if not obj_ids:
                 # if a previous rule has been applied, stop the log
-                # i.e: if multiple rules a set for a an object, only the 1st is applied
+                # i.e: if multiple rules a set for an object, only the 1st is applied
                 return True
             domain = []
             if rule.domain_filter:
@@ -733,7 +733,7 @@ class audittrail_rule(osv.osv):
                 if not res_ids:
                     continue
 
-                # test next rule on res_ids exluded by the rule domain
+                # test next rule on res_ids excluded by the rule domain
                 obj_ids = [x for x in obj_ids if x not in res_ids]
             else:
                 res_ids = obj_ids[:]

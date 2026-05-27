@@ -28,8 +28,8 @@ transport_order_fees_type()
 class transport_order_customs_fees(osv.osv):
     _name = 'transport.order.customs.fees'
     _description = 'Fees'
-
     _order = 'name, id'
+    _trace = True
 
     def _get_vals(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -127,8 +127,8 @@ transport_order_customs_fees()
 class transport_order_transport_fees(osv.osv):
     _name = 'transport.order.transport.fees'
     _description = 'Transport Fees'
-
     _order = 'name, id'
+    _trace = True
 
     def _get_vals(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -416,8 +416,8 @@ transport_sub_step()
 class transport_order_step(osv.osv):
     _name = 'transport.order.step'
     _description = 'Steps'
-
     _order = 'step_id'
+    _trace = True
 
     def _auto_init(self, cr, context=None):
         res = super(transport_order_step, self)._auto_init(cr, context)
