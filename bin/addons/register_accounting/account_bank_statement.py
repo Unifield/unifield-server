@@ -2460,11 +2460,6 @@ class account_bank_statement_line(osv.osv):
         # browse all statement lines for creating move lines
         absls = self.browse(cr, 1, list(set(ids)), context=context)
         if postype == 'hard':
-            total_in = 0.0
-            total_out = 0.0
-            total_functional_in = 0.0
-            total_functional_out = 0.0
-
             for absl in absls:
                 if (abs(absl.amount_in) < 0.0001 and abs(absl.amount_out) < 0.0001 and
                     abs(absl.functional_in) < 0.0001 and abs(absl.functional_out) < 0.0001
