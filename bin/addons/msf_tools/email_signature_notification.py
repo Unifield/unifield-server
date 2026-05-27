@@ -403,12 +403,12 @@ class email_signature_notification(osv.osv):
 <div>Thank you,</div>
 <div>UniField Team</div>""") % (user_signl.get('user_name', _('UniField user')), first_line, instance_name, docs_string, sign_expiry_text)
 
-                    tools.email_send(False, [user_signl['user_email']], email_subject, email_body, subtype='html')
+                    tools.email_send(False, [user_signl['user_email']], email_subject, email_body, subtype='html', raise_error=True)
                 except Exception as e:
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
                     else:
-                        error_msg = e.args and '. '.join(e.args) or e
+                        error_msg = e
                 finally:
                     # Logs to be displayed on the signature tab
                     email_log_vals = {
@@ -472,12 +472,12 @@ class email_signature_notification(osv.osv):
 <div>Thank you,</div>
 <div>UniField Team</div>""") % (exp_sign_user_list,)
 
-                tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators, subtype='html')
+                tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators, subtype='html', raise_error=True)
             except Exception as e:
                 if isinstance(e, osv.except_osv):
                     error_msg = e.value
                 else:
-                    error_msg = e.args and '. '.join(e.args) or e
+                    error_msg = e
             finally:
                 msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or\
                     _('The signature of %s is expired. The email was sent to users in the "Sign_document_creator_finance" and "Sign_document_creator_supply" groups successfully') % (', '.join(usernames)),
@@ -664,12 +664,12 @@ class email_signature_notification(osv.osv):
 <div>Thank you,</div>
 <div>UniField Team</div>""") % (instance_name, docs_string_supply)
 
-                    tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators_supply, subtype='html')
+                    tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators_supply, subtype='html', raise_error=True)
                 except Exception as e:
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
                     else:
-                        error_msg = e.args and '. '.join(e.args) or e
+                        error_msg = e
                 finally:
                     msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or \
                         _('The email was sent to users in the "Sign_document_creator_supply" group successfully'),
@@ -699,12 +699,12 @@ class email_signature_notification(osv.osv):
 <div>Thank you,</div>
 <div>UniField Team</div>""") % (instance_name, docs_string_finance)
 
-                    tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators_finance, subtype='html')
+                    tools.email_send(False, [], email_subject, email_body, email_bcc=email_doc_creators_finance, subtype='html', raise_error=True)
                 except Exception as e:
                     if isinstance(e, osv.except_osv):
                         error_msg = e.value
                     else:
-                        error_msg = e.args and '. '.join(e.args) or e
+                        error_msg = e
                 finally:
                     msg = error_msg and _('Some error(s) occurred while trying to send the email: %s') % (error_msg,) or \
                         _('The email was sent to users in the "Sign_document_creator_finance" group successfully'),
