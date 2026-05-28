@@ -3178,6 +3178,8 @@ class account_bank_statement_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.statement_id and line.statement_id.state != 'open':
                 raise osv.except_osv(_('Warning'), _("Register not open, you can't duplicate lines."))
+            if line.from_import_cheque_id:
+                raise osv.except_osv(_('Warning'), _('Line from import cheque cannot be duplicated.'))
             default_vals = ({
                 'name': '(copy) ' + line.name,
                 'cheque_number': None,
