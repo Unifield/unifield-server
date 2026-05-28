@@ -2821,15 +2821,16 @@ class product_attributes(osv.osv):
             res.setdefault('value', {}).update({'transport_ok': False})
         return res
 
-    def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, context=None):
+    def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, state, context=None):
         '''
         Prevent users to select the "Temporary" Product Creator
         Archived MISC nomenclatures are only available to "Local" Product Creator
+        Prevent users to select the Product Creator Local if the UniField Status is "Archived" or "Forbidden"
         '''
         data_obj = self.pool.get('ir.model.data')
+        prod_istatus = ids and self.read(cr, uid, ids[0], ['international_status']) or False
+        current_istatus = prod_istatus and prod_istatus['international_status'] and prod_istatus['international_status'][0] or False
         if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]:
-            prod_istatus = ids and self.read(cr, uid, ids[0], ['international_status']) or False
-            current_istatus = prod_istatus and prod_istatus['international_status'] and prod_istatus['international_status'][0] or False
             return {
                 'value': {'international_status': current_istatus},
                 'warning': {'title': _('Warning'), 'message': _('You can not select this Product Creator manually')}
@@ -2841,6 +2842,38 @@ class product_attributes(osv.osv):
                 'warning': {
                     'title': _('Warning'),
                     'message': _('Please select a non-archived Root Nomenclature if you want to modify the Product Creator')
+                }
+            }
+        arch_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_4')[1]
+        forb_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_forbidden')[1]
+        if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1] \
+                and state in [arch_state_id, forb_state_id]:
+            return {
+                'value': {'international_status': current_istatus},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('The combination of the current UniField Status and the selected Product Creator "Local" are not allowed')
+                }
+            }
+        return {}
+
+    def onchange_state(self, cr, uid, ids, state, international_status, context=None):
+        '''
+        Prevent users to select the "Archived" or "Forbidden" UniField Status if the Product Creator is Local
+        '''
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+        arch_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_4')[1]
+        forb_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_forbidden')[1]
+        if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1] \
+                and state in [arch_state_id, forb_state_id]:
+            return {
+                'value': {'state': ids and self.read(cr, uid, ids[0], ['state'], context=context)['state'][0] or False},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('The combination of Product Creator "Local" and the selected UniField Status are not allowed')
                 }
             }
         return {}
