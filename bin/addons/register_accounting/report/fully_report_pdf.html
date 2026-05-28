@@ -12,13 +12,15 @@ if o.journal_id.type == 'cash':
 else:
   if o.journal_id.type == 'bank':
       closing_bal_title = _('Bank Statement balance:')
+  elif o.journal_id.type == 'other':
+      closing_bal_title = _('Statement balance:')
   else:
       closing_bal_title = _('Closing balance:')
   closing_bal = o.balance_end_real or 0.0
   calculated_bal = o.balance_end or 0.0
 %>
 
-<h1>${o.journal_id.type == 'cash' and _('CASH REGISTER FULL REPORT') or o.journal_id.type == 'bank' and _('BANK REGISTER FULL REPORT') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER FULL REPORT') or ''|x}</h1>
+<h1>${o.journal_id.type == 'cash' and _('CASH REGISTER FULL REPORT') or o.journal_id.type == 'bank' and _('BANK REGISTER FULL REPORT') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER FULL REPORT') or o.journal_id.type == 'other' and _('MOBILE REGISTER FULL REPORT') or ''|x}</h1>
 <h4>${o.journal_id.code|x} - ${o.period_id and o.period_id.name or ''|x}</h4>
 <table id="header">
 <tr>
