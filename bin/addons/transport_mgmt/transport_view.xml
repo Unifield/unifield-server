@@ -295,8 +295,9 @@
                                     <field name="currency_id" />
                                     <field name="details" />
                                     <field name="state" />
-                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('state', '!=', 'draft')]}" type="object" icon="terp-check" header="True"/>
-                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': [('state', '!=', 'draft')]}" type="object" icon="gtk-del"/>
+                                    <field name="parent_state" invisible="1" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
                         </page>
@@ -319,8 +320,9 @@
                                     <field name="currency_id" />
                                     <field name="details" />
                                     <field name="state" />
-                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('state', '!=', 'draft')]}" type="object" icon="terp-check" header="True"/>
-                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': [('state', '!=', 'draft')]}" type="object" icon="gtk-del"/>
+                                    <field name="parent_state" invisible="1" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
                         </page>
@@ -607,8 +609,9 @@
                                     <field name="currency_id" />
                                     <field name="details" />
                                     <field name="state" />
-                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('state', '!=', 'draft')]}" type="object" icon="terp-check" header="True"/>
-                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': [('state', '!=', 'draft')]}" type="object" icon="gtk-del"/>
+                                    <field name="parent_state" invisible="1" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
                         </page>
@@ -631,8 +634,9 @@
                                     <field name="currency_id" />
                                     <field name="details" />
                                     <field name="state" />
-                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('state', '!=', 'draft')]}" type="object" icon="terp-check" header="True"/>
-                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': [('state', '!=', 'draft')]}" type="object" icon="gtk-del"/>
+                                    <field name="parent_state" invisible="1" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
                         </page>
