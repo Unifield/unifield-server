@@ -1307,7 +1307,7 @@ class sde_import(osv.osv_memory):
 
     def get_out_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
         """
-        Get info from PICKs, its latest Track Change and info from their moves when needed
+        Get info from OUTs, its latest Track Change and info from their moves when needed
         """
         if context is None:
             context = {}
@@ -1322,18 +1322,20 @@ class sde_import(osv.osv_memory):
                     pis.name, -- 23
                     pno.name, -- 24
                     m.comment, -- 25
-                    pas.name, -- 26
-                    k.composition_reference, -- 27
-                    l.name, -- 28
-                    l2.name, -- 29
-                    m.product_qty, -- 30
-                    u.name, -- 31
-                    lot.name, -- 33
-                    m.expired_date, -- 33
-                    pcc.cold_chain, -- 34 kc_check
-                    pp.dangerous_goods, -- 35 dg_check
-                    pp.controlled_substance, -- 36 np_check
-                    m.state -- 37
+                    k.composition_reference, -- 26
+                    l.name, -- 27
+                    l2.name, -- 28
+                    m.product_qty, -- 29
+                    u.name, -- 30
+                    lot.name, -- 31
+                    m.expired_date, -- 32
+                    pcc.cold_chain, -- 33 kc_check
+                    pp.dangerous_goods, -- 34 dg_check
+                    pp.controlled_substance, -- 35 np_check
+                    m.state, -- 36
+                    pp.id, -- 37
+                    l.id, -- 38
+                    lot.id -- 39
                 """
             sql_lines_join = """
                     LEFT JOIN product_product pp ON m.product_id = pp.id
@@ -1341,16 +1343,15 @@ class sde_import(osv.osv_memory):
                     LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
                     LEFT JOIN product_international_status pis ON pp.international_status = pis.id
                     LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
-                    LEFT JOIN product_asset pas ON m.asset_id = pas.id
                     LEFT JOIN composition_kit k ON m.composition_list_id = k.id
                     LEFT JOIN stock_location l ON m.location_id = l.id
                     LEFT JOIN stock_location l2 ON m.location_dest_id = l2.id
                     LEFT JOIN product_uom u ON m.product_uom = u.id
                     LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
                 """
-            sql_lines_group = """, m.id, m.line_number, pp.default_code, pt.name, pis.name, pno.name, m.comment, pas.name,
+            sql_lines_group = """, m.id, m.line_number, pp.default_code, pt.name, pis.name, pno.name, m.comment,
                     k.composition_reference, l.name, l2.name, m.product_qty, u.name, lot.name, m.expired_date, pcc.cold_chain,
-                    pp.dangerous_goods, pp.controlled_substance, m.state"""
+                    pp.dangerous_goods, pp.controlled_substance, m.state, pp.id, l.id, lot.id"""
             sql_lines_order = ', m.line_number, m.id'
         cr.execute("""
                 SELECT
@@ -1444,19 +1445,19 @@ class sde_import(osv.osv_memory):
                     'product_creator': out[23],
                     'nomen_main_type': out[24],
                     'comment': out[25] or '',
-                    'asset': out[26] or '',
-                    'kit': out[27] or '',
-                    'source_location': out[28],
-                    'destination_location': out[29],
-                    'product_qty': out[30] or 0,
+                    'kit': out[26] or '',
+                    'source_location': out[27],
+                    'destination_location': out[28],
+                    'qty_in_stock': self.get_qty_available(new_cr, uid, out[37], out[38], out[39], context=context) or 0,
+                    'product_qty': out[29] or 0,
                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                    'uom': out[31] or '',
-                    'prodlot_id': out[32] or '',
-                    'expired_date': out[33] or '',
-                    'kc_check': out[34] or False,
-                    'dg_check': out[35] == 'True' and _('True') or out[35] == 'no_know' and _('Unknown') or _('False'),
-                    'np_check': out[36] or False,
-                    'state': out[37] and MOVE_STATE[out[37]] or '',
+                    'uom': out[30] or '',
+                    'prodlot_id': out[31] or '',
+                    'expired_date': out[32] or '',
+                    'kc_check': out[33] or False,
+                    'dg_check': out[34] == 'True' and _('True') or out[34] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': out[35] or False,
+                    'state': out[36] and MOVE_STATE[out[36]] or '',
                 })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'out',
@@ -1507,7 +1508,7 @@ class sde_import(osv.osv_memory):
         '''
         For each move of the Outgoing Delivery Processor whose line_number is in the import, reset as much data as possible:
             - Merge the quantities of split lines and delete the splits
-            - Remove any asset, kit and BN/ED info
+            - Remove any kit and BN/ED info
             - Sum the quantities and set the quantity to process at 0
         '''
         if context is None:
@@ -1537,7 +1538,7 @@ class sde_import(osv.osv_memory):
                 to_del.append(x[0])
             data[key]['ordered_quantity'] += x[3]
         for key in data:
-            proc_move_vals = {'ordered_quantity': data[key]['ordered_quantity'], 'quantity': 0, 'asset': False,
+            proc_move_vals = {'ordered_quantity': data[key]['ordered_quantity'], 'quantity': 0,
                               'composition_list_id': False, 'prodlot_id': False, 'expired_date': False}
             proc_move_obj.write(cr, uid, data[key]['master'], proc_move_vals, context=context)
         proc_move_obj.unlink(cr, uid, to_del, context=context)
@@ -1770,19 +1771,19 @@ class sde_import(osv.osv_memory):
                                     'product_creator': out[23],
                                     'nomen_main_type': out[24],
                                     'comment': out[25] or '',
-                                    'asset': out[26] or '',
-                                    'kit': out[27] or '',
-                                    'source_location': out[28],
-                                    'destination_location': out[29],
-                                    'product_qty': out[30] or 0,
+                                    'kit': out[26] or '',
+                                    'source_location': out[27],
+                                    'destination_location': out[28],
+                                    'qty_in_stock': self.get_qty_available(cr, uid, out[37], out[38], out[39], context=context) or 0,
+                                    'product_qty': out[29] or 0,
                                     'qty_to_process': None,  # Left empty to force SDE to change the value
-                                    'uom': out[31] or '',
-                                    'prodlot_id': out[32] or '',
-                                    'expired_date': out[33] or '',
-                                    'kc_check': out[34] or False,
-                                    'dg_check': out[35] == 'True' and _('True') or out[35] == 'no_know' and _('Unknown') or _('False'),
-                                    'np_check': out[36] or False,
-                                    'state': out[37] and MOVE_STATE[out[37]] or '',
+                                    'uom': out[30] or '',
+                                    'prodlot_id': out[31] or '',
+                                    'expired_date': out[32] or '',
+                                    'kc_check': out[33] or False,
+                                    'dg_check': out[34] == 'True' and _('True') or out[34] == 'no_know' and _('Unknown') or _('False'),
+                                    'np_check': out[35] or False,
+                                    'state': out[36] and MOVE_STATE[out[36]] or '',
                                 })
                     else:
                         threaded_method = self.create_picking_ticket_paginated_export

@@ -32,10 +32,6 @@ class wizard_out_import(osv.osv_memory):
                     else:
                         raise osv.except_osv(_('Error'), _('Line %s: Column "Ordered Qty" must be a number') % data['item'])
 
-        if 'asset' in data:  # set to str
-            if not data['asset']:
-                data['asset'] = ''
-
         if 'kit' in data:  # set to str
             if not data['kit']:
                 data['kit'] = ''
@@ -186,7 +182,6 @@ class wizard_out_import(osv.osv_memory):
             context = {}
 
         prod_obj = self.pool.get('product.product')
-        asset_obj = self.pool.get('product.asset')
 
         data = {}
         product_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', line_data['code'])], limit=1, context=context)
@@ -198,14 +193,6 @@ class wizard_out_import(osv.osv_memory):
             data.update({
                 'product': product
             })
-
-        if product and product.type == 'product' and product.subtype == 'asset' and line_data['asset']:
-            asset_ids = asset_obj.search(cr, uid, [('name', '=', line_data['asset']), ('product_id', '=', product.id)], limit=1, context=context)
-            if not asset_ids:
-                raise osv.except_osv(_('Error'), _('Asset %s for the product %s not found in database')
-                                     % (line_data['asset'], line_data['code']))
-            else:
-                data.update({'asset_id': asset_ids[0]})
 
         return data
 
@@ -249,7 +236,6 @@ class wizard_out_import(osv.osv_memory):
             lines_data[line_index] = {
                 'item': move.get('line_number', False),
                 'code': move.get('product_code', ''),
-                'asset': move.get('asset', ''),
                 'kit': move.get('kit', ''),
                 'qty': move.get('product_qty', 0.0),
                 'qty_to_process': move.get('qty_to_process', 0.0),
@@ -277,8 +263,8 @@ class wizard_out_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('OUT reference in the import file doesn\'t match with the current OUT'))
 
         # Fetch the data from the file
-        lines_headers = ['item', 'code', 'description', 'comment', 'asset', 'kit', 'src_location', 'dest_location',
-                         'qty', 'qty_to_process', 'uom', 'batch', 'expiry_date', 'kc', 'dg', 'cs']
+        lines_headers = ['item', 'code', 'description', 'comment', 'kit', 'src_location', 'dest_location',
+                         'qty_in_stock', 'qty', 'qty_to_process', 'uom', 'batch', 'expiry_date', 'kc', 'dg', 'cs']
         lines_data = {}
         for cell in sheet.iter_rows(min_row=11, min_col=1, max_col=16):
             if not cell[0].value:  # Stop looking at lines if there is no data in first column
@@ -421,14 +407,6 @@ class wizard_out_import(osv.osv_memory):
                             _('Error'), _('Line %s: The given expiry date doesn\'t exist in database') % line_data['item']
                         )
 
-                # Asset
-                if proc_move.asset_check:
-                    if line_data['asset']:
-                        to_write['asset_id'] = data.get('asset_id')
-                    elif proc_move.location_supplier_customer_mem_out:
-                        raise osv.except_osv(_('Error'), _('Line %s: Product %s must have an Asset')
-                                             % (line_data['item'], line_data['code']))
-
                 # UoM
                 uom = self.get_uom(cr, uid, ids, line_data, proc_move.ordered_uom_category.id, json_import, context=context)
                 if proc_move.ordered_uom_id.id != uom.id:
@@ -471,8 +449,6 @@ class wizard_out_import(osv.osv_memory):
                 move_data = {'quantity': to_write.get('qty_to_process', 0)}
                 if to_write.get('prodlot_id'):
                     move_data.update({'prodlot_id': to_write['prodlot_id']})
-                if to_write.get('asset_id'):
-                    move_data.update({'asset_id': to_write['asset_id']})
                 if to_write.get('uom_id'):
                     move_data.update({'uom_id': to_write['uom_id']})
                 if to_write.get('uom_rounding_is_pce'):
