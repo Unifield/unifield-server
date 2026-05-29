@@ -109,6 +109,51 @@ class patch_scripts(osv.osv):
         cr.execute("""UPDATE product_product SET nb_merge_from = 1 WHERE replace_product_id IS NOT NULL""")
         return True
 
+    def us_14532_email_signature_notification(self, cr, uid, *a, **b):
+        '''
+        Give default access read rights to all users and read+write rights to Sync_Config group for
+            email.signature.notification and email.signature.notification.doc.applicability at HQ level
+        Add the missing rights for manual signature request email
+        Hide the email.signature.notification configuration menu if necessary
+        '''
+        group_obj = self.pool.get('res.groups')
+        if _get_instance_level(self, cr, uid) == 'hq':
+            sc_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync_Config')])
+            for model in ['email.signature.notification', 'email.signature.notification.doc.applicability']:
+                model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model)])
+                self.pool.get('ir.model.access').create(cr, uid, {
+                    'name': 'common',
+                    'model_id': model_id[0],
+                    'perm_read': True,
+                })
+                if sc_group_ids:
+                    self.pool.get('ir.model.access').create(cr, uid, {
+                        'name': 'Sync_Config',
+                        'model_id': model_id[0],
+                        'groups': [(6, 0, sc_group_ids)],
+                        'perm_read': True,
+                        'perm_write': True,
+                    })
+
+        if not cr.table_exists('sync_server_user_rights'):
+            # exclude sync server
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            for group_name, model, b_names in [
+                ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement', 'physical.inventory'], ['specific_email_signature_notification']),
+                ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order', 'physical.inventory'], ['specific_email_signature_notification'])
+            ]:
+                group_ids = group_obj.search(cr, uid, [('name', '=', group_name)], context=None)
+                if group_ids:
+                    bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
+                    bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+
+        setup_config = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup_config:
+            menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'email_signature_notification_menu')[1]
+            self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': setup_config.signature})
+
+        return True
+
     def us_15072_po_detail(self, cr, uid, *a, **b):
         """
         Add the PO details to the invoice
@@ -7946,8 +7991,9 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def _get_default_ctx_lang(self, cr, uid, context=None):
-        if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
-            return 'en_MF'
+        for lang in ['en_MF', 'fr_MF', 'sp_MF']:
+            if self.pool.get('res.lang').search_exists(cr, uid, [('translatable','=',True), ('code', '=', lang)]):
+                return lang
         return 'en_US'
 
     def set_default_partner_lang(self, cr, uid, context=None):

@@ -63,30 +63,16 @@ class mission_stock_wizard(osv.osv_memory):
             string='Report',
             domain=[('instance_id.state', '!=', 'inactive'), '|', ('full_view', '=', False), '&', ('full_view', '=', True), ('instance_id.level', '!=', 'project')]
         ),
-        'with_valuation': fields.selection(
-            [('true', 'Yes'), ('false', 'No')],
-            string='Display stock valuation ?',
-            required=True,
-        ),
+        'with_valuation': fields.selection([('true', 'Yes'), ('false', 'No')], string='Display stock valuation ?', required=True),
         'display_only_in_stock': fields.selection(
             [('true', 'Yes'), ('false', 'No')],
             string='Display only products in stock and/or in pipe',
             required=True,
         ),
-        'last_update': fields.datetime(
-            string='Last update',
-            readonly=True,
-        ),
-        'export_ok': fields.boolean(
-            string='XML Export ready',
-        ),
-        'export_file': fields.binary(
-            string='XML File',
-        ),
-        'fname': fields.char(
-            string='Filename',
-            size=256,
-        ),
+        'last_update': fields.datetime(string='Last update', readonly=True),
+        'export_ok': fields.boolean(string='XML Export ready'),
+        'export_file': fields.binary(string='XML File'),
+        'fname': fields.char(string='Filename', size=256),
         'processed_start_date': fields.datetime(string='since', readonly=True),
         'processed_state': fields.selection([
                                             ('no_report_selected', 'No report selected'),
@@ -238,17 +224,11 @@ class mission_stock_wizard(osv.osv_memory):
         Check if the wizard is linked to a report and if the report is available
         '''
         if not ids:
-            raise osv.except_osv(
-                _('Error'),
-                _('You should choose a report to display.'),
-            )
+            raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
 
         wiz_id = self.browse(cr, uid, ids, context=context)
         if not wiz_id.report_id:
-            raise osv.except_osv(
-                _('Error'),
-                _('You should choose a report to display.'),
-            )
+            raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
         if not wiz_id.report_id.last_update:
             raise osv.except_osv(
                 _('Error'),
@@ -258,28 +238,21 @@ report when the last update field will be filled. Thank you for your comprehensi
 
         return wiz_id
 
-    def open_xls_file(self, cr, uid, ids, context=None):
-        return self.open_file(cr, uid, ids, file_format='xls', context=context)
-
-    def open_csv_file(self, cr, uid, ids, context=None):
-        return self.open_file(cr, uid, ids, file_format='csv', context=context)
-
-    def open_consolidated_xls(self, cr, uid, ids, context=None):
+    def open_consolidated_xlsx(self, cr, uid, ids, context=None):
         instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.name
 
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'stock.mission.report_xls',
+            'report_name': 'report_consolidated_mission_stock_report',
             'datas': {
-                'file_name': 'consolidate_mission_stock.xls',
-                'file_format': 'xls',
+                'file_name': 'consolidate_mission_stock_report.xlsx',
                 'target_filename': _('Consolidated_Mission_Stock_Report_%s_%s') % (instance_name, time.strftime('%Y%m%d_%H%M%S'))
             },
             'nodestroy': True,
             'context': context,
         }
 
-    def open_file(self, cr, uid, ids, file_format='xls', context=None):
+    def open_file(self, cr, uid, ids, context=None):
         '''
         Open the file
         '''
@@ -293,8 +266,7 @@ report when the last update field will be filled. Thank you for your comprehensi
 
         datas = {'ids': ids}
 
-        # add the requested field name and report_id to the datas
-        # to be used later on in the stock_mission_report_xls_parser
+        # add the requested field name and report_id to the datas to be used later on in the stock_mission_report_xls_parser
         res = self.read(cr, uid, ids, ['with_valuation', 'report_id', 'display_only_in_stock', 'fname'], context=context)
 
         field_name = None
@@ -306,14 +278,13 @@ report when the last update field will be filled. Thank you for your comprehensi
         datas.update({
             'field_name': field_name,
             'report_id': res['report_id'],
-            'file_format': file_format,
             'display_only_in_stock': (res['display_only_in_stock'] == 'true'),
             'target_filename': res['fname'],
         })
 
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'stock.mission.report_xls',
+            'report_name': 'report_mission_stock_report',
             'datas': datas,
             'nodestroy': True,
             'context': context,

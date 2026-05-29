@@ -1238,19 +1238,50 @@ class email_log(osv.osv):
 
     _columns = {
         'recipients': fields.char('Email Recipient(s)', size=512, required=True),
-        'subject': fields.char('Email Subject', size=256, required=True),
-        'body': fields.text('Email Body', required=True),
+        'recipient_names': fields.char('Email Recipient(s)\' Names', size=512),
+        'subject': fields.char('Email Subject', size=256),
+        'body': fields.text('Email Body'),
         'state': fields.selection([('error', 'Error'), ('success', 'Success')], 'State', required=True),
         'result': fields.text('Final result', required=True),
         'failed_attempts': fields.integer('Number of failed attempts'),
         'sender_model_id': fields.many2one('ir.model', 'Object', required=1, ondelete='set null'),
+        'signature_ids': fields.many2many('signature', 'signature_email_log_rel', 'email_log_id', 'signature_id', string='Signatures', readonly=True),
         'date_sent': fields.datetime('Date sent', required=True),
         'user_id': fields.many2one('res.users', 'User generating the mail', required=True),
     }
 
     _defaults = {
+        'subject': '',
+        'body': '',
         'failed_attempts': 0
     }
 
+    def view_signature_email_logs(self, cr, uid, ids, context=None):
+        '''
+        Method to create and return a report containing Email logs data for the Email Notification for Signatures
+        '''
+
+        if context is None:
+            context = {}
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'report_signature_email_logs',
+            'context': context,
+            'datas': {'target_filename': _('Signature_Email_Logs_Report_%s') % (time.strftime('%Y_%m_%d_%H_%M'),)}
+        }
+
 
 email_log()
+
+
+class signature(osv.osv):
+    _name = 'signature'
+    _inherit = 'signature'
+
+    _columns = {
+        'email_log_ids': fields.many2many('email.log', 'signature_email_log_rel', 'signature_id', 'email_log_id', string='Email Logs', order_by='date_sent desc'),
+    }
+
+
+signature()
