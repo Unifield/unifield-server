@@ -2828,9 +2828,9 @@ class product_attributes(osv.osv):
         Prevent users to select the Product Creator Local if the UniField Status is "Archived" or "Forbidden"
         '''
         data_obj = self.pool.get('ir.model.data')
-        prod_istatus = ids and self.read(cr, uid, ids[0], ['international_status']) or False
-        current_istatus = prod_istatus and prod_istatus['international_status'] and prod_istatus['international_status'][0] or False
         if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]:
+            prod_istatus = ids and self.read(cr, uid, ids[0], ['international_status']) or False
+            current_istatus = prod_istatus and prod_istatus['international_status'] and prod_istatus['international_status'][0] or False
             return {
                 'value': {'international_status': current_istatus},
                 'warning': {'title': _('Warning'), 'message': _('You can not select this Product Creator manually')}
@@ -2849,7 +2849,7 @@ class product_attributes(osv.osv):
         if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1] \
                 and state in [arch_state_id, forb_state_id]:
             return {
-                'value': {'international_status': current_istatus},
+                'value': {'international_status': False},
                 'warning': {
                     'title': _('Warning'),
                     'message': _('The combination of the current UniField Status and the selected Product Creator "Local" are not allowed')
@@ -2870,7 +2870,7 @@ class product_attributes(osv.osv):
         if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1] \
                 and state in [arch_state_id, forb_state_id]:
             return {
-                'value': {'state': ids and self.read(cr, uid, ids[0], ['state'], context=context)['state'][0] or False},
+                'value': {'state': False},
                 'warning': {
                     'title': _('Warning'),
                     'message': _('The combination of Product Creator "Local" and the selected UniField Status are not allowed')
