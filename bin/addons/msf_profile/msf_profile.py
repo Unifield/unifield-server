@@ -59,6 +59,19 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_15346_OCBTD101_CHABUSD_no_delete(self, cr, uid, *a, **b):
+        """
+            do no sent sync update deletion on account.journal OCBSY101/CHABUSD
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.code == 'OCBTD101':
+            cr.execute('''
+                delete from ir_model_data
+                where name = 'journal_OCBSY101_CHABUSD_ARAB BANK USD' and
+                not exists(select id from account_journal where id=res_id)
+            ''')
+        return True
+
     def us_15685_populate_apr_reg_responsible(self, cr, uid, *a, **b):
         cr.execute("""
             insert into bank_statement_users_rel (statement_id, user_id)

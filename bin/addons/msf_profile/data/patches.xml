@@ -1301,5 +1301,9 @@
         <record id="us_15685_populate_apr_reg_responsible" model="patch.scripts">
             <field name="method">us_15685_populate_apr_reg_responsible</field>
         </record>
+
+        <record id="us_15346_OCBTD101_CHABUSD_no_delete" model="patch.scripts">
+            <field name="method">us_15346_OCBTD101_CHABUSD_no_delete</field>
+        </record>
     </data>
 </openerp>
