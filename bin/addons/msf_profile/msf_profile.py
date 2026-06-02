@@ -73,12 +73,13 @@ class patch_scripts(osv.osv):
             self.log_info(cr, uid, "US-11997 fixed at HQ")
         elif cr.table_exists('sync_server_user_rights'):
             cr.execute("""
-                update sync_server_update
-                    set owner = (select parent_id from msf_instance where id=owner)
+                update sync_server_update u
+                    set owner = (select parent_id from sync_server_entity where id=owner)
                 where
                     rule_id in (select id from sync_server_sync_rule where sequence_number in (450, 455, 456, 457, 458)) and
                     owner is not null and
-                    owner in (select id from sync_server_entity where instance_level='project')
+                    owner in (select id from sync_server_entity where instance_level='project') and
+                    u.id in (select min(id) from sync_server_update u2 where u2.session_id=u.session_id and u2.rule_id=u.rule_id and u2.sdref=u.sdref)
             """)
             self.log_info(cr, uid, "US-11997 fixed on sync server")
 
