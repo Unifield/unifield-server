@@ -213,6 +213,8 @@ class update_to_send(osv.osv,fv_formatter):
             if rule.direction == 'mission-private' and owners:
                 for _id in owners:
                     own = owners[_id]
+                    if not own:
+                        continue
                     if not isinstance(own, (list, tuple)):
                         own = [own]
                     if self.pool.get('msf.instance').search_exists(cr, uid, [('instance', 'in', own), ('level', '!=', 'coordo')], context=context):
