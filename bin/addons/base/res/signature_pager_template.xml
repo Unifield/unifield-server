@@ -37,13 +37,19 @@
             <button name="activate_offline_reset" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '=', False), ('allowed_to_be_signed_unsigned', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="4" confirm="Warning, by setting this document as 'signed off-line' all online signatures will be removed from this document and all signatures must be handled outside of system."/>
             <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="4" />
         </group>
+        <group colspan="2" col="7">
+            <button name="specific_email_signature_notification" type="object" string="Send request to sign" attrs="{'invisible': ['|', ('signature_res_model', '!=', 'purchase.order'), ('email_signature_notif_active', '=', False)], 'readonly': ['|', '|', '|', '|', '|', ('email_signature_manual_notif', '=', True), ('signature_state', '=', 'signed'), ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False), '&amp;', ('allowed_to_be_locked', '=', True), ('doc_locked_for_sign', '=', False)]}" icon="terp-mail-message-new" colspan="2" />
+        </group>
         <newline />
+        <field name="signature_res_model" invisible="1" readonly="1" />
         <field name="allowed_to_manage_user" invisible="1" />
         <field name="allowed_to_be_signed_unsigned" invisible="1" />
         <field name="allowed_to_be_locked" invisible="1" />
         <field name="allowed_to_be_closed" invisible="1" />
         <field name="doc_locked_for_sign" invisible="1" />
         <field name="is_signee_user" invisible="1" />
+        <field name="email_signature_notif_active" invisible="1" />
+        <field name="email_signature_manual_notif" invisible="1" />
         <field name="signature_line_ids" readonly="1" nolabel="1" colspan="6" on_change="sig_line_change()" mode="tree">
             <tree string="Signatures">
                 <field name="name" />
@@ -65,6 +71,22 @@
         <group colspan="3" col="4">
             <button name="action_close_signature" string="Close Signature" type="object" icon="terp-locked" attrs="{'readonly': ['|', ('signature_is_closed', '=', True), ('allowed_to_be_closed', '=', False)]}" ignore_access_error="1" confirm="You are about to block signature on the document. This is not modifiable. Are you sure ?"/>
             <field name="signature_is_closed" />
+        </group>
+        <group colspan="6" attrs="{'invisible': [('email_signature_notif_active', '=', False)]}">
+            <field name="email_log_ids" readonly="1" nolabel="1" colspan="6">
+                <tree string="Email logs">
+                    <field name="recipients" />
+                    <field name="date_sent" />
+                    <field name="result" />
+                    <field name="state" />
+                </tree>
+                <form string="Email logs" noteditable="1">
+                    <field name="recipients" />
+                    <field name="date_sent" />
+                    <field name="result" colspan="4" />
+                    <field name="state" />
+                </form>
+            </field>
         </group>
     </group>
 </page>

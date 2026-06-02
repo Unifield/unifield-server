@@ -24,6 +24,7 @@ import math
 from osv import fields,osv
 import tools
 import pooler
+import re
 from tools.translate import _
 
 
@@ -187,6 +188,23 @@ class res_partner(osv.osv):
         name = self.read(cr, uid, [id], ['name'])[0]['name']
         default.update({'name': name+ _(' (copy)'), 'events':[]})
         return super(res_partner, self).copy(cr, uid, id, default, context)
+
+    def on_change_name(self, cr, uid, ids, name, partner_type, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        if name and partner_type:
+            entity_obj = self.pool.get('sync.client.entity')
+            if entity_obj and partner_type == 'external':
+                if entity_obj.get_entity(cr, uid).oc == 'ocb' and re.match('^E[0-9]{3} ', name):
+                    res['value'] = {'can_be_msf_entity': False, 'is_msf_entity': False, 'msf_entity': False}
+                else:
+                    res['value'] = {'can_be_msf_entity': True}
+
+        return res
 
     def do_share(self, cr, uid, ids, *args):
         return True

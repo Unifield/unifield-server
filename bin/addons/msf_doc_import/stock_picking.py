@@ -231,6 +231,11 @@ class stock_picking(osv.osv):
             # get ID of the IN:
             in_id = self.get_incoming_id_from_file(cr, uid, file_path, context)
 
+            # Prevent the import if the IN was updated by SDE
+            in_data = self.read(cr, uid, in_id, ['name', 'shipment_ref', 'partner_id', 'order_category', 'sde_updated'], context=context)
+            if in_data['sde_updated']:
+                raise osv.except_osv(_('Error'), _('%s was already updated by SDE and can not be updated by the automated import') % (in_data['name'],))
+
             # create stock.incoming.processor and its stock.move.in.processor:
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
             self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context) # import all lines and set qty to zero
@@ -294,7 +299,8 @@ class stock_picking(osv.osv):
 
             # Create/Update an ITO using the shipment_ref
             if self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='transport'):
-                in_data = self.read(cr, uid, context.get('new_picking', in_id), ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
+                if context.get('new_picking') and context['new_picking'] != in_id:
+                    in_data = self.read(cr, uid, context['new_picking'], ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
                 if in_data['shipment_ref']:
                     in_partner_id = in_data['partner_id'] and in_data['partner_id'][0] or False
                     self.create_update_ito(cr, uid, in_data['id'], in_data['name'], in_data['shipment_ref'],

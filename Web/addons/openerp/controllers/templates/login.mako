@@ -31,7 +31,7 @@
 
     <table id="logintable" class="view" cellpadding="0" cellspacing="0" style="padding-top: 25px; border:none;">
         <tr>
-            <td class="loginbox">
+            <td class="loginbox" style="width:500px;">
                 <form action="${py.url(target)}" method="post" name="loginform" id="loginform" style="padding-bottom: 5px; min-width: 100px;">
                     % for key, value in origArgs.items():
                         <input type="hidden" name="${key}" value="${value}"/>
@@ -71,12 +71,12 @@
 
                                 </tr>
                                 <tr>
-                                    <td></td>
-                                    <td class="db_login_buttons">
+                                    <td class="db_login_buttons" colspan="2">
                                         % if cp.config('dbbutton.visible', 'openerp-web'):
-                                            <button type="button" class="static_boxes" tabindex="-1" onclick="location.href='${py.url('/openerp/database')}'" id="databases">${_("Databases")}
-                                            </button>
+                                            <button type="button" class="static_boxes" tabindex="-1" onclick="location.href='${py.url('/openerp/database')}'" id="databases">${_("Databases")}</button>
                                         % endif
+                                        <button type="button" class="static_boxes" tabindex="-1" onclick="location.href='${py.url('/openerp/forgotten_login')}'" id="forgotten_login">${_("Forgot login?")}</button>
+                                        <button type="button" class="static_boxes" tabindex="-1" onclick="location.href='${py.url('/openerp/forgotten_password')}'" id="forgotten_password">${_("Forgot password?")}</button>
                                         <button type="button" class="static_boxes" onclick="disable_save()" id="login">${_("Login")}</button>
                                     </td>
                                 </tr>

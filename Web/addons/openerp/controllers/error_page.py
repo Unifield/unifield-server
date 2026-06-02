@@ -27,6 +27,36 @@ import openobject.errors
 from openobject.controllers import BaseController
 from openobject.tools import expose, redirect
 from openobject.i18n import _
+import logging
+
+_cperror._HTTPErrorTemplate = '''<!DOCTYPE html PUBLIC
+"-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+    <title>%(status)s</title>
+    <style type="text/css">
+    #powered_by {
+        margin-top: 20px;
+        border-top: 2px solid black;
+        font-style: italic;
+    }
+
+    #traceback {
+        color: red;
+    }
+    </style>
+</head>
+    <body>
+        <h2>%(status)s</h2>
+        <p>%(message)s</p>
+        <pre id="traceback">%(traceback)s</pre>
+    <div id="powered_by">
+    </div>
+    </body>
+</html>
+'''
 
 class ErrorPage(BaseController):
 
@@ -43,7 +73,12 @@ class ErrorPage(BaseController):
             return self.__render(value)
 
         if not isinstance(value, openobject.errors.TinyException):
-            return _cperror.get_error_page(500, traceback=_cperror.format_exc())
+            full_tb = _cperror.format_exc()
+            tb = ''
+            if hasattr(rpc.session, 'uid') and rpc.session.is_logged():
+                tb = full_tb
+            cherrypy.log.error("500 %s" % full_tb, severity=logging.ERROR)
+            return _cperror.get_error_page(500, traceback=tb)
 
         return self.__render(value)
 
