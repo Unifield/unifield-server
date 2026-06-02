@@ -82,6 +82,7 @@ class wizard_invoice_date(osv.osv_memory):
                 for aml in invoice.move_id.line_id:
                     if (abs(aml.debit) < 0.0001 and abs(aml.credit) < 0.0001
                         and abs(aml.debit_currency) < 0.0001 and abs(aml.credit_currency) < 0.0001
+                        and aml.is_counterpart == False
                     ):
                         raise osv.except_osv(
                             _('Error'),
