@@ -35,6 +35,10 @@ from . import common
 import math
 from osv.fields import float as float_class, function as function_class
 
+from mako.template import Template
+from mako import exceptions
+from osv.osv import except_osv
+
 DT_FORMAT = '%Y-%m-%d'
 DHM_FORMAT = '%Y-%m-%d %H:%M:%S'
 HM_FORMAT = '%H:%M:%S'
@@ -253,6 +257,8 @@ class rml_parse(object):
         self.log_export = False
         self.sheet_name_used = []
         self.total_sheet_number = 0
+        self.cache_lang_obj = False
+        self.cache_decimal_precision = {}
 
     def getSign(self, obj, key, field, d_format=None):
         if not hasattr(obj, 'signature_id'):
@@ -415,10 +421,12 @@ class rml_parse(object):
     def get_digits(self, obj=None, f=None, dp=None):
         d = DEFAULT_DIGITS = 2
         if dp:
-            decimal_precision_obj = self.pool.get('decimal.precision')
-            ids = decimal_precision_obj.search(self.cr, self.uid, [('name', '=', dp)])
-            if ids:
-                d = decimal_precision_obj.browse(self.cr, self.uid, ids)[0].digits
+            if dp not in self.cache_decimal_precision:
+                decimal_precision_obj = self.pool.get('decimal.precision')
+                ids = decimal_precision_obj.search(self.cr, self.uid, [('name', '=', dp)])
+                if ids:
+                    self.cache_decimal_precision[dp] = decimal_precision_obj.browse(self.cr, self.uid, ids)[0].digits
+            d = self.cache_decimal_precision[dp]
         elif obj and f:
             res_digits = getattr(obj._columns[f], 'digits', lambda x: ((16, DEFAULT_DIGITS)))
             if isinstance(res_digits, tuple):
@@ -437,21 +445,24 @@ class rml_parse(object):
             digits = self.get_digits(value)
         if isinstance(value, str) and not value:
             return ''
-        pool_lang = self.pool.get('res.lang')
-        lang = self.localcontext['lang']
 
-        lang_ids = pool_lang.search(self.cr, self.uid, [('code','=',lang)])[0]
-        lang_obj = pool_lang.browse(self.cr, self.uid, lang_ids)
+        if not self.cache_lang_obj:
+            pool_lang = self.pool.get('res.lang')
+            lang = self.localcontext['lang']
+            lang_ids = pool_lang.search(self.cr, self.uid, [('code','=',lang)])[0]
+            self.cache_lang_obj = pool_lang.browse(self.cr, self.uid, lang_ids)
+
+
 
         if date or date_time:
             if not str(value):
                 return ''
 
-            date_format = lang_obj.date_format
+            date_format = self.cache_lang_obj.date_format
             parse_format = '%Y-%m-%d'
             if date_time:
                 value=value.split('.')[0]
-                date_format = date_format + " " + lang_obj.time_format
+                date_format = date_format + " " + self.cache_lang_obj.time_format
                 parse_format = '%Y-%m-%d %H:%M:%S'
             if not isinstance(value, time.struct_time):
                 return time.strftime(date_format, time.strptime(value, parse_format))
@@ -460,7 +471,7 @@ class rml_parse(object):
                 date = datetime(*value.timetuple()[:6])
             return date.strftime(date_format)
 
-        return lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
+        return self.cache_lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
 
     def formatLang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False, dp=False):
         """
@@ -727,14 +738,29 @@ class report_sxw(report_rml, preprocess.report):
         try:
             objs = self.getObjects(cr, uid, ids, context)
             rml_parser.set_context(objs, data, ids, report_xml.report_type)
-            processed_rml = etree.XML(rml)
-            if report_xml.header:
-                rml_parser._add_header(processed_rml, self.header)
-            processed_rml = self.preprocess_rml(processed_rml,report_xml.report_type)
+            if not report_xml.mako_template:
+                processed_rml = etree.XML(rml)
+                if report_xml.header:
+                    rml_parser._add_header(processed_rml, self.header)
+                processed_template = etree.tostring(self.preprocess_rml(processed_rml,report_xml.report_type), encoding='utf8')
+            else:
+                body = Template(filename=os.path.join(tools.config['root_path'], self.tmpl), input_encoding='utf-8', output_encoding='utf-8', default_filters=['decode.utf8'])
+                rml_parser.localcontext['explicit_translate'] = True
+                rml_parser.orig_file=self.tmpl
+                try:
+                    processed_template = body.render(
+                        _=rml_parser.translate_call,
+                        **rml_parser.localcontext
+                    )
+                except Exception:
+                    msg = exceptions.text_error_template().render()
+                    raise except_osv('mako2pdf render', msg)
+
             if rml_parser.logo:
                 logo = base64.b64decode(rml_parser.logo)
+
             create_doc = self.generators[report_xml.report_type]
-            pdf = create_doc(etree.tostring(processed_rml, encoding='utf8'),rml_parser.localcontext,logo,title)
+            pdf = create_doc(processed_template, rml_parser.localcontext, logo, title)
             return (pdf, report_xml.report_type)
         finally:
             if rml_parser.log_export:

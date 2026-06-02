@@ -339,6 +339,7 @@ form: module.record_id""" % (xml_id,)
             res['target_filename'] = rec.get('target_filename')
 
         res['run_in_background'] = rec.get('run_in_background', False)
+        res['mako_template'] = rec.get('mako_template', False)
         res['multi'] = rec.get('multi') and eval(rec.get('multi','False'))
 
         xml_id = rec.get('id','')

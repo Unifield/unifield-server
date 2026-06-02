@@ -42,6 +42,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         new_ids = ids
         obj_move = self.pool.get('account.move.line')
 
+        wiz_model = data.get('wiz_model', 'account.report.general.ledger')
+        data.update(self.pool.get(wiz_model)._init_data(self.cr, self.uid, ids, context=data.get('context')))
         # local context AND move line _query_get call
         self.sortby = data['form'].get('sortby', 'sort_date')
         used_context = data['form'].get('used_context',{})
@@ -153,7 +155,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         if 'instance_ids' in data['form']:
             self.context['instance_ids'] = data['form']['instance_ids']
-        if (data['model'] == 'ir.ui.menu'):
+
+        if data['model'] == 'ir.ui.menu':
             new_ids = [data['form']['chart_account_id']]
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids, context=self.context)
 
@@ -198,9 +201,23 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         # "Open Items at" filter
         if data['form'].get('open_items'):
-            aml_ids = obj_move.search(self.cr, self.uid, [('open_items', '=', data['form']['open_items'])],
-                                      order='NO_ORDER', context=self.context) or [0]
-            self.query += " AND l.id in(%s) " % (",".join(map(str, aml_ids)))
+            open_item_period = self.pool.get('account.period').browse(self.cr, self.uid, data['form']['open_items'], fields_to_fetch=['date_start', 'number'])
+            self.query += """
+                AND a.reconcile = 't'
+                AND (
+                            l.reconcile_id is null
+                            or exists(
+                                select rec_line.id from account_move_line rec_line, account_period rec_p
+                            where
+                                rec_line.reconcile_id = l.reconcile_id
+                                and rec_p.id = rec_line.period_id
+                                and (
+                                    rec_p.date_start > '%(period_start)s'
+                                    or rec_p.date_start = '%(period_start)s' and rec_p.number > '%(period_number)s'
+                                )
+                            )
+                        )
+            """ % {'period_start': open_item_period.date_start, 'period_number': open_item_period.number}
 
         query = self.query
         if self.reconciled_filter:
@@ -225,7 +242,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             context = {}
         super(general_ledger, self).__init__(cr, uid, name, context=context)
         self.query = ""
-        self.tot_currency = 0.0
         self.period_sql = ""
         self.sold_accounts = {}
         self.sortby = 'sort_date'
@@ -257,6 +273,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_initial_balance': self._get_initial_balance,
             'get_tree_nodes': self._get_tree_nodes,
             'show_node_in_report': self._show_node_in_report,
+            'update_percent': self._update_percent,
         })
 
         # company currency
@@ -264,6 +281,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.currency_id = False
         self.currency_name = ''
         self.instance_id = False
+        self.counter = 0
+        self.bk_id = context.get('background_id')
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
         if user and user[0] and user[0].company_id:
             self.currency_id = user[0].company_id.currency_id.id
@@ -275,6 +294,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         self.context = context
         self._drill = None
+
+    def _update_percent(self):
+        self.counter += 1
+        if self.bk_id:
+            self.pool.get('memory.background.report').write(self.cr, self.uid, self.bk_id, {'percent': min(0.95, self.counter/self._drill.nodes_count)})
+
 
     def _get_tree_nodes(self, account):
         res = []
@@ -308,9 +333,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def lines(self, node, initial_balance_mode=False):
         """ display final account node entries (JIs)"""
         res = []
-        #if not node.is_move_level:
-        #    return res
-
+        sql = False
+        all_t = time.time()
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
@@ -326,28 +350,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             move_state_in = "('posted')" if self.target_move == 'posted' \
                 else "('draft', 'posted')"
 
-            # First compute all counterpart strings for every move_id where this account appear.
-            # Currently, the counterpart info is used only in landscape mode
-            # => desactivated since US-334
-            '''
-            sql = """
-                SELECT m1.move_id,
-                    array_to_string(ARRAY(SELECT DISTINCT a.code
-                                              FROM account_move_line m2
-                                              LEFT JOIN account_account a ON (m2.account_id=a.id)
-                                              WHERE m2.move_id = m1.move_id
-                                              AND m2.account_id<>%%s), ', ') AS counterpart
-                    FROM (SELECT move_id
-                            FROM account_move_line l
-                            LEFT JOIN account_move am ON (am.id = l.move_id)
-                            WHERE am.state IN %s and %s AND l.account_id = %%s GROUP BY move_id) m1
-            """% (tuple(move_state), self.query)
-            self.cr.execute(sql, (account.id, account.id))
-            counterpart_res = self.cr.dictfetchall()
-            counterpart_accounts = {}
-            for i in counterpart_res:
-                counterpart_accounts[i['move_id']] = i['counterpart']
-            del counterpart_res'''
             # Then select all account_move_line of this account
 
             if self.sortby == 'sort_third_party':
@@ -367,22 +369,17 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
                 m.name AS move_name, m.id AS mmove_id,per.code as period_code,
                 c.symbol AS currency_code,
-                i.id AS invoice_id, i.type AS invoice_type,
-                i.number AS invoice_number,
                 p.name AS partner_name, c.name as currency_name, l.partner_txt as third_party, l.reconcile_txt
                 FROM account_move_line l
                 JOIN account_move m on (l.move_id=m.id)
                 LEFT JOIN res_currency c on (l.currency_id=c.id)
                 LEFT JOIN res_partner p on (l.partner_id=p.id)
-                LEFT JOIN account_invoice i on (m.id =i.move_id)
                 LEFT JOIN account_period per on (per.id=l.period_id)
                 JOIN account_journal j on (l.journal_id=j.id)
                 JOIN account_account a on (a.id=l.account_id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
             """ %(self.query, move_state_in, sql_sort)
             sql = sql.replace('{{reconcile}}', self.reconciled_filter)
-            self.cr.execute(sql, (account.id, ))
-            res = self.cr.dictfetchall()
         else:
             if self.init_balance:
                 # US-822: move lines for period 0 IB journal
@@ -410,24 +407,23 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                         JOIN account_journal j on (l.journal_id=j.id)
                     WHERE %s AND l.account_id = %%s and per.number = 0 ORDER by %s
                 """ % (self.init_query, sql_sort, )
-                self.cr.execute(sql, (account.id, ))
-                res = self.cr.dictfetchall()
+
+        if sql:
+            print('Query %s' % self.cr.mogrify(sql, (account.id, )))
+            self.cr.execute(sql, (account.id, ))
+            t = time.time()
+            res = self.cr.dictfetchall()
+            print(time.time() - t)
 
         if res:
-            account_sum = 0.0
             for l in res:
                 l['move'] = l['move_name'] != '/' and l['move_name'] or ('*'+str(l['mmove_id']))
                 l['partner'] = l['partner_name'] or ''
-                account_sum += l['debit'] - l['credit']
-                l['progress'] = account_sum
-                # counter part desactivated since us 354
-                # l['line_corresp'] = l['mmove_id'] == '' and ' ' or counterpart_accounts[l['mmove_id']].replace(', ',',')
                 # Modification of amount Currency
                 if l['credit'] > 0:
                     if l['amount_currency'] != None:
                         l['amount_currency'] = abs(l['amount_currency']) * -1
-                if l['amount_currency'] != None:
-                    self.tot_currency = self.tot_currency + l['amount_currency']
+        print('uu', time.time() - all_t, len(res))
         return res
 
     def _get_account(self, data):
@@ -599,8 +595,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return self.init_balance
 
 #report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
-report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
-report_sxw.report_sxw('report.account.general.ledger_landscape_tb', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
+report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.mako', parser=general_ledger, header='internal landscape')
+report_sxw.report_sxw('report.account.general.ledger_landscape_tb', 'account.account', 'addons/account/report/account_general_ledger_landscape.mako', parser=general_ledger, header='internal landscape')
 
 
 class general_ledger_xls(SpreadsheetReport):
