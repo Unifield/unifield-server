@@ -1608,17 +1608,7 @@ class account_move(osv.osv):
         for move in self.browse(cursor, user, ids, context=context):
             top = None
 
-            total_debit = 0.0
-            total_credit = 0.0
-            total_debit_currency = 0.0
-            total_credit_currency = 0.0
-
             for line in move.line_id:
-                total_debit += line.debit or 0.0
-                total_credit += line.credit or 0.0
-                total_debit_currency += line.debit_currency or 0.0
-                total_credit_currency += line.credit_currency or 0.0
-
                 account = line.account_id
                 while account:
                     account2 = account
@@ -1627,14 +1617,15 @@ class account_move(osv.osv):
                     top = account2.id
                 elif top!=account2.id:
                     raise osv.except_osv(_('Error !'), _('You cannot validate a Journal Entry unless all journal items are in same chart of accounts !'))
-            if (abs(total_debit) < 0.0001 and abs(total_credit) < 0.0001 and
-                abs(total_debit_currency) < 0.0001 and abs(total_credit_currency) < 0.0001
-            ):
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Journal Entry "%s" has all debit/credit amounts equal to zero.')
-                    % (move.name)
-                )
+
+                if (abs(line.debit) < 0.0001 and abs(line.credit) < 0.0001 and
+                    abs(line.debit_currency) < 0.0001 and abs(line.credit_currency) < 0.0001
+                ):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Journal Entry "%s" has all debit/credit amounts equal to zero.')
+                        % (line.name)
+                    )
         return self.post(cursor, user, ids, context=context)
 
     def button_cancel(self, cr, uid, ids, context=None):

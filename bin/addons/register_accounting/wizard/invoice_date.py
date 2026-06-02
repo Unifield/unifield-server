@@ -79,24 +79,15 @@ class wizard_invoice_date(osv.osv_memory):
             invoice = inv_obj.browse(cr, uid, wiz.invoice_id.id, context=context)
 
             if invoice.move_id:
-                total_debit = 0.0
-                total_credit = 0.0
-                total_debit_curr = 0.0
-                total_credit_curr = 0.0
                 for aml in invoice.move_id.line_id:
-                    total_debit += aml.debit or 0.0
-                    total_credit += aml.credit or 0.0
-                    total_debit_curr += aml.debit_currency or 0.0
-                    total_credit_curr += aml.credit_currency or 0.0
-
-                if (abs(total_debit) < 0.0001 and abs(total_credit) < 0.0001
-                    and abs(total_debit_curr) < 0.0001 and abs(total_credit_curr) < 0.0001
-                ):
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('Invoice line "%s" has all debit/credit amounts equal to zero.')
-                        % (invoice.name)
-                    )
+                    if (abs(aml.debit) < 0.0001 and abs(aml.credit) < 0.0001
+                        and abs(aml.debit_currency) < 0.0001 and abs(aml.credit_currency) < 0.0001
+                    ):
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('Invoice line "%s" has all debit/credit amounts equal to zero.')
+                            % (aml.name)
+                        )
 
         return { 'type': 'ir.actions.act_window_close', }
 
