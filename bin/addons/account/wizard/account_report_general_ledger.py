@@ -85,7 +85,7 @@ class account_report_general_ledger(osv.osv_memory):
         'amount_currency': True,
         'sortby': 'sort_date',
         'initial_balance': False,
-        'export_format': 'pdf',
+        'export_format': 'xls',
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
         'account_type': 'all',
         'reconciled': 'empty',

@@ -30,9 +30,14 @@
 import time
 from report import report_sxw
 from .common_report_header import common_report_header
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from osv import osv
 from tools.translate import _
+
+from spreadsheet_xml.xlsx_write import XlsxReport
+from spreadsheet_xml.xlsx_write import XlsxReportParser
+from datetime import datetime
+
+from openpyxl.worksheet.header_footer import HeaderFooterItem
 
 
 class general_ledger(report_sxw.rml_parse, common_report_header):
@@ -237,14 +242,32 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         return res
 
-    def __init__(self, cr, uid, name, context=None):
-        if context is None:
-            context = {}
-        super(general_ledger, self).__init__(cr, uid, name, context=context)
+    def _init_var(self):
         self.query = ""
         self.period_sql = ""
         self.sold_accounts = {}
         self.sortby = 'sort_date'
+        # company currency
+        self.currency_id = False
+        self.currency_name = ''
+        self.instance_id = False
+        self.counter = 0
+        self.bk_id = self.context.get('background_id')
+        user = self.pool.get('res.users').browse(self.cr, self.uid, [self.uid], context=self.context)
+        if user and user[0] and user[0].company_id:
+            self.currency_id = user[0].company_id.currency_id.id
+            self.currency_name = user[0].company_id.currency_id and user[0].company_id.currency_id.name or ''
+            if user[0].company_id.instance_id:
+                self.instance_id = user[0].company_id.instance_id.id
+        if not self.currency_id:
+            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
+
+        self._drill = None
+
+    def __init__(self, cr, uid, name, context=None):
+        if context is None:
+            context = {}
+        super(general_ledger, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
             'lines': self.lines,
@@ -275,25 +298,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'show_node_in_report': self._show_node_in_report,
             'update_percent': self._update_percent,
         })
-
-        # company currency
         self.uid = uid
-        self.currency_id = False
-        self.currency_name = ''
-        self.instance_id = False
-        self.counter = 0
-        self.bk_id = context.get('background_id')
-        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
-        if user and user[0] and user[0].company_id:
-            self.currency_id = user[0].company_id.currency_id.id
-            self.currency_name = user[0].company_id.currency_id and user[0].company_id.currency_id.name or ''
-            if user[0].company_id.instance_id:
-                self.instance_id = user[0].company_id.instance_id.id
-        if not self.currency_id:
-            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
-
         self.context = context
-        self._drill = None
+        self._init_var()
+
 
     def _update_percent(self):
         self.counter += 1
@@ -334,7 +342,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         """ display final account node entries (JIs)"""
         res = []
         sql = False
-        all_t = time.time()
+        #all_t = time.time()
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
@@ -409,11 +417,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 """ % (self.init_query, sql_sort, )
 
         if sql:
-            print('Query %s' % self.cr.mogrify(sql, (account.id, )))
+            #print('Query %s' % self.cr.mogrify(sql, (account.id, )))
             self.cr.execute(sql, (account.id, ))
-            t = time.time()
+            #t = time.time()
             res = self.cr.dictfetchall()
-            print(time.time() - t)
+            #print(time.time() - t)
 
         if res:
             for l in res:
@@ -423,7 +431,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 if l['credit'] > 0:
                     if l['amount_currency'] != None:
                         l['amount_currency'] = abs(l['amount_currency']) * -1
-        print('uu', time.time() - all_t, len(res))
+        #print('uu', time.time() - all_t, len(res))
         return res
 
     def _get_account(self, data):
@@ -598,16 +606,215 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.mako', parser=general_ledger, header='internal landscape')
 report_sxw.report_sxw('report.account.general.ledger_landscape_tb', 'account.account', 'addons/account/report/account_general_ledger_landscape.mako', parser=general_ledger, header='internal landscape')
 
+class account_general_ledger_xls_parser(XlsxReportParser, general_ledger):
+    _name = "account.general.ledger_xls.parser"
 
-class general_ledger_xls(SpreadsheetReport):
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        super(general_ledger_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+    def generate(self, context=None):
+        self._init_var()
 
-    def create(self, cr, uid, ids, data, context=None):
-        #ids = getIds(self, cr, uid, ids, context)
-        a = super(general_ledger_xls, self).create(cr, uid, ids, data, context)
-        return (a[0], 'xls')
+        self.counter = 0
+        self.localcontext = {'lang': self.context.get('lang')}
+        data = {'context': context, 'wiz_model': self.wiz_model}
+        self.set_context(False, data, self.ids or [])
 
-general_ledger_xls('report.account.general.ledger_xls', 'account.account', 'addons/account/report/account_general_ledger_xls.mako', parser=general_ledger, header='internal')
+
+        sheet = self.workbook.active
+        self.create_style_from_template('line_header_style', 'A1')
+        self.create_style_from_template('filter_style', 'A2')
+        self.create_style_from_template('main_subtotal_style', 'A5')
+        self.create_style_from_template('main_subtotal_number_style', 'G5')
+        self.create_style_from_template('detail_subtotal_style', 'A6')
+        self.create_style_from_template('detail_subtotal_number_style', 'G6')
+        self.create_style_from_template('line_account_style', 'A7')
+        self.create_style_from_template('line_text_style', 'B7')
+        self.create_style_from_template('line_date_style', 'C7')
+        self.create_style_from_template('line_currency_style', 'F7')
+        self.create_style_from_template('line_number_style', 'G7')
+
+        self.duplicate_column_dimensions()
+        self.duplicate_row_dimensions([1, 2, 3, 4])
+        sheet.page_setup.orientation = 'landscape'
+        sheet.page_setup.fitToPage = True
+        sheet.page_setup.fitToHeight = False
+        sheet.page_setup.paperSize = 9 # A4
+
+        header = HeaderFooterItem()
+        header.center.text = self.title
+        header.center.size = 14
+        header.center.font = "Arial,Bold"
+        sheet.oddHeader = header
+        sheet.evenHeader = header
+
+        footer = HeaderFooterItem()
+        footer.center.text = "%s &[Page]/&N" % (_('Page'), )
+        footer.center.size = 8
+        sheet.oddFooter = footer
+        sheet.evenFooter = footer
+
+
+        if self.model == 'account.account':
+            col_1 =  _('Company')
+        else:
+            col_1 = _('Chart of Account')
+
+        headers = [
+            col_1,
+            _('Fiscal Year'),
+            _('Journals'),
+            _('Display'),
+            _('Open Items at'),
+            _('Filter By'),
+            _('Target Moves'),
+            _('Proprietary Instances'),
+            '',
+            '',
+            _('Currency')
+        ]
+
+        sheet.merged_cells.ranges.append("H1:J1")
+
+
+        self.workbook.active.append([self.cell_ro(x, 'line_header_style') for x in headers])
+
+        for a in self.objects:
+            self.workbook.active.append([self.cell_ro(x, 'filter_style') for x in [
+                self._get_account(data),
+                self._get_fiscalyear(data),
+                self._get_journals_str(data),
+                self._get_display_info(data),
+                self._get_open_items_selection(data),
+                self._get_filter_info(data),
+                self._get_target_move(data),
+                self._get_prop_instances_str(),
+                '',
+                '',
+                self._get_output_currency_code(data),
+            ]])
+            sheet.merged_cells.ranges.append("H2:J2")
+
+            self.workbook.active.append([])
+
+            if self.get_show_move_lines():
+                self.workbook.active.append([self.cell_ro(x, 'line_header_style') for x in [
+                    _('Account'),
+                    _('Entry Seq'),
+                    _('Posting Date'),
+                    _('Description'),
+                    _('Third Party'),
+                    _('Currency'),
+                    _('Debit'),
+                    _('Credit'),
+                    _('Booking Balance'),
+                    '%s %s' % (_('Balance'), self._get_output_currency_code(data)),
+                    _('Reconcile Number'),
+
+                ]])
+            else:
+                self.workbook.active.append([self.cell_ro(x, 'line_header_style') for x in [
+                    _('Account'),
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    _('Currency'),
+                    _('Debit'),
+                    _('Credit'),
+                    _('Booking Balance'),
+                    '%s %s' % (_('Balance'), self._get_output_currency_code(data)),
+
+                ]])
+                sheet.merged_cells.ranges.append("B4:F4")
+
+            idx = 5
+            for o in self._get_tree_nodes(a):
+                self._update_percent()
+                if '*' in o.data and self._show_node_in_report(o):
+                    line_data = [
+                        self.cell_ro(o.code,'main_subtotal_style'),
+                        self.cell_ro(o.name,'main_subtotal_style'),
+                        self.cell_ro('', 'main_subtotal_style'),
+                        self.cell_ro('', 'main_subtotal_style'),
+                        self.cell_ro('', 'main_subtotal_style'),
+                    ]
+                    if not self.get_show_move_lines():
+                        line_data.append(self.cell_ro('', 'main_subtotal_style'))
+                    line_data += [
+                        self.cell_ro(self._get_output_currency_code(data),'main_subtotal_style'),
+                        self.cell_ro(o.data['*']['debit'],'main_subtotal_number_style'),
+                        self.cell_ro(o.data['*']['credit'],'main_subtotal_number_style'),
+                        self.cell_ro(o.data['*']['debit'] - o.data['*']['credit'],'main_subtotal_number_style'),
+                        self.cell_ro(o.data['*']['debit'] - o.data['*']['credit'],'main_subtotal_number_style'),
+
+                    ]
+                    if self.get_show_move_lines():
+                        line_data.append(self.cell_ro('', 'main_subtotal_number_style'))
+                    self.workbook.active.append(line_data)
+                    if not self.get_show_move_lines():
+                        sheet.merged_cells.ranges.append(f"B{idx}:F{idx}")
+                    else:
+                        sheet.merged_cells.ranges.append(f"B{idx}:E{idx}")
+                    idx += 1
+
+                    if o.displayed:
+                        for ccy in o.get_currencies():
+                            line_data = [
+                                self.cell_ro(o.code,'detail_subtotal_style'),
+                                self.cell_ro(_('Sub Total'),'detail_subtotal_style'),
+                                self.cell_ro('', 'detail_subtotal_style'),
+                                self.cell_ro('', 'detail_subtotal_style'),
+                                self.cell_ro('', 'detail_subtotal_style')
+                            ]
+                            if not self.get_show_move_lines():
+                                line_data.append(self.cell_ro('', 'detail_subtotal_style'))
+                            line_data += [
+                                self.cell_ro(ccy,'detail_subtotal_style'),
+                                self.cell_ro(o.data[ccy]['debit_ccy'],'detail_subtotal_number_style'),
+                                self.cell_ro(o.data[ccy]['credit_ccy'],'detail_subtotal_number_style'),
+                                self.cell_ro(o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy'],'detail_subtotal_number_style'),
+                                self.cell_ro(o.data[ccy]['debit'] - o.data[ccy]['credit'],'detail_subtotal_number_style'),
+                            ]
+                            if self.get_show_move_lines():
+                                line_data.append(self.cell_ro('', 'detail_subtotal_number_style'))
+                            self.workbook.active.append(line_data)
+                            if not self.get_show_move_lines():
+                                sheet.merged_cells.ranges.append(f"B{idx}:F{idx}")
+                            else:
+                                sheet.merged_cells.ranges.append(f"B{idx}:E{idx}")
+                            idx += 1
+                    for line in self.lines(o, initial_balance_mode=True):
+                        self.workbook.active.append([
+                            self.cell_ro(o.code,'line_account_style'),
+                            self.cell_ro(line['move'] or '','line_text_style'),
+                            self.cell_ro('', 'line_text_style'),
+                            self.cell_ro('', 'line_text_style'),
+                            self.cell_ro('', 'line_text_style'),
+                            self.cell_ro(line['currency_name'],'line_currency_style'),
+                            self.cell_ro(self._get_line_debit(line, booking=True),'line_number_style'),
+                            self.cell_ro(self._get_line_credit(line, booking=True),'line_number_style'),
+                            self.cell_ro(self._get_line_balance(line, booking=True),'line_number_style'),
+                            self.cell_ro(self._get_line_balance(line, booking=False),'line_number_style'),
+                            self.cell_ro(line.get('reconcile_txt') or '', 'line_text_style'),
+                        ])
+                        sheet.merged_cells.ranges.append(f"B{idx}:E{idx}")
+                        idx += 1
+
+                    for line in self.lines(o, initial_balance_mode=False):
+                        self.workbook.active.append([
+                            self.cell_ro(o.code,'line_account_style'),
+                            self.cell_ro(line['move'] or '','line_text_style'),
+                            self.cell_ro(datetime.strptime(line['ldate'], '%Y-%m-%d'), 'line_date_style'),
+                            self.cell_ro(line['lname'] or '' ,'line_text_style'),
+                            self.cell_ro(line['third_party'] or '','line_text_style'),
+                            self.cell_ro(line['currency_name'],'line_currency_style'),
+                            self.cell_ro(self._get_line_debit(line, booking=True),'line_number_style'),
+                            self.cell_ro(self._get_line_credit(line, booking=True),'line_number_style'),
+                            self.cell_ro(self._get_line_balance(line, booking=True),'line_number_style'),
+                            self.cell_ro(self._get_line_balance(line, booking=False),'line_number_style'),
+                            self.cell_ro(line.get('reconcile_txt') or '', 'line_text_style'),
+                        ])
+                        idx += 1
+
+XlsxReport('report.account.general.ledger_xls', parser=account_general_ledger_xls_parser, template='addons/account/report/account_general_ledger_template.xlsx')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
