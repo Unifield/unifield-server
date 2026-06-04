@@ -147,7 +147,7 @@
   </stylesheet>
   <story>
     % for a in objects:
-    <para style="terp_header_Centre">${get_title()|x }</para>
+    <para style="terp_header_Centre">${get_title()|h,x }</para>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
@@ -173,7 +173,7 @@
           <para style="terp_tblheader_General_Centre">${_('Open Items at')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">${_('Filter By')} ${(get_filter(data)!='No Filter' and get_filter(data))|x}</para>
+          <para style="terp_tblheader_General_Centre">${_('Filter By')} ${(get_filter(data)!='No Filter' and get_filter(data))|h,x}</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">${_('Proprietary Instances')}</para>
@@ -186,31 +186,31 @@
     <blockTable colWidths="98.0,84.0,98.0,98.0,80.0,134.0,98.0,98.0" style="Table2">
       <tr>
         <td>
-          <para style="terp_default_Centre_8">${(get_account(data) or '')|x}</para>
+          <para style="terp_default_Centre_8">${(get_account(data) or '')|h,x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">${(get_fiscalyear(data) or '')|x}</para>
+          <para style="terp_default_Centre_8">${(get_fiscalyear(data) or '')|h,x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">${(get_journals_str(data) or '')|x}</para>
+          <para style="terp_default_Centre_8">${(get_journals_str(data) or '')|h,x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">${(get_display_info(data))|x}</para>
+          <para style="terp_default_Centre_8">${(get_display_info(data))|h,x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">${(get_open_items_selection(data))|x}</para>
+          <para style="terp_default_Centre_8">${(get_open_items_selection(data))|h,x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">${(get_filter_info(data))|x}</para>
+          <para style="terp_default_Centre_8">${(get_filter_info(data))|h,x}</para>
           <para style="terp_default_Centre_8">
             <font color="white"> </font>
           </para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">${ get_prop_instances()|x }</para>
+          <para style="terp_default_Centre_8">${ get_prop_instances()|h,x }</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">${ get_target_move(data)|x }</para>
+          <para style="terp_default_Centre_8">${ get_target_move(data)|h,x }</para>
         </td>
       </tr>
     </blockTable>
@@ -233,7 +233,7 @@
           <para style="terp_tblheader_Details">${_('Third Party')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">${ get_ccy_label()|x }</para>
+          <para style="terp_tblheader_Details">${ get_ccy_label()|h,x }</para>
         </td>
         <td>
           <para style="terp_tblheader_Details_Right">${_('Debit')}</para>
@@ -245,7 +245,7 @@
           <para style="terp_tblheader_Details_Right">${_('Booking Balance')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">${_('Balance')} ${ get_output_currency_code(data)|x }</para>
+          <para style="terp_tblheader_Details_Right">${_('Balance')} ${ get_output_currency_code(data)|h,x }</para>
         </td>
       </tr>
     </blockTable>
@@ -265,7 +265,7 @@
           <para style="terp_tblheader_Details"></para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">${ get_ccy_label()|x }</para>
+          <para style="terp_tblheader_Details">${ get_ccy_label()|h,x }</para>
         </td>
         <td>
           <para style="terp_tblheader_Details_Right">${_('Debit')}</para>
@@ -277,7 +277,7 @@
           <para style="terp_tblheader_Details_Right">${_('Booking Balance')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">${_('Balance')} ${ get_output_currency_code(data)|x }</para>
+          <para style="terp_tblheader_Details_Right">${_('Balance')} ${ get_output_currency_code(data)|h,x }</para>
         </td>
       </tr>
     </blockTable>
@@ -289,22 +289,22 @@
       <blockTable colWidths="356.0,50.0,95.0,95.0,95.0,95.0" style="Table8_header">
         <tr>
           <td>
-            <para style="terp_default_Bold_9">${ '..'*(o.level-1) } ${ o.name|x }</para>
+            <para style="terp_default_Bold_9">${ '..'*(o.level-1) } ${ o.name|h,x }</para>
           </td>
           <td>
-              <para style="terp_default_Bold_9_Right">${ get_output_currency_code(data)|x }</para>
+              <para style="terp_default_Bold_9_Right">${ get_output_currency_code(data)|h,x }</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'], digits=get_digits(dp='Account'))|x }</para>
+            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'], digits=get_digits(dp='Account'))|h,x }</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['credit'], digits=get_digits(dp='Account'))|x }</para>
+            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['credit'], digits=get_digits(dp='Account'))|h,x }</para>
           </td>
            <td>
-            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account'))|x }</para>
+            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account'))|h,x }</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account'))|x }</para>
+            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account'))|h,x }</para>
           </td>
         </tr>
       </blockTable>
@@ -316,25 +316,25 @@
         <blockTable colWidths="40.0,316.0,50.0,95.0,95.0,95.0,95.0" style="Table8_subtotal_ccy">
           <tr>
             <td>
-              <para style="terp_default_9_Right">${(o.code or '')|x }</para>
+              <para style="terp_default_9_Right">${(o.code or '')|h,x }</para>
             </td>
             <td>
               <para style="terp_default_9_Right">${_('Sub Total')}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${ ccy|x }</para>
+              <para style="terp_default_9_Right">${ ccy|h,x }</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit_ccy'], digits=get_digits(dp='Account')))|x}</para>
+              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit_ccy'], digits=get_digits(dp='Account')))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')))|x}</para>
+              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')))|h,x}</para>
             </td>
              <td>
-              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')))|x}</para>
+              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit'] - o.data[ccy]['credit'], digits=get_digits(dp='Account')))|x }</para>
+              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit'] - o.data[ccy]['credit'], digits=get_digits(dp='Account')))|h,x }</para>
             </td>
           </tr>
         </blockTable>
@@ -348,25 +348,25 @@
         <blockTable colWidths="40.0,316.0,50.0,95.0,95.0,95.0,95.0" style="Table9">
           <tr>
             <td>
-              <para style="terp_default_9_Right">${(o.code or '')|x}</para>
+              <para style="terp_default_9_Right">${(o.code or '')|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${(line['move'] or '')|x}</para>
+              <para style="terp_default_9_Right">${(line['move'] or '')|h,x}</para>
             </td>
             <td>
-                <para style="terp_default_9_Right">${(line['currency_name'] or '')|x}</para>
+                <para style="terp_default_9_Right">${(line['currency_name'] or '')|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account'))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account'))|x}</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account'))|h,x}</para>
             </td>
            </tr>
         </blockTable>
@@ -377,31 +377,31 @@
         <blockTable colWidths="114.0,80.0,92.0,70.0,50.0,95.0,95.0,95.0,95.0" style="Table9">
           <tr>
             <td>
-              <para style="terp_default_8">${(line['move'] or '')|x}</para>
+              <para style="terp_default_8">${(line['move'] or '')|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_8">${(formatLang(line['ldate'],date=True))|x}</para>
+              <para style="terp_default_8">${(formatLang(line['ldate'],date=True))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_8">${(line['lname'] or '')|x}</para>
+              <para style="terp_default_8">${(line['lname'] or '')|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_Right_8">${(line['third_party'] or '')|x}</para>
+              <para style="terp_default_Right_8">${(line['third_party'] or '')|h,x}</para>
             </td>
             <td>
-                <para style="terp_default_Right_8">${(line['currency_name'] or '')|x}</para>
+                <para style="terp_default_Right_8">${(line['currency_name'] or '')|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account'))|h,x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account'))|x}</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account'))|h,x}</para>
             </td>
            </tr>
         </blockTable>
