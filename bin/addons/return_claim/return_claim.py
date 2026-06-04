@@ -1351,9 +1351,9 @@ class claim_event(osv.osv):
 
         self._process_replacement(cr, uid, obj, event_picking, context=context)
 
-        # change the reason type of the picking to loss/damage
-        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_damage')[1]
-        pick_obj.write(cr, uid, [event_picking.id], ({'reason_type_id': loss_id}), context=context)
+        # change the reason type of the picking to Internal Move
+        int_move_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+        pick_obj.write(cr, uid, [event_picking.id], ({'reason_type_id': int_move_id}), context=context)
 
         context.update({'keep_prodlot': False, 'keepPoLine': False})
 

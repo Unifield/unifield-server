@@ -30,6 +30,7 @@ from tools.translate import _
 class stock_reason_type(osv.osv):
     _name = 'stock.reason.type'
     _description = 'Reason Types Moves'
+    _order = 'complete_code'
 
     def init(self, cr):
         """
@@ -134,6 +135,7 @@ class stock_reason_type(osv.osv):
         'name': fields.char(size=128, string='Name', required=True, translate=1),
         'code': fields.integer(string='Code', required=True),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name'),
+        'complete_code': fields.float(digits=(16, 2), string='Code', required=True),
         'parent_id': fields.many2one('stock.reason.type', string='Parent reason'),
         'level': fields.function(_get_level, method=True, type='integer', string='Level', readonly=True),
         'inventory_ok': fields.boolean(string='Inventory type', help='If checked, this reason type will be available in inventory line'),

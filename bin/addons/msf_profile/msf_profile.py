@@ -59,6 +59,146 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF42.0
+    def us_12708_14170_15700_fix_reason_types(self, cr, uid, *a, **b):
+        """
+        Add complete_code data to the existing Reason Types
+        For some of the OCs, DF moves to fix the Reason Type:
+            - From "Expired/Damaged/Scrap" to "Destruction": RT Destruction (OCB, OCP, OCG).
+            - On claim INs from "MSF/Other Supplier" to "Quarantine (analyze)": RT Internal move (OCB, OCG).
+            - From "Stock/Intermediate Stocks/EPREP Stocks" location and their children to "Quarantine (analyze)" and
+            the opposite: RT Internal move (OCB, OCG).
+            - Specific RT depending on the current RT, the source location and the destination location (OCG: File in US-14170).
+        """
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+
+        # Fix the Reason Types' data
+        int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 1.00 WHERE id = %s""", (int_rt_id,))
+        consu_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_consumption')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 2.00 WHERE id = %s""", (consu_rt_id,))
+        consu_rep_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_consumption_report')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 3.00 WHERE id = %s""", (consu_rep_rt_id,))
+        ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 4.00 WHERE id = %s""", (ret_rt_id,))
+        ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 5.00 WHERE id = %s""", (ext_rt_id,))
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 6.00 WHERE id = %s""", (deli_partner_rt_id,))
+        int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 7.00 WHERE id = %s""", (int_move_rt_id,))
+        loan_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 8.00 WHERE id = %s""", (loan_rt_id,))
+        don_st_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 9.00 WHERE id = %s""", (don_st_rt_id,))
+        don_exp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 10.00 WHERE id = %s""", (don_exp_rt_id,))
+        don_kind_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 11.00 WHERE id = %s""", (don_kind_rt_id,))
+        loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 12.00 WHERE id = %s""", (loss_rt_id,))
+        scrap_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 12.01 WHERE id = %s""", (scrap_rt_id,))
+        sample_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_sample')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 12.02 WHERE id = %s""", (sample_rt_id,))
+        exp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 12.03 WHERE id = %s""", (exp_rt_id,))
+        dam_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_damage')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 12.04 WHERE id = %s""", (dam_rt_id,))
+        discr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 13.00 WHERE id = %s""", (discr_rt_id,))
+        other_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 14.00 WHERE id = %s""", (other_rt_id,))
+        kit_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 15.00 WHERE id = %s""", (kit_rt_id,))
+        goods_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 16.00 WHERE id = %s""", (goods_ret_rt_id,))
+        goods_rep_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 17.00 WHERE id = %s""", (goods_rep_rt_id,))
+        stock_init_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 18.00 WHERE id = %s""", (stock_init_rt_id,))
+        int_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_return')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 19.00 WHERE id = %s""", (int_ret_rt_id,))
+        deli_unit_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 20.00 WHERE id = %s""", (deli_unit_rt_id,))
+        loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 21.00 WHERE id = %s""", (loan_ret_rt_id,))
+        don_prog_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_prog')[1]
+        cr.execute("""UPDATE stock_reason_type SET complete_code = 22.00 WHERE id = %s""", (don_prog_rt_id,))
+
+        # Fix some of the moves' Reason Type
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj:
+            oc = entity_obj.get_entity(cr, uid).oc
+            quarantine_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+            exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+            destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+            common_loc_ids = [
+                data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
+                data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
+                data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1]
+            ]
+            child_loc_ids = loc_obj.search(cr, uid, [('location_id', 'in', common_loc_ids)])
+            common_loc_ids.extend(child_loc_ids)
+            # From "Expired/Damaged/Scrap" to "Destruction": RT Destruction (OCB, OCP, OCG)
+            if oc in ['ocb', 'ocp', 'ocg']:
+                destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+                cr.execute("""
+                    UPDATE stock_move SET reason_type_id = %s WHERE location_id = %s AND location_dest_id = %s
+                """, (destr_rt_id, exp_dam_scrap_loc_id, destr_loc_id))
+                self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Destruction"' % (cr.rowcount,))
+            # On claim INs from "MSF/Other Supplier" to "Quarantine (analyze)": RT Internal move (OCB, OCG).
+            # From "Stock/Intermediate Stocks/EPREP Stocks" location and their children to "Quarantine (analyze)" and
+            # the opposite: RT Internal move (OCB, OCG).
+            if oc in ['ocb', 'ocg']:
+                other_sup_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')[1]
+                msf_sup_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')[1]
+                cr.execute("""
+                    UPDATE stock_move SET reason_type_id = %s
+                    WHERE reason_type_id != %s AND ((location_id IN %s AND location_dest_id = %s
+                        AND picking_id IN (SELECT id FROM stock_picking WHERE type = 'in' AND subtype = 'standard' AND
+                        claim = 't')) OR
+                        (location_id IN %s AND location_dest_id = %s) OR
+                        (location_id = %s AND location_dest_id IN %s))
+                """, (int_move_rt_id, int_move_rt_id, tuple([other_sup_loc_id, msf_sup_loc_id]), quarantine_loc_id,
+                      tuple(common_loc_ids), quarantine_loc_id, quarantine_loc_id, tuple(common_loc_ids)))
+                self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Internal Moves"' % (cr.rowcount,))
+            # Specific RT depending on the current RT, the source location and the destination location (OCG: File in US-14170)
+            if oc == 'ocg':
+                # Source Stock/IS/EPREP, destination Exp / Dam / Scrap, RT Internal Move, no BN/ED: RT Loss / Scrap
+                # Source Cross Docking/Input/Kit, destination Exp/Dam/Scrap, RT Internal Move, no BN/ED: RT Loss / Scrap
+                # Source Quarantine (analyze), destination Exp/Dam/Scrap, RT Internal Move, no BN/ED: RT Loss / Scrap
+                common_with_cdik_loc_ids = common_loc_ids.copy()
+                common_with_cdik_loc_ids.extend([
+                    data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],
+                    data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1],
+                    data_obj.get_object_reference(cr, uid, 'stock', 'location_production')[1],
+                ])
+                cr.execute("""
+                    UPDATE stock_move SET reason_type_id = %s WHERE reason_type_id = %s AND prodlot_id IS NULL AND 
+                        expired_date IS NULL AND location_id = %s AND location_dest_id = %s
+                """, (scrap_rt_id, int_move_rt_id, common_with_cdik_loc_ids, exp_dam_scrap_loc_id))
+                self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Loss / Scrap"' % (cr.rowcount,))
+
+                # Source AGOK LOG, destination Exp/Dam/Scrap, RT Stock Init: RT Loss / Scap
+                agok_log_loc_ids = loc_obj.search(cr, uid, [('name', '=like', 'AGOK LOG'), ('active', 'in', ['t', 'f'])])
+                if agok_log_loc_ids:
+                    cr.execute("""
+                        UPDATE stock_move SET reason_type_id = %s WHERE reason_type_id = %s AND location_id = %s AND location_dest_id = %s
+                    """, (scrap_rt_id, stock_init_rt_id, agok_log_loc_ids[0], exp_dam_scrap_loc_id))
+                    self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves from AGOK LOG was set to "Loss / Scrap"' % (cr.rowcount,))
+
+                # Source Stock/IS/EPREP, destination Exp / Dam / Scrap, RT Internal Move, BN/ED: RT Loss / Expiry
+                # Source Cross Docking/Input/Kit/Dekit, destination Exp/Dam/Scrap, RT Internal Move, BN/ED: RT Loss / Expiry
+                # Source Quarantine (analyze), destination Exp/Dam/Scrap, RT Internal Move, BN/ED >= move Date: RT Loss / Expiry
+                # Source non-"Inventory loss & profit", destination Exp/Dam/Scrap, RT Int Supply/Ext Supply/Kit/Other/Ret from Unit/Stock Init: Loss / Expiry
+
+
+                # Source Quarantine (analyze), destination Exp/Dam/Scrap, RT Internal Move, BN/ED < move Date: RT Loss / Damage
+
+        return True
+
     # UF41.0
     def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
         '''

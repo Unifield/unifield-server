@@ -46,6 +46,7 @@ class stock_expired_damaged_report(osv.osv):
         'loss_sample_ok': fields.boolean(string='12.2 Loss / Sample'),
         'loss_expiry_ok': fields.boolean(string='12.3 Loss / Expiry'),
         'loss_damage_ok': fields.boolean(string='12.4 Loss / Damage'),
+        'loss_batch_recall_ok': fields.boolean(string='12.5 Loss / Batch Recall'),
     }
 
     _defaults = {
@@ -56,6 +57,7 @@ class stock_expired_damaged_report(osv.osv):
         'loss_sample_ok': True,
         'loss_expiry_ok': True,
         'loss_damage_ok': True,
+        'loss_batch_recall_ok': True,
     }
 
     def update(self, cr, uid, ids, context=None):
@@ -82,6 +84,9 @@ class stock_expired_damaged_report(osv.osv):
 
         if report.loss_damage_ok:
             reason_type_ids.append(obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_damage')[1])
+
+        if report.loss_batch_recall_ok:
+            reason_type_ids.append(obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_batch_recall')[1])
 
         return reason_type_ids
 
