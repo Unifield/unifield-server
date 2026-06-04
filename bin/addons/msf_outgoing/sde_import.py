@@ -418,23 +418,25 @@ class sde_import(osv.osv_memory):
         # Search the IN
         if not po_id:
             raise osv.except_osv(_('Error'), _('PO was not found with the given references'))
+        if not po_name:
+            po_name = po_obj.read(cr, uid, po_id[0], ['name'], context=context)['name']
         in_domain = [('purchase_id', '=', po_id[0]), ('type', '=', 'in'), ('claim', '=', False)]
         error_msg = _('No available IN found for the given PO %s') % po_name
 
         in_id = False
-        # Look for Available Updated IN first
+        # Look for Available Updated IN first, if a Shipment Ref is given but no IN is found with it, search without it
         if in_updated:
             in_upd_domain = in_domain + [('state', '=', 'updated')]
             if ship_ref:
-                in_upd_domain.append(('shipment_ref', '=ilike', ship_ref))
-            in_id = pick_obj.search(cr, uid, in_upd_domain, context=context)
+                in_id = pick_obj.search(cr, uid, in_upd_domain + [('shipment_ref', '=ilike', ship_ref)], context=context)
+            if not in_id:
+                in_id = pick_obj.search(cr, uid, in_upd_domain, context=context)
 
         if not in_id:
             if ship_ref:
-                in_domain.extend([('shipment_ref', '=ilike', ship_ref), ('state', '=', 'shipped')])
                 error_msg = _('No available shipped IN found for the given PO %s and the given Ship Reference %s') % (po_name, ship_ref)
-                in_id = pick_obj.search(cr, uid, in_domain, context=context)
-            else:
+                in_id = pick_obj.search(cr, uid, in_domain + [('shipment_ref', '=ilike', ship_ref), ('state', '=', 'shipped')], context=context)
+            if not in_id:
                 in_id = pick_obj.search(cr, uid, in_domain + [('state', '=', 'assigned')], context=context)
                 if not in_id:
                     in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
