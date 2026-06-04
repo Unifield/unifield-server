@@ -75,7 +75,7 @@
             menu="False"
             header="False"
             model="account.account"
-            name="account.general.ledger_xls"
+            name="account.general.ledger_xlsx"
             file=""
             report_type="openpyxl"
             string="General Ledger"/>

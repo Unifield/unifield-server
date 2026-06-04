@@ -823,6 +823,6 @@ class account_general_ledger_xls_parser(XlsxReportParser, general_ledger):
                         ])
                         idx += 1
 
-XlsxReport('report.account.general.ledger_xls', parser=account_general_ledger_xls_parser, template='addons/account/report/account_general_ledger_template.xlsx')
+XlsxReport('report.account.general.ledger_xlsx', parser=account_general_ledger_xls_parser, template='addons/account/report/account_general_ledger_template.xlsx')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

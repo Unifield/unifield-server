@@ -88,7 +88,7 @@ class account_balance_report(osv.osv_memory):
     def _print_report(self, cr, uid, ids, data, context=None):
         data = self.read(cr, uid, ids[0], ['export_format'], context=context)
         if data.get('export_format') == 'xls':
-            report_name = 'account.general.ledger_xls'
+            report_name = 'account.general.ledger_xlsx'
         else:
             report_name = 'account.general.ledger_landscape_tb'
 

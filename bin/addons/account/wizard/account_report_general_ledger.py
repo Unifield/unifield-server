@@ -169,7 +169,7 @@ class account_report_general_ledger(osv.osv_memory):
             context = {}
         data = self.read(cr, uid, ids[0], ['export_format'], context=context)
         if data.get('export_format') == 'xls':
-            report_name = 'account.general.ledger_xls'
+            report_name = 'account.general.ledger_xlsx'
         else:
             report_name = 'account.general.ledger_landscape'
 
