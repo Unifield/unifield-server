@@ -613,6 +613,9 @@ class account_general_ledger_xls_parser(XlsxReportParser, general_ledger):
         self._init_var()
 
         self.counter = 0
+        self.lang_dict_called = False
+        self.lang_dict = {}
+        self.default_lang = {}
         self.localcontext = {'lang': self.context.get('lang')}
         data = {'context': context, 'wiz_model': self.wiz_model}
         self.set_context(False, data, self.ids or [])
