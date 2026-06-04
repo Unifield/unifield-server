@@ -342,7 +342,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         """ display final account node entries (JIs)"""
         res = []
         sql = False
-        #all_t = time.time()
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
@@ -417,11 +416,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 """ % (self.init_query, sql_sort, )
 
         if sql:
-            #print('Query %s' % self.cr.mogrify(sql, (account.id, )))
             self.cr.execute(sql, (account.id, ))
-            #t = time.time()
             res = self.cr.dictfetchall()
-            #print(time.time() - t)
 
         if res:
             for l in res:
@@ -431,7 +427,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 if l['credit'] > 0:
                     if l['amount_currency'] != None:
                         l['amount_currency'] = abs(l['amount_currency']) * -1
-        #print('uu', time.time() - all_t, len(res))
         return res
 
     def _get_account(self, data):
@@ -624,6 +619,7 @@ class account_general_ledger_xls_parser(XlsxReportParser, general_ledger):
         sheet = self.workbook.active
         self.create_style_from_template('line_header_style', 'A1')
         self.create_style_from_template('filter_style', 'A2')
+        self.create_style_from_template('filter_journal_style', 'C2')
         self.create_style_from_template('main_subtotal_style', 'A5')
         self.create_style_from_template('main_subtotal_number_style', 'G5')
         self.create_style_from_template('detail_subtotal_style', 'A6')
@@ -635,7 +631,7 @@ class account_general_ledger_xls_parser(XlsxReportParser, general_ledger):
         self.create_style_from_template('line_number_style', 'G7')
 
         self.duplicate_column_dimensions()
-        self.duplicate_row_dimensions([1, 2, 3, 4])
+        self.duplicate_row_dimensions([1, 3, 4])
         sheet.page_setup.orientation = 'landscape'
         sheet.page_setup.fitToPage = True
         sheet.page_setup.fitToHeight = False
@@ -680,19 +676,28 @@ class account_general_ledger_xls_parser(XlsxReportParser, general_ledger):
         self.workbook.active.append([self.cell_ro(x, 'line_header_style') for x in headers])
 
         for a in self.objects:
-            self.workbook.active.append([self.cell_ro(x, 'filter_style') for x in [
-                self._get_account(data),
-                self._get_fiscalyear(data),
-                self._get_journals_str(data),
-                self._get_display_info(data),
-                self._get_open_items_selection(data),
-                self._get_filter_info(data),
-                self._get_target_move(data),
-                self._get_prop_instances_str(),
-                '',
-                '',
-                self._get_output_currency_code(data),
-            ]])
+
+
+            line_data = [
+                self.cell_ro(x, 'filter_style') for x in [
+                    self._get_account(data),
+                    self._get_fiscalyear(data)
+                ]]
+
+            line_data.append(self.cell_ro(self._get_journals_str(data), 'filter_journal_style'))
+            line_data += [
+                self.cell_ro(x, 'filter_style') for x in [
+                    self._get_display_info(data),
+                    self._get_open_items_selection(data),
+                    self._get_filter_info(data),
+                    self._get_target_move(data),
+                    self._get_prop_instances_str(),
+                    '',
+                    '',
+                    self._get_output_currency_code(data),
+                ]]
+
+            self.workbook.active.append(line_data)
             sheet.merged_cells.ranges.append("H2:J2")
 
             self.workbook.active.append([])
