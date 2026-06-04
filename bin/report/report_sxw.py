@@ -738,7 +738,8 @@ class report_sxw(report_rml, preprocess.report):
         try:
             objs = self.getObjects(cr, uid, ids, context)
             rml_parser.set_context(objs, data, ids, report_xml.report_type)
-            if not report_xml.mako_template:
+            # report_xml object a()
+            if not hasattr(report_xml, 'mako_template') or not report_xml.mako_template:
                 processed_rml = etree.XML(rml)
                 if report_xml.header:
                     rml_parser._add_header(processed_rml, self.header)
