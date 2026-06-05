@@ -1545,11 +1545,280 @@ class sde_import(osv.osv_memory):
         return True
 
     # =============================================================================================================== #
+    #                                             PPL (Pre-Packing List)                                              #
+    # =============================================================================================================== #
+    def wizard_sde_ppl_import(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on PPL
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_ppl_actions(cr, uid, ids, 'ppl_import', context=context)
+
+    def wizard_sde_ppl_remove_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to remove a banner message on PPLs
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_ppl_actions(cr, uid, ids, 'remove_banner_msg', context=context)
+
+    def wizard_sde_ppl_export(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export PPL
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_ppl_actions(cr, uid, ids, 'ppl_export', context=context)
+
+    def wizard_sde_ppl_export_lines(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export PPLs with lines
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_ppl_actions(cr, uid, ids, 'ppl_export_lines', context=context)
+
+    def wizard_sde_ppl_actions(self, cr, uid, ids, action, context=None):
+        '''
+        Method to use instead of the JSONRPC
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
+        if not sde_imp['json_text']:
+            raise osv.except_osv(_('Warning'), _('No JSON data to use'))
+
+        result = []
+        if action == 'ppl_import':
+            result = self.sde_ppl_import(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'remove_banner_msg':
+            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'ppl', True, context=context)
+        elif action == 'ppl_export':
+            result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'ppl', with_lines=False, context=context)
+        elif action == 'ppl_export_lines':
+            result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'ppl', with_lines=True, context=context)
+
+        return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_ppl_import')
+    def sde_ppl_import(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to import JSON data.
+        A pagination system has been added to the import to allow users to import several JSONs for the same document
+        before trying to process the data. The keys sde_pagination_id, sde_pagination_page and sde_pagination_end are
+        necessary to allow the pagination.
+        '''
+        if context is None:
+            context = {}
+
+        return True
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_ppl_remove_msg')
+    def sde_ppl_remove_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to remove a 'SDE is updating' message on a list of PPLs
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_msg(cr, uid, json_text, 'ppl', True, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_ppl_export_lines')
+    def sde_ppl_export_lines(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to export info on PPLs with lines
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'ppl', with_lines=True, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_ppl_export')
+    def sde_ppl_export(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to export info on PPLs
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'ppl', with_lines=False, context=context)
+
+    def get_ppl_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
+        """
+        Get info from PPLs, its latest Track Change, info from their moves when needed and the existing Pack Types
+        """
+        if context is None:
+            context = {}
+
+        sql_lines_col, sql_lines_join, sql_lines_group, sql_lines_order = '', '', '', ''
+        if with_lines:  # Additional data for the lines
+            sql_lines_col = """,
+                m.id, -- 18
+                m.line_number, -- 19
+                pp.default_code, -- 20
+                pt.name, -- 21
+                pis.name, -- 22
+                pno.name, -- 23
+                m.comment, -- 24
+                m.product_qty, -- 25
+                lot.name, -- 26
+                m.expired_date, -- 27
+                pcc.cold_chain, -- 28 kc_check
+                pp.dangerous_goods, -- 29 dg_check
+                pp.controlled_substance, -- 30 np_check
+                m.from_pack, -- 31
+                m.to_pack, -- 32
+                m.weight, -- 33
+                m.width, -- 34
+                m.length, -- 35
+                m.height, -- 36
+                ptype.name -- 37
+            """
+            sql_lines_join = """
+                LEFT JOIN product_product pp ON m.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
+                LEFT JOIN product_international_status pis ON pp.international_status = pis.id
+                LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
+                LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
+                LEFT JOIN pack_type ptype ON m.pack_type = ptype.id
+            """
+            sql_lines_group = """, m.id,  m.line_number, pp.default_code, pt.name, pis.name, pno.name, m.comment,
+                m.product_qty, lot.name, m.expired_date, pcc.cold_chain, pp.dangerous_goods, pp.controlled_substance,
+                m.from_pack, m.to_pack, m.weight, m.width, m.length, m.height, ptype.name"""
+            sql_lines_order = ', m.line_number, m.id'
+        cr.execute("""
+            SELECT
+                p.name, -- 0
+                p.date, -- 1
+                s.client_order_ref, -- 2
+                s.name, -- 3
+                s.date_order, -- 4
+                s.delivery_requested_date, -- 5
+                s.ready_to_ship_date, -- 6
+                s.transport_type, -- 7
+                par.name, -- 8
+                addr.street, -- 9
+                addr.street2, -- 10
+                co.name, -- 11
+                addr.phone, -- 12
+                dl.name, -- 13
+                COUNT(DISTINCT(m.line_number)), -- 14
+                p.sde_updated, -- 15
+                MAX(a.log), -- 16
+                MAX(a.timestamp) -- 17
+                """ + sql_lines_col + """
+            FROM stock_move m
+                LEFT JOIN stock_picking p ON m.picking_id = p.id
+                LEFT JOIN audittrail_log_line a ON p.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'stock.picking' LIMIT 1)
+                LEFT JOIN sale_order s ON p.sale_id = s.id
+                LEFT JOIN res_partner par ON p.partner_id = par.id
+                LEFT JOIN res_partner_address addr ON p.address_id = addr.id
+                LEFT JOIN res_country co ON addr.country_id = co.id
+                LEFT JOIN stock_location dl ON p.ext_cu = dl.id
+                """ + sql_lines_join + """
+            WHERE p.id IN %s AND m.state = 'assigned'
+            GROUP BY p.id, p.name, p.date, s.client_order_ref, s.name, s.date_order, s.delivery_requested_date,
+                s.ready_to_ship_date, s.transport_type, par.name, addr.street, addr.street2, co.name, addr.phone,
+                dl.name, p.sde_updated""" + sql_lines_group + """
+            ORDER BY p.id""" + sql_lines_order + """ OFFSET %s LIMIT %s
+        """, (tuple(ids), offset, limit)) # not_a_user_entry
+
+        return cr.fetchall()
+
+    def create_ppl_paginated_export(self, cr, uid, ids, pagi_ref, page, last_page, offset, limit, with_lines=False, context=None):
+        '''
+        Method to be used in the background to create the paginated exports beyond page 1
+        '''
+        if context is None:
+            context = {}
+
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        data, pack_types_data = {}, {}
+        shipper_data = self.get_shipper_data(new_cr, uid, context=context)
+        for ppl in self.get_ppl_export_data(new_cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
+            if not data.get(ppl[0]):
+                partner_data = [ppl[8], _('Supply Responsible')]
+                address_data = []
+                if ppl[9]:
+                    address_data.append(ppl[9])
+                if ppl[10]:
+                    address_data.append(ppl[10])
+                if ppl[11]:
+                    address_data.append(ppl[11])
+                if address_data:
+                    partner_data.append(' '.join(address_data))
+                if ppl[12]:
+                    partner_data.append(ppl[12])
+
+                data[ppl[0]] = {
+                    'date': ppl[1],
+                    'client_po_ref': ppl[2] or '',
+                    'fo_ir_ref': ppl[3] or '',
+                    'fo_date': ppl[4] or '',
+                    'packing_date': ppl[5] or '',
+                    'ready_to_ship_date': ppl[6] or '',
+                    'transport_type': ppl[7] and LIST_TRANSPORT_TYPE[ppl[7]] or '',
+                    'shipper_address': shipper_data and '; '.join(shipper_data) or '',
+                    'consignee_address': partner_data and '; '.join(partner_data) or '',
+                    'destination_location': ppl[13] or '',
+                    'total_items': ppl[14] or 0,
+                    'updated_by_sde': ppl[15] or False,
+                    'latest_log': ppl[16] or '',
+                    'latest_log_date': ppl[17] or '',
+                }
+
+            if with_lines and len(ppl) > 18:
+                if 'move_lines' not in data[ppl[0]]:
+                    data[ppl[0]]['move_lines'] = []
+                data[ppl[0]]['move_lines'].append({
+                    'line_number': ppl[19],
+                    'product_code': ppl[20],
+                    'product_name': ppl[21],
+                    'product_creator': ppl[22],
+                    'nomen_main_type': ppl[23],
+                    'comment': ppl[24] or '',
+                    'product_qty': ppl[25] or 0,
+                    'qty_to_process': None,  # Left empty to force SDE to change the value
+                    'prodlot_id': ppl[26] or '',
+                    'expired_date': ppl[27] or '',
+                    'kc_check': ppl[28] or False,
+                    'dg_check': ppl[29] == 'True' and _('True') or ppl[29] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': ppl[30] or False,
+                    'from_pack': ppl[31] or 0,
+                    'to_pack': ppl[32] or 0,
+                    'weight': ppl[33] or 0,
+                    'size': 'x'.join([str(ppl[34] or 0), str(ppl[35] or 0), str(ppl[36] or 0)]) or '',
+                    'pack_type': ppl[37] or 0,
+                })
+
+        pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'ppl',
+                     'page': page, 'last_page': page == last_page, 'with_lines': with_lines}
+        self.pool.get('sde.export.pagination').create(new_cr, 1, pagi_vals, context=context)
+
+        new_cr.commit()
+        new_cr.close(True)
+
+        return True
+    # =============================================================================================================== #
     #                                                       ALL                                                       #
     # =============================================================================================================== #
     def sde_stock_picking_msg(self, cr, uid, json_text, doc_type, to_remove, context=None):
         '''
-        Method used by the SDE script to set a 'SDE is updating' message on a list of Picking Tickets/OUTs
+        Method used by the SDE script to set a 'SDE is updating' message on a list of Picking Tickets/OUTs/PPLs
         '''
         if context is None:
             context = {}
@@ -1565,6 +1834,9 @@ class sde_import(osv.osv_memory):
         if doc_type == 'out':
             doc = _('OUT')
             pick_subtype = 'standard'
+        elif doc_type == 'ppl':
+            doc = _('PPL')
+            pick_subtype = 'ppl'
 
         result = {'database': instance_name, 'error': False, 'message': ''}
         try:
@@ -1622,6 +1894,9 @@ class sde_import(osv.osv_memory):
         if pick_type == 'out' and pick_subtype == 'standard':
             doc = _('OUTs')
             export_type = 'out'
+        elif pick_type == 'out' and pick_subtype == 'ppl':
+            doc = _('PPLs')
+            export_type = 'ppl'
         else:
             doc = _('Picking Tickets')
             export_type = 'pick'
@@ -1679,6 +1954,11 @@ class sde_import(osv.osv_memory):
                             % (pagi_exp['with_lines'] and _(' and lines') or '', json_data['sde_pagination_page'], json_data['sde_pagination_id']),
                             'data': json.loads(pagi_exp['pagination_json_text']),
                         })
+                        if pick_type == 'out' and pick_subtype == 'ppl':
+                            pack_types = {}
+                            for pack_type in self.get_pack_types(cr, uid, context=context):
+                                pack_types[pack_type[0]] = {'width': pack_type[1] or 0, 'length': pack_type[2] or 0, 'height': pack_type[3] or 0}
+                            result.update({'pack_types': pack_types})
                     else:
                         raise osv.except_osv(_('Error'), _('No %s export data was found with the "sde_pagination_id" %s and the "sde_pagination_page" %s')
                                              % (doc, json_data['sde_pagination_id'], json_data['sde_pagination_page']))
@@ -1705,6 +1985,12 @@ class sde_import(osv.osv_memory):
                     if not pick_ids:
                         raise osv.except_osv(_('Error'), _('There is no %s %s to export')
                                              % ('/'.join([PICKING_STATE[state] for state in states]), doc))
+
+                    # Set sde_update_msg on all exported PPLs
+                    if pick_type == 'out' and pick_subtype == 'ppl':
+                        update_msg = _('This %s is currently being updated via SDE since %s, please avoid making any direct change in UniField') \
+                                     % (doc, datetime.now().strftime('%d/%m/%Y %H:%M'),)
+                        pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': update_msg}, context=context)
 
                     # Default number of lines per page is 100 if not specified
                     lines_per_page = 100
@@ -1783,6 +2069,64 @@ class sde_import(osv.osv_memory):
                                     'dg_check': out[35] == 'True' and _('True') or out[35] == 'no_know' and _('Unknown') or _('False'),
                                     'np_check': out[36] or False,
                                     'state': out[37] and MOVE_STATE[out[37]] or '',
+                                })
+                    elif pick_type == 'out' and pick_subtype == 'ppl':
+                        threaded_method = self.create_ppl_paginated_export
+                        shipper_data = self.get_shipper_data(cr, uid, context=context)
+                        for ppl in self.get_ppl_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
+                            if not data.get(ppl[0]):
+                                partner_data = [ppl[8], _('Supply Responsible')]
+                                address_data = []
+                                if ppl[9]:
+                                    address_data.append(ppl[9])
+                                if ppl[10]:
+                                    address_data.append(ppl[10])
+                                if ppl[11]:
+                                    address_data.append(ppl[11])
+                                if address_data:
+                                    partner_data.append(' '.join(address_data))
+                                if ppl[12]:
+                                    partner_data.append(ppl[12])
+
+                                data[ppl[0]] = {
+                                    'date': ppl[1],
+                                    'client_po_ref': ppl[2] or '',
+                                    'fo_ir_ref': ppl[3] or '',
+                                    'fo_date': ppl[4] or '',
+                                    'packing_date': ppl[5] or '',
+                                    'ready_to_ship_date': ppl[6] or '',
+                                    'transport_type': ppl[7] and LIST_TRANSPORT_TYPE[ppl[7]] or '',
+                                    'shipper_address': shipper_data and '; '.join(shipper_data) or '',
+                                    'consignee_address': partner_data and '; '.join(partner_data) or '',
+                                    'destination_location': ppl[13] or '',
+                                    'total_items': ppl[14] or 0,
+                                    'updated_by_sde': ppl[15] or False,
+                                    'latest_log': ppl[16] or '',
+                                    'latest_log_date': ppl[17] or '',
+                                }
+
+                            if with_lines and len(ppl) > 18:
+                                if 'move_lines' not in data[ppl[0]]:
+                                    data[ppl[0]]['move_lines'] = []
+                                data[ppl[0]]['move_lines'].append({
+                                    'line_number': ppl[19],
+                                    'product_code': ppl[20],
+                                    'product_name': ppl[21],
+                                    'product_creator': ppl[22],
+                                    'nomen_main_type': ppl[23],
+                                    'comment': ppl[24] or '',
+                                    'product_qty': ppl[25] or 0,
+                                    'qty_to_process': None,  # Left empty to force SDE to change the value
+                                    'prodlot_id': ppl[26] or '',
+                                    'expired_date': ppl[27] or '',
+                                    'kc_check': ppl[28] or False,
+                                    'dg_check': ppl[29] == 'True' and _('True') or ppl[29] == 'no_know' and _('Unknown') or _('False'),
+                                    'np_check': ppl[30] or False,
+                                    'from_pack': ppl[31] or 0,
+                                    'to_pack': ppl[32] or 0,
+                                    'weight': ppl[33] or 0,
+                                    'size': 'x'.join([str(ppl[34] or 0), str(ppl[35] or 0), str(ppl[36] or 0)]) or '',
+                                    'pack_type': ppl[37] or 0,
                                 })
                     else:
                         threaded_method = self.create_picking_ticket_paginated_export
@@ -1875,6 +2219,11 @@ class sde_import(osv.osv_memory):
                         'message': _('%sThe header%s data of %s have been exported%s')
                         % (avchk_msg, with_lines and _(' and lines') or '', final_msg_pick, pagi_msg)
                     })
+                    if pick_type == 'out' and pick_subtype == 'ppl':
+                        pack_types = {}
+                        for pack_type in self.get_pack_types(cr, uid, context=context):
+                            pack_types[pack_type[0]] = {'width': pack_type[1] or 0, 'length': pack_type[2] or 0, 'height': pack_type[3] or 0}
+                        result.update({'pack_types': pack_types})
             else:
                 if avchk_data.state == 'error':
                     avchk_msg = (_('An error occurred during the Availability Check of %s (%s/%s): %s')
@@ -1937,6 +2286,48 @@ class sde_import(osv.osv_memory):
 
         return qty_available
 
+    def get_shipper_data(self, cr, uid, context=None):
+        """
+        Get data from the instance's partner
+        """
+        if context is None:
+            context = {}
+
+        instance_partner = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id
+        instance_addr_id = self.pool.get('res.partner').address_get(cr, uid, instance_partner.id)['default']
+        instance_addr = self.pool.get('res.partner.address').browse(cr, uid, instance_addr_id, context=context)
+        shipper_data = [instance_partner.name, _('Supply Responsible')]
+        shipper_address = []
+        if instance_addr:
+            if instance_addr.street:
+                shipper_address.append(instance_addr.street)
+            if instance_addr.street2:
+                shipper_address.append(instance_addr.street2)
+            if instance_addr.zip:
+                shipper_address.append(instance_addr.zip)
+            if instance_addr.city:
+                shipper_address.append(instance_addr.city)
+            if instance_addr.country_id:
+                shipper_address.append(instance_addr.country_id.name)
+        if shipper_address:
+            shipper_data.append(' '.join(shipper_address))
+        if instance_addr.phone:
+            shipper_data.append(instance_addr.phone)
+        if instance_addr.email:
+            shipper_data.append(instance_addr.email)
+
+        return shipper_data
+
+    def get_pack_types(self, cr, uid, context=None):
+        """
+        Get data from the Pack Types
+        """
+        if context is None:
+            context = {}
+
+        cr.execute("""SELECT name, width, length, height FROM pack_type""")
+        return cr.fetchall()
+
 
 sde_import()
 
@@ -1948,7 +2339,7 @@ class sde_update_log(osv.osv):
 
     _columns = {
         'date': fields.datetime('Update Date', required=True, readonly=True),
-        'doc_type': fields.selection(string='Document Type', selection=[('in', 'Incoming Shipment'), ('pick', 'Picking Ticket'), ('out', 'Delivery Order')],
+        'doc_type': fields.selection(string='Document Type', selection=[('in', 'Incoming Shipment'), ('pick', 'Picking Ticket'), ('out', 'Delivery Order'), ('ppl', 'Pre-Packing List')],
                                      required=True, readonly=True),
         'doc_ref': fields.char(string='Reference', size=64, required=True, readonly=True),
     }
@@ -1987,7 +2378,7 @@ class sde_export_pagination(osv.osv):
     _columns = {
         'pagination_json_id': fields.char(string='Pagination JSON ID', size=32, required=True, readonly=True),
         'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
-        'doc_type': fields.selection(string='Document Type', selection=[('pick', 'Picking Ticket'), ('out', 'Delivery Order')], required=True, readonly=True),
+        'doc_type': fields.selection(string='Document Type', selection=[('pick', 'Picking Ticket'), ('out', 'Delivery Order'), ('ppl', 'Pre-Packing List')], required=True, readonly=True),
         'page': fields.integer(string='SDE import page', required=True, readonly=True),
         'last_page': fields.boolean(string='Last page of the export', readonly=True),
         'with_lines': fields.boolean(string='Exported with lines', readonly=True),

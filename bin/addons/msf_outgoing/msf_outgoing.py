@@ -94,6 +94,8 @@ class pack_type(osv.osv):
     _name = 'pack.type'
     _description = 'Pack Type'
     _order = 'name,id'
+    _trace = True
+
     _columns = {
         'name': fields.char(string='Name', size=1024),
         'length': fields.float(digits=(16, 2), string='Length [cm]'),

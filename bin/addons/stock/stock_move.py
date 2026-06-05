@@ -607,7 +607,7 @@ class stock_move(osv.osv):
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
         'parcel_ids': fields.related('pack_info_id', 'parcel_ids', type='text', string='Parcel IDs'),
-        'ppl_returned_ok': fields.boolean(string='Has been returned ?', readonly=True, internal=True),
+        'ppl_returned_ok': fields.boolean(string='Has been returned', readonly=True, internal=True),
         'integrity_error': fields.selection(INTEGRITY_STATUS_SELECTION, 'Error', readonly=True),
         'pack_type': fields.many2one('pack.type', string='Pack Type'),
         'length': fields.float(digits=(16, 2), string='Length [cm]'),

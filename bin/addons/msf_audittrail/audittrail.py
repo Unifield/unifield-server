@@ -604,15 +604,17 @@ class audittrail_rule(osv.osv):
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1])
 
             elif thisrule.object_id.model == 'stock.picking':
-                # TC only on IN, OUT
+                # TC only on IN, OUT, Pick, PPL
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_tree')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_tree')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1])
 
-            # search if the view does not already exists
+            # search if the view does not already exist
             search_domain = [('res_model', '=', val['res_model']),
                              ('src_model', '=', val['src_model'])]
             action_search = obj_action.search(cr, uid, search_domain)
