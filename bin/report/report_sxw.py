@@ -745,7 +745,7 @@ class report_sxw(report_rml, preprocess.report):
                     rml_parser._add_header(processed_rml, self.header)
                 processed_template = etree.tostring(self.preprocess_rml(processed_rml,report_xml.report_type), encoding='utf8')
             else:
-                body = Template(filename=os.path.join(tools.config['root_path'], self.tmpl), input_encoding='utf-8', output_encoding='utf-8', default_filters=['decode.utf8'])
+                body = Template(filename=os.path.join(tools.config['root_path'], self.tmpl), input_encoding='utf-8', output_encoding='utf-8', default_filters=['decode.utf8','h', 'x'])
                 rml_parser.localcontext['explicit_translate'] = True
                 rml_parser.orig_file=self.tmpl
                 try:
