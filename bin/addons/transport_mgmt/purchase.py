@@ -143,6 +143,23 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).copy(cr, uid, ids, default, context=context)
 
+    def _get_tin(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        for inv in self.browse(cr, uid, ids, context=context):
+            res[inv.id] = inv.partner_id.tax_identification_number or False
+        return res
+
+    def _search_tin(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        partner_obj = self.pool.get('res.partner')
+        partner_ids = partner_obj.search(
+            cr, uid,
+            [('tax_identification_number', args[0][1], args[0][2])],
+            context={'active_test': False}
+        )
+        return [('partner_id', 'in', partner_ids)]
+
     _columns = {
         'display_intl_transport_ok': fields.boolean(string='Displayed intl transport'),
         'intl_supplier_ok': fields.boolean(string='International Supplier'),
@@ -157,7 +174,8 @@ class purchase_order(osv.osv):
         'transport_customs_fees_ids': fields.function(_get_transport_docs_customs, method=True, type='one2many', relation='transport.order.customs.fees', string='Inbound/Outbound Transport Orders for Customs Fees'),
         'transport_transport_fees_ids': fields.function(_get_transport_docs_transport, method=True, type='one2many', relation='transport.order.transport.fees', string='Inbound/Outbound Transport Orders for Transport Fees'),
         'transport_active': fields.function(misc.get_transport_active, method=True, type='boolean', string='Transport Management active'),
-        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15, string='Supplier TIN', store=False, readonly=True),
+        'tax_identification_number': fields.function(_get_tin, fnct_search=_search_tin, method=True, type='char', size=15,
+            string='Supplier TIN', store=False, readonly=True,),
         'business_registration_number': fields.related('partner_id', 'business_registration_number', type='char', size=15, string='Supplier RCCM', store=False, readonly=True),
     }
 

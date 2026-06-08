@@ -256,6 +256,22 @@ class account_invoice(osv.osv):
             res[_id] = asset
         return res
 
+    def _get_tin(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        for inv in self.browse(cr, uid, ids, context=context):
+            res[inv.id] = inv.partner_id.tax_identification_number or False
+        return res
+
+    def _search_tin(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        partner_obj = self.pool.get('res.partner')
+        partner_ids = partner_obj.search(
+            cr, uid,
+            [('tax_identification_number', args[0][1], args[0][2])],
+            context={'active_test': False}
+        )
+        return [('partner_id', 'in', partner_ids)]
 
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -366,7 +382,8 @@ class account_invoice(osv.osv):
         'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
         'is_partner_active': fields.related('partner_id', 'active', type='boolean', string='Partner Active', store=False, write_relate=False),
         'po_details': fields.char(size=86, string='PO Details'),
-        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15, string='Supplier TIN', store=False, readonly=True),
+        'tax_identification_number': fields.function(_get_tin, fnct_search=_search_tin, method=True, type='char', size=15,
+            string='Supplier TIN', store=False, readonly=True,),
         'business_registration_number': fields.related('partner_id', 'business_registration_number', type='char', size=15, string='Supplier RCCM', store=False, readonly=True),
     }
     _defaults = {
