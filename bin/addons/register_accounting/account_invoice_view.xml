@@ -70,9 +70,6 @@
                                     <field name="price_unit"/>
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
-                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type,
-                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id,
-                                        {'company_id': parent.company_id})"/>
                                     <field invisible="True" name="uos_id"/>
                                     <field invisible="1" name="inactive_product"/>
                                 </tree>
