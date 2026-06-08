@@ -1198,7 +1198,9 @@ class report_spool(netsvc.ExportService):
                     logger = netsvc.Logger()
                     logger.notifyChannel('web-services', netsvc.LOG_ERROR,
                                          'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
-                    if hasattr(exception, 'name') and hasattr(exception, 'value'):
+                    if isinstance(exception, osv.except_message):
+                        self._reports[id]['exception'] = exception
+                    elif hasattr(exception, 'name') and hasattr(exception, 'value'):
                         self._reports[id]['exception'] = ExceptionWithTraceback('%s %s' % (tools.ustr(exception.name), tools.ustr(exception.value)), tb_s)
                     else:
                         self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb_s)
@@ -1244,8 +1246,10 @@ class report_spool(netsvc.ExportService):
             if self._reports[report_id]['uid'] == uid:
                 result = self._reports[report_id]
                 if result.get('exception'):
-                    return result['state'], '%s %s' % (result['exception'].message, result['exception'].traceback)
-                return result['state'], ''
+                    if isinstance(result.get('exception'), osv.except_message):
+                        return result['state'], result['exception'].value, ''
+                    return result['state'], result['exception'].message, result['exception'].traceback
+                return result['state'], '', ''
             else:
                 raise Exception('AccessDenied')
         else:

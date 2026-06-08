@@ -58,7 +58,10 @@
       <!-- <blockBackground colorName="#cde1f0" start="0,0" stop="-1,0"/> -->
     </blockTableStyle>
     <blockTableStyle id="Table9">
-      <blockAlignment value="LEFT"/>
+      <blockFont name="Helvetica" size="7.0" />
+      <blockLeading length="9" />
+      <blockAlignment value="LEFT" start="0,0" stop="2,0"/>
+      <blockAlignment value="RIGHT" start="3,0" stop="-1,0"/>
       <blockValign value="TOP"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="1,-1" stop="1,-1"/>
@@ -376,33 +379,15 @@
       <section>
         <blockTable colWidths="114.0,80.0,92.0,70.0,50.0,95.0,95.0,95.0,95.0" style="Table9">
           <tr>
-            <td>
-              <para style="terp_default_8">${(line['move'] or '')}</para>
-            </td>
-            <td>
-              <para style="terp_default_8">${(formatLang(line['ldate'],date=True))}</para>
-            </td>
-            <td>
-              <para style="terp_default_8">${(line['lname'] or '')}</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_8">${(line['third_party'] or '')}</para>
-            </td>
-            <td>
-                <para style="terp_default_Right_8">${(line['currency_name'] or '')}</para>
-            </td>
-            <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))}</para>
-            </td>
-            <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))}</para>
-            </td>
-            <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account'))}</para>
-            </td>
-            <td>
-              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account'))}</para>
-            </td>
+            <td>${(line['move'] or '')}</td>
+            <td>${(formatLang(line['ldate'],date=True))}</td>
+            <td><para style="terp_default_8">${(line['lname'] or '')}</para></td>
+	    <td><para style="terp_default_Right_8">${(line['third_party'] or '')}</para></td>
+            <td>${(line['currency_name'] or '')}</td>
+            <td>${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))}</td>
+            <td>${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))}</td>
+            <td>${formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account'))}</td>
+            <td>${formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account'))}</td>
            </tr>
         </blockTable>
       </section>

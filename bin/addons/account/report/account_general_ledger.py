@@ -240,6 +240,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                                                                 reconcile_filter=self.reconciled_filter,
                                                                 context=used_context)
 
+        if self.show_move_lines:
+            if self._drill.total_count > 1010000:
+                raise osv.except_message(_('Warning'), _('The report has too many lines %s and cannot be generated. Please use the filters to reduce the number of lines') % self._drill.total_count)
+            if data.get('form', {}).get('export_format') == 'pdf' and self._drill.total_count > 500000:
+                raise osv.except_message(_('Warning'), _('The report has too many lines %s and cannot be generated. Please export the lines in xls format or use the filters to reduce the number of lines') % self._drill.total_count)
         return res
 
     def _init_var(self):
