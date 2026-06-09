@@ -176,7 +176,7 @@
           <para style="terp_tblheader_General_Centre">${_('Open Items at')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">${_('Filter By')} ${(get_filter(data)!='No Filter' and get_filter(data))}</para>
+          <para style="terp_tblheader_General_Centre">${_('Filter By')} ${(get_filter(data)!='No Filter' and get_filter(data) or '')}</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">${_('Proprietary Instances')}</para>
@@ -381,8 +381,8 @@
           <tr>
             <td>${(line['move'] or '')}</td>
             <td>${(formatLang(line['ldate'],date=True))}</td>
-            <td><para style="terp_default_8">${(line['lname'] or '')}</para></td>
-	    <td><para style="terp_default_Right_8">${(line['third_party'] or '')}</para></td>
+            <td><parawrap style="terp_default_8">${(line['lname'] or '')}</parawrap></td>
+	    <td><parawrap style="terp_default_Right_8">${(line['third_party'] or '')}</parawrap></td>
             <td>${(line['currency_name'] or '')}</td>
             <td>${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))}</td>
             <td>${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))}</td>
