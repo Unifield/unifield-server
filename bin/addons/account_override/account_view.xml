@@ -95,5 +95,22 @@
             menu="False"
          />
 
+        <record id="action_open_aji_tc" model="ir.actions.server">
+            <field name="name">Track Changes</field>
+            <field name="state">code</field>
+            <field name="model_id" ref="model_account_analytic_line"/>
+            <field name="code">action = obj.open_ad_tc(context=context)</field>
+        </record>
+
+        <record id="open_aji_tc" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.analytic.line</field>
+            <field name="name">Track Changes</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_open_aji_tc"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="200"/>
+        </record>
+
+
     </data>
 </openerp>

@@ -809,15 +809,39 @@ class audittrail_rule(osv.osv):
                         'object_id': model_parent_id,
                         'fct_res_id': inherit_field_id or res_id,
                     })
+
+                grp_label_mapping = {
+                    'cost_center_id': 'CC',
+                    'destination_id': 'D',
+                    'analytic_id': 'FP',
+                    'percentage': '%'
+                }
+                grp_label = []
+                grp_old_value = []
+                grp_new_value = []
+
                 if method == 'unlink':
+
                     vals.update({
                         'field_description': get_field_description(rule.object_id),
                         'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                     })
+                    if rule.object_id.model == 'funding.pool.distribution.line':
+                        p_data = self.pool.get('funding.pool.distribution.line').read(cr, uid, res_id, list(grp_label_mapping.keys()), context=context)
+                        old_data_list = []
+                        for x in grp_label_mapping.keys():
+                            if p_data[x]:
+                                old_data_list.append(self._map_to_str(p_data[x]))
+                        if old_data_list:
+                            vals['old_value'] = ' / '.join(old_data_list)
+                        if context.get('track_changes_res_id'):
+                            vals['res_id'] = context['track_changes_res_id']
+                        vals['name'] = 'Other AD line'
+
                     log_line_obj.create(cr, uid, vals)
 
                 elif method in ('write', 'create'):
-                    if method == 'create' and rule.object_id.model != 'stock.picking':
+                    if method == 'create' and rule.object_id.model not in ('stock.picking', 'funding.pool.distribution.line'):
                         vals.update({
                             'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                             'field_description': get_field_description(rule.object_id),
@@ -829,7 +853,13 @@ class audittrail_rule(osv.osv):
                     else:
                         record = {}
 
-                    for field in list(fields_to_trace.keys()):
+
+                    if rule.object_id.model == 'funding.pool.distribution.line':
+                        ordered_fields_to_trace = [x for x in grp_label_mapping.keys() if x in fields_to_trace.keys()]
+                    else:
+                        ordered_fields_to_trace = fields_to_trace.keys()
+
+                    for field in ordered_fields_to_trace:
                         old_value = record.get(field, False)
                         new_value = current[res_id].get(field, False)
 
@@ -877,6 +907,11 @@ class audittrail_rule(osv.osv):
                                 if context and context.get('from_reset_password'):
                                     description = 'Password from temp code'
                                 old_value, new_value = '********', '********'
+                            if rule.object_id.model == 'funding.pool.distribution.line':
+                                grp_label.append(grp_label_mapping.get(field, field))
+                                grp_old_value.append(self._map_to_str(old_value))
+                                grp_new_value.append(self._map_to_str(new_value))
+                                continue
                             line.update({
                                 'field_id': fields_to_trace[field].id,
                                 'field_description': description,
@@ -886,6 +921,15 @@ class audittrail_rule(osv.osv):
                                 'old_value': old_value,
                             })
                             log_line_obj.create(cr, uid, line)
+
+                    if grp_label:
+                        vals.update({
+                            'field_description': 'AD %s' % (' / '.join(grp_label),),
+                            'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
+                            'new_value': ' / '.join(grp_new_value),
+                            'old_value': ' / '.join(grp_old_value),
+                        })
+                        log_line_obj.create(cr, uid, vals)
 
         context['translate_fields'] = True
 
@@ -915,6 +959,16 @@ class audittrail_rule(osv.osv):
             log_seq_obj.create(cr, uid, {'model': obj_name, 'res_id': res_id, 'sequence': seq_id})
             log = seq_pool.get_id(cr, uid, seq_id, code_or_id='id')
         return log
+
+    def _map_to_str(self, value):
+        if isinstance(value, (int, bool)):
+            return str(value)
+        if isinstance(value, float):
+            return str(round(value, 2))
+        if isinstance(value, (list, tuple)):
+            # m2o
+            return value[1]
+        return value
 
 audittrail_rule()
 

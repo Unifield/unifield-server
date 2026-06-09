@@ -901,7 +901,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         db_line_type = '_'.join([line_type.replace('.', '_'), 'lines'])
         distrib = self.pool.get('analytic.distribution').browse(cr, uid, distrib_ids)[0]
-        res = []
+        res = {}
         for x in getattr(distrib, db_line_type, False):
             db_lines_vals = {
                 'id': x.id,
@@ -914,7 +914,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Add cost_center_id field if we come from a funding.pool object
             if line_type == 'funding.pool':
                 db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False, })
-            res.append(db_lines_vals)
+            res[x.id] = db_lines_vals
         return res
 
     def wizard_lines_to_list(self, cr, uid, ids, line_type=False):
@@ -965,44 +965,67 @@ class analytic_distribution_wizard(osv.osv_memory):
         line_obj_name = '.'.join([line_type, 'distribution.line']) # get something like "cost.center.distribution.line"
         line_obj = self.pool.get(line_obj_name)
         # Search database lines
-        db_lines = self.distrib_lines_to_list(cr, uid, distrib.id, line_type)
+        db_lines_dict = self.distrib_lines_to_list(cr, uid, distrib.id, line_type)
         # Search wizard lines
         wiz_lines = self.wizard_lines_to_list(cr, uid, wizard_id, line_type)
+        reusable_line_id = list(set(db_lines_dict.keys()) - set([x['id'] for x in wiz_lines]))
         # Begin comparison process
         processed_line_ids = []
         # Delete wizard lines that have not changed
-        for line in db_lines:
+        for line_id in db_lines_dict:
+            line = db_lines_dict[line_id]
             if line in wiz_lines:
                 wiz_lines.remove(line)
                 processed_line_ids.append(line.get('id'))
         distrib_changed = len(wiz_lines) > 0
         # Write changes for line that already exists
+        currency_id = wizard.currency_id and wizard.currency_id and wizard.currency_id.id or company_currency_id
+
+        max_line_id = False
+        max_line_perc = 0
         for i in range(0,len(wiz_lines)):
             line = wiz_lines[i]
-            if line.get('id', False) and line.get('id', False) in [x.get('id') for x in db_lines]:
-                line_obj.write(cr, uid, line.get('id'), line, context=context)
-                processed_line_ids.append(line.get('id'))
+            p_line_id = False
+            if line.get('id', False) and line.get('id', False) in db_lines_dict:
+                p_line_id = line.get('id')
+            elif reusable_line_id:
+                p_line_id = reusable_line_id.pop(0)
+            if p_line_id:
+                if not line.get('currency_id'):
+                    del(line['id'])
+                    # null value on new lines
+                    line['currency_id'] = currency_id
+                line_obj.write(cr, uid, p_line_id, line, context=context)
+                processed_line_ids.append(p_line_id)
             else:
                 vals = {
                     'analytic_id': line.get('analytic_id'),
                     'percentage': line.get('percentage'),
                     'distribution_id': distrib.id,
-                    'currency_id': wizard.currency_id and wizard.currency_id and wizard.currency_id.id or company_currency_id,
+                    'currency_id': currency_id,
                     'cost_center_id': line.get('cost_center_id') or False,
                     'destination_id': line.get('destination_id') or False,
                 }
                 if wizard.partner_type: #UF-2138: added the ref to partner type of FO/PO
                     vals.update({'partner_type': wizard.partner_type})
 
-                new_line = line_obj.create(cr, uid, vals, context=context)
-                processed_line_ids.append(new_line)
+                p_line_id = line_obj.create(cr, uid, vals, context=context)
+                processed_line_ids.append(p_line_id)
+
             wiz_lines[i] = None
+            if line.get('percentage') > max_line_perc:
+                max_line_perc = line.get('percentage')
+                max_line_id = p_line_id
+
         # Search lines that have been deleted
         search_ids = line_obj.search(cr, uid, [('distribution_id', '=', distrib.id)], context=context)
         for obj_id in search_ids:
             if obj_id not in processed_line_ids:
                 distrib_changed = True
-                line_obj.unlink(cr, uid, obj_id, context=context)
+                ctx = dict(context)
+                if max_line_id:
+                    ctx['track_changes_res_id'] = max_line_id
+                line_obj.unlink(cr, uid, obj_id, context=ctx)
         return distrib_changed
 
     def _check_analytic_account_validity(self, cr, uid, ids, context=None):

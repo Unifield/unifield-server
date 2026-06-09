@@ -342,6 +342,7 @@ cost_center_distribution_line()
 class funding_pool_distribution_line(osv.osv):
     _name = "funding.pool.distribution.line"
     _inherit = "distribution.line"
+    _trace = True
     _columns = {
         "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account', required=True, ondelete='restrict'),
         "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True, ondelete='restrict'),
