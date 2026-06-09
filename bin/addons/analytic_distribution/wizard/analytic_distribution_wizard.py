@@ -905,7 +905,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         for x in getattr(distrib, db_line_type, False):
             db_lines_vals = {
                 'id': x.id,
-                'distribution_id': x.distribution_id and x.distribution_id.id,
                 'currency_id': x.currency_id and x.currency_id.id,
                 'analytic_id': x.analytic_id and x.analytic_id.id,
                 'percentage': x.percentage,
@@ -935,7 +934,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         for x in getattr(wizard, wiz_line_types.get(line_type), False):
             wiz_lines_vals = {
                 'id': x.distribution_line_id and x.distribution_line_id.id or False,
-                'distribution_id': x.wizard_id.distribution_id and x.wizard_id.distribution_id.id,
                 'currency_id': x.currency_id and x.currency_id.id,
                 'analytic_id': x.analytic_id and x.analytic_id.id,
                 'percentage': x.percentage,
@@ -947,7 +945,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             res.append(wiz_lines_vals)
         return res
 
-    def compare_and_write_modifications(self, cr, uid, wizard_id, line_type=False, context=None):
+    def compare_and_write_modifications(self, cr, uid, wizard_id, line_type=False, context=None, distrib=None):
         """
         Compare wizard lines to database lines and write modifications done
         """
@@ -960,7 +958,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             return False
         # Prepare some values
         wizard = self.browse(cr, uid, [wizard_id], context=context)[0]
-        distrib = wizard.distribution_id
+        if distrib is None:
+            distrib = wizard.distribution_id
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         line_obj_name = '.'.join([line_type, 'distribution.line']) # get something like "cost.center.distribution.line"
         line_obj = self.pool.get(line_obj_name)
@@ -1285,12 +1284,19 @@ class analytic_distribution_wizard(osv.osv_memory):
                 distribution_id = wiz.distribution_id and wiz.distribution_id.id or False
                 # write analytic distribution on move line and validate move
                 ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', wiz.register_line_id.account_id.id), ('id', 'not in', [wiz.register_line_id.first_move_line_id.id]), ('move_id', 'in', [x and x.id for x in wiz.register_line_id.move_ids])])
-                # copy distribution
-                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, distribution_id, {}, context=context)
-                new_register_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, distribution_id, {}, context=context)
-                # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
-                self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': wiz.account_id.id}, check=False, update_check=False)
-                self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.register_line_id.id], {'account_id': wiz.account_id.id, 'analytic_distribution_id': new_register_distribution_id}, context=context)
+                if ml_ids:
+                    first_move_line = self.pool.get('account.move.line').browse(cr, uid, ml_ids[0], fields_to_fetch=['analytic_distribution_id'])
+                    if first_move_line.analytic_distribution_id:
+                        move_line_distrib = first_move_line.analytic_distribution_id
+                    else:
+                        move_line_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
+                        move_line_distrib = self.pool.get('analytic.distribution').browse(cr, uid, move_line_distrib_id, move_line_distrib_id)
+                    for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
+                        self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context, distrib=move_line_distrib)
+                    self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': move_line_distrib.id, 'account_id': wiz.account_id.id}, check=False, update_check=False)
+                new_ctx = dict(context)
+                new_ctx['force_update_ad'] = True
+                self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.register_line_id.id], {'account_id': wiz.account_id.id, 'analytic_distribution_id': distribution_id}, context=new_ctx)
                 # account.move validate is called in account.bank.statement.line write
                 #self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
         elif new_distrib:

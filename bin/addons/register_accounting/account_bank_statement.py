@@ -2275,7 +2275,9 @@ class account_bank_statement_line(osv.osv):
         # it deletes / creates AJI
         # call _update_move_from_st_line only if values have changed
         to_update_ids = []
-        if state == 'temp' and not context.get('sync_update_execution'):
+        if state == 'temp' and context.get('force_update_ad'):
+            to_update_ids = ids
+        elif state == 'temp' and not context.get('sync_update_execution'):
             to_remove= ['from_import_cheque_id', 'down_payment_id', 'imported_invoice_line_ids', 'move_ids']
             keys_to_read = [x for x in list(values.keys()) if x not in to_remove]
             if keys_to_read:
