@@ -691,6 +691,7 @@
                     <field name="packing_list" />
                     <field name="order_category" string="Order\nCategory"/>
 					<field name="reason_type_id" />
+					<field name="sde_updated"/>
 					<field name="date"/>
 					<field name="min_date" string="Expected\nPack Date" />
 					<field name="state"/>
@@ -858,6 +859,10 @@
                             <field name="type" invisible="1"/>
                             <field name="from_ir" invisible="1"/>
                             <field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
+                            <group colspan="4" attrs="{'invisible': [('sde_updated', '=', False)]}">
+                                <field name="sde_updated" readonly="1"/>
+                                <button name="reset_sde_updated_flag" states="assigned" string="Reset SDE update" type="object" icon="gtk-refresh" />
+                            </group>
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>

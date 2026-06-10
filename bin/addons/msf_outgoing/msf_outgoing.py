@@ -4610,6 +4610,8 @@ class stock_picking(osv.osv):
             cancel_ppl = move_obj.search(cr, uid, [('picking_id', '=', picking.id), ('state', '!=', 'assigned')], count=True, context=context)
 
             if cancel_ppl:
+                # In case the PPL is fully returned, remove the SDE data
+                self.write(cr, uid, [picking.id], {'sde_update_msg': False}, context=context)
                 """
                 we dont want the back move (done) to be canceled - so we dont use the original cancel workflow state because
                 action_cancel() from stock_picking would be called, this would cancel the done stock_moves
@@ -4790,8 +4792,13 @@ class stock_picking(osv.osv):
         if not ids:
             raise osv.except_osv(_('Error'), _('No PICK selected'))
 
+        sde_obj = self.pool.get('sde.import')
         # Reset all lines and merge the splits
-        self.pool.get('sde.import').reset_pick_lines(cr, uid, ids, [], context=context)
+        pick_data = self.read(cr, uid, ids[0], ['type', 'subtype'], context=context)
+        if pick_data['type'] == 'out' and pick_data['subtype'] == 'ppl':  # PPL
+            sde_obj.reset_ppl_lines(cr, uid, ids, [], context=context)
+        else:  # Pick
+            sde_obj.reset_pick_lines(cr, uid, ids, [], context=context)
 
         self.write(cr, uid, ids, {'sde_updated': False, 'sde_reset_date': datetime.now()}, context=context)
 

@@ -1587,6 +1587,16 @@ class sde_import(osv.osv_memory):
             return True
         return self.wizard_sde_ppl_actions(cr, uid, ids, 'ppl_export_lines', context=context)
 
+    def wizard_sde_pack_types_export(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export Pack Types
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_ppl_actions(cr, uid, ids, 'pack_types_export', context=context)
+
     def wizard_sde_ppl_actions(self, cr, uid, ids, action, context=None):
         '''
         Method to use instead of the JSONRPC
@@ -1609,6 +1619,8 @@ class sde_import(osv.osv_memory):
             result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'ppl', with_lines=False, context=context)
         elif action == 'ppl_export_lines':
             result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'ppl', with_lines=True, context=context)
+        elif action == 'pack_types_export':
+            result = self.sde_pack_types_export(cr, uid, sde_imp['json_text'], context=context)
 
         return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
 
@@ -1623,7 +1635,136 @@ class sde_import(osv.osv_memory):
         if context is None:
             context = {}
 
-        return True
+        pagi_obj = self.pool.get('sde.import.pagination')
+        pick_obj = self.pool.get('stock.picking')
+        wiz_imp_obj = self.pool.get('wizard.import.ppl.to.create.ship')
+
+        context['sde_flow'] = True
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': _('Done')}
+        pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
+        pagi_json_text = ''
+        pagi_json_data, ppl_ids = [], []
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
+
+            sde_pagi_error = False
+            if json_data.get('sde_pagination_id'):
+                if 'sde_pagination_page' not in json_data or 'sde_pagination_end' not in json_data:
+                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_end are mandatory to use the pagination in the SDE PPL import')
+                else:
+                    sde_pagi_end_msg = json_data.get('sde_pagination_end') and _(' and finished') or ''
+                    sde_pagi_page = json_data['sde_pagination_page']
+                    try:
+                        sde_pagi_page = int(sde_pagi_page)
+                    except ValueError:
+                        sde_pagi_error = _('The page number must be an integer')
+                    sde_pagi_ids = pagi_obj.search(cr, 1, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    if sde_pagi_ids:
+                        sde_pagi_id = sde_pagi_ids[0]
+                        sde_pagi = pagi_obj.read(cr, 1, sde_pagi_id, context=context)
+                        if sde_pagi['state'] == 'done':
+                            sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
+                        elif sde_pagi_page - sde_pagi['page'] != 1:
+                            sde_pagi_error = _('The page number must be in sequential order without gaps: last page imported %s, imported page %s') \
+                                % (sde_pagi['page'], json_data['sde_pagination_page'])
+                        else:
+                            # Update the existing JSON with the new data in the key move_lines
+                            pagi_json_text = sde_pagi['pagination_json_text']
+                            pagi_json_data = json.loads(pagi_json_text)
+
+                            pagi_json_data['move_lines'].extend(json_data['move_lines'])
+                            pagi_json_text = json.dumps(pagi_json_data)
+
+                            pagi_vals = {
+                                'pagination_json_text': pagi_json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': sde_pagi_page,
+                                'last_modification': datetime.now(),
+                            }
+                            if sde_pagi_end_msg:
+                                pagi_vals['state'] = 'done'
+                            pagi_obj.write(cr, 1, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s updated%s with page %s') % (json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
+                    else:
+                        if sde_pagi_page != 1:
+                            sde_pagi_error = _('The first page of a paginated SDE import must be 1')
+                        else:
+                            sde_pagi_vals = {
+                                'state': json_data.get('sde_pagination_end') and 'done' or 'progress',
+                                'pagination_json_id': json_data['sde_pagination_id'],
+                                'pagination_json_text': json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': 1,
+                                'last_modification': datetime.now(),
+                            }
+                            sde_pagi_id = pagi_obj.create(cr, 1, sde_pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
+
+            if sde_pagi_error:
+                raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
+                                     % (json_data.get('sde_pagination_id'), sde_pagi_error))
+            elif not json_data.get('sde_pagination_id') or (sde_pagi_end_msg and sde_pagi_id):
+                # Get the correct JSON data if the pagination has been used
+                if sde_pagi_id and pagi_json_text and pagi_json_data:
+                    json_text = pagi_json_text
+                    json_data = pagi_json_data
+
+                # Get the PPL from the name
+                if not json_data.get('name'):
+                    raise osv.except_osv(_('Error'), _('The main key "name" is mandatory and should not be empty'))
+                ppl_ids = self.get_stock_picking_from_refs(cr, uid, [json_data['name']], ['assigned'], 'out', 'ppl', context=context)
+                ppl_id = ppl_ids[0]
+                ppl = pick_obj.read(cr, uid, ppl_id, ['name', 'sde_updated'], context=context)
+                if ppl['sde_updated']:
+                    raise osv.except_osv(_('Error'), _('The PPL %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE update there') % (ppl['name'],))
+
+                # Reset the data of the imported lines
+                if not json_data.get('move_lines'):
+                    raise osv.except_osv(_('Error'), _('The main key "move_lines" is mandatory and should not be empty'))
+                lines_to_reset = []
+                for move_data in json_data['move_lines']:
+                    if isinstance(move_data.get('line_number', False), int) and move_data['line_number'] not in lines_to_reset:
+                        lines_to_reset.append(move_data['line_number'])
+                if lines_to_reset:
+                    self.reset_ppl_lines(cr, uid, [ppl_id], lines_to_reset, context=context)
+
+                # Import the data, the PPL's state is set back to Assigned at the end of _import
+                pick_obj.write(cr, uid, ppl_id, {'state': 'import'}, context)
+                wiz_id = wiz_imp_obj.create(cr, uid, {'picking_id': ppl_id, 'file': False, 'json_text': json_text, 'state': 'in_progress'}, context=context)
+                error_log, qty_errors, from_to_pack_errors = wiz_imp_obj._import(cr, uid, [wiz_id], context=context)
+                if error_log or qty_errors or from_to_pack_errors:
+                    raise osv.except_osv(_('Error'),  _('Some errors occurred during the import: %s')
+                                         % ('; '.join([err for err in [error_log, qty_errors, from_to_pack_errors] if err]),))
+
+                result['message'] = pagi_msg or _('Done')
+
+                # Set the PPL as sde_updated, remove the banner message
+                pick_obj.write(cr, uid, ppl_id, {'sde_updated': True, 'sde_update_msg': False}, context=context)
+
+                # Log the update
+                self.pool.get('sde.update.log').create(cr, 1, {'date': datetime.now(), 'doc_type': 'ppl', 'doc_ref': ppl['name']}, context=context)
+            elif pagi_msg:
+                result['message'] = pagi_msg
+        except Exception as e:
+            cr.rollback()
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+        finally:
+            if 'sde_flow' in context:
+                context.pop('sde_flow')
+
+        return result
 
     @jsonrpc_orm_exposed('sde.import', 'sde_ppl_remove_msg')
     def sde_ppl_remove_msg(self, cr, uid, json_text, context=None):
@@ -1654,6 +1795,61 @@ class sde_import(osv.osv_memory):
             context = {}
 
         return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'ppl', with_lines=False, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_pack_types_export')
+    def sde_pack_types_export(self, cr, uid, json_text, context=None):
+        """
+        Method used by the SDE script to export info on Pack Types
+        """
+        if context is None:
+            context = {}
+
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': '', 'data': []}
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)')
+                                     % (json_data['database'], instance_name))
+
+            # Get the documents with the references given
+            ptype_names = []
+            ptype_data = {}
+            if json_data.get('pack_types') and isinstance(json_data['pack_types'], list):
+                try:
+                    json_data['pack_types'] = [str(pick_name).strip() for pick_name in json_data['pack_types']]
+                except:
+                    raise osv.except_osv(_('Error'),  _('One or more of the names in the key "pack_types" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
+                ptype_names = json_data['pack_types']
+                cr.execute("""SELECT name, width, length, height FROM pack_type WHERE name ILIKE ANY(%s)""", (ptype_names,))
+            else:
+                cr.execute("""SELECT name, width, length, height FROM pack_type""")
+            for x in cr.fetchall():
+                ptype_data.update({x[0]: {'width': x[1], 'length': x[2], 'height': x[3]}})
+
+            if not ptype_data:
+                with_names = ''
+                if ptype_names:
+                    with_names = _(' with the names %s') % (', '.join(ptype_names),)
+                raise osv.except_osv(_('Error'), _('There is no Pack Type%s to export') % (with_names,))
+
+            result.update({
+                'data': ptype_data,
+                'message': _('The data of %s Pack Types have been exported') % (len(ptype_data),)
+            })
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+
+        return result
 
     def get_ppl_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
         """
@@ -1704,7 +1900,7 @@ class sde_import(osv.osv_memory):
                 p.name, -- 0
                 p.date, -- 1
                 s.client_order_ref, -- 2
-                s.name, -- 3
+                p.origin, -- 3
                 s.date_order, -- 4
                 s.delivery_requested_date, -- 5
                 s.ready_to_ship_date, -- 6
@@ -1767,7 +1963,7 @@ class sde_import(osv.osv_memory):
                 data[ppl[0]] = {
                     'date': ppl[1],
                     'client_po_ref': ppl[2] or '',
-                    'fo_ir_ref': ppl[3] or '',
+                    'origin': ppl[3] or '',
                     'fo_date': ppl[4] or '',
                     'packing_date': ppl[5] or '',
                     'ready_to_ship_date': ppl[6] or '',
@@ -1792,7 +1988,6 @@ class sde_import(osv.osv_memory):
                     'nomen_main_type': ppl[23],
                     'comment': ppl[24] or '',
                     'product_qty': ppl[25] or 0,
-                    'qty_to_process': None,  # Left empty to force SDE to change the value
                     'prodlot_id': ppl[26] or '',
                     'expired_date': ppl[27] or '',
                     'kc_check': ppl[28] or False,
@@ -1802,7 +1997,7 @@ class sde_import(osv.osv_memory):
                     'to_pack': ppl[32] or 0,
                     'weight': ppl[33] or 0,
                     'size': 'x'.join([str(ppl[34] or 0), str(ppl[35] or 0), str(ppl[36] or 0)]) or '',
-                    'pack_type': ppl[37] or 0,
+                    'pack_type': ppl[37] or '',
                 })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'ppl',
@@ -1813,6 +2008,48 @@ class sde_import(osv.osv_memory):
         new_cr.close(True)
 
         return True
+
+    def reset_ppl_lines(self, cr, uid, ids, line_numbers, context=None):
+        '''
+        For each move of the Available PPL whose line_number is in the import, reset as much data as possible:
+            - Merge the quantities of split lines by BN and delete the splits
+            - Reset from/to pack to 1/1
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        move_obj = self.pool.get('stock.move')
+
+        ln_sql = ""
+        if line_numbers:
+            if len(line_numbers) == 1:
+                ln_sql = " AND line_number = %s" % (line_numbers[0],)
+            else:
+                ln_sql = " AND line_number IN %s" % (tuple(line_numbers),)
+        cr.execute("""
+           SELECT id, picking_id, line_number, product_qty, prodlot_id FROM stock_move
+           WHERE state = 'assigned' AND picking_id IN %s AND product_qty != 0
+        """ + ln_sql, (tuple(ids),)) # not_a_user_entry
+
+        data = {}
+        to_del = []
+        for x in cr.fetchall():
+            key = (x[1], x[2], x[4])
+            if key not in data:
+                data[key] = {'product_qty': 0, 'master': x[0]}
+            else:
+                to_del.append(x[0])
+            data[key]['product_qty'] += x[3]
+        for key in data:
+            move_vals = {'product_qty': data[key]['product_qty'], 'product_uos_qty': data[key]['product_qty'],
+                         'from_pack': 1, 'to_pack': 1}
+            move_obj.write(cr, uid, data[key]['master'], move_vals, context=context)
+        move_obj.unlink(cr, uid, to_del, force=True, context=context)
+
+        return True
+
     # =============================================================================================================== #
     #                                                       ALL                                                       #
     # =============================================================================================================== #
@@ -1954,11 +2191,6 @@ class sde_import(osv.osv_memory):
                             % (pagi_exp['with_lines'] and _(' and lines') or '', json_data['sde_pagination_page'], json_data['sde_pagination_id']),
                             'data': json.loads(pagi_exp['pagination_json_text']),
                         })
-                        if pick_type == 'out' and pick_subtype == 'ppl':
-                            pack_types = {}
-                            for pack_type in self.get_pack_types(cr, uid, context=context):
-                                pack_types[pack_type[0]] = {'width': pack_type[1] or 0, 'length': pack_type[2] or 0, 'height': pack_type[3] or 0}
-                            result.update({'pack_types': pack_types})
                     else:
                         raise osv.except_osv(_('Error'), _('No %s export data was found with the "sde_pagination_id" %s and the "sde_pagination_page" %s')
                                              % (doc, json_data['sde_pagination_id'], json_data['sde_pagination_page']))
@@ -2091,7 +2323,7 @@ class sde_import(osv.osv_memory):
                                 data[ppl[0]] = {
                                     'date': ppl[1],
                                     'client_po_ref': ppl[2] or '',
-                                    'fo_ir_ref': ppl[3] or '',
+                                    'origin': ppl[3] or '',
                                     'fo_date': ppl[4] or '',
                                     'packing_date': ppl[5] or '',
                                     'ready_to_ship_date': ppl[6] or '',
@@ -2116,7 +2348,6 @@ class sde_import(osv.osv_memory):
                                     'nomen_main_type': ppl[23],
                                     'comment': ppl[24] or '',
                                     'product_qty': ppl[25] or 0,
-                                    'qty_to_process': None,  # Left empty to force SDE to change the value
                                     'prodlot_id': ppl[26] or '',
                                     'expired_date': ppl[27] or '',
                                     'kc_check': ppl[28] or False,
@@ -2126,7 +2357,7 @@ class sde_import(osv.osv_memory):
                                     'to_pack': ppl[32] or 0,
                                     'weight': ppl[33] or 0,
                                     'size': 'x'.join([str(ppl[34] or 0), str(ppl[35] or 0), str(ppl[36] or 0)]) or '',
-                                    'pack_type': ppl[37] or 0,
+                                    'pack_type': ppl[37] or '',
                                 })
                     else:
                         threaded_method = self.create_picking_ticket_paginated_export
@@ -2219,11 +2450,6 @@ class sde_import(osv.osv_memory):
                         'message': _('%sThe header%s data of %s have been exported%s')
                         % (avchk_msg, with_lines and _(' and lines') or '', final_msg_pick, pagi_msg)
                     })
-                    if pick_type == 'out' and pick_subtype == 'ppl':
-                        pack_types = {}
-                        for pack_type in self.get_pack_types(cr, uid, context=context):
-                            pack_types[pack_type[0]] = {'width': pack_type[1] or 0, 'length': pack_type[2] or 0, 'height': pack_type[3] or 0}
-                        result.update({'pack_types': pack_types})
             else:
                 if avchk_data.state == 'error':
                     avchk_msg = (_('An error occurred during the Availability Check of %s (%s/%s): %s')
@@ -2264,6 +2490,8 @@ class sde_import(osv.osv_memory):
         if not_found:
             if pick_type == 'out' and pick_subtype == 'standard':
                 doc = _('OUTs')
+            elif pick_type == 'out' and pick_subtype == 'ppl':
+                doc = _('PPLs')
             else:
                 doc = _('Picking Tickets')
             raise osv.except_osv(_('Error'), _('The %s %s %s could not be found')
@@ -2317,16 +2545,6 @@ class sde_import(osv.osv_memory):
             shipper_data.append(instance_addr.email)
 
         return shipper_data
-
-    def get_pack_types(self, cr, uid, context=None):
-        """
-        Get data from the Pack Types
-        """
-        if context is None:
-            context = {}
-
-        cr.execute("""SELECT name, width, length, height FROM pack_type""")
-        return cr.fetchall()
 
 
 sde_import()
