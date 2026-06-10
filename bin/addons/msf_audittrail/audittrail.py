@@ -1186,7 +1186,36 @@ class audittrail_log_line(osv.osv):
                     else:
                         new_args += [arg]
                 args = new_args
+        # TODO
+        if context['active_model'] == 'account.invoice' and context['active_id']:
+            # header
+            cr.execute('''
+                update audittrail_log_line l
+                    set object_id = (select id from ir_model where model='account.invoice'), res_id=i.id
+                    from account_invoice i, funding_pool_distribution_line fpl
+                where
+                    l.object_id = (select id from ir_model where model='funding.pool.distribution.line') and
+                    i.id = %s and
+                    i.analytic_distribution_id = fpl.distribution_id and
+                    l.res_id = fpl.id
+            ''', (context['active_id'],))
 
+            # line
+            cr.execute('''
+                update audittrail_log_line l
+                    set
+                        object_id = (select id from ir_model where model='account.invoice'),
+                        res_id = il.invoice_id,
+                        fct_object_id = (select id from ir_model where model='account.invoice.line'),
+                        fct_res_id = il.id,
+                        sub_obj_name = il.line_number
+                    from account_invoice_line il, funding_pool_distribution_line fpl
+                where
+                    l.object_id = (select id from ir_model where model='funding.pool.distribution.line') and
+                    il.invoice_id = %s and
+                    il.analytic_distribution_id = fpl.distribution_id and
+                    l.res_id = fpl.id
+            ''', (context['active_id'],))
 
         return super(audittrail_log_line, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
