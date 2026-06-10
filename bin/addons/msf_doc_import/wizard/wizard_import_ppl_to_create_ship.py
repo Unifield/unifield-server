@@ -536,9 +536,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
     %s
     
     %s
-    
-    %s
-    ''') % (total_time, complete_lines, line_num, lines_to_correct, error_log, qty_errors, message, from_to_pack_errors)
+    ''') % (total_time, complete_lines, line_num, lines_to_correct, error_log, qty_errors, from_to_pack_errors)
             wizard_vals = {'message': final_message, 'state': 'done', 'percent_completed': 100}
             self.write(cr, uid, ids, wizard_vals, context=context)
             # we reset the state of the PPL to assigned (initial state)
