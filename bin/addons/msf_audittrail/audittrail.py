@@ -812,7 +812,7 @@ class audittrail_rule(osv.osv):
 
                 grp_label_mapping = {
                     'cost_center_id': 'CC',
-                    'destination_id': 'D',
+                    'destination_id': 'Dest',
                     'analytic_id': 'FP',
                     'percentage': '%'
                 }
@@ -836,7 +836,8 @@ class audittrail_rule(osv.osv):
                             vals['old_value'] = ' / '.join(old_data_list)
                         if context.get('track_changes_res_id'):
                             vals['res_id'] = context['track_changes_res_id']
-                        vals['name'] = 'Other AD line'
+                        vals['name'] = 'Other AD line deletion'
+                        vals['field_description'] = 'Other AD line deletion'
 
                     log_line_obj.create(cr, uid, vals)
 

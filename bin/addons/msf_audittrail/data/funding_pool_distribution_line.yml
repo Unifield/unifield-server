@@ -17,7 +17,7 @@
             'log_unlink': True,
             'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
-            'domain_filter': ???,
+            'domain_filter': [('track_changes_ok', '=', True)],
         }
 
         if not rule_id:

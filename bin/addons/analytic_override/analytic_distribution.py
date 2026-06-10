@@ -348,6 +348,31 @@ class funding_pool_distribution_line(osv.osv):
         "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True, ondelete='restrict'),
     }
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        tc_ids = []
+        tc_ok = False
+        if not count and args:
+            for arg in args:
+                if arg and arg[0] == 'id' and arg[1] == 'in':
+                    tc_ids = tuple(arg[2])
+                elif arg and arg[0] == 'track_changes_ok':
+                    tc_ok = True
+
+        if tc_ok and tc_ids:
+            cr.execute('''select
+                fp.id
+            from funding_pool_distribution_line fp
+            left join account_move m on m.analytic_distribution_id = fp.distribution_id
+            left join account_move_line ml on ml.analytic_distribution_id = fp.distribution_id
+            where
+                fp.id in %s and
+                (m.id is not null or ml.id is not null)
+            ''', (tc_ids, ))
+            return [x[0] for x in cr.fetchall()]
+
+        return super(funding_pool_distribution_line, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+
+
     def _check_fp(self, cr, uid, ids, context=None):
         """
         Raises an error if no Funding Pool is linked to the FP distrib line(s)
