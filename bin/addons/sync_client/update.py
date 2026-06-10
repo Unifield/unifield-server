@@ -589,12 +589,16 @@ class update_received(osv.osv,fv_formatter):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
+                # do not post JE if there is a previous NR: period not open
+                if update.model == 'account.move':
+                    extra_dom = [('rule_sequence', '<=', update.rule_sequence), ('sequence_number', '<=', update.sequence_number), ('id', '!=', update.id)]
+                else:
+                    extra_dom = [('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)]
                 prev_nr_ids = self.search(cr, uid,
                                           [('sdref', '=', update.sdref),
                                            ('is_deleted', '=', False),
-                                              ('run', '=', False),
-                                              ('rule_sequence', '=', update.rule_sequence),
-                                              ('sequence_number', '<', update.sequence_number)])
+                                           ('run', '=', False)
+                                           ] + extra_dom)
                 # previous not run on the same (sdref, rule_sequence): do not execute
                 if prev_nr_ids:
                     if update.rule_sequence in (602, 603):

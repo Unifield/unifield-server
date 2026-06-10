@@ -1168,6 +1168,7 @@ class account_move(osv.osv):
             # US-2563: do not raise in case of duplicate
             if not context.get('copy', False) and period and (period.state == 'created' or \
                                                               (context.get('from_web_menu') and period.state != 'draft')):  # don't save manual JE in a non-open period
+
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
 
             # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!
@@ -1253,6 +1254,14 @@ class account_move(osv.osv):
             # from web menu, we also update document_date and date
             if context.get('from_web_menu', False):
                 fields += ['document_date', 'date']
+            if vals.get('period_id'):
+                if self.pool.get('account.period').search_exists(cr, uid, [('id', '=', vals['period_id']), ('state', '=', 'created')], context=context):
+                    period_rec = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
+                    raise osv.except_osv(_('Error !'),
+                                         _("Period '%s' is not open!' \
+                     ' No Journal Entry is updated") % (period_rec.name, ))
+
+
             for m in self.browse(cr, uid, ids):
                 if context.get('sync_update_session') and vals.get('state') == 'posted' and m.state == 'draft':
                     vals['posted_sync_sequence'] = context['sync_update_session']
