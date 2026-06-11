@@ -359,16 +359,17 @@ class funding_pool_distribution_line(osv.osv):
                     tc_ok = True
 
         if tc_ok and tc_ids:
-            cr.execute('''select
-                fp.id
-            from funding_pool_distribution_line fp
-            left join account_move m on m.analytic_distribution_id = fp.distribution_id
-            left join account_move_line ml on ml.analytic_distribution_id = fp.distribution_id
-            left join account_invoice v on v.analytic_distribution_id = fp.distribution_id
-            left join account_invoice_line vl on vl.analytic_distribution_id = fp.distribution_id
-            where
-                fp.id in %s and
-                (m.id is not null or ml.id is not null or v.id is not null or vl.id is not null)
+            cr.execute('''
+                select
+                    fp.id
+                from funding_pool_distribution_line fp
+                where
+                    fp.id in %s and (
+                        exists(select m.id from account_move m where m.analytic_distribution_id = fp.distribution_id)
+                        or exists(select ml.id from account_move_line ml where ml.analytic_distribution_id = fp.distribution_id)
+                        or exists(select v.id from account_invoice v where v.analytic_distribution_id = fp.distribution_id)
+                        or exists(select vl.id from account_invoice_line vl where vl.analytic_distribution_id = fp.distribution_id)
+                )
             ''', (tc_ids, ))
             return [x[0] for x in cr.fetchall()]
 
