@@ -913,6 +913,36 @@ class audittrail_rule(osv.osv):
                                 grp_old_value.append(self._map_to_str(old_value))
                                 grp_new_value.append(self._map_to_str(new_value))
                                 continue
+
+                            if field == 'analytic_distribution_id' and \
+                                    rule.object_id.model in ('account.move', 'account.move.line', 'account.invoice', 'account.invoice.line') and \
+                                    new_value and \
+                                    isinstance(new_value, (list, tuple)) and \
+                                    new_value[0]:
+                                fp_line_obj = self.pool.get('funding.pool.distribution.line')
+                                fp_line_ids = fp_line_obj.search(cr, uid, [('distribution_id', '=', new_value[0])])
+                                fp_object_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'funding.pool.distribution.line')])[0]
+                                if fp_line_ids:
+                                    for fp_line in fp_line_obj.browse(cr, uid, fp_line_ids):
+                                        line.update({
+                                            'name': 'funding.pool.distribution.line',
+                                            'object_id': fp_object_id,
+                                            'res_id': fp_line.id,
+                                            'method': 'create',
+                                            'field_description': 'AD CC / Dest / FP / %',
+                                            'sub_obj_name': False,
+                                            'rule_id': False,
+                                            'fct_object_id': False,
+                                            'fct_res_id': False,
+                                            'new_value': '%s / %s / %s / %s' % (
+                                                fp_line.cost_center_id and fp_line.cost_center_id.code or '',
+                                                fp_line.destination_id and fp_line.destination_id.code or '',
+                                                fp_line.analytic_id and fp_line.analytic_id.code or '',
+                                                fp_line.percentage and round(fp_line.percentage, 2) or '')
+                                        })
+                                        log_line_obj.create(cr, uid, line)
+                                continue
+
                             line.update({
                                 'field_id': fields_to_trace[field].id,
                                 'field_description': description,

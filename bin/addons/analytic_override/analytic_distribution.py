@@ -348,6 +348,33 @@ class funding_pool_distribution_line(osv.osv):
         "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True, ondelete='restrict'),
     }
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        tc_ids = []
+        tc_ok = False
+        if not count and args:
+            for arg in args:
+                if arg and arg[0] == 'id' and arg[1] == 'in':
+                    tc_ids = tuple(arg[2])
+                elif arg and arg[0] == 'track_changes_ok':
+                    tc_ok = True
+
+        if tc_ok and tc_ids:
+            cr.execute('''select
+                fp.id
+            from funding_pool_distribution_line fp
+            left join account_move m on m.analytic_distribution_id = fp.distribution_id
+            left join account_move_line ml on ml.analytic_distribution_id = fp.distribution_id
+            left join account_invoice v on v.analytic_distribution_id = fp.distribution_id
+            left join account_invoice_line vl on vl.analytic_distribution_id = fp.distribution_id
+            where
+                fp.id in %s and
+                (m.id is not null or ml.id is not null or v.id is not null or vl.id is not null)
+            ''', (tc_ids, ))
+            return [x[0] for x in cr.fetchall()]
+
+        return super(funding_pool_distribution_line, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+
+
     def _check_fp(self, cr, uid, ids, context=None):
         """
         Raises an error if no Funding Pool is linked to the FP distrib line(s)
@@ -397,6 +424,7 @@ class analytic_distribution(osv.osv):
 
     def _get_lines_count(self, cr, uid, ids, name=False, args=False, context=None):
         """
+        former method used for TC entries
         Get count of each analytic distribution lines type.
         Example: with an analytic distribution with 2 cost center, 3 funding pool and 1 Free 1:
         2 CC; 3 FP; 1 F1; 0 F2;
@@ -412,15 +440,8 @@ class analytic_distribution(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
         # Browse given invoices
-        for distrib in self.browse(cr, uid, ids, context=context):
-            txt = ''
-            txt += str(len(distrib.cost_center_lines) or '0') + ' CC; '
-            txt += str(len(distrib.funding_pool_lines) or '0') + ' FP; '
-            txt += str(len(distrib.free_1_lines) or '0') + ' F1; '
-            txt += str(len(distrib.free_2_lines) or '0') + ' F2'
-            if not txt:
-                txt = ''
-            res[distrib.id] = txt
+        for _id in ids:
+            res[_id] = '%s'%_id
         return res
 
     _columns = {
