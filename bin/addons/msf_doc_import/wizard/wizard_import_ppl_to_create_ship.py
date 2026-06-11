@@ -179,7 +179,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
             context = {}
 
         line_data = []
-        message = ''
+        errors = ''
         line_num = 0
         header_index = context.get('header_index', {})
         for i, row in enumerate(rows):
@@ -187,7 +187,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
             col_count = len(row)
             template_col_count = len(list(header_index.items()))
             if col_count != template_col_count:
-                message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") \
+                errors += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") \
                            % (line_num, template_col_count, ', '.join([_(col) for col in ppl_columns_lines_for_import]))
                 continue
             try:
@@ -207,10 +207,10 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     'imp_pack_type': row.cells[15] and row.cells[15].data or False,
                 })
             except Exception as e:
-                message += _('An error has occurred for the line %s in the Excel file. Details : %s') % (line_num, e)
+                errors += _('Line %s in the Excel file: %s\n') % (line_num, e)
                 continue
 
-        return line_data, message
+        return line_data, errors
 
     def _import(self, dbname, uid, ids, context=None):
         '''
@@ -269,7 +269,9 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 current_row = next(rows)
                 if not current_row.cells:
                     next(rows)
-                line_data, message = self.get_excel_data(cr, uid, ids, rows, context=context)
+                line_data, errors = self.get_excel_data(cr, uid, ids, rows, context=context)
+                if errors:
+                    raise osv.except_osv(_('Error'), errors)
 
             percent_completed = 0
             total_line_num = len(line_data)
@@ -470,7 +472,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     self.write(cr, uid, ids, {'percent_completed': percent_completed})
         except Exception as e:
             cr.rollback()
-            error_log += _("An error is occurred. Details : %s") % e
+            error_log += _("An error has occurred. Details : %s") % (e,)
         finally:
             error_log += ''.join(error_list)
             if error_log:
