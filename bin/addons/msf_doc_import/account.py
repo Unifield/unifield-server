@@ -35,7 +35,7 @@ from base import currency_date
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 from spreadsheet_xml import SPECIAL_CHAR
 import re
-
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
