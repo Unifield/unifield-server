@@ -259,10 +259,10 @@
 <!--                            <field domain="[('domain', '=', 'partner')]" name="title" size="0" groups="base.group_extended" widget="selection"/>-->
                             <field name="legal_name"/>
                             <field name="tax_identification_number" string="TIN"/>
-                            <field name="business_registration_number" string="Business registration number"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="state" attrs="{'invisible': [('partner_type', '!=', 'external')]}" />
+                            <field name="business_registration_number" string="Business registration number"/>
                         </group>
                         <group colspan="1" col="2">
                             <field name="customer" select="1"/>
