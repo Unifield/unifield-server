@@ -36,15 +36,15 @@
                 <form string="Import Entries">
                     <label string="This will import Entries from a XML file." colspan="4"/>
                     <newline/>
-                    <group>
+                    <group col="6" colspan="6">
                         <field name="file" filename="filename" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                         <field name="filename" invisible="1"/>
                         <button name="%(action_download_mako_template)d"
                                 type="action"
                                 string="Save as"
                                 icon="gtk-execute"/>
+                        <field name="date" attrs="{'invisible': [('state', '!=', 'draft')]}" default_focus="1"/>
                     </group>
-                    <field name="date" attrs="{'invisible': [('state', '!=', 'draft')]}" default_focus="1"/>
                     <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
                     <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}"/>
                     <newline/>
