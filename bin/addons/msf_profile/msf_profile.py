@@ -139,7 +139,7 @@ class patch_scripts(osv.osv):
                 data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
                 data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1]
             ]
-            child_loc_ids = loc_obj.search(cr, uid, [('location_id', 'in', common_loc_ids)])
+            child_loc_ids = loc_obj.search(cr, uid, [('location_id', 'in', common_loc_ids), ('active', 'in', ['t', 'f'])])
             common_loc_ids.extend(child_loc_ids)
             # From "Expired/Damaged/Scrap" to "Destruction": RT Destruction (OCB, OCP, OCG)
             if oc in ['ocb', 'ocp', 'ocg']:
@@ -156,9 +156,8 @@ class patch_scripts(osv.osv):
                 msf_sup_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')[1]
                 cr.execute("""
                     UPDATE stock_move SET reason_type_id = %s
-                    WHERE reason_type_id != %s AND ((location_id IN %s AND location_dest_id = %s
-                        AND picking_id IN (SELECT id FROM stock_picking WHERE type = 'in' AND subtype = 'standard' AND
-                        claim = 't')) OR
+                    WHERE reason_type_id != %s AND((location_id IN %s AND location_dest_id = %s
+                        AND picking_id IN (SELECT id FROM stock_picking WHERE type = 'in' AND subtype = 'standard' AND claim = 't')) OR
                         (location_id IN %s AND location_dest_id = %s) OR
                         (location_id = %s AND location_dest_id IN %s))
                 """, (int_move_rt_id, int_move_rt_id, tuple([other_sup_loc_id, msf_sup_loc_id]), quarantine_loc_id,
@@ -173,16 +172,18 @@ class patch_scripts(osv.osv):
                 common_with_cdik_loc_ids.extend([
                     data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],
                     data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1],
-                    data_obj.get_object_reference(cr, uid, 'stock', 'location_production')[1],
+                    data_obj.get_object_reference(cr, uid, 'stock', 'location_production')[1]
                 ])
+                common_with_cdik_qua_loc_ids = common_with_cdik_loc_ids.copy()
+                common_with_cdik_qua_loc_ids.append(quarantine_loc_id)
                 cr.execute("""
                     UPDATE stock_move SET reason_type_id = %s WHERE reason_type_id = %s AND prodlot_id IS NULL AND 
-                        expired_date IS NULL AND location_id = %s AND location_dest_id = %s
-                """, (scrap_rt_id, int_move_rt_id, common_with_cdik_loc_ids, exp_dam_scrap_loc_id))
+                        expired_date IS NULL AND location_id IN %s AND location_dest_id = %s
+                """, (scrap_rt_id, int_move_rt_id, tuple(common_with_cdik_qua_loc_ids), exp_dam_scrap_loc_id))
                 self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Loss / Scrap"' % (cr.rowcount,))
 
                 # Source AGOK LOG, destination Exp/Dam/Scrap, RT Stock Init: RT Loss / Scap
-                agok_log_loc_ids = loc_obj.search(cr, uid, [('name', '=like', 'AGOK LOG'), ('active', 'in', ['t', 'f'])])
+                agok_log_loc_ids = loc_obj.search(cr, uid, [('name', '=ilike', 'AGOK LOG'), ('active', 'in', ['t', 'f'])])
                 if agok_log_loc_ids:
                     cr.execute("""
                         UPDATE stock_move SET reason_type_id = %s WHERE reason_type_id = %s AND location_id = %s AND location_dest_id = %s
@@ -190,12 +191,27 @@ class patch_scripts(osv.osv):
                     self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves from AGOK LOG was set to "Loss / Scrap"' % (cr.rowcount,))
 
                 # Source Stock/IS/EPREP, destination Exp / Dam / Scrap, RT Internal Move, BN/ED: RT Loss / Expiry
-                # Source Cross Docking/Input/Kit/Dekit, destination Exp/Dam/Scrap, RT Internal Move, BN/ED: RT Loss / Expiry
+                # Source Cross Docking/Input/Kit, destination Exp/Dam/Scrap, RT Internal Move, BN/ED: RT Loss / Expiry
                 # Source Quarantine (analyze), destination Exp/Dam/Scrap, RT Internal Move, BN/ED >= move Date: RT Loss / Expiry
                 # Source non-"Inventory loss & profit", destination Exp/Dam/Scrap, RT Int Supply/Ext Supply/Kit/Other/Ret from Unit/Stock Init: Loss / Expiry
-
+                inv_loss_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'location_inventory')[1]
+                cr.execute("""
+                    UPDATE stock_move SET reason_type_id = %s
+                    WHERE location_dest_id = %s AND
+                        ((reason_type_id = %s AND location_id IN %s AND prodlot_id IS NOT NULL) OR
+                        (reason_type_id = %s AND location_id = %s AND expired_date IS NOT NULL AND expired_date >= date) OR
+                        (reason_type_id IN %s AND location_id != %s))
+                """, (exp_rt_id, exp_dam_scrap_loc_id, int_move_rt_id, tuple(common_with_cdik_loc_ids), int_move_rt_id, quarantine_loc_id,
+                      tuple([int_rt_id, ret_rt_id, ext_rt_id, other_rt_id, kit_rt_id, stock_init_rt_id]), inv_loss_loc_id))
+                self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Loss / Expiry"' % (cr.rowcount,))
 
                 # Source Quarantine (analyze), destination Exp/Dam/Scrap, RT Internal Move, BN/ED < move Date: RT Loss / Damage
+                cr.execute("""
+                    UPDATE stock_move SET reason_type_id = %s
+                    WHERE reason_type_id = %s AND location_id = %s AND location_dest_id = %s AND
+                        expired_date IS NOT NULL AND expired_date < date
+                """, (dam_rt_id, int_move_rt_id, quarantine_loc_id, exp_dam_scrap_loc_id))
+                self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Loss / Damage"' % (cr.rowcount,))
 
         return True
 
