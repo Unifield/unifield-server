@@ -726,7 +726,8 @@ class audittrail_rule(osv.osv):
                 return True
             domain = []
             if rule.domain_filter:
-                domain = eval(rule.domain_filter)
+                if obj._name != 'funding.pool.distribution.line' or not context.get('force_tc_fp'):
+                    domain = eval(rule.domain_filter)
             if domain:
                 new_dom = ['&', ('id', 'in', obj_ids)] + domain
                 res_ids = obj.search(cr, uid, new_dom, order='NO_ORDER')
