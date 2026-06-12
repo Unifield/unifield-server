@@ -103,7 +103,7 @@
         </record>
 
         <record id="open_aji_tc" model="ir.values">
-            <field name="key2">client_action_multi</field>
+            <field name="key2">client_action_relate</field>
             <field name="model">account.analytic.line</field>
             <field name="name">Track Changes</field>
             <field name="value" eval="'ir.actions.server,%d'%action_open_aji_tc"/>
