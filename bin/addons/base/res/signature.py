@@ -853,6 +853,10 @@ class signature_line(osv.osv):
 
 
     def _get_ready_to_sign(self, cr, uid, ids, name=None, arg=None, context=None):
+        """
+        A signature line is ready_to_sign if it is signable, has the lowest prio among signable lines, and if no higher
+        prio signature have already been signed
+        """
         if not ids:
             return {}
         ret = {}
@@ -860,21 +864,22 @@ class signature_line(osv.osv):
             ret[_id] = False
 
         cr.execute('''
-            select
-                l.id
-            from
-                signature_line l
-            left join
-                signature_line other on other.signature_id = l.signature_id and other.is_active='t' and other.prio < l.prio and other.signed = 'f'
-            where
-                l.id in %s and
-                l.is_active = 't' and
-                l.signed = 'f'
-            group by
-                l.id
-            having
-                count(other.id) = 0
-        ''', (tuple(ids), ))
+            (SELECT l.id
+            FROM signature_line l
+            LEFT JOIN signature_line other ON other.signature_id = l.signature_id AND other.is_active='t'
+                AND other.prio < l.prio AND other.signed = 'f'
+            WHERE l.id IN %s AND l.is_active = 't' AND l.signed = 'f'
+            GROUP BY l.id
+            HAVING count(other.id) = 0)
+            INTERSECT
+            (SELECT l.id
+            FROM signature_line l
+            LEFT JOIN signature_line other ON other.signature_id = l.signature_id AND other.is_active='t'
+                AND other.prio > l.prio AND other.signed = 't'
+            WHERE l.id IN %s AND l.is_active = 't' AND l.signed = 'f'
+            GROUP BY l.id
+            HAVING count(other.id) = 0)
+        ''', (tuple(ids), tuple(ids)))
         for _id in cr.fetchall():
             ret[_id[0]] = True
         return ret
