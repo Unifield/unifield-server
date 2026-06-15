@@ -115,3 +115,687 @@
             self.write(cr, uid, rule_id, vals, context=context)
         # Subscribe to the rule
         self.subscribe(cr, uid, rule_id)
+-
+  ITO Steps CREATE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Steps CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.step')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'step_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO Steps WRITE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Steps WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.step')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['step_id', 'sub_step_id', 'comment', 'name', 'target_end_date', 'end_date']
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'step_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO Steps DELETE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Steps DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.step')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'step_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Steps CREATE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Steps CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.step')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'step_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Steps WRITE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Steps WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.step')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['step_id', 'sub_step_id', 'comment', 'name', 'target_end_date', 'end_date']
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'step_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Steps DELETE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Steps DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.step')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'step_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.step'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO Customs Fees CREATE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Customs Fees CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.customs.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO Customs Fees WRITE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Customs Fees WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.customs.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name', 'value', 'currency_id', 'details', 'state', 'purchase_id']
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO Customs Fees DELETE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Customs Fees DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.customs.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Customs Fees CREATE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Customs Fees CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.customs.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Customs Fees WRITE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Customs Fees WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.customs.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name', 'value', 'currency_id', 'details', 'state', 'purchase_id']
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Customs Fees DELETE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Customs Fees DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.customs.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.customs.fees'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO Transport Fees CREATE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Transport Fees CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.transport.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO Transport Fees WRITE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Transport Fees WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.transport.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name', 'value', 'currency_id', 'details', 'state', 'purchase_id']
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO Transport Fees DELETE
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO Transport Fees DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.transport.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'transport_in_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_in_id', '!=', False)]",
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Transport Fees CREATE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Transport Fees CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.transport.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Transport Fees WRITE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Transport Fees WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.transport.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name', 'value', 'currency_id', 'details', 'state', 'purchase_id']
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO Transport Fees DELETE
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO Transport Fees DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'transport.order.transport.fees')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+      
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'transport.order.transport.fees'), ('name', '=', 'transport_out_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('transport_out_id', '!=', False)]",
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
