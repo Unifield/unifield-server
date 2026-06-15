@@ -36,8 +36,18 @@ class product_mass_update(osv.osv):
 
         return res
 
+    def get_product_state_selection(self, cr, uid, context=None):
+        """
+        Only "Valid" and "Phase Out" by default, add "Forbidden" and "Archived" at HQ level
+        """
+        res = [('valid', _('Valid')), ('phase_out', _('Phase Out'))]
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+            res.extend([('forbidden', _('Forbidden')), ('archived', _('Archived'))])
+
+        return res
+
     _columns = {
-        'name': fields.char(size=64, string='Update Reference'),
+        'name': fields.char(size=128, string='Update Reference'),
         'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done'), ('cancel', 'Cancelled')], string='Status', readonly=True),
         'date_done': fields.datetime(string='Date of the update', readonly=True),
         'user_id': fields.many2one('res.users', string='User who Updated', readonly=True),
@@ -66,7 +76,7 @@ class product_mass_update(osv.osv):
                                      help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
         'procure_method': fields.selection([('make_to_stock', 'Make to Stock'), ('make_to_order', 'Make to Order')], 'Procurement Method',
                                            help="If you encode manually a Procurement, you probably want to use a make to order method."),
-        'product_state': fields.selection([('valid', 'Valid'), ('phase_out', 'Phase Out'), ('forbidden', 'Forbidden'), ('archived', 'Archived')], 'Status', help="Tells the user if he can use the product or not."),
+        'product_state': fields.selection(selection=get_product_state_selection, string='Status', help="Tells the user if he can use the product or not."),
         'sterilized': fields.selection(selection=[('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Sterile'),
         'supply_method': fields.selection([('produce', 'Produce'), ('buy', 'Buy')], 'Supply Method',
                                           help="Produce will generate production order or tasks, according to the product type. Purchase will trigger purchase orders when requested."),

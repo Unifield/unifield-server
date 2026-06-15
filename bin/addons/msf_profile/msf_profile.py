@@ -59,6 +59,80 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF42.0
+    def us_15593_15666_fix_local_products(self, cr, uid, *a, **b):
+        """
+        At Coordo:
+            - Set the Standardization Level of Local Products from Standard/Non-Standard Local to Non-Standard.
+            - Try to deactivate all active Local Products with the UniField Status Forbidden or Archived. If one or more
+            products can not be deactivated, set their UniField Status to Phase Out and create a Product Mass Update for them.
+            - Set the UniField Status of inactive Local Products with the UniField Status Forbidden or Archived to Phase Out
+        """
+        if _get_instance_level(self, cr, uid) == 'coordo':
+            # Local Products to Non-Standard
+            cr.execute("""
+                SELECT p.id FROM product_product p LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE pis.code = 'local' AND p.standard_ok IN ('standard', 'non_standard_local')
+            """)
+            prod_st_ok_ids = [x[0] for x in cr.fetchall()]
+            if prod_st_ok_ids:
+                cr.execute("""UPDATE product_product SET standard_ok = 'non_standard' WHERE id IN %s""", (tuple(prod_st_ok_ids),))  # not_a_user_entry
+                self.log_info(cr, uid, "US-15593-15666: %d Local product(s) had their Standardization Level set to Non-standard" % (cr.rowcount,))
+
+            # Try to deactivate Forbidden/Archived Local Products
+            not_deactivated, not_deac_prod_ids = [], []
+            cr.execute("""
+                SELECT p.id FROM product_product p
+                    LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                    LEFT JOIN product_status ps ON pt.state = ps.id
+                    LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE p.active = 't' AND pis.code = 'local' AND ps.code IN ('archived', 'forbidden')
+            """)
+            prod_to_deac_ids = [x[0] for x in cr.fetchall()]
+            for prod_id in prod_to_deac_ids:
+                deactivated = self.pool.get('product.product').deactivate_product(cr, uid, [prod_id])
+                if deactivated != True:  # If it doesn't return True, the product has not been deactivated
+                    not_deactivated.append(deactivated.get('res_id'))
+            self.log_info(cr, uid, "US-15593-15666: %d Local product(s) were deactivated" % (len(prod_to_deac_ids) - len(not_deactivated),))
+
+            # Create the Product Mass Update with the non-deactivated products
+            # Then set the UF State of non-deactivated products and the already Archived/Forbidden inactive products to Phase Out
+            cr.execute("""
+                SELECT p.id FROM product_product p
+                    LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                    LEFT JOIN product_status ps ON pt.state = ps.id
+                    LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE p.active = 'f' AND pis.code = 'local' AND ps.code IN ('archived', 'forbidden')
+            """)
+            to_phase_out_prod_ids = [x[0] for x in cr.fetchall()]
+
+            for wiz_prod_error in self.pool.get('product.deactivation.error').browse(cr, uid, not_deactivated):
+                not_deac_prod_ids.append(wiz_prod_error.product_id.id)
+            if not_deac_prod_ids:
+                to_phase_out_prod_ids = list(set(to_phase_out_prod_ids + not_deac_prod_ids))
+                p_mass_upd_vals = {
+                    'name': '(US-15593) Local Products UF Status Archived/Forbidden Correction',
+                    'active_product': 'no',
+                    'product_ids': [(6, 0, not_deac_prod_ids)],
+                }
+                self.pool.get('product.mass.update').create(cr, uid, p_mass_upd_vals)
+
+            if to_phase_out_prod_ids:
+                phase_out_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
+                cr.execute("""
+                    UPDATE product_template SET state = %s 
+                    WHERE id IN (SELECT p.product_tmpl_id FROM product_product p WHERE id IN %s)
+                """, (phase_out_id, tuple(to_phase_out_prod_ids)))  # not_a_user_entry
+                self.log_info(cr, uid, "US-15593-15666: %d Local product(s) had their UniField Status set to Phase Out" % (cr.rowcount,))
+
+            # Update the ir_model_data of all products updated by SQL
+            mod_prod_ids = list(set(prod_st_ok_ids + to_phase_out_prod_ids))
+            if mod_prod_ids:
+                cr.execute("""UPDATE ir_model_data SET last_modification = NOW(), touched = '["transport_ok", "state"]'
+                              WHERE model = 'product.product' AND res_id IN %s""", (tuple(mod_prod_ids),))  # not_a_user_entry
+
+        return True
+
     # UF41.0
     def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
         '''
