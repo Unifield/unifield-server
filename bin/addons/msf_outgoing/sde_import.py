@@ -1545,9 +1545,9 @@ class sde_import(osv.osv_memory):
         return True
 
     # =============================================================================================================== #
-    #                                             PPL (Pre-Packing List)                                              #
+    #                                       PACK ONLY: PPL (Pre-Packing List)                                         #
     # =============================================================================================================== #
-    def wizard_sde_ppl_import(self, cr, uid, ids, context=None):
+    def wizard_sde_pack_only_import(self, cr, uid, ids, context=None):
         '''
         Method to use instead of the JSONRPC to set a banner message on PPL
         '''
@@ -1555,9 +1555,9 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_ppl_actions(cr, uid, ids, 'ppl_import', context=context)
+        return self.wizard_sde_pack_only_actions(cr, uid, ids, 'pack_only_import', context=context)
 
-    def wizard_sde_ppl_remove_msg(self, cr, uid, ids, context=None):
+    def wizard_sde_pack_only_remove_msg(self, cr, uid, ids, context=None):
         '''
         Method to use instead of the JSONRPC to remove a banner message on PPLs
         '''
@@ -1565,9 +1565,9 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_ppl_actions(cr, uid, ids, 'remove_banner_msg', context=context)
+        return self.wizard_sde_pack_only_actions(cr, uid, ids, 'remove_banner_msg', context=context)
 
-    def wizard_sde_ppl_export(self, cr, uid, ids, context=None):
+    def wizard_sde_pack_only_export(self, cr, uid, ids, context=None):
         '''
         Method to use instead of the JSONRPC to export PPL
         '''
@@ -1575,9 +1575,9 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_ppl_actions(cr, uid, ids, 'ppl_export', context=context)
+        return self.wizard_sde_pack_only_actions(cr, uid, ids, 'pack_only_export', context=context)
 
-    def wizard_sde_ppl_export_lines(self, cr, uid, ids, context=None):
+    def wizard_sde_pack_only_export_lines(self, cr, uid, ids, context=None):
         '''
         Method to use instead of the JSONRPC to export PPLs with lines
         '''
@@ -1585,7 +1585,7 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_ppl_actions(cr, uid, ids, 'ppl_export_lines', context=context)
+        return self.wizard_sde_pack_only_actions(cr, uid, ids, 'pack_only_export_lines', context=context)
 
     def wizard_sde_pack_types_export(self, cr, uid, ids, context=None):
         '''
@@ -1595,9 +1595,9 @@ class sde_import(osv.osv_memory):
             context = {}
         if not ids:
             return True
-        return self.wizard_sde_ppl_actions(cr, uid, ids, 'pack_types_export', context=context)
+        return self.wizard_sde_pack_only_actions(cr, uid, ids, 'pack_types_export', context=context)
 
-    def wizard_sde_ppl_actions(self, cr, uid, ids, action, context=None):
+    def wizard_sde_pack_only_actions(self, cr, uid, ids, action, context=None):
         '''
         Method to use instead of the JSONRPC
         '''
@@ -1611,21 +1611,21 @@ class sde_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('No JSON data to use'))
 
         result = []
-        if action == 'ppl_import':
-            result = self.sde_ppl_import(cr, uid, sde_imp['json_text'], context=context)
+        if action == 'pack_only_import':
+            result = self.sde_pack_only_import(cr, uid, sde_imp['json_text'], context=context)
         elif action == 'remove_banner_msg':
             result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'ppl', True, context=context)
-        elif action == 'ppl_export':
+        elif action == 'pack_only_export':
             result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'ppl', with_lines=False, context=context)
-        elif action == 'ppl_export_lines':
+        elif action == 'pack_only_export_lines':
             result = self.sde_stock_picking_export(cr, uid, sde_imp['json_text'], 'out', 'ppl', with_lines=True, context=context)
         elif action == 'pack_types_export':
             result = self.sde_pack_types_export(cr, uid, sde_imp['json_text'], context=context)
 
         return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
 
-    @jsonrpc_orm_exposed('sde.import', 'sde_ppl_import')
-    def sde_ppl_import(self, cr, uid, json_text, context=None):
+    @jsonrpc_orm_exposed('sde.import', 'sde_pack_only_import')
+    def sde_pack_only_import(self, cr, uid, json_text, context=None):
         '''
         Method used by the SDE script to import JSON data.
         A pagination system has been added to the import to allow users to import several JSONs for the same document
@@ -1766,8 +1766,8 @@ class sde_import(osv.osv_memory):
 
         return result
 
-    @jsonrpc_orm_exposed('sde.import', 'sde_ppl_remove_msg')
-    def sde_ppl_remove_msg(self, cr, uid, json_text, context=None):
+    @jsonrpc_orm_exposed('sde.import', 'sde_pack_only_remove_msg')
+    def sde_pack_only_remove_msg(self, cr, uid, json_text, context=None):
         '''
         Method used by the SDE script to remove a 'SDE is updating' message on a list of PPLs
         '''
@@ -1776,8 +1776,8 @@ class sde_import(osv.osv_memory):
 
         return self.sde_stock_picking_msg(cr, uid, json_text, 'ppl', True, context=context)
 
-    @jsonrpc_orm_exposed('sde.import', 'sde_ppl_export_lines')
-    def sde_ppl_export_lines(self, cr, uid, json_text, context=None):
+    @jsonrpc_orm_exposed('sde.import', 'sde_pack_only_export_lines')
+    def sde_pack_only_export_lines(self, cr, uid, json_text, context=None):
         '''
         Method used by the SDE script to export info on PPLs with lines
         '''
@@ -1786,8 +1786,8 @@ class sde_import(osv.osv_memory):
 
         return self.sde_stock_picking_export(cr, uid, json_text, 'out', 'ppl', with_lines=True, context=context)
 
-    @jsonrpc_orm_exposed('sde.import', 'sde_ppl_export')
-    def sde_ppl_export(self, cr, uid, json_text, context=None):
+    @jsonrpc_orm_exposed('sde.import', 'sde_pack_only_export')
+    def sde_pack_only_export(self, cr, uid, json_text, context=None):
         '''
         Method used by the SDE script to export info on PPLs
         '''
@@ -1851,7 +1851,7 @@ class sde_import(osv.osv_memory):
 
         return result
 
-    def get_ppl_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
+    def get_pack_only_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
         """
         Get info from PPLs, its latest Track Change, info from their moves when needed and the existing Pack Types
         """
@@ -1934,7 +1934,7 @@ class sde_import(osv.osv_memory):
 
         return cr.fetchall()
 
-    def create_ppl_paginated_export(self, cr, uid, ids, pagi_ref, page, last_page, offset, limit, with_lines=False, context=None):
+    def create_pack_only_paginated_export(self, cr, uid, ids, pagi_ref, page, last_page, offset, limit, with_lines=False, context=None):
         '''
         Method to be used in the background to create the paginated exports beyond page 1
         '''
@@ -1945,7 +1945,7 @@ class sde_import(osv.osv_memory):
 
         data, pack_types_data = {}, {}
         shipper_data = self.get_shipper_data(new_cr, uid, context=context)
-        for ppl in self.get_ppl_export_data(new_cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
+        for ppl in self.get_pack_only_export_data(new_cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
             if not data.get(ppl[0]):
                 partner_data = [ppl[8], _('Supply Responsible')]
                 address_data = []
@@ -2303,9 +2303,9 @@ class sde_import(osv.osv_memory):
                                     'state': out[37] and MOVE_STATE[out[37]] or '',
                                 })
                     elif pick_type == 'out' and pick_subtype == 'ppl':
-                        threaded_method = self.create_ppl_paginated_export
+                        threaded_method = self.create_pack_only_paginated_export
                         shipper_data = self.get_shipper_data(cr, uid, context=context)
-                        for ppl in self.get_ppl_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
+                        for ppl in self.get_pack_only_export_data(cr, uid, pick_ids, offset, lines_per_page, with_lines=with_lines, context=context):
                             if not data.get(ppl[0]):
                                 partner_data = [ppl[8], _('Supply Responsible')]
                                 address_data = []

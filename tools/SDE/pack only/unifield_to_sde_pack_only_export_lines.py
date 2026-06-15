@@ -63,7 +63,7 @@ if not user_id:
 result = {}
 try:
     # import with a timeout of 240s
-    result = json_rpc(url_object, "execute", [dbname, user_id, password, 'sde.import', 'sde_ppl_import', sys.argv[1], lang_context], 240)
+    result = json_rpc(url_object, "execute", [dbname, user_id, password, 'sde.import', 'sde_pack_only_export_lines', sys.argv[1], lang_context], 240)
 except Exception as e:
     result = {'error': True, 'message': e}
 finally:
