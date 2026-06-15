@@ -550,14 +550,16 @@
             <field name="priority">17</field>
             <field name="arch" type="xml">
                 <search string="Stock Locations">
-                    <filter icon="terp-go-home" name="in_location"
-                        string="Internal" domain="[('usage', '=', 'internal')]" help="Internal Locations" />
-                    <filter icon="terp-personal" name="customer"
-                        string="Customer" domain="[('usage', '=', 'customer')]" help="Customer Locations" />
-                    <filter icon="terp-personal" name="supplier"
-                        string="Supplier" domain="[('usage', '=', 'supplier')]" help="Supplier Locations" />
+                    <filter icon="terp-go-home" name="in_location" string="Internal" domain="[('usage', '=', 'internal')]" help="Internal Locations" />
+                    <filter icon="terp-personal" name="customer" string="Customer" domain="[('usage', '=', 'customer')]" help="Customer Locations" />
+                    <filter icon="terp-personal" name="supplier" string="Supplier" domain="[('usage', '=', 'supplier')]" help="Supplier Locations" />
                     <separator orientation="vertical"/>
                     <field name="name"/>
+                    <separator orientation="vertical" />
+                    <group name="display_active_filter" invisible="1">
+                        <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
+                        <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
+                    </group>
                 </search>
             </field>
         </record>
