@@ -60,6 +60,16 @@
         <Font ss:Size="10"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
+    <Style ss:ID="line_right_price0">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="10"/>
+    </Style>
     <Style ss:ID="line_left1">
         <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <Borders>
@@ -82,6 +92,17 @@
         <Font ss:Size="10"/>
         <Interior ss:Color="#dddddd" ss:Pattern="Solid"/>
         <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="line_right_price1">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="10"/>
+        <Interior ss:Color="#dddddd" ss:Pattern="Solid"/>
     </Style>
      <Style ss:ID="line_center">
         <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
@@ -228,9 +249,9 @@
                 % endif
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.origin|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getFirstSplitOnUnderscore(o.purchase_line_id.sync_order_line_db_id) or getFirstSplitOnUnderscore(o.sale_line_id.sync_order_line_db_id) or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${computeCurrency(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_price${i}"><Data ss:Type="Number">${computeCurrency(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getUserCompany()['currency_id'].name|x}</Data></Cell>
-                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${computeCurrency(o) * getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_price${i}"><Data ss:Type="Number">${computeCurrency(o) * getQty(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getSel(o, 'status')|x}</Data></Cell>
             </Row>
             % endfor
