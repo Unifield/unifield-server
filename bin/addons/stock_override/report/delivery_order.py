@@ -30,6 +30,7 @@ class delivery_order(report_sxw.rml_parse):
             'time': time,
             'get_selec': self.get_selection,
             'get_address': self.get_address,
+            'getStock': self.get_qty_available,
             'get_state': self.get_state,
         })
 
@@ -68,6 +69,27 @@ class delivery_order(report_sxw.rml_parse):
             'received': _('Received'),
         }
         return states.get(state, '')
+
+    def get_qty_available(self, move=False):
+        """
+        Get the available quantity for a move, with the product id and the info put in the context
+        """
+        context = {}
+
+        if not move:
+            return 0.00
+
+        if move.location_id:
+            context = {
+                'location': move.location_id.id,
+                'location_id': move.location_id.id,
+                'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
+            }
+
+        prod = self.pool.get('product.product').read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=context)
+        qty_available = prod and prod['qty_available'] or 0.00
+
+        return qty_available
 
 report_sxw.report_sxw('report.delivery.order','stock.picking','addons/stock_override/report/delivery_order.rml',parser=delivery_order, header=False)
 
