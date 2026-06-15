@@ -15,7 +15,8 @@
         % endif
 
         <% hidden_dict = dict(hidden_selection) %>
-        % if value in hidden_dict:
+        <% options_dict = dict(options) %>
+        % if value in hidden_dict and value not in options_dict:
             <option value="${value or ''}" selected="selected">${hidden_dict[value]}</option>
         % endif
 
