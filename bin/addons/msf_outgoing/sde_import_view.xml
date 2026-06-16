@@ -74,11 +74,12 @@
                     <button name="wizard_sde_out_export" string="Export OUTs" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_out_export_lines" string="Export OUTs with lines" icon="gtk-execute" type="object" colspan="2" />
                     <separator colspan="4" string="PACK ONLY Tools" />
-                    <button name="wizard_sde_pack_only_import" string="Import PPL" icon="gtk-execute" type="object" colspan="2" />
+                    <button name="wizard_sde_pack_only_msg" string="Set banner on PPLs" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_pack_only_remove_msg" string="Remove banner on PPLs" icon="gtk-execute" type="object" colspan="2" />
+                    <button name="wizard_sde_pack_only_import" string="Import PPL" icon="gtk-execute" type="object" colspan="2" />
+                    <button name="wizard_sde_pack_types_export" string="Export Pack Types" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_pack_only_export" string="Export PPLs" icon="gtk-execute" type="object" colspan="2" />
                     <button name="wizard_sde_pack_only_export_lines" string="Export PPLs with lines" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_pack_types_export" string="Export Pack Types" icon="gtk-execute" type="object" colspan="2" />
                     <separator colspan="4" string="Report Actions" />
                     <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="4" context="{'from_sde_wizard': True}" />
                 </form>

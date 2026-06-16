@@ -169,7 +169,10 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 'imp_from_pack': line.get('from_pack', False),
                 'imp_to_pack': line.get('to_pack', False),
                 'imp_weight': line.get('weight', False),
-                'imp_pack_type': False,  # Not modifiable by SDE import
+                'imp_pack_type': line.get('pack_type', False),
+                'imp_width': line.get('width', False),
+                'imp_length': line.get('length', False),
+                'imp_height': line.get('height', False),
             })
 
         return line_data
@@ -205,6 +208,9 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     'imp_to_pack': row.cells[12] and row.cells[12].data or False,
                     'imp_weight': row.cells[13] and row.cells[13].data or False,
                     'imp_pack_type': row.cells[15] and row.cells[15].data or False,
+                    'imp_width': False,  # Not used by manual import
+                    'imp_height': False,  # Not used by manual import
+                    'imp_length': False  # Not used by manual import
                 })
             except Exception as e:
                 errors += _('Line %s in the Excel file: %s\n') % (line_num, e)
@@ -246,6 +252,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         sum_qty = {}
         complete_lines, lines_to_correct = 0, 0
         line_num = 0
+        # List of lines treated
+        treated_lines = []
         try:
             picking = wiz_browse.picking_id
 
@@ -275,8 +283,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
             percent_completed = 0
             total_line_num = len(line_data)
-            # List of lines treated
-            treated_lines = []
             for i, line in enumerate(line_data):
                 line_num += 1
                 # default values
@@ -411,21 +417,48 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             'weight': line['imp_weight'],
                         })
                     elif line.get('imp_weight') and not isinstance(line['imp_weight'], int) and not isinstance(line['imp_weight'], float):
-                        line_errors.append(_(' Weight per pack has to be an float.'))
+                        line_errors.append(_(' Weight per pack has to be a float.'))
 
                     # pack type + width, length & height
                     pack_type_name = False
-                    if not wiz_browse.json_text and line.get('imp_pack_type'):
-                        pack_type_ids = pack_type_obj.search(cr, uid, [('name', '=', tools.ustr(line['imp_pack_type']))])
-                        if pack_type_ids:
-                            # Taking the last id because LOOKUP in Excel will choose the last item in a list with same names
-                            pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[-1])
-                            pack_type_name = pack_type.name
-                            to_update.update({
-                                'pack_type': pack_type
-                            })
-                        else:
-                            line_errors.append(_(' This Pack Type doesn\'t exists.'))
+                    if line.get('imp_pack_type'):
+                        pack_type_domain = [('name', '=', tools.ustr(line['imp_pack_type']))]
+                        wlh_errors = False
+                        width = line.get('imp_width', 0)
+                        length = line.get('imp_length', 0)
+                        height = line.get('imp_height', 0)
+                        if wiz_browse.json_text:
+                            try:
+                                width = float(width)
+                            except Exception as e:
+                                line_errors.append(_(' Width has to be a float.'))
+                                wlh_errors = True
+                            try:
+                                length = float(length)
+                            except Exception as e:
+                                line_errors.append(_(' Length has to be a float.'))
+                                wlh_errors = True
+                            try:
+                                height = float(height)
+                            except Exception as e:
+                                line_errors.append(_(' Height has to be a float.'))
+                                wlh_errors = True
+                            pack_type_domain.extend([('width', '=', width), ('length', '=', length), ('height', '=', height)])
+                        if not wlh_errors:
+                            pack_type_ids = pack_type_obj.search(cr, uid, pack_type_domain, context=context)
+                            if pack_type_ids:
+                                # Taking the last id because LOOKUP in Excel will choose the last item in a list with same names
+                                pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[-1])
+                                pack_type_name = pack_type.name
+                                to_update.update({
+                                    'pack_type': pack_type
+                                })
+                            else:
+                                if wiz_browse.json_text:
+                                    line_errors.append(_(' The Pack Type with the name %s, the width %s, the length %s and the height %s doesn\'t exist.')
+                                                       % (line['imp_pack_type'], width, length, height))
+                                else:
+                                    line_errors.append(_(' This Pack Type doesn\'t exist.'))
                     # List to display an error if two of more sequences have different pack types
                     if to_update.get('from_pack') and to_update.get('to_pack'):
                         current_seq = '%s-%s' % (to_update['from_pack'], to_update['to_pack'])
@@ -509,6 +542,15 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     qty_errors = _('Quantities errors : ') + qty_errors
                 else:
                     qty_errors = _('Quantities errors : \n') + qty_errors
+
+            # Reject the SDE import if all lines have not been imported
+            if context.get('sde_flow') and not error_log and not from_to_pack_errors and not qty_errors:
+                cr.execute("""SELECT DISTINCT(line_number) FROM stock_move WHERE picking_id = %s AND id NOT IN %s"""
+                           , (wiz_browse.picking_id.id, tuple(treated_lines)))
+                missing_lines = [str(x[0]) for x in cr.fetchall()]
+                if missing_lines:
+                    error_log = _("Reported errors : The line(s) %s are missing from the SDE import. Please ensure that all lines of the PPL are in the SDE import or it will be rejected.")\
+                                % (', '.join(missing_lines))
 
             if not error_log and not from_to_pack_errors and not qty_errors:
                 for data in updated_data:

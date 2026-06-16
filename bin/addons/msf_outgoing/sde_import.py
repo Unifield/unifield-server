@@ -488,7 +488,7 @@ class sde_import(osv.osv_memory):
     # =============================================================================================================== #
     def wizard_sde_picking_ticket_import(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the JSONRPC to set a banner message on Picking Tickets
+        Method to use instead of the JSONRPC to import on a Picking Tickets
         '''
         if context is None:
             context = {}
@@ -958,7 +958,7 @@ class sde_import(osv.osv_memory):
     # =============================================================================================================== #
     def wizard_sde_out_import(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the JSONRPC to set a banner message on OUTs
+        Method to use instead of the JSONRPC to import on an OUT
         '''
         if context is None:
             context = {}
@@ -1549,13 +1549,23 @@ class sde_import(osv.osv_memory):
     # =============================================================================================================== #
     def wizard_sde_pack_only_import(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the JSONRPC to set a banner message on PPL
+        Method to use instead of the JSONRPC to import on a PPL
         '''
         if context is None:
             context = {}
         if not ids:
             return True
         return self.wizard_sde_pack_only_actions(cr, uid, ids, 'pack_only_import', context=context)
+
+    def wizard_sde_pack_only_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on PPLs
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_pack_only_actions(cr, uid, ids, 'banner_msg', context=context)
 
     def wizard_sde_pack_only_remove_msg(self, cr, uid, ids, context=None):
         '''
@@ -1613,6 +1623,8 @@ class sde_import(osv.osv_memory):
         result = []
         if action == 'pack_only_import':
             result = self.sde_pack_only_import(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'banner_msg':
+            result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'ppl', False, context=context)
         elif action == 'remove_banner_msg':
             result = self.sde_stock_picking_msg(cr, uid, sde_imp['json_text'], 'ppl', True, context=context)
         elif action == 'pack_only_export':
@@ -1766,6 +1778,16 @@ class sde_import(osv.osv_memory):
 
         return result
 
+    @jsonrpc_orm_exposed('sde.import', 'sde_pack_only_msg')
+    def sde_pack_only_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to set a 'SDE is updating' message on a list of PPLs
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_stock_picking_msg(cr, uid, json_text, 'ppl', False, context=context)
+
     @jsonrpc_orm_exposed('sde.import', 'sde_pack_only_remove_msg')
     def sde_pack_only_remove_msg(self, cr, uid, json_text, context=None):
         '''
@@ -1800,6 +1822,7 @@ class sde_import(osv.osv_memory):
     def sde_pack_types_export(self, cr, uid, json_text, context=None):
         """
         Method used by the SDE script to export info on Pack Types
+        Group the data to prevent exporting exact duplicates
         """
         if context is None:
             context = {}
@@ -1825,11 +1848,22 @@ class sde_import(osv.osv_memory):
                 except:
                     raise osv.except_osv(_('Error'),  _('One or more of the names in the key "pack_types" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
                 ptype_names = json_data['pack_types']
-                cr.execute("""SELECT name, width, length, height FROM pack_type WHERE name ILIKE ANY(%s)""", (ptype_names,))
+                cr.execute("""
+                    SELECT pt.name, pt.width, pt.length, pt.height, MAX(a.log), MAX(a.timestamp)
+                    FROM pack_type pt
+                    LEFT JOIN audittrail_log_line a ON pt.id = a.res_id AND a.object_id = (SELECT id FROM ir_model WHERE model = 'pack.type' LIMIT 1)
+                    WHERE pt.name ILIKE ANY(%s) GROUP BY pt.name, pt.width, pt.length, pt.height
+                """, (ptype_names,))
             else:
-                cr.execute("""SELECT name, width, length, height FROM pack_type""")
+                cr.execute("""
+                    SELECT pt.name, pt.width, pt.length, pt.height, MAX(a.log), MAX(a.timestamp)
+                    FROM pack_type pt
+                    LEFT JOIN audittrail_log_line a ON pt.id = a.res_id AND a.object_id = (SELECT id FROM ir_model WHERE model = 'pack.type' LIMIT 1)
+                    GROUP BY pt.name, pt.width, pt.length, pt.height
+                """)
             for x in cr.fetchall():
-                ptype_data.update({x[0]: {'width': x[1], 'length': x[2], 'height': x[3]}})
+                ptype_data.update({x[0]: {'width': x[1], 'length': x[2], 'height': x[3],'latest_log': x[4] or '',
+                                          'latest_log_date': x[5] or ''}})
 
             if not ptype_data:
                 with_names = ''
@@ -1861,26 +1895,26 @@ class sde_import(osv.osv_memory):
         sql_lines_col, sql_lines_join, sql_lines_group, sql_lines_order = '', '', '', ''
         if with_lines:  # Additional data for the lines
             sql_lines_col = """,
-                m.id, -- 18
-                m.line_number, -- 19
-                pp.default_code, -- 20
-                pt.name, -- 21
-                pis.name, -- 22
-                pno.name, -- 23
-                m.comment, -- 24
-                m.product_qty, -- 25
-                lot.name, -- 26
-                m.expired_date, -- 27
-                pcc.cold_chain, -- 28 kc_check
-                pp.dangerous_goods, -- 29 dg_check
-                pp.controlled_substance, -- 30 np_check
-                m.from_pack, -- 31
-                m.to_pack, -- 32
-                m.weight, -- 33
+                m.id, -- 17
+                m.line_number, -- 18
+                pp.default_code, -- 9
+                pt.name, -- 20
+                pis.name, -- 21
+                pno.name, -- 22
+                m.comment, -- 23
+                m.product_qty, -- 24
+                lot.name, -- 25
+                m.expired_date, -- 26
+                pcc.cold_chain, -- 27 kc_check
+                pp.dangerous_goods, -- 28 dg_check
+                pp.controlled_substance, -- 29 np_check
+                m.from_pack, -- 30
+                m.to_pack, -- 31
+                m.weight, -- 32
+                ptype.name, -- 33
                 m.width, -- 34
                 m.length, -- 35
-                m.height, -- 36
-                ptype.name -- 37
+                m.height -- 36
             """
             sql_lines_join = """
                 LEFT JOIN product_product pp ON m.product_id = pp.id
@@ -1911,10 +1945,9 @@ class sde_import(osv.osv_memory):
                 co.name, -- 11
                 addr.phone, -- 12
                 dl.name, -- 13
-                COUNT(DISTINCT(m.line_number)), -- 14
-                p.sde_updated, -- 15
-                MAX(a.log), -- 16
-                MAX(a.timestamp) -- 17
+                p.sde_updated, -- 14
+                MAX(a.log), -- 15
+                MAX(a.timestamp) -- 16
                 """ + sql_lines_col + """
             FROM stock_move m
                 LEFT JOIN stock_picking p ON m.picking_id = p.id
@@ -1971,33 +2004,34 @@ class sde_import(osv.osv_memory):
                     'shipper_address': shipper_data and '; '.join(shipper_data) or '',
                     'consignee_address': partner_data and '; '.join(partner_data) or '',
                     'destination_location': ppl[13] or '',
-                    'total_items': ppl[14] or 0,
-                    'updated_by_sde': ppl[15] or False,
-                    'latest_log': ppl[16] or '',
-                    'latest_log_date': ppl[17] or '',
+                    'updated_by_sde': ppl[14] or False,
+                    'latest_log': ppl[15] or '',
+                    'latest_log_date': ppl[16] or '',
                 }
 
-            if with_lines and len(ppl) > 18:
+            if with_lines and len(ppl) > 17:
                 if 'move_lines' not in data[ppl[0]]:
                     data[ppl[0]]['move_lines'] = []
                 data[ppl[0]]['move_lines'].append({
-                    'line_number': ppl[19],
-                    'product_code': ppl[20],
-                    'product_name': ppl[21],
-                    'product_creator': ppl[22],
-                    'nomen_main_type': ppl[23],
-                    'comment': ppl[24] or '',
-                    'product_qty': ppl[25] or 0,
-                    'prodlot_id': ppl[26] or '',
-                    'expired_date': ppl[27] or '',
-                    'kc_check': ppl[28] or False,
-                    'dg_check': ppl[29] == 'True' and _('True') or ppl[29] == 'no_know' and _('Unknown') or _('False'),
-                    'np_check': ppl[30] or False,
-                    'from_pack': ppl[31] or 0,
-                    'to_pack': ppl[32] or 0,
-                    'weight': ppl[33] or 0,
-                    'size': 'x'.join([str(ppl[34] or 0), str(ppl[35] or 0), str(ppl[36] or 0)]) or '',
-                    'pack_type': ppl[37] or '',
+                    'line_number': ppl[18],
+                    'product_code': ppl[19],
+                    'product_name': ppl[20],
+                    'product_creator': ppl[21],
+                    'nomen_main_type': ppl[22],
+                    'comment': ppl[23] or '',
+                    'product_qty': ppl[24] or 0,
+                    'prodlot_id': ppl[25] or '',
+                    'expired_date': ppl[26] or '',
+                    'kc_check': ppl[27] or False,
+                    'dg_check': ppl[28] == 'True' and _('True') or ppl[28] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': ppl[29] or False,
+                    'from_pack': ppl[30] or 0,
+                    'to_pack': ppl[31] or 0,
+                    'weight': ppl[32] or 0.00,
+                    'pack_type': ppl[33] or '',
+                    'width': ppl[34] or 0.00,
+                    'length': ppl[35] or 0.00,
+                    'height': ppl[36] or 0.00,
                 })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'ppl',
@@ -2044,7 +2078,8 @@ class sde_import(osv.osv_memory):
             data[key]['product_qty'] += x[3]
         for key in data:
             move_vals = {'product_qty': data[key]['product_qty'], 'product_uos_qty': data[key]['product_qty'],
-                         'from_pack': 1, 'to_pack': 1}
+                         'from_pack': 1, 'to_pack': 1, 'weight': False, 'pack_type': False, 'width': False,
+                         'length': False, 'height': False}
             move_obj.write(cr, uid, data[key]['master'], move_vals, context=context)
         move_obj.unlink(cr, uid, to_del, force=True, context=context)
 
@@ -2218,12 +2253,6 @@ class sde_import(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('There is no %s %s to export')
                                              % ('/'.join([PICKING_STATE[state] for state in states]), doc))
 
-                    # Set sde_update_msg on all exported PPLs
-                    if pick_type == 'out' and pick_subtype == 'ppl':
-                        update_msg = _('This %s is currently being updated via SDE since %s, please avoid making any direct change in UniField') \
-                                     % (doc, datetime.now().strftime('%d/%m/%Y %H:%M'),)
-                        pick_obj.write(cr, uid, pick_ids, {'sde_update_msg': update_msg}, context=context)
-
                     # Default number of lines per page is 100 if not specified
                     lines_per_page = 100
                     if json_data.get('lines_per_page'):
@@ -2331,33 +2360,34 @@ class sde_import(osv.osv_memory):
                                     'shipper_address': shipper_data and '; '.join(shipper_data) or '',
                                     'consignee_address': partner_data and '; '.join(partner_data) or '',
                                     'destination_location': ppl[13] or '',
-                                    'total_items': ppl[14] or 0,
-                                    'updated_by_sde': ppl[15] or False,
-                                    'latest_log': ppl[16] or '',
-                                    'latest_log_date': ppl[17] or '',
+                                    'updated_by_sde': ppl[14] or False,
+                                    'latest_log': ppl[15] or '',
+                                    'latest_log_date': ppl[16] or '',
                                 }
 
-                            if with_lines and len(ppl) > 18:
+                            if with_lines and len(ppl) > 17:
                                 if 'move_lines' not in data[ppl[0]]:
                                     data[ppl[0]]['move_lines'] = []
                                 data[ppl[0]]['move_lines'].append({
-                                    'line_number': ppl[19],
-                                    'product_code': ppl[20],
-                                    'product_name': ppl[21],
-                                    'product_creator': ppl[22],
-                                    'nomen_main_type': ppl[23],
-                                    'comment': ppl[24] or '',
-                                    'product_qty': ppl[25] or 0,
-                                    'prodlot_id': ppl[26] or '',
-                                    'expired_date': ppl[27] or '',
-                                    'kc_check': ppl[28] or False,
-                                    'dg_check': ppl[29] == 'True' and _('True') or ppl[29] == 'no_know' and _('Unknown') or _('False'),
-                                    'np_check': ppl[30] or False,
-                                    'from_pack': ppl[31] or 0,
-                                    'to_pack': ppl[32] or 0,
-                                    'weight': ppl[33] or 0,
-                                    'size': 'x'.join([str(ppl[34] or 0), str(ppl[35] or 0), str(ppl[36] or 0)]) or '',
-                                    'pack_type': ppl[37] or '',
+                                    'line_number': ppl[18],
+                                    'product_code': ppl[19],
+                                    'product_name': ppl[20],
+                                    'product_creator': ppl[21],
+                                    'nomen_main_type': ppl[22],
+                                    'comment': ppl[23] or '',
+                                    'product_qty': ppl[24] or 0,
+                                    'prodlot_id': ppl[25] or '',
+                                    'expired_date': ppl[26] or '',
+                                    'kc_check': ppl[27] or False,
+                                    'dg_check': ppl[28] == 'True' and _('True') or ppl[28] == 'no_know' and _('Unknown') or _('False'),
+                                    'np_check': ppl[29] or False,
+                                    'from_pack': ppl[30] or 0,
+                                    'to_pack': ppl[31] or 0,
+                                    'weight': ppl[32] or 0.00,
+                                    'pack_type': ppl[33] or '',
+                                    'width': ppl[34] or 0.00,
+                                    'length': ppl[35] or 0.00,
+                                    'height': ppl[36] or 0.00,
                                 })
                     else:
                         threaded_method = self.create_picking_ticket_paginated_export
