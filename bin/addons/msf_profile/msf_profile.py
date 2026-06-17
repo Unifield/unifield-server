@@ -205,6 +205,12 @@ class patch_scripts(osv.osv):
                       tuple([int_rt_id, ret_rt_id, ext_rt_id, other_rt_id, kit_rt_id, stock_init_rt_id]), inv_loss_loc_id))
                 self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Loss / Expiry"' % (cr.rowcount,))
 
+                # Source "Inventory loss & profit", destination Exp/Dam/Scrap, RT Other: RT Discrepancy
+                cr.execute("""
+                    UPDATE stock_move SET reason_type_id = %s WHERE reason_type_id = %s AND location_id = %s AND location_dest_id = %s
+                """, (discr_rt_id, other_rt_id, inv_loss_loc_id, exp_dam_scrap_loc_id))
+                self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Discrepancy"' % (cr.rowcount,))
+
                 # Source Quarantine (analyze), destination Exp/Dam/Scrap, RT Internal Move, BN/ED < move Date: RT Loss / Damage
                 cr.execute("""
                     UPDATE stock_move SET reason_type_id = %s
