@@ -1342,9 +1342,11 @@ class claim_event(osv.osv):
         picking_tools.confirm(cr, uid, event_picking.id, context=context)
         # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
         picking_tools.check_assign(cr, uid, event_picking.id, context=context)
-        # update the destination location for each move
+        # update the destination location and reason type for each move
+        int_move_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
         move_ids = [move.id for move in event_picking.move_lines]
-        move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_anal']}, context=context)
+        move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_anal'],
+                                           'reason_type_id': int_move_id}, context=context)
         # validate the event picking if not from picking wizard
         if not obj.from_picking_wizard_claim_event and not obj.replacement_picking_expected_claim_event:
             self._validate_picking(cr, uid, event_picking.id, context=context)
@@ -1352,7 +1354,6 @@ class claim_event(osv.osv):
         self._process_replacement(cr, uid, obj, event_picking, context=context)
 
         # change the reason type of the picking to Internal Move
-        int_move_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
         pick_obj.write(cr, uid, [event_picking.id], ({'reason_type_id': int_move_id}), context=context)
 
         context.update({'keep_prodlot': False, 'keepPoLine': False})
