@@ -481,7 +481,10 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
                     # update move line on picking
                     if to_update['error_list']:
-                        error_list += [_('Line %s:') % (line_num,)] + to_update['error_list']
+                        if wiz_browse.json_text and imp_line_num:
+                            error_list += [_('Line number %s:') % (imp_line_num,)] + to_update['error_list']
+                        else:
+                            error_list += [_('Line %s:') % (line_num,)] + to_update['error_list']
                         if wiz_browse.json_text:
                             error_list += [' ']
                         else:
