@@ -558,8 +558,10 @@ class actions_server(osv.osv):
         'loop_action':fields.many2one('ir.actions.server', 'Loop Action', help="Select the action that will be executed. Loop action will not be avaliable inside loop."),
         'expression':fields.char('Loop Expression', size=512, help="Enter the field/expression that will return the list. E.g. select the sale order in Object, and you can have loop on the sales order line. Expression = `object.order_line`."),
         'copy_object': fields.reference('Copy Of', selection=_select_objects, size=256),
+        'context': fields.char('Context Value', size=512),
     }
     _defaults = {
+        'context': False,
         'state': lambda *a: 'dummy',
         'condition': lambda *a: 'True',
         'type': lambda *a: 'ir.actions.server',

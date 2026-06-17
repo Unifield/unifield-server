@@ -91,28 +91,45 @@
             </field>
         </record>
 
-    <!-- Actions -->
-        <act_window id="analytic_distribution.action_mass_reallocation"
-            name="Mass reallocation"
-            res_model="mass.reallocation.wizard"
-            src_model="account.analytic.line"
-            key2="client_action_multi"
-            view_mode="form"
-            view_type="form"
-            context="{'analytic_account_from': context.get('analytic_account_from', False) }"
-            view_ids="account.view_account_analytic_line_form,account.view_account_analytic_line_tree,account_mcdb.account_analytic_line_mcdb_search_result"
-            target="new"/>
+        <!-- Actions -->
+        <record id="action_open_mass_reallocation" model="ir.actions.server">
+            <field name="name">Mass reallocation</field>
+            <field name="model_id" ref="analytic_distribution.model_mass_reallocation_wizard"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_wizard(context=context)</field>
+            <field name="context">{'analytic_account_from': context.get('analytic_account_from', False)}</field>
+        </record>
 
-        <act_window id="analytic_distribution.action_mass_reallocation_search"
-            name="Mass reallocation - All search results"
-            res_model="mass.reallocation.wizard"
-            src_model="account.analytic.line"
-            key2="client_action_multi"
-            view_mode="form"
-            view_type="form"
-            view_ids="account.view_account_analytic_line_form,account.view_account_analytic_line_tree,account_mcdb.account_analytic_line_mcdb_search_result"
-            context="{'all_search': True, 'search_domain': search_domain, 'analytic_account_from': context.get('analytic_account_from', False) }"
-            target="new"/>
+        <record id="analytic_distribution.action_mass_reallocation2" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.analytic.line</field>
+            <field name="name">Mass reallocation</field>
+            <field eval="'ir.actions.server,%d'%action_open_mass_reallocation" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="target">current</field>
+            <field name="view_ids">account.view_account_analytic_line_form,account.view_account_analytic_line_tree,account_mcdb.account_analytic_line_mcdb_search_result</field>
+            <field name="sequence" eval="5"/>
+        </record>
+
+        <record id="action_open_mass_reallocation_search" model="ir.actions.server">
+            <field name="name">Mass reallocation - All search results</field>
+            <field name="model_id" ref="analytic_distribution.model_mass_reallocation_wizard"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_wizard(context=context)</field>
+            <field name="context">{'all_search': True, 'search_domain': search_domain, 'analytic_account_from': context.get('analytic_account_from', False)}</field>
+        </record>
+
+        <record id="analytic_distribution.action_mass_reallocation_search2" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.analytic.line</field>
+            <field name="name">Mass reallocation - All search results</field>
+            <field eval="'ir.actions.server,%d'%action_open_mass_reallocation_search" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="target">current</field>
+            <field name="view_ids">account.view_account_analytic_line_form,account.view_account_analytic_line_tree,account_mcdb.account_analytic_line_mcdb_search_result</field>
+            <field name="sequence" eval="10"/>
+        </record>
+
 
     <!-- Account move line search view -->
         <record id="mcdb_view_account_move_line_filter" model="ir.ui.view">

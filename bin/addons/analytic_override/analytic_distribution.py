@@ -80,34 +80,6 @@ class analytic_distribution1(osv.osv):
                     dl_obj.write(cr, uid, [dl.get('id')], dl_vals, context=context)
         return True
 
-    def update_distribution_line_account(self, cr, uid, line_ids, account_id, context=None):
-        """
-        Update account on distribution line
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        # Return False if no line_ids
-        if not account_id or not line_ids: # fix bug on UF-2205 with analytic lines that comes from INTL Engagement journal without any distribution
-            return False
-        if isinstance(line_ids, int):
-            line_ids = [line_ids]
-        # Prepare some values
-        account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context=context)[0]
-        if account.category == 'OC':
-            vals = {'cost_center_id': account_id}
-        elif account.category == 'DEST':
-            vals = {'destination_id': account_id}
-        else:
-            vals = {'analytic_id': account_id}
-        if account.category == 'FREE1':
-            obj = self.pool.get('free.1.distribution.line')
-        elif account.category == 'FREE2':
-            obj = self.pool.get('free.2.distribution.line')
-        else:
-            obj = self.pool.get('funding.pool.distribution.line')
-        return obj.write(cr, uid, line_ids, vals, context=context)
-
     def create_funding_pool_lines(self, cr, uid, ids, account_id=False, context=None):
         """
         Create funding pool lines regarding cost_center_lines from analytic distribution.

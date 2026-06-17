@@ -30,6 +30,9 @@ from lxml import etree
 import threading
 import pooler
 from msf_field_access_rights.osv_override import _get_instance_level
+from base import currency_date
+import logging
+from tools.misc import get_traceback
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -57,16 +60,24 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'error_ids': fields.many2many('account.analytic.line', 'mass_reallocation_error_rel', 'wizard_id', 'analytic_line_id', string="Errors", readonly=True),
         'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_non_supported_rel', 'wizard_id', 'analytic_line_id', string="Non supported", readonly=True),
         'process_ids': fields.many2many('account.analytic.line', 'mass_reallocation_process_rel', 'wizard_id', 'analytic_line_id', string="Allocatable", readonly=True),
+        'done_ids': fields.many2many('account.analytic.line', 'mass_reallocation_done_rel', 'wizard_id', 'analytic_line_id', string="Processed", readonly=True),
         'nb_error': fields.function(_get_total, string="Items excluded from reallocation", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_process': fields.function(_get_total, string="Allocatable items", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_done': fields.char('NB lines done', readonly=1, size=256),
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'display_fp': fields.boolean('Display FP'),
         'process_in_progress': fields.boolean('Process in progress'),
+        'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In Progress'), ('done', 'Done'), ('error', 'Error'), ('cancel', 'Cancel'), ('ack', 'ack')], string='State', readonly=True),
+        'message': fields.char(string='Message', size=256, readonly=True),
     }
 
     _defaults = {
         'display_fp': lambda *a: False,
         'process_in_progress': lambda *a: False,
+        'state': lambda *a: 'draft',
+        'percent': 0.0,
+        'nb_done': '',
+        'message': _('Processing to the Mass Reallocation...'),
     }
 
     def default_get(self, cr, uid, fields=None, context=None, from_web=False):
@@ -84,36 +95,191 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         res['display_fp'] = context.get('display_fp', False)
         return res
 
-    def process_thread(self, cr, uid, ids, context=None):
-        cr = pooler.get_db(cr.dbname).cursor()
+    def button_cancel(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'cancel', 'nb_done': '0', 'done_ids': [(6, 0, [])]}, context=None)
+        return True
+
+    def button_close(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'ack'}, context=None)
+        return {'type': 'ir.actions.act_window_close'}
+
+    def process_thread(self, dbname, uid, ids, context=None):
+        cr = pooler.get_db(dbname).cursor()
         # Browse all given wizard
+        aline_num = ''
+        aal_obj = self.pool.get('account.analytic.line')
         try:
-            for wiz in self.browse(cr, uid, ids, context=context):
-                values = {'process_in_progress': True}
-                super(mass_reallocation_verification_wizard, self).write(cr, uid, [wiz.id], values, context=context)
-                # If no supporteds_ids, raise an error
-                if not wiz.process_ids:
-                    raise osv.except_osv(_('Error'), _('No lines to be processed.'))
-                # Prepare some values
-                account_id = wiz.account_id and wiz.account_id.id
-                # Sort by distribution
-                lines = defaultdict(list)
-                for line in wiz.process_ids:
+            wiz = self.browse(cr, uid, ids[0], context=context)
+            values = {'process_in_progress': True, 'state': 'inprogress'}
+            self.write(cr, uid, [wiz.id], values, context=context)
+            # If no supporteds_ids, raise an error
+            if not wiz.process_ids:
+                raise osv.except_osv(_('Error'), _('No lines to be processed.'))
+            # Prepare some values
+            account_id = wiz.account_id and wiz.account_id.id
+            # Sort by distribution
+            lines = defaultdict(list)
+            total_nb_lines = 0
+            distrib_line_ids = set()
+            for line in wiz.process_ids:
+                if line.distribution_id:
                     lines[line.distribution_id.id].append(line)
-                # Process each distribution
-                for distrib_id in lines:
-                    # UF-2205: fix problem with lines that does not have any distribution line or distribution id (INTL engagement lines)
-                    if not distrib_id:
-                        continue
-                    for line in lines[distrib_id]:
-                        # Update distribution
-                        self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
-                    # Then update analytic line
-                    self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, wiz.date, context=context)
+                    distrib_line_ids.add(line.distrib_line_id.id)
+                    total_nb_lines += 1
+
+            date = wiz.date
+            if not date:
+                date = strftime('%Y-%m-%d')
+            # UTP-943: Check that period is open
+            correction_period_id = self.pool.get('mass.reallocation.wizard').check_period_open(cr, uid, date, context=context)
+
+            # Prepare some value
+            context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
+            move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
+
+            ir_seq_obj = self.pool.get('ir.sequence')
+
+            aaj_obj = self.pool.get('account.analytic.journal')
+            od_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, context=context)
+            if not od_analytic_journal_id:
+                raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
+
+            # sequence info from GL journal
+            aj_obj = self.pool.get('account.journal')
+            gl_correction_journal_id = aj_obj.get_correction_journal(cr, uid, context=context)
+            if not gl_correction_journal_id:
+                raise osv.except_osv(_('Error'), _('No GL journal found for corrections!'))
+            gl_correction_journal_rec = aj_obj.browse(cr, uid, gl_correction_journal_id, context=context)
+
+            if wiz.account_id.category == 'OC':
+                vals = {'cost_center_id': account_id}
+            elif wiz.account_id.category == 'DEST':
+                vals = {'destination_id': account_id}
+            else:
+                vals = {'analytic_id': account_id}
+            if wiz.account_id.category == 'FREE1':
+                obj = self.pool.get('free.1.distribution.line')
+            elif wiz.account_id.category == 'FREE2':
+                obj = self.pool.get('free.2.distribution.line')
+            else:
+                obj = self.pool.get('funding.pool.distribution.line')
+            obj.write(cr, uid, list(distrib_line_ids), vals, context=context)
+
+            is_donation = {}
+            gl_correction_odx_journal_rec = False
+            gl_correction_odhq_journal_rec = False
+            nb_done = 0
+            for distrib_id in lines:
+                done_ids = []
+                for aline in lines[distrib_id]:
+                    if self.search_exists(cr, uid, [('id', '=', wiz.id), ('state', '=', 'cancel')]):
+                        self.write(cr, uid, wiz.id, {'nb_done': '0', 'done_ids': [(6, 0, [])], 'message': _('Cancelled by user')}, context=None)
+                        return True
+                    done_ids.append((4, aline.id))
+                    aline_num = aline.entry_sequence
+                    curr_date = currency_date.get_date(self, cr, aline.document_date, aline.date, source_date=aline.source_date)
+                    if wiz.account_id.category not in ['OC', 'DEST']:
+                        # Update account
+                        aal_obj.write(cr, uid, [aline.id], {'account_id': account_id, 'ad_updated': True}, context=context)
+                    else:
+                        # Period verification
+                        period = aline.period_id
+                        # Prepare some values
+                        fieldname = 'cost_center_id'
+                        if wiz.account_id.category == 'DEST':
+                            fieldname = 'destination_id'
+
+                        # update or reverse ?
+                        update = period and period.state not in ['done', 'mission-closed']
+                        if aline.journal_id.type == 'hq':
+                            # US-773/2: if HQ entry always like period closed fashion
+                            update = False
+
+                        if update:
+                            # not mission close: override line
+                            # Update account # Date: UTP-943 speak about original date for non closed periods
+                            vals = {
+                                fieldname: account_id,
+                                'date': aline.date,
+                                'source_date': curr_date,
+                                'ad_updated': True,
+                            }
+                            aal_obj.write(cr, uid, [aline.id], vals, context=context)
+                        # else reverse line before recreating them with right values
+                        else:
+                            # mission close or + or HQ entry: reverse
+
+                            seq_num_ctx = period and {'fiscalyear_id': period.fiscalyear_id.id} or None
+                            if aline.move_id.account_id.id not in is_donation:
+                                is_donation[aline.move_id.account_id.id] = aline.move_id.account_id.type_for_register == 'donation'
+
+                            if is_donation[aline.move_id.account_id.id]:
+                                if not gl_correction_odx_journal_rec:
+                                    gl_correction_odx_journal_id = aj_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
+                                    if not gl_correction_odx_journal_id:
+                                        raise osv.except_osv(_('Error'), _('No GL journal found for ODX'))
+                                    gl_correction_odx_journal_rec = aj_obj.browse(cr, uid, gl_correction_odx_journal_id, context=context)
+                                    odx_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, corr_type='extra', context=context)
+                                    if not odx_analytic_journal_id:
+                                        raise osv.except_osv(_('Error'), _('No analytic journal found for ODX!'))
+
+                                seqnum = ir_seq_obj.get_id(cr, uid, gl_correction_odx_journal_rec.sequence_id.id, context=seq_num_ctx)
+                                entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_odx_journal_rec.code, seqnum)
+                                corr_j = odx_analytic_journal_id
+                            # Correction: of an HQ entry, or of a correction of an HQ entry
+                            elif aline.journal_id.type in ('hq', 'correction_hq'):
+                                if not gl_correction_odhq_journal_rec:
+                                    gl_correction_odhq_journal_id = aj_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
+                                    if not gl_correction_odhq_journal_id:
+                                        raise osv.except_osv(_('Error'), _('No "correction HQ" journal found!'))
+                                    gl_correction_odhq_journal_rec = aj_obj.browse(cr, uid, gl_correction_odhq_journal_id,
+                                                                                   fields_to_fetch=['sequence_id', 'code'], context=context)
+                                    odhq_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, corr_type='hq', context=context)
+                                    if not odhq_analytic_journal_id:
+                                        raise osv.except_osv(_('Error'), _('No "correction HQ" analytic journal found!'))
+                                seqnum = ir_seq_obj.get_id(cr, uid, gl_correction_odhq_journal_rec.sequence_id.id, context=seq_num_ctx)
+                                entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_odhq_journal_rec.code, seqnum)
+                                corr_j = odhq_analytic_journal_id
+                            else:
+                                # compute entry sequence
+                                seqnum = ir_seq_obj.get_id(cr, uid, gl_correction_journal_rec.sequence_id.id, context=seq_num_ctx)
+                                entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_journal_rec.code, seqnum)
+                                corr_j = od_analytic_journal_id
+
+                            # First reverse line
+                            rev_ids = aal_obj.reverse(cr, uid, [aline.id], posting_date=date)
+                            # UTP-943: Shoud have a correction journal on these lines
+                            aal_obj.write(cr, uid, rev_ids, {'journal_id': corr_j, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
+                            # then create new lines
+                            cor_name = aal_obj.join_without_redundancy(aline.name, 'COR')
+                            cor_ids = aal_obj.copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
+                                                                       'source_date': curr_date, 'journal_id': corr_j,
+                                                                       'name': cor_name, 'ref': aline.entry_sequence, 'real_period_id': correction_period_id}, context=context)
+                            aal_obj.write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
+                            # finally flag analytic line as reallocated
+                            aal_obj.write(cr, uid, [aline.id], {'is_reallocated': True})
+
+                            if isinstance(rev_ids, int):
+                                rev_ids = [rev_ids]
+                            if isinstance(cor_ids, int):
+                                cor_ids = [cor_ids]
+                            for rev_cor_id in rev_ids + cor_ids:
+                                cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, rev_cor_id))
+                    # Set line as corrected upstream if we are in COORDO/HQ instance
+                    if aline.move_id:
+                        self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [aline.move_id.id], context=context)
+                    nb_done += 1
+                self.write(cr, uid, ids[0], {'nb_done': '%s / %s' % (nb_done, total_nb_lines), 'done_ids': done_ids}, context=context)
+
+            self.write(cr, uid, ids[0], {'state': 'done', 'message': _('Done')}, context=context)
             cr.commit()
+        except Exception as e:
+            cr.rollback()
+            logging.getLogger('mass.reallocation').error(get_traceback(e))
+            self.write(cr, uid, ids[0], {'nb_done': '0', 'state': 'error', 'message': '%s %s' % (aline_num or '', str(e))}, context=context)
         finally:
             values = {'process_in_progress': False}
-            super(mass_reallocation_verification_wizard, self).write(cr, uid, ids, values, context=context)
+            self.write(cr, uid, ids[0], values, context=context)
             cr.close(True)
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -134,15 +300,68 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
                                                in progress'))
         process = threading.Thread(None,
                                    wiz_mass_obj.process_thread, None,
-                                   (cr, uid, ids), {'context': context})
+                                   (cr.dbname, uid, ids), {'context': context})
         process.start()
-        return {'type': 'ir.actions.act_window_close'}
+        process.join(1.0)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'mass_reallocation_progress_wizard_view')[1]
+        all_str = ''
+        if context.get('all_search'):
+            all_str = _('- All search results')
+        return {
+            'name': '%s %s' % (_('Mass reallocation'), all_str),
+            'type': 'ir.actions.act_window',
+            'res_model': 'mass.reallocation.verification.wizard',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'view_id': [view_id],
+            'res_id': ids[0],
+            'target': 'self',
+            'context': context,
+            'no_pager': True,
+        }
+
 
 mass_reallocation_verification_wizard()
 
 class mass_reallocation_wizard(osv.osv_memory):
     _name = 'mass.reallocation.wizard'
     _description = 'Mass Reallocation Wizard'
+
+    def open_wizard(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['active_model'] = 'account.analytic.line'
+        if context.get('all_search'):
+            name = _('Mass reallocation - All search results')
+        else:
+            name = _('Mass reallocation')
+
+        running = self.pool.get('mass.reallocation.verification.wizard').search(cr, uid, [('state', 'in', ['inprogress', 'done', 'error'])], context=context)
+        if running:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'mass_reallocation_progress_wizard_view')[1]
+            return {
+                'name': name,
+                'type': 'ir.actions.act_window',
+                'res_model': 'mass.reallocation.verification.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'context': context,
+                'target': 'current',
+                'res_id': running[0],
+                'no_pager': True,
+            }
+
+        return {
+            'name': name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'mass.reallocation.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'context': context,
+            'target': 'current',
+            'no_pager': True,
+        }
 
     def _is_process_in_progress(self, cr, uid, fields, context=None):
         wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
@@ -312,6 +531,13 @@ class mass_reallocation_wizard(osv.osv_memory):
 
         return True
 
+    def check_period_open(self, cr, uid, date, context=None):
+        correction_period_id = self.pool.get('account.period').get_open_period_from_date(cr, uid, date, check_extra_config=True, context=context)
+        if not correction_period_id:
+            raise osv.except_osv(_('Error'), _('No open period found for this date: %s') % (date,))
+        return correction_period_id
+
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Launch mass reallocation process
@@ -402,6 +628,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         if process_ids:
             vals.update({'process_ids': [(6, 0, process_ids)]})
         # Check process_ids and date
+        self.check_period_open(cr, uid, date, context)
         self.check_date(cr, uid, ids, process_ids, date, context)
         verif_id = self.pool.get('mass.reallocation.verification.wizard').create(cr, uid, vals, context=context)
         # Create Mass Reallocation Verification Wizard
@@ -411,9 +638,10 @@ class mass_reallocation_wizard(osv.osv_memory):
             'res_model': 'mass.reallocation.verification.wizard',
             'view_type': 'form',
             'view_mode': 'form',
-            'target': 'new',
+            'target': 'self',
             'res_id': [verif_id],
             'context': context,
+            'no_pager': True,
         }
 
 mass_reallocation_wizard()

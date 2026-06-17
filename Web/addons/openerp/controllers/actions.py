@@ -41,7 +41,7 @@ import os
 def execute_window(view_ids, model, res_id=False, domain=None, view_type='form', context=None,
                    mode='form,tree', name=None, target=None, limit=None, search_view=None,
                    context_menu=False, display_menu_tip=False, action_id=None,
-                   sidebar_open=False, auto_refresh=False):
+                   sidebar_open=False, auto_refresh=False, no_pager=False):
     """Performs `actions.act_window` action.
 
     @param view_ids: view ids
@@ -70,6 +70,7 @@ def execute_window(view_ids, model, res_id=False, domain=None, view_type='form',
     params['sidebar_open'] = sidebar_open
     params['target'] = target or None
     params['auto_refresh'] = auto_refresh
+    params['no_pager'] = no_pager
     cherrypy.request._terp_view_name = name or None
     cherrypy.request._terp_view_target = target or None
 
@@ -363,7 +364,8 @@ def act_window(action, data):
                           display_menu_tip=display_menu_tip,
                           action_id=action.get('id'),
                           sidebar_open=action.get('sidebar_open'),
-                          auto_refresh=action.get('auto_refresh'))
+                          auto_refresh=action.get('auto_refresh'),
+                          no_pager=action.get('no_pager'))
 
 def server(action, data):
     context = dict(data.get('context', {}),

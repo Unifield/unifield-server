@@ -777,7 +777,7 @@ class many2many(_column):
             elif act[0] == 3:
                 raise _('Not Implemented')
             elif act[0] == 4:
-                raise _('Not Implemented')
+                obj.datas[id].setdefault(name, []).append(act[1])
             elif act[0] == 5:
                 raise _('Not Implemented')
             elif act[0] == 6:

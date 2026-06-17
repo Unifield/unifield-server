@@ -276,6 +276,10 @@ class ir_values(osv.osv):
                 datas = datas and datas[0]
                 if not datas:
                     return False
+                if model == 'ir.actions.server' and 'context' in datas and not datas['context']:
+                    # contextr added in US-6225, prevent regression on other ir.actions.server entries
+                    # by removing empty context
+                    del(datas['context'])
             else:
                 datas = json.loads(x[2])
             if meta and meta != 'web':

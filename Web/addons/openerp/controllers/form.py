@@ -269,7 +269,13 @@ class Form(SecuredController):
         buttons.i18n = not editable and mode == 'form'
         buttons.show_grid = mode == 'diagram'
         buttons.create_node = mode == 'diagram' and editable
-
+        if params.no_pager:
+            buttons.pager = False
+            buttons.delete = False
+            buttons.cancel = False
+            buttons.save = False
+            buttons.edit = False
+            buttons.new = False
         from openerp.widgets import get_registered_views
         buttons.views = []
 
@@ -278,6 +284,8 @@ class Form(SecuredController):
 
         target = getattr(cherrypy.request, '_terp_view_target', None)
         buttons.toolbar = (target not in ('new', 'same') and not form.is_dashboard) or mode == 'diagram'
+        if params.no_pager:
+            buttons.toolbar = False
 
         pager = None
         if buttons.pager:

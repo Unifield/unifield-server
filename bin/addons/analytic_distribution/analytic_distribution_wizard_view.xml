@@ -168,7 +168,7 @@
             <field name="model">mass.reallocation.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1" hide_cancel_button="1">
                     <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/>
                     <label string="" colspan="2"/>
                     <newline/>
@@ -249,7 +249,7 @@
             <field name="model">mass.reallocation.verification.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1" hide_cancel_button="1">
                     <group col="6" colspan="4">
                         <field name="nb_process" colspan="2"/>
                         <field name="nb_error" colspan="2"/>
@@ -279,6 +279,52 @@
                 </form>
             </field>
         </record>
+
+        <record id="mass_reallocation_progress_wizard_view" model="ir.ui.view">
+                <field name="name">Mass Reallocation Verification Wizard</field>
+                <field name="model">mass.reallocation.verification.wizard</field>
+                <field name="type">form</field>
+                <field name="priority" eval="100" />
+                <field name="arch" type="xml">
+                <form hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1" hide_cancel_button="1">
+                    <group colspan="4">
+                       <html colspan="4">
+                        <script language="javascript">
+                            $(document).ready(function() {
+                                if ($('#state').val() == 'inprogress') {
+                                    setTimeout(function(){
+                                        $('#dummy').click();
+                                    },2400)
+                                }
+                            });
+                        </script>
+                        </html>
+                   </group>
+                    <group col="8" colspan="4">
+                            <field name="nb_done" colspan="2"/>
+                            <field name="nb_process" colspan="2"/>
+                            <field name="nb_error" colspan="2"/>
+                            <field name="nb_other" colspan="2"/>
+                    </group>
+                    <field name="account_id" readonly="1" />
+                    <newline />
+                    <field name="date" readonly="1" />
+                    <group colspan="4" col="4">
+                        <field name="message" colspan="4" />
+                        <field name="state"  colspan="4"/>
+                    </group>
+                    <group colspan="4" col="4">
+                        <button name="button_cancel" string="Cancel" colspan="1" type="object" icon="gtk-cancel" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
+                        <button name="button_close"  type="object" string="Close" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'inprogress')]}" />
+                    </group>
+                    <separator string="Lines processed" colspan="4"/>
+                    <newline/>
+                    <field name="display_fp" invisible="1"/>
+                    <field name="done_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <button name="dummy" string="Update" icon="gtk-refresh" invisible="1"/>
+                </form>
+                </field>
+            </record>
 
     </data>
 </openerp>
