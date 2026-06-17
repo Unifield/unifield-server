@@ -77,7 +77,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'state': lambda *a: 'draft',
         'percent': 0.0,
         'nb_done': '',
-        'message': _('Processing to the Mass Reallocation...'),
+        'message': lambda obj, cr, uid, context:_('Processing to the Mass Reallocation...'),
     }
 
     def default_get(self, cr, uid, fields=None, context=None, from_web=False):
