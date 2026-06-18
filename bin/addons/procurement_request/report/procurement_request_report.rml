@@ -247,7 +247,7 @@
                     <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[line.product_uom and get_name('product.uom', line.product_uom.id) or '']]</para>
                 </td>
                 <td>
-                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[getSel(line, 'type')]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[line.type_display and getSel(line, 'type') or 'N/A']]</para>
                 </td>
                 <td>
                     <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[ formatLang(line.price_subtotal) ]]</para>

@@ -2149,6 +2149,24 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _get_type_display(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return the sale.order.line type to display
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for sol in self.read(cr, uid, ids, ['type', 'state'], context=context):
+            if sol['state'] in ['draft', 'validated']:
+                res[sol['id']] = False
+            else:
+                res[sol['id']] = sol['type']
+
+        return res
+
     def _get_state_to_display(self, cr, uid, ids, field_name, args, context=None):
         '''
         return the sale.order.line state to display
@@ -2369,6 +2387,7 @@ class sale_order_line(osv.osv):
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
         'tax_id': fields.many2many('account.tax', 'sale_order_tax', 'order_line_id', 'tax_id', 'Taxes', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'type': fields.selection([('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'type_display': fields.function(_get_type_display, method=True, type='selection', selection=[('make_to_stock', 'from stock'), ('make_to_order', 'on order')], string='Procurement Method', readonly=True),
         'address_allotment_id': fields.many2one('res.partner.address', 'Allotment Partner'),
         'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Product UoM', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
