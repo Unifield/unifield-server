@@ -34,6 +34,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Supplier catalogue">
+                    <field name="id" invisible="1" />
                     <field name="name" colspan="4" attrs="{'readonly': [('from_sync', '=', True)]}" />
                     <field name="is_esc" invisible="1" />
                     <field name="from_sync" invisible="1" />
@@ -42,7 +43,7 @@
                     <field name="period_from" attrs="{'required': [('is_esc', '=', False)], 'readonly': ['|', '&amp;', ('is_esc', '=', True), ('instance_level', '!=', 'section'), ('from_sync', '=', True)]}" />
                     <field name="period_to" attrs="{'readonly': ['|', '&amp;', ('is_esc', '=', True), ('instance_level', '!=', 'section'), ('from_sync', '=', True)]}" />
                     <field name="currency_id" attrs="{'readonly': ['|', ('state', '=', 'confirmed'), ('from_sync', '=', True)]}" domain="[('partner_currency', '=', partner_id)]" />
-                    <field name="partner_id" readonly="1" />
+                    <field name="partner_id" attrs="{'readonly': [('id', '!=', False)]}" on_change="onchange_partner_id(partner_id)" />
                     <group colspan="2">
                         <field name="ranking" colspan="1" attrs="{'required': [('state', '=', 'confirmed'), ('ranking_on_all_lines', '=', False)]}" />
                         <button name="update_ranking" type="object" icon="gtk-indent" string="Apply to lines" colspan="1" />
@@ -82,7 +83,7 @@
             <field name="model">supplier.catalogue</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Supplier catalogues" hide_new_button="1">
+                <tree string="Supplier catalogues">
                     <field name="name" />
                     <field name="period_from" />
                     <field name="period_to" />
