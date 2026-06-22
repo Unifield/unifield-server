@@ -59,6 +59,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF42.0
+    def us_15771_15779_15909_15911_15947_transport_update(self, cr, uid, *a, **b):
+        """
+        Fix the state of ITOs with the new ones if necessary:
+            - Under Preclearance (preclearance) => Pre-Arrival (prearrival)
+            - At Border Point (border) => At Customs Entry Point (entry)
+        """
+        cr.execute("""UPDATE transport_order_in SET state = 'prearrival' WHERE state = 'preclearance'""")
+        self.log_info(cr, uid, "US-15771-15779-15909-15911-15947: %s  Under Preclearance ITOs had their state set to Pre-Arrival" % (cr.rowcount,))
+        cr.execute("""UPDATE transport_order_in SET state = 'entry' WHERE state = 'border'""")
+        self.log_info(cr, uid, "US-15771-15779-15909-15911-15947: %s  At Border Point ITOs had their state set to At Customs Entry Point" % (cr.rowcount,))
+
+        return True
+
     # UF41.0
     def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
         '''

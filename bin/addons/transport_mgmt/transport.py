@@ -71,11 +71,12 @@ class transport_order_customs_fees(osv.osv):
         'purchase_details': fields.related('purchase_id', 'details', type='char', string='PO Details', size=86, readonly=True, store=False, select=1),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
-                                        selection=[('planned', 'Planned'),
-                                                   ('preclearance', 'Under Preclearance'),
+                                        selection=[('draft', 'Draft'),
+                                                   ('planned', 'Planned'),
+                                                   ('prearrival', 'Pre-Arrival'),
                                                    ('transit', 'In Transit'),
-                                                   ('border', 'At Border Point'),
-                                                   ('customs', 'Customs Cleared'),
+                                                   ('entry', 'At Customs Entry Point'),
+                                                   ('customs', 'Customs Released'),
                                                    ('warehouse', 'At Warehouse'),
                                                    ('dispatched', 'Dispatched'),
                                                    ('closed', 'Closed'),
@@ -159,11 +160,12 @@ class transport_order_transport_fees(osv.osv):
         'purchase_details': fields.related('purchase_id', 'details', type='char', string='PO Details', size=86, readonly=True, store=False, select=1),
         'parent_name': fields.function(_get_vals, method=True, string='Name', type='char', size=64, multi='get_vals'),
         'parent_state': fields.function(_get_vals, method=True, string='State', type='selection', multi='get_vals',
-                                        selection=[('planned', 'Planned'),
-                                                   ('preclearance', 'Under Preclearance'),
+                                        selection=[('draft', 'Draft'),
+                                                   ('planned', 'Planned'),
+                                                   ('prearrival', 'Pre-Arrival'),
                                                    ('transit', 'In Transit'),
-                                                   ('border', 'At Border Point'),
-                                                   ('customs', 'Customs Cleared'),
+                                                   ('entry', 'At Customs Entry Point'),
+                                                   ('customs', 'Customs Released'),
                                                    ('warehouse', 'At Warehouse'),
                                                    ('dispatched', 'Dispatched'),
                                                    ('closed', 'Closed'),
@@ -906,11 +908,12 @@ class transport_order_in(osv.osv):
         'line_ids': fields.one2many('transport.order.in.line', 'transport_id', 'Lines', copy=False),
         'incoming_ids': fields.function(_get_incoming_ids, fnct_search=_search_incoming_ids, method=True, type='char', string='Incoming Shipment Reference'),
         'state': fields.selection([
+            ('draft', 'Draft'),
             ('planned', 'Planned'),
-            ('preclearance', 'Under Preclearance'),
+            ('prearrival', 'Pre-Arrival'),
             ('transit', 'In Transit'),
-            ('border', 'At Border Point'),
-            ('customs', 'Customs Cleared'),
+            ('entry', 'At Customs Entry Point'),
+            ('customs', 'Customs Released'),
             ('warehouse', 'At Warehouse'),
             ('closed', 'Closed'),
             ('cancel', 'Cancelled'),
@@ -928,7 +931,7 @@ class transport_order_in(osv.osv):
     }
     _defaults = {
         'shipment_type': 'in',
-        'state': 'planned',
+        'state': 'draft',
         'oto_created': False,
         'from_sync': False,
         'no_line': lambda *a: True,
@@ -1005,12 +1008,16 @@ class transport_order_in(osv.osv):
         if to_process_ids:
             if self.search_exists(cr, uid, [('id', 'in', ids), ('macroprocess_id', '=', False)], context=context):
                 raise osv.except_osv(_('Warning'), _('Please choose a Macroprocess before trying to process the Transport Object'))
-            if current_step != 'planned' and self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
+            if current_step not in ['draft', 'planned'] and\
+                    self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
                 raise osv.except_osv(_('Warning'), _('Please choose a Customs Regime before trying to process the ITO'))
             all_st = [x[0] for x in self._columns['state'].selection]
             next_st = all_st[all_st.index(current_step)+1]
             self.write(cr, uid, to_process_ids, {'state': next_st}, context=context)
         return True
+
+    def button_to_planned(self, cr, uid, ids, context=None):
+        return self._process_step(cr, uid, ids, 'draft', context=context)
 
     def button_process(self, cr, uid, ids, context=None):
         return self._process_step(cr, uid, ids, 'planned', context=context)
@@ -1082,13 +1089,13 @@ class transport_order_in(osv.osv):
         }
 
     def button_dispatch(self, cr, uid, ids, context=None):
-        return self._process_step(cr, uid, ids, 'preclearance', context=context)
+        return self._process_step(cr, uid, ids, 'prearrival', context=context)
 
     def button_arrive(self, cr, uid, ids, context=None):
         return self._process_step(cr, uid, ids, 'transit', context=context)
 
     def button_clear_customs(self, cr, uid, ids, context=None):
-        return self._process_step(cr, uid, ids, 'border', context=context)
+        return self._process_step(cr, uid, ids, 'entry', context=context)
 
     def button_delivery(self, cr, uid, ids, context=None):
         return self._process_step(cr, uid, ids, 'customs', context=context)
@@ -1159,7 +1166,7 @@ class transport_order_in(osv.osv):
             self.log(cr, uid, back_id, _('Backorder ITO %s created') % (ito_name), context=context)
 
         if ito.state == 'planned':
-            new_state = 'preclearance'
+            new_state = 'prearrival'
         else:
             new_state = 'closed'
 
@@ -1187,6 +1194,7 @@ class transport_order_in(osv.osv):
                         data[to_copy_rel] = x[to_copy_rel][0]
 
                 data.update({
+                    'state': 'planned',
                     'shipment_type': 'out',
                     'supplier_partner_id': self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id,
                     'line_ids': [],
@@ -1247,7 +1255,7 @@ class transport_order_out(osv.osv):
                 left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split_or_cancel and pack.oto_line_id = line.id or not line.is_split_or_cancel)
             where
                 oto.id in %s and
-                oto.state = 'planned'
+                oto.state in ('draft', 'planned')
             group by oto.id''', (tuple(ids), ))
 
         for x in cr.fetchall():
@@ -1270,7 +1278,7 @@ class transport_order_out(osv.osv):
                 left join shipment_additionalitems add on add.shipment_id = ship.id and (line.is_split_or_cancel and add.oto_line_id = line.id or not line.is_split_or_cancel)
             where
                 oto.id in %s and
-                oto.state = 'planned'
+                oto.state in ('draft', 'planned')
             group by oto.id''', (tuple(ids), ))
 
         for x in cr.fetchall():
@@ -1290,7 +1298,7 @@ class transport_order_out(osv.osv):
                 transport_order_out oto, transport_order_out_line line
             where
                 oto.id = line.transport_id and
-                (line.shipment_id is null or oto.state != 'planned') and
+                (line.shipment_id is null or oto.state not in ('draft', 'planned')) and
                 oto.id in %s
             group by oto.id
             ''', (tuple(ids), ))
@@ -1337,6 +1345,7 @@ class transport_order_out(osv.osv):
         'line_ids': fields.one2many('transport.order.out.line', 'transport_id', 'Lines', copy=False),
         'shipment_ids': fields.function(_get_shipment_ids, fnct_search=_search_shipment_ids, method=True, type='char', string='Shipment Reference'),
         'state': fields.selection([
+            ('draft', 'Draft'),
             ('planned', 'Planned'),
             ('dispatched', 'Dispatched'),
             ('closed', 'Closed'),
@@ -1352,9 +1361,18 @@ class transport_order_out(osv.osv):
     }
     _defaults = {
         'shipment_type': 'out',
-        'state': 'planned',
+        'state': 'draft',
         'supplier_partner_id': lambda self, cr, uid, *a: self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id,
     }
+
+    def button_to_planned(self, cr, uid, ids, context=None):
+        to_val_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+        if not to_val_ids:
+            return True
+
+        self.write(cr, uid, ids, {'state': 'planned'}, context=context)
+
+        return True
 
     def button_dispatch(self, cr, uid, ids, context=None):
         ship_ids = self.pool.get('transport.order.out.line').search(cr, uid, [('transport_id', 'in', ids), ('transport_id.state', '=', 'planned'), '|', ('shipment_id', '=', False), ('shipment_id.state', 'in', ['done', 'delivered'])])
@@ -1697,7 +1715,8 @@ class transport_order_out_line(osv.osv):
 
         ship_data = {}
         if not fields or set(fields).intersection(frozen_fields):
-            to_compute_ids = self.search(cr, uid, [('id', 'in', ids),('transport_id.state', '=', 'planned'), ('shipment_id', '!=', False)])
+            to_compute_ids = self.search(cr, uid, [('id', 'in', ids), ('transport_id.state', 'in', ['draft', 'planned']),
+                                                   ('shipment_id', '!=', False)])
             if to_compute_ids:
                 ship_data = self._get_shipment_data(cr, uid, to_compute_ids,  context=context)
 
