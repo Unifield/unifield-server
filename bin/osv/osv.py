@@ -86,6 +86,8 @@ class except_osv(Exception):
     def __str__(self):
         return '%s: %s' % (self.name, self.value)
 
+class except_message(except_osv):
+    pass
 
 class object_proxy(netsvc.Service):
     _recorded_psql_pid = {}

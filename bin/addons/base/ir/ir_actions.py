@@ -134,6 +134,7 @@ class report_xml(osv.osv):
         'report_rml_content': fields.function(_report_content, fnct_inv=_report_content_inv, method=True, type='binary', string='RML content'),
         'run_in_background': fields.boolean('Run report in bg'),
         'update_title': fields.boolean('Update title with form name'),
+        'mako_template': fields.boolean('Use Mako template instead of rml parser'),
 
     }
     _defaults = {

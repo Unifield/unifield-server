@@ -88,7 +88,7 @@
             string="Balance by account"
             model="account.account"
             name="account.chart.export"
-            file="account_override/report/report_account_chart_export.mako"
+            file="addons/account_override/report/report_account_chart_export.mako"
             report_type="webkit"
             header="False"
             auto="False"
