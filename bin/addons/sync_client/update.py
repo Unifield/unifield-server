@@ -46,6 +46,7 @@ re_subfield_separator = re.compile(r"[./]")
 OBJ_TO_RECREATE = [
     'res.partner',
     'account.period',
+    'account.cashbox.line',
     'ir.model.access',
     'msf_field_access_rights.field_access_rule',
     'msf_field_access_rights.field_access_rule_line',
