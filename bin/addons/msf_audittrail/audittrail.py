@@ -726,7 +726,8 @@ class audittrail_rule(osv.osv):
                 return True
             domain = []
             if rule.domain_filter:
-                domain = eval(rule.domain_filter)
+                if obj._name != 'funding.pool.distribution.line' or not context.get('force_tc_fp'):
+                    domain = eval(rule.domain_filter)
             if domain:
                 new_dom = ['&', ('id', 'in', obj_ids)] + domain
                 res_ids = obj.search(cr, uid, new_dom, order='NO_ORDER')
@@ -809,15 +810,40 @@ class audittrail_rule(osv.osv):
                         'object_id': model_parent_id,
                         'fct_res_id': inherit_field_id or res_id,
                     })
+
+                grp_label_mapping = {
+                    'cost_center_id': 'CC',
+                    'destination_id': 'Dest',
+                    'analytic_id': 'FP',
+                    'percentage': '%'
+                }
+                grp_label = []
+                grp_old_value = []
+                grp_new_value = []
+
                 if method == 'unlink':
+
                     vals.update({
                         'field_description': get_field_description(rule.object_id),
                         'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                     })
+                    if rule.object_id.model == 'funding.pool.distribution.line':
+                        p_data = self.pool.get('funding.pool.distribution.line').read(cr, uid, res_id, list(grp_label_mapping.keys()), context=context)
+                        old_data_list = []
+                        for x in grp_label_mapping.keys():
+                            if p_data[x]:
+                                old_data_list.append(self._map_to_str(p_data[x]))
+                        if old_data_list:
+                            vals['old_value'] = ' / '.join(old_data_list)
+                        if context.get('track_changes_res_id'):
+                            vals['res_id'] = context['track_changes_res_id']
+                        vals['name'] = 'Other AD line deletion'
+                        vals['field_description'] = 'Other AD line deletion'
+
                     log_line_obj.create(cr, uid, vals)
 
                 elif method in ('write', 'create'):
-                    if method == 'create' and rule.object_id.model != 'stock.picking':
+                    if method == 'create' and rule.object_id.model not in ('stock.picking', 'funding.pool.distribution.line'):
                         vals.update({
                             'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                             'field_description': get_field_description(rule.object_id),
@@ -829,7 +855,13 @@ class audittrail_rule(osv.osv):
                     else:
                         record = {}
 
-                    for field in list(fields_to_trace.keys()):
+
+                    if rule.object_id.model == 'funding.pool.distribution.line':
+                        ordered_fields_to_trace = [x for x in grp_label_mapping.keys() if x in fields_to_trace.keys()]
+                    else:
+                        ordered_fields_to_trace = fields_to_trace.keys()
+
+                    for field in ordered_fields_to_trace:
                         old_value = record.get(field, False)
                         new_value = current[res_id].get(field, False)
 
@@ -877,6 +909,41 @@ class audittrail_rule(osv.osv):
                                 if context and context.get('from_reset_password'):
                                     description = 'Password from temp code'
                                 old_value, new_value = '********', '********'
+                            if rule.object_id.model == 'funding.pool.distribution.line':
+                                grp_label.append(grp_label_mapping.get(field, field))
+                                grp_old_value.append(self._map_to_str(old_value))
+                                grp_new_value.append(self._map_to_str(new_value))
+                                continue
+
+                            if field == 'analytic_distribution_id' and \
+                                    rule.object_id.model in ('account.move', 'account.move.line', 'account.invoice', 'account.invoice.line') and \
+                                    new_value and \
+                                    isinstance(new_value, (list, tuple)) and \
+                                    new_value[0]:
+                                fp_line_obj = self.pool.get('funding.pool.distribution.line')
+                                fp_line_ids = fp_line_obj.search(cr, uid, [('distribution_id', '=', new_value[0])])
+                                fp_object_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'funding.pool.distribution.line')])[0]
+                                if fp_line_ids:
+                                    for fp_line in fp_line_obj.browse(cr, uid, fp_line_ids):
+                                        line.update({
+                                            'name': 'funding.pool.distribution.line',
+                                            'object_id': fp_object_id,
+                                            'res_id': fp_line.id,
+                                            'method': 'create',
+                                            'field_description': 'AD CC / Dest / FP / %',
+                                            'sub_obj_name': False,
+                                            'rule_id': False,
+                                            'fct_object_id': False,
+                                            'fct_res_id': False,
+                                            'new_value': '%s / %s / %s / %s' % (
+                                                fp_line.cost_center_id and fp_line.cost_center_id.code or '',
+                                                fp_line.destination_id and fp_line.destination_id.code or '',
+                                                fp_line.analytic_id and fp_line.analytic_id.code or '',
+                                                fp_line.percentage and round(fp_line.percentage, 2) or '')
+                                        })
+                                        log_line_obj.create(cr, uid, line)
+                                continue
+
                             line.update({
                                 'field_id': fields_to_trace[field].id,
                                 'field_description': description,
@@ -886,6 +953,15 @@ class audittrail_rule(osv.osv):
                                 'old_value': old_value,
                             })
                             log_line_obj.create(cr, uid, line)
+
+                    if grp_label:
+                        vals.update({
+                            'field_description': 'AD %s' % (' / '.join(grp_label),),
+                            'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
+                            'new_value': ' / '.join(grp_new_value),
+                            'old_value': ' / '.join(grp_old_value),
+                        })
+                        log_line_obj.create(cr, uid, vals)
 
         context['translate_fields'] = True
 
@@ -915,6 +991,16 @@ class audittrail_rule(osv.osv):
             log_seq_obj.create(cr, uid, {'model': obj_name, 'res_id': res_id, 'sequence': seq_id})
             log = seq_pool.get_id(cr, uid, seq_id, code_or_id='id')
         return log
+
+    def _map_to_str(self, value):
+        if isinstance(value, (int, bool)):
+            return str(value)
+        if isinstance(value, float):
+            return str(round(value, 2))
+        if isinstance(value, (list, tuple)):
+            # m2o
+            return value[1]
+        return value
 
 audittrail_rule()
 
@@ -1131,7 +1217,36 @@ class audittrail_log_line(osv.osv):
                     else:
                         new_args += [arg]
                 args = new_args
+        # TODO
+        if context['active_model'] == 'account.invoice' and context['active_id']:
+            # header
+            cr.execute('''
+                update audittrail_log_line l
+                    set object_id = (select id from ir_model where model='account.invoice'), res_id=i.id
+                    from account_invoice i, funding_pool_distribution_line fpl
+                where
+                    l.object_id = (select id from ir_model where model='funding.pool.distribution.line') and
+                    i.id = %s and
+                    i.analytic_distribution_id = fpl.distribution_id and
+                    l.res_id = fpl.id
+            ''', (context['active_id'],))
 
+            # line
+            cr.execute('''
+                update audittrail_log_line l
+                    set
+                        object_id = (select id from ir_model where model='account.invoice'),
+                        res_id = il.invoice_id,
+                        fct_object_id = (select id from ir_model where model='account.invoice.line'),
+                        fct_res_id = il.id,
+                        sub_obj_name = il.line_number
+                    from account_invoice_line il, funding_pool_distribution_line fpl
+                where
+                    l.object_id = (select id from ir_model where model='funding.pool.distribution.line') and
+                    il.invoice_id = %s and
+                    il.analytic_distribution_id = fpl.distribution_id and
+                    l.res_id = fpl.id
+            ''', (context['active_id'],))
 
         return super(audittrail_log_line, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
