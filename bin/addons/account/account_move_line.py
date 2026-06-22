@@ -764,6 +764,10 @@ class account_move_line(osv.osv):
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial,
                                                       type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
         'asset_line_id': fields.many2one('product.asset.line', 'Asset Line', readonly=1, ondelete='restrict'),
+        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15,
+                                                    string='3RD Party Partner TIN', store=False, readonly=True, context={'active_test': False}),
+        'business_registration_number': fields.related('partner_id', 'business_registration_number', type='char',
+                                                       size=15, string='3RD Party Partner RCCM', store=False, readonly=True, context={'active_test': False}),
     }
 
     def _get_currency(self, cr, uid, context=None):
