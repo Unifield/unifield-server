@@ -201,7 +201,6 @@
                         />
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
                         <field name="tax_identification_number" readonly="1" />
-<!--                        <field name="fiscal_position" groups="base.group_extended" widget="selection"/>-->
                         <newline/>
                         <field name="document_date" />
                         <field name="date_invoice"/>

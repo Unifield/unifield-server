@@ -219,6 +219,21 @@ class wizard_account_invoice(osv.osv):
 
         # Temp post the line
         absl_obj.button_temp_posting(cr, uid, [reg_line_id], context=context)
+        absl = absl_obj.browse(cr, uid, reg_line_id, context=context)
+
+        invoice = inv_obj.browse(cr, uid, inv_id, context=context)
+
+        if invoice.move_id:
+            for aml in invoice.move_id.line_id:
+                if (abs(aml.debit) < 0.0001 and abs(aml.credit) < 0.0001 and
+                    abs(aml.debit_currency) < 0.0001 and abs(aml.credit_currency) < 0.0001
+                    and aml.is_counterpart == False
+                    ):
+                    raise osv.except_osv(
+                        _('Warning'),
+                        _('Entry "%s" has all total debit/credit '
+                          'amounts equal to zero.') % (aml.name)
+                    )
 
         # Link invoice and register_line
         inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
