@@ -58,6 +58,32 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_11997_financing_contract_sync(self, cr, uid, *a, **b):
+        # on HQ trigger updates on financing object linked to mission-private rule
+        # this will unlock existing NR
+
+        # on sync server changer owner on rules from project to coordo
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''eligibility_from_date'']' where model='financing.contract.format'")
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''code'']' where model='financing.contract.contract'")
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''funded'']' where model='financing.contract.funding.pool.line'")
+            self.log_info(cr, uid, "US-11997 fixed at HQ")
+        elif cr.table_exists('sync_server_user_rights'):
+            cr.execute("""
+                update sync_server_update u
+                    set owner = (select parent_id from sync_server_entity where id=owner)
+                where
+                    rule_id in (select id from sync_server_sync_rule where sequence_number in (450, 455, 456, 457, 458)) and
+                    owner is not null and
+                    owner in (select id from sync_server_entity where instance_level='project') and
+                    u.id in (select min(id) from sync_server_update u2 where u2.session_id=u.session_id and u2.rule_id=u.rule_id and u2.sdref=u.sdref)
+            """)
+            self.log_info(cr, uid, "US-11997 fixed on sync server")
+
+        return True
+
     # UF41.0
     def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
         '''

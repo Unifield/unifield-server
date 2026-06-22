@@ -376,7 +376,7 @@ class financing_contract_contract(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'instance_id':
-            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+            return self.get_coordo_dest(cr, uid, ids, dest_field, context)
 
         return super(financing_contract_contract, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
@@ -390,7 +390,7 @@ class financing_contract_funding_pool_line(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'instance_id':
-            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+            return self.get_coordo_dest(cr, uid, ids, dest_field, context)
 
         return super(financing_contract_funding_pool_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
@@ -404,7 +404,7 @@ class financing_contract_format(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'hidden_instance_id':
-            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+            return self.get_coordo_dest(cr, uid, ids, dest_field, context)
 
         return super(financing_contract_format, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
@@ -416,7 +416,7 @@ class financing_contract_format_line(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'instance_id':
-            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+            return self.get_coordo_dest(cr, uid, ids, dest_field, context)
 
         return super(financing_contract_format_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
