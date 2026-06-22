@@ -58,6 +58,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF42.0
     def us_11997_financing_contract_sync(self, cr, uid, *a, **b):
         # on HQ trigger updates on financing object linked to mission-private rule
         # this will unlock existing NR
@@ -83,6 +84,20 @@ class patch_scripts(osv.osv):
             self.log_info(cr, uid, "US-11997 fixed on sync server")
 
         return True
+
+    def us_15346_OCBTD101_CHABUSD_no_delete(self, cr, uid, *a, **b):
+        """
+            do no sent sync update deletion on account.journal OCBSY101/CHABUSD
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.code == 'OCBTD101':
+            cr.execute('''
+                delete from ir_model_data
+                where name = 'journal_OCBSY101_CHABUSD_ARAB BANK USD' and
+                not exists(select id from account_journal where id=res_id)
+            ''')
+        return True
+
 
     # UF41.0
     def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
