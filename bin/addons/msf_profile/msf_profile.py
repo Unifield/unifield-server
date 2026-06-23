@@ -7669,17 +7669,19 @@ class patch_scripts(osv.osv):
         Create the mobile money analytic journal OFIN
         """
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
-        cr.execute("""
-                   INSERT INTO account_analytic_journal (name, code, active, company_id, type, instance_id,
-                                                         is_current_instance)
-                   VALUES ('Other Financial Institutions',
-                           'OFIN',
-                           TRUE,
-                           1,
-                           'cash',
-                           %s,
-                           TRUE);
-                   """, (instance,))
+
+        if instance:
+            journal_obj = self.pool.get('account.analytic.journal')
+
+            journal_obj.create(cr, uid, {
+                'name': 'Other Financial Institutions',
+                'code': 'OFIN',
+                'active': True,
+                'company_id': 1,
+                'type': 'cash',
+                'instance_id': instance,
+                'is_current_instance': True,
+            }, context=None)
         return True
 
     def launch_patch_scripts(self, cr, uid, *a, **b):
