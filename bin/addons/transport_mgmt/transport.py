@@ -511,6 +511,47 @@ class transport_order(osv.osv):
             }
         return res
 
+    def _set_total(self, cr, uid, ids, name, value, arg, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        cr.execute("""UPDATE transport_order SET """ + name + """ = %s WHERE id IN %s""", (value, tuple(ids)))
+        return True
+
+    def _search_transport_po_ids(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        for arg in args:
+            if arg[0] == 'transport_po_ids':
+                dom.extend(['|', ('transport_customs_fees_ids.purchase_id', arg[1], arg[2]),
+                            ('transport_transport_fees_ids.purchase_id', arg[1], arg[2])])
+            else:
+                dom.append(arg)
+        return dom
+
+    def _get_transport_po_names(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        res = {}
+        for _id in ids:
+            res[_id] = ''
+        return res
+
+    def _get_transport_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of transport.order.in/out.line objects for which values have changed
+        return the list of ids of transport.order object which need to get their state field updated
+
+        self is transport.order.in/out.line object
+        '''
+        result = []
+        for obj in self.read(cr, uid, ids, ['transport_id'], context=context):
+            if obj['transport_id'] and obj['transport_id'][0] not in result:
+                result.append(obj['transport_id'][0])
+        return result
+
     _columns = {
         'name': fields.char('Reference', size=64, required=True, select=True, readonly=True, copy=False),
         'original_cargo_ref': fields.char('Original Cargo ref', size=256, select=True),
@@ -540,7 +581,10 @@ class transport_order(osv.osv):
         'post2_transport_partner_id': fields.many2one('res.partner', 'Post Transit 2nd Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
         'post2_transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Post Transit 2nd Transport Mode'),
 
-        'transport_po_id': fields.many2one('purchase.order', 'Transport PO', domain=[('categ', '=', 'transport')], context={'po_from_transport': True}),
+        'transport_po_ids': fields.function(get_fake, type='many2one', relation='purchase.order', fnct_search=_search_transport_po_ids, string='Transport PO', method=True, readonly=True,
+                                            domain=[('categ', 'in', ['service', 'transport']), ('tender_id', '=', False), ('rfq_ok', '=', False)],
+                                            context={'po_from_transport': True, 'search_default_draft': 1, 'search_default_validated': 1, 'search_default_sourced': 1, 'search_default_confirmed': 1, 'search_default_done': 1}),
+        'transport_po_names': fields.function(lambda self, *a: self._get_transport_po_names(*a), type='char', string='Transport PO', method=True, readonly=True),
 
         'supplier_partner_id': fields.many2one('res.partner', 'Supplier Partner', domain=[('supplier', '=', True)], select=1, ondelete='restrict'),
         'supplier_address_id': fields.many2one('res.partner.address', 'Supplier Address', select=1, ondelete='restrict'),
@@ -568,9 +612,18 @@ class transport_order(osv.osv):
             ('temp', 'Temporary Importation'),
         ], 'Customs Regime', add_empty=True),
 
-        'cargo_weight': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Weight [kg]', multi='_total'),
-        'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm³]', multi='_total'),
-        'cargo_parcels':  fields.function(lambda self, *a: self._get_total(*a), type='integer', method=True, string='Total Number of Parcels', multi='_total'),
+        'cargo_weight': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Weight [kg]',
+                                        multi='_total', fnct_inv=lambda self, *a: self._set_total(*a),
+                                        store={'transport.order.in.line': (_get_transport_ids, ['incoming_id', 'process_parcels_nb', 'process_volume', 'process_weight'], 10),
+                                               'transport.order.out.line': (_get_transport_ids, ['shipment_id', 'process_parcels_nb', 'process_volume', 'process_weight'], 10)}),
+        'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm³]',
+                                        multi='_total', fnct_inv=lambda self, *a: self._set_total(*a),
+                                        store={'transport.order.in.line': (_get_transport_ids, ['incoming_id', 'process_parcels_nb', 'process_volume', 'process_weight'], 10),
+                                               'transport.order.out.line': (_get_transport_ids, ['shipment_id', 'process_parcels_nb', 'process_volume', 'process_weight'], 10)}),
+        'cargo_parcels':  fields.function(lambda self, *a: self._get_total(*a), type='integer', method=True, string='Total Number of Parcels',
+                                          multi='_total', fnct_inv=lambda self, *a: self._set_total(*a),
+                                          store={'transport.order.in.line': (_get_transport_ids, ['incoming_id', 'process_parcels_nb', 'process_volume', 'process_weight'], 10),
+                                                 'transport.order.out.line': (_get_transport_ids, ['shipment_id', 'process_parcels_nb', 'process_volume', 'process_weight'], 10)}),
         'container_type': fields.selection([('dry', 'Dry'), ('reefer', 'Reefer')], 'Container Type'),
         'container_size': fields.selection([('20ft', '20 ft'), ('40ft', '40 ft')], 'Container Size'),
         'truck_payload': fields.selection([('1-3T', '1-3 tons'), ('3-6T', '3-6 tons'), ('6-9T', '6-9 tons'), ('9-12T', '9-12 tons'), ('12-24T', '12-24 tons'), ('24-30T', '24-30 tons')], 'Truck Payload'),
@@ -861,6 +914,13 @@ class transport_order_in(osv.osv):
 
         return res
 
+    def _set_total(self, cr, uid, ids, name, value, arg, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        cr.execute("""UPDATE transport_order_in SET """ + name + """ = %s WHERE id IN %s""", (value, tuple(ids)))
+        return True
 
     def _search_incoming_ids(self, cr, uid, obj, name, args, context=None):
         dom = []
@@ -889,7 +949,25 @@ class transport_order_in(osv.osv):
                 l.transport_id in %s
             group by l.transport_id''', (tuple(ids), ))
         for x in cr.fetchall():
-            ret[x[0]] = ','.join(x[1])
+            ret[x[0]] = ', '.join(x[1])
+        return ret
+
+    def _get_transport_po_names(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        ret = super(transport_order_in, self)._get_transport_po_names(cr, uid, ids, field_name, args, context=context)
+        cr.execute('''
+            SELECT ito.id, ARRAY_AGG(DISTINCT(p.name))
+            FROM transport_order_in ito
+                LEFT JOIN transport_order_transport_fees tf ON tf.transport_in_id = ito.id
+                LEFT JOIN transport_order_customs_fees cf ON cf.transport_in_id = ito.id
+                LEFT JOIN purchase_order p ON tf.purchase_id = p.id OR cf.purchase_id = p.id
+            WHERE (tf.purchase_id IS NOT NULL OR cf.purchase_id IS NOT NULL) AND ito.id IN %s GROUP BY ito.id''', (tuple(ids),))
+        for x in cr.fetchall():
+            if x[1]:
+                ret[x[0]] = ', '.join(x[1])
         return ret
 
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
@@ -906,7 +984,7 @@ class transport_order_in(osv.osv):
 
     _columns = {
         'line_ids': fields.one2many('transport.order.in.line', 'transport_id', 'Lines', copy=False),
-        'incoming_ids': fields.function(_get_incoming_ids, fnct_search=_search_incoming_ids, method=True, type='char', string='Incoming Shipment Reference'),
+        'incoming_ids': fields.function(_get_incoming_ids, fnct_search=_search_incoming_ids, method=True, type='char', string='IN Ref.'),
         'state': fields.selection([
             ('draft', 'Draft'),
             ('planned', 'Planned'),
@@ -1008,8 +1086,7 @@ class transport_order_in(osv.osv):
         if to_process_ids:
             if self.search_exists(cr, uid, [('id', 'in', ids), ('macroprocess_id', '=', False)], context=context):
                 raise osv.except_osv(_('Warning'), _('Please choose a Macroprocess before trying to process the Transport Object'))
-            if current_step not in ['draft', 'planned'] and\
-                    self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('customs_regime', '=', False)], context=context):
                 raise osv.except_osv(_('Warning'), _('Please choose a Customs Regime before trying to process the ITO'))
             all_st = [x[0] for x in self._columns['state'].selection]
             next_st = all_st[all_st.index(current_step)+1]
@@ -1311,6 +1388,14 @@ class transport_order_out(osv.osv):
 
         return res
 
+    def _set_total(self, cr, uid, ids, name, value, arg, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        cr.execute("""UPDATE transport_order_out SET """ + name + """ = %s WHERE id IN %s""", (value, tuple(ids)))
+        return True
+
     def _search_shipment_ids(self, cr, uid, obj, name, args, context=None):
         dom = []
         for arg in args:
@@ -1339,6 +1424,24 @@ class transport_order_out(osv.osv):
             group by l.transport_id''', (tuple(ids), ))
         for x in cr.fetchall():
             ret[x[0]] = ','.join(x[1])
+        return ret
+
+    def _get_transport_po_names(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        ret = super(transport_order_out, self)._get_transport_po_names(cr, uid, ids, field_name, args, context=context)
+        cr.execute('''
+            SELECT oto.id, ARRAY_AGG(DISTINCT(p.name))
+            FROM transport_order_out oto
+                LEFT JOIN transport_order_transport_fees tf ON tf.transport_out_id = oto.id
+                LEFT JOIN transport_order_customs_fees cf ON cf.transport_out_id = oto.id
+                LEFT JOIN purchase_order p ON tf.purchase_id = p.id OR cf.purchase_id = p.id
+            WHERE (tf.purchase_id IS NOT NULL OR cf.purchase_id IS NOT NULL) AND oto.id IN %s GROUP BY oto.id''', (tuple(ids),))
+        for x in cr.fetchall():
+            if x[1]:
+                ret[x[0]] = ', '.join(x[1])
         return ret
 
     _columns = {

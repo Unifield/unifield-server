@@ -122,7 +122,7 @@
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
                         <field name="incoming_ids"  />
-                        <field name="transport_po_id" />
+                        <field name="transport_po_ids" />
                         <field name="cargo_category" />
                         <field name="arrival_planned_date" />
                     </group>
@@ -144,7 +144,10 @@
                     <field name="transport_partner_id" />
                     <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
                     <field name="incoming_ids" />
-                    <field name="transport_po_id" />
+                    <field name="transport_po_names" />
+                    <field name="cargo_parcels" />
+                    <field name="cargo_volume" />
+                    <field name="cargo_weight" />
                     <field name="cargo_category" />
                     <field name="arrival_planned_date" />
                     <field name="details"  truncate="50"/>
@@ -198,15 +201,15 @@
                     <field name="name" />
                     <newline/>
                     <field name="shipment_type"  />
-                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}"/>
+                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['draft', 'planned', 'prearrival', 'transit', 'entry'])]}"/>
                     <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}"/>
                     <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                     <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}"/>
                     <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}"/>
-                    <field name="details" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                    <field name="details" attrs="{'readonly': [('state', 'not in', ['draft', 'planned', 'planned', 'prearrival', 'transit', 'entry'])]}" />
                     <group colspan="2" col="3" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                         <field name="no_line" invisible="1"/>
-                        <field name="ship_ref" on_change="onchange_ship_ref(ship_ref, select_incoming)"/>
+                        <field name="ship_ref" on_change="onchange_ship_ref(ship_ref, select_incoming)"  attrs="{'readonly': [('state', 'not in', ['draft', 'planned', 'planned', 'prearrival', 'transit', 'entry'])]}"/>
                         <field name="select_incoming" on_change="onchange_select_incoming(select_incoming)" nolabel="1"
                                domain="[('type', '=', 'in'), ('partner_id', '=', supplier_partner_id), ('shipment_ref', '!=', False)]"
                                attrs="{'invisible': ['|', ('no_line', '=', False), ('ship_ref', '!=', False)]}"
@@ -283,9 +286,9 @@
 
                         <page string="Cargo" on_change="change_line()">
                             <group colspan="4" col="6">
-                                <field name="cargo_parcels" />
-                                <field name="cargo_volume" />
-                                <field name="cargo_weight" />
+                                <field name="cargo_parcels" attrs="{'readonly': [('state', 'not in', ['prearrival', 'transit', 'entry'])]}" />
+                                <field name="cargo_volume" attrs="{'readonly': [('state', 'not in', ['prearrival', 'transit', 'entry'])]}" />
+                                <field name="cargo_weight" attrs="{'readonly': [('state', 'not in', ['prearrival', 'transit', 'entry'])]}" />
                                 <field name="container_type" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                                 <field name="container_size" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                                 <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
@@ -296,8 +299,8 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                         </page>
 
-                        <page string="Customs Fees" attrs="{'invisible': ['|', ('state', 'in', ['draft', 'planned']), ('zone_type', 'not in', ['int', 'domestic'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', 'not in', ['draft', 'planned', 'cancel'])]}"/>
+                        <page string="Customs Fees" attrs="{'invisible': [('zone_type', 'not in', ['int', 'domestic'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', '!=', 'cancel')]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
@@ -445,7 +448,7 @@
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
                         <field name="shipment_ids"  />
-                        <field name="transport_po_id" />
+                        <field name="transport_po_ids" />
                         <field name="cargo_category" />
                         <field name="departure_date" />
                     </group>
@@ -465,7 +468,10 @@
                     <field name="transport_partner_id" />
                     <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
                     <field name="shipment_ids"  />
-                    <field name="transport_po_id" />
+                    <field name="transport_po_names" />
+                    <field name="cargo_parcels" />
+                    <field name="cargo_volume" />
+                    <field name="cargo_weight" />
                     <field name="cargo_category" />
                     <field name="arrival_planned_date" />
                     <field name="details"  truncate="50"/>
@@ -597,9 +603,9 @@
 
                         <page string="Cargo" on_change="change_line()">
                             <group colspan="4" col="6">
-                                <field name="cargo_parcels" />
-                                <field name="cargo_volume" />
-                                <field name="cargo_weight" />
+                                <field name="cargo_parcels" attrs="{'readonly': [('state', '!=', 'dispatched')]}" />
+                                <field name="cargo_volume" attrs="{'readonly': [('state', '!=', 'dispatched')]}" />
+                                <field name="cargo_weight" attrs="{'readonly': [('state', '!=', 'dispatched')]}" />
                                 <field name="container_type" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                                 <field name="container_size" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                                 <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
@@ -610,8 +616,8 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
                         </page>
 
-                        <page string="Customs Fees" attrs="{'invisible': ['|', ('state', 'in', ['draft', 'planned']), ('zone_type', 'not in', ['int', 'domestic'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', 'not in', ['draft', 'planned', 'cancel'])]}"/>
+                        <page string="Customs Fees" attrs="{'invisible': [('zone_type', 'not in', ['int', 'domestic'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', '!=', 'cancel')]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
@@ -722,10 +728,10 @@
                     <field name="step_id" widget="selection" get_selection="get_steps" />
                     <field name="sub_step_id" widget="selection" />
                     <field name="sub_step_name" readonly="1" invisible="1" />
-                    <field name="comment" />
                     <field name="name" />
                     <field name="target_end_date" />
                     <field name="end_date" />
+                    <field name="comment" />
                 </tree>
             </field>
         </record>
