@@ -100,6 +100,12 @@ class currency_setup(osv.osv_memory):
 
         # Change the currencies on all internal partners
         partner_ids = self.pool.get('res.partner').search(cr, uid, [('partner_type', 'in', ['internal', 'intermission']), ('active', 'in', ['t', 'f'])])
+        try:
+            # main partner is not yet set as internal ...
+            partner_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'main_partner')[1])
+        except:
+            pass
+
         self.pool.get('res.partner').write(cr, uid, partner_ids, {'property_product_pricelist': sale_price_id[0],
                                                                   'property_product_pricelist_purchase': purchase_price_id[0]})
 
