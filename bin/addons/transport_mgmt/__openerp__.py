@@ -51,6 +51,7 @@
         'report/intl_transport_view.xml',
         'report/local_transport_view.xml',
         'security/ir.model.access.csv',
+        'wizard/merge_ito_wizard_view.xml',
     ],
     'demo_xml': [
     ],
