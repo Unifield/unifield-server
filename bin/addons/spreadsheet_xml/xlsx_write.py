@@ -52,6 +52,7 @@ class XlsxReport(report_int):
         wb.iso_dates = True
         parser = self.parser(cr, uid, ids, wb, wb_t, context)
         parser.model = datas.get('model')
+        parser.wiz_model = datas.get('wiz_model')
         parser.generate(context=context)
         tmp = NamedTemporaryFile(delete=False)
         wb.save(tmp.name)
@@ -71,12 +72,20 @@ class XlsxReportParser():
         self.workbook_template = workbook_template
         self.pool = pooler.get_pool(cr.dbname)
 
+    def duplicate_column_dimensions_grp(self, default_width=None):
+        assert self.workbook_template, "duplicate_column_dimensions can be used only with a tempate"
+
     def duplicate_column_dimensions(self, default_width=None):
         assert self.workbook_template, "duplicate_column_dimensions can be used only with a tempate"
 
+        col_dim = {}
+        for x in self.workbook_template.active.column_dimensions.values():
+            for y in range(x.min, x.max+1):
+                col_dim[get_column_letter(y)] = x
+
         for x in range(1, self.workbook_template.active.max_column+1):
             letter = get_column_letter(x)
-            tmp_column = self.workbook_template.active.column_dimensions[letter]
+            tmp_column = col_dim.get(letter, self.workbook_template.active.column_dimensions[letter])
             width = False
             if not tmp_column.customWidth and default_width:
                 width = default_width

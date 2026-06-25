@@ -46,6 +46,7 @@ re_subfield_separator = re.compile(r"[./]")
 OBJ_TO_RECREATE = [
     'res.partner',
     'account.period',
+    'account.cashbox.line',
     'ir.model.access',
     'msf_field_access_rights.field_access_rule',
     'msf_field_access_rights.field_access_rule_line',
@@ -213,6 +214,8 @@ class update_to_send(osv.osv,fv_formatter):
             if rule.direction == 'mission-private' and owners:
                 for _id in owners:
                     own = owners[_id]
+                    if not own:
+                        continue
                     if not isinstance(own, (list, tuple)):
                         own = [own]
                     if self.pool.get('msf.instance').search_exists(cr, uid, [('instance', 'in', own), ('level', '!=', 'coordo')], context=context):
@@ -589,12 +592,16 @@ class update_received(osv.osv,fv_formatter):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
+                # do not post JE if there is a previous NR: period not open
+                if update.model == 'account.move':
+                    extra_dom = [('rule_sequence', '<=', update.rule_sequence), ('sequence_number', '<=', update.sequence_number), ('id', '!=', update.id)]
+                else:
+                    extra_dom = [('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)]
                 prev_nr_ids = self.search(cr, uid,
                                           [('sdref', '=', update.sdref),
                                            ('is_deleted', '=', False),
-                                              ('run', '=', False),
-                                              ('rule_sequence', '=', update.rule_sequence),
-                                              ('sequence_number', '<', update.sequence_number)])
+                                           ('run', '=', False)
+                                           ] + extra_dom)
                 # previous not run on the same (sdref, rule_sequence): do not execute
                 if prev_nr_ids:
                     if update.rule_sequence in (602, 603):

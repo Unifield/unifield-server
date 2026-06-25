@@ -53,6 +53,8 @@
     <paraStyle name="text" leftIndent="3mm"/>
     <paraStyle name="text_right" rightIndent="3mm" alignment="RIGHT"/>
     <paraStyle name="medium_text" fontName="Helvetica" fontSize="9" alignment="LEFT"/>
+    <paraStyle name="small_text_6" fontName="Helvetica" fontSize="6" alignment="RIGHT"/>
+    <paraStyle name="small_text_7" fontName="Helvetica" fontSize="7" alignment="RIGHT"/>
   </stylesheet>
 
   <story>
@@ -105,9 +107,15 @@
               <blockTable colWidths="20mm,30mm,40mm">
                 <tr>
                   [[ not o.starting_details_ids and removeParentNode('blockTable')  or repeatIn(o.starting_details_ids,'line') ]]
-                  <td><para style="text_right">[[ line.pieces ]]</para></td>
-                  <td><para style="text_right">[[ line.number and line.number or '0' ]]</para></td>
-                  <td><para style="text_right"><b>[[ line.subtotal and line.subtotal or '0.00' ]]</b> [[ o.currency and o.currency.name or '' ]]</para></td>
+                  <td>
+                    <para style="text_right">[[ setTag('para','para',{'style':'small_text_6'}) if max([float(x.pieces or 0) for x in o.starting_details_ids])&gt;=1000000 else (setTag('para','para',{'style':'small_text_7'}) if max([float(x.pieces or 0) for x in o.starting_details_ids])&gt;=1000 else setTag('para','para',{'style':'text_right'})) ]][[ line.pieces ]]</para>
+                  </td>
+                  <td>
+                    <para style="text_right">[[ setTag('para','para',{'style':'small_text_6'}) if max([float(x.pieces or 0) for x in o.starting_details_ids])&gt;=1000000 else (setTag('para','para',{'style':'small_text_7'}) if max([float(x.pieces or 0) for x in o.starting_details_ids])&gt;=1000 else setTag('para','para',{'style':'text_right'})) ]][[ line.number and line.number or '0' ]]</para>
+                  </td>
+                  <td>
+                    <para style="text_right">[[ setTag('para','para',{'style':'small_text_6'}) if max([float(x.pieces or 0) for x in o.starting_details_ids])&gt;=1000000 else (setTag('para','para',{'style':'small_text_7'}) if max([float(x.pieces or 0) for x in o.starting_details_ids])&gt;=1000 else setTag('para','para',{'style':'text_right'})) ]]<b>[[ line.subtotal and line.subtotal or '0.00' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+                  </td>
                 </tr>
               </blockTable>
           </td>
@@ -117,9 +125,15 @@
             <blockTable colWidths="20mm,30mm,40mm">
                 <tr>
                   [[ not o.ending_details_ids and removeParentNode('blockTable') or repeatIn(o.ending_details_ids,'line') ]]
-                  <td><para style="text_right">[[ line.pieces ]]</para></td>
-                  <td><para style="text_right">[[ line.number and line.number or '0' ]]</para></td>
-                  <td><para style="text_right"><b>[[ line.subtotal and line.subtotal or '0.00' ]]</b> [[ o.currency and o.currency.name or '' ]]</para></td>
+                  <td>
+                    <para style="text_right">[[ setTag('para','para',{'style':'small_text_6'}) if max([float(x.pieces or 0) for x in o.ending_details_ids])&gt;=1000000 else (setTag('para','para',{'style':'small_text_7'}) if max([float(x.pieces or 0) for x in o.ending_details_ids])&gt;=1000 else setTag('para','para',{'style':'text_right'})) ]][[ line.pieces ]]</para>
+                  </td>
+                  <td>
+                    <para style="text_right">[[ setTag('para','para',{'style':'small_text_6'}) if max([float(x.pieces or 0) for x in o.ending_details_ids])&gt;=1000000 else (setTag('para','para',{'style':'small_text_7'}) if max([float(x.pieces or 0) for x in o.ending_details_ids])&gt;=1000 else setTag('para','para',{'style':'text_right'})) ]][[ line.number and line.number or '0' ]]</para>
+                  </td>
+                  <td>
+                    <para style="text_right">[[ setTag('para','para',{'style':'small_text_6'}) if max([float(x.pieces or 0) for x in o.ending_details_ids])&gt;=1000000 else (setTag('para','para',{'style':'small_text_7'}) if max([float(x.pieces or 0) for x in o.ending_details_ids])&gt;=1000 else setTag('para','para',{'style':'text_right'})) ]]<b>[[ line.subtotal and line.subtotal or '0.00' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+                  </td>
                 </tr>
               </blockTable>
           </td>
@@ -133,16 +147,16 @@
       <blockTable colWidths="90mm, 90mm" style="table_reconciliation">
         <tr>
           <td>
-            <para>Starting balance: <b>[[ o.balance_start and o.balance_start or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
-            <para>Cash Transaction: <b>[[ o.total_entry_encoding and o.total_entry_encoding or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
-            <para>Calculated Balance: <b>[[ o.msf_calculated_balance and o.msf_calculated_balance or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
-            <para>Unrecorded Advances: <b>[[ o.open_advance_amount and o.open_advance_amount or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
-            <para>Unrecorded expenses: <b>[[ o.unrecorded_expenses_amount and o.unrecorded_expenses_amount or '0.0']]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Starting balance: <b>[[ formatLang(o.balance_start and o.balance_start or 0.0, digits=2) ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Cash Transaction: <b>[[ formatLang(o.total_entry_encoding and o.total_entry_encoding or 0.0, digits=2) ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Calculated Balance: <b>[[ formatLang(o.msf_calculated_balance and o.msf_calculated_balance or 0.0, digits=2) ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Unrecorded Advances: <b>[[ formatLang(o.open_advance_amount and o.open_advance_amount or 0.0, digits=2) ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Unrecorded expenses: <b>[[ formatLang(o.unrecorded_expenses_amount and o.unrecorded_expenses_amount or 0.0, digits=2) ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
           </td>
           <td>
-            <para>Theoretical balance: <b>[[ o.balance_end and o.balance_end or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
-            <para>CashBox Balance: <b>[[ o.balance_end_cash and o.balance_end_cash or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
-            <para>Gap: <b>[[ o.closing_gap and o.closing_gap or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Theoretical balance: <b>[[ formatLang(o.balance_end and o.balance_end or 0.0, digits=2) ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>CashBox Balance: <b>[[ formatLang(o.balance_end_cash and o.balance_end_cash or 0.0, digits=2) ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Gap: <b>[[ formatLang(o.closing_gap and o.closing_gap or 0.0, digits=2) ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
           </td>
         </tr>
       </blockTable>
