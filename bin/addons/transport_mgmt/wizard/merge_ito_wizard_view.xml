@@ -28,16 +28,16 @@
                         <html colspan="4">
                             <p>
                                 <translate>
-                                    All information of the ITO template will be written in the new ITO, <br />except the Cargo Type which will depend on the template and merged ITO data. If they are identical the merged Cargo Type will be the same, but if they are not the merged Cargo Type will be Mixed.<br/>A new Cargo Type will also be shown on the Lines of the merged ITO.
+                                    All information of the ITO template will be written in the new ITO, except the Cargo Type which will depend on the template and merged ITO data.<br/>If they are identical the merged Cargo Type will be the same, but if they are not the merged Cargo Type will be Mixed.<br/>A new Cargo Type will also be shown on the Lines of the merged ITO.
                                 </translate>
                             </p>
                         </html>
                         <newline />
                         <group colspan="4" col="4" attrs="{'invisible': [('cant_merge_msg', '=', False)]}">
                             <html colspan="4">
-                                <p style="margin-top:10px;padding-left:5px;border-style:solid;border-width:1px;background-color:#F0EBA4;border-radius:5px;">
-                                    <span style="font-weight:bold;"><translate>IMPOSSIBLE TO MERGE: </translate></span>
-                                    <span style="background-color:#F0EBA4"><field name="cant_merge_msg" /></span>
+                                <p style="margin-top:10px;padding-left:5px;border-style:solid;border-width:1px;border-radius:5px;">
+                                    <div style="font-weight:bold;color:red"><translate>IMPOSSIBLE TO MERGE:</translate></div>
+                                    <div><field name="cant_merge_msg" /></div>
                                 </p>
                             </html>
                         </group>

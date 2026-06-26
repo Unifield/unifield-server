@@ -221,6 +221,7 @@
                     </group>
                     <field name="sync_ref" />
                     <field name="from_sync" invisible="1" />
+                    <field name="merged_order" invisible="1" />
                     <notebook colspan="4">
                         <page string="Steps">
                             <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" required="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
@@ -275,10 +276,12 @@
                                     <field name="weight" />
                                     <field name="amount" />
                                     <field name="currency_id" attrs="{'required': [('amount', '!=', False)]}"/>
+                                    <field name="cargo_category" attrs="{'invisible': [('merged_transport', '=', False)]}"/>
                                     <field name="comment" />
                                     <field name="kc" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
                                     <field name="dg" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
                                     <field name="cs" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
+                                    <field name="merged_transport" invisible="1" />
                                 </tree>
 
                             </field>

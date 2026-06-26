@@ -86,5 +86,126 @@ class merge_ito_wizard(osv.osv_memory):
 
         return res
 
+    def merge_ito(self, cr, uid, ids, context=None):
+        """
+        Method to merge ITOs
+        """
+        if context is None:
+            context = {}
+
+        ito_obj = self.pool.get('transport.order.in')
+        data_obj =self.pool.get('ir.model.data')
+
+        search_view_id = data_obj._get_id(cr, uid, 'transport_mgmt', 'transport_order_in_search')
+        search_view = data_obj.read(cr, uid, search_view_id, ['res_id'])
+
+        context['merge_ito'] = True
+        tmpl_ito = self.browse(cr, uid, ids[0], fields_to_fetch=['ito_template_id'], context=context).ito_template_id
+        merged_ito_data = {
+            'merged_order': True,
+            'state': tmpl_ito.state,
+            'line_ids': [],
+            'macroprocess_id': tmpl_ito.macroprocess_id.id,
+            'transport_step_ids': [],
+            'customs_regime': tmpl_ito.customs_regime,
+            'transport_customs_fees_ids': [],
+            'transport_transport_fees_ids': [],
+        }
+        # Copy lines
+        for line in tmpl_ito.line_ids:
+            merged_ito_data['line_ids'].append((0, 0, {
+                'incoming_id': line.incoming_id and line.incoming_id.id or False,
+                'description': line.description,
+                'parcels_nb': line.parcels_nb,
+                'volume': line.volume,
+                'weight': line.weight,
+                'amount': line.amount,
+                'currency_id': line.currency_id and line.currency_id.id or False,
+                'cargo_category': tmpl_ito.cargo_category,
+                'comment': line.comment,
+                'kc': line.kc,
+                'dg': line.dg,
+                'cs': line.cs,
+            }))
+        # Copy steps
+        for step in tmpl_ito.transport_step_ids:
+            merged_ito_data['transport_step_ids'].append((0, 0, {
+                'step_id': step.step_id.id,
+                'sub_step_id': step.sub_step_id and step.sub_step_id.id or False,
+                'name': step.name,
+                'target_end_date': step.target_end_date,
+                'end_date': step.end_date,
+                'comment': step.comment,
+            }))
+        # Copy Customs Fees
+        for cfee in tmpl_ito.transport_customs_fees_ids:
+            merged_ito_data['transport_customs_fees_ids'].append((0, 0, {
+                'name': cfee.name.id,
+                'purchase_id': cfee.purchase_id and cfee.purchase_id.id or False,
+                'value': cfee.value,
+                'currency_id': cfee.currency_id.id,
+                'details': cfee.details,
+                'validated': cfee.validated,
+            }))
+        # Copy Transport Fees
+        for tfee in tmpl_ito.transport_transport_fees_ids:
+            merged_ito_data['transport_transport_fees_ids'].append((0, 0, {
+                'name': tfee.name.id,
+                'purchase_id': tfee.purchase_id and tfee.purchase_id.id or False,
+                'value': tfee.value,
+                'currency_id': tfee.currency_id.id,
+                'details': tfee.details,
+                'validated': tfee.validated,
+            }))
+
+        merged_cargo_category = tmpl_ito.cargo_category
+        merged_sync_refs = tmpl_ito.sync_ref and tmpl_ito.sync_ref.split(';') or []
+        for ito in [ito for ito in ito_obj.browse(cr, uid, context.get('active_ids', []), context=context) if ito.id != tmpl_ito.id]:
+            if merged_cargo_category != 'mixed' and merged_cargo_category != ito.cargo_category:
+                merged_cargo_category = 'mixed'
+            if ito.sync_ref:
+                for oto_ref in ito.sync_ref.split(';'):
+                    if oto_ref not in merged_sync_refs:
+                        merged_sync_refs.append(oto_ref)
+
+            for line in ito.line_ids:
+                merged_ito_data['line_ids'].append((0, 0, {
+                    'incoming_id': line.incoming_id and line.incoming_id.id or False,
+                    'description': line.description,
+                    'parcels_nb': line.parcels_nb,
+                    'volume': line.volume,
+                    'weight': line.weight,
+                    'amount': line.amount,
+                    'currency_id': line.currency_id and line.currency_id.id or False,
+                    'cargo_category': ito.cargo_category,
+                    'comment': line.comment,
+                    'kc': line.kc,
+                    'dg': line.dg,
+                    'cs': line.cs,
+                }))
+
+        # Update the merged ITO data then create it
+        merged_ito_data.update({'cargo_category': merged_cargo_category, 'from_sync': merged_sync_refs and True or False,
+                                'sync_ref': ';'.join(merged_sync_refs)})
+        merged_ito_id = ito_obj.copy(cr, uid, tmpl_ito.id, merged_ito_data, context=context)
+
+        # Cancel all ITOs used in the merge
+        ito_obj.write(cr, uid, context.get('active_ids', []), {'state': 'cancel'}, context=context)
+
+        if context.get('merge_ito'):
+            context.pop('merge_ito')
+
+        return {
+            'domain': "[('id', '=', %s)]" % (merged_ito_id,),
+            'name': 'Inbound Transport Object',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'transport.order.in',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'search_view_id': search_view['res_id'],
+            'context': {},
+        }
+
 
 merge_ito_wizard()

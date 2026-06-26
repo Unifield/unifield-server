@@ -564,7 +564,7 @@ class transport_order(osv.osv):
         #'linked_transport_id': # TODO m2o vs free text
         'details': fields.char('Details', size=1024),
         'notes': fields.text('Notes'),
-
+        'merged_order': fields.boolean('Merged Order', help='If the Transport Order is merged, Cargo Type will be displayed on its Transport Object Lines', copy=False),
 
         'transport_partner_id': fields.many2one('res.partner', 'Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
         'transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Transport Mode'),
@@ -639,6 +639,7 @@ class transport_order(osv.osv):
 
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'merged_order': lambda *a: False,
     }
 
     def change_line(self, cr, uid, ids, context=None):
@@ -769,7 +770,7 @@ class transport_order_in(osv.osv):
                 where
                     ito.from_sync = 't' and
                     ito.id in %s and
-                    not exists(select ito2.id from transport_order_in ito2 where ito2.id = ito.id and ito2.sync_ref = ito2.sync_ref and state not in ('closed', 'done'))
+                    not exists(select ito2.id from transport_order_in ito2 where ito2.id != ito.id and ito2.sync_ref = ito.sync_ref and state not in ('closed', 'cancel'))
             ''', (tuple(ids), ))
         for _id in cr.fetchall():
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'transport.order.in', _id[0], {},
@@ -1020,7 +1021,7 @@ class transport_order_in(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         ret = super(transport_order_in, self).write(cr, uid, ids, vals, context=context)
-        if vals and vals.get('state') in ['closed', 'cancel']:
+        if not context.get('merge_ito') and vals and vals.get('state') in ['closed', 'cancel']:
             self.generate_closure_sync_message(cr, uid, ids, context=context)
         return ret
 
@@ -1308,7 +1309,8 @@ class transport_order_out(osv.osv):
 
     def closed_by_sync(self, cr, uid, source, line_info, context=None):
         info = line_info.to_dict()
-        oto_ids = self.search(cr, uid, [('state', '=', 'dispatched'), ('name', '=', info.get('sync_ref')), ('next_partner_id.name', '=', source)], context=context)
+        sync_refs = info.get('sync_ref') and info['sync_ref'].split(';') or []
+        oto_ids = self.search(cr, uid, [('state', '=', 'dispatched'), ('name', 'in', sync_refs), ('next_partner_id.name', '=', source)], context=context)
         if oto_ids:
             self.write(cr, uid, oto_ids, {'state': 'closed'}, context=context)
             return 'OTO closed'
@@ -1571,6 +1573,7 @@ class transport_order_line(osv.osv):
         'amount': fields.float_null('Value', digits=(16,2)),
         'currency_id': fields.many2one('res.currency', 'Currency', domain=[('active', '=', True)]),
         'comment': fields.char('Comment', size=1024),
+        'cargo_category': fields.selection([('medical', 'Medical'), ('log', 'Logistic'), ('mixed', 'Mixed')], 'Cargo Type', copy=False, readonly=True),
         # TODO currency ?
         # TODO state
         'kc': fields.boolean('CC', help='Cold Chain'),
@@ -1624,7 +1627,7 @@ class transport_order_in_line(osv.osv):
                                                                                                               ('delivered', 'Delivered'),
                                                                                                               ('cancel', 'Cancelled'),
                                                                                                               ('import', 'Import in progress'),]),
-
+        'merged_transport': fields.related('transport_id', 'merged_order', type='boolean', string='Merged Order'),
         'process_parcels_nb': fields.integer_null('Number of Parcels'),
         'process_volume': fields.float_null('Volume [dm³]', digits=(16,2)),
         'process_weight': fields.float_null('Weight [kg]', digits=(16,2)),
