@@ -213,7 +213,7 @@
 
 
         <section>
-        <blockTable colWidths="19.0,85.0,130.0,75.0,51.0,50.0,40.0,30.0,70.0,55.0,65.0,65.0,40.0,20.0,20.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="19.0,85.0,130.0,80.0,45.0,51.0,40.0,30.0,70.0,55.0,65.0,65.0,40.0,20.0,20.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -228,10 +228,10 @@
                     <para style="LHeader">Comments</para>
                 </td>
                 <td>
-                    <para style="LHeader">Kit</para>
+                    <para style="LHeader">Qty in Stock</para>
                 </td>
                 <td>
-                    <para style="LHeader">Qty in Stock</para>
+                    <para style="LHeader">Kit</para>
                 </td>
                 <td>
                     <para style="LHeader">Qty to Pick</para>
@@ -277,10 +277,10 @@
                     <para style="Line">[[ line.comment ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.composition_list_id.composition_combined_ref_lot ]]</para>
+                    <para style="Line">[[ objects[0].state != 'done' and formatFloatDigitsToUom(getStock(line), line.product_id.uom_id.rounding) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ objects[0].state != 'done' and formatFloatDigitsToUom(getStock(line), line.product_id.uom_id.rounding) or '' ]]</para>
+                    <para style="Line">[[ line.composition_list_id.composition_combined_ref_lot ]]</para>
                 </td>
                 <td>
                     <para style="Line">[[ line.product_qty ]]</para>
@@ -311,7 +311,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="299.0,101.0,70.0,325.0" style="TotalInfo">
+        <blockTable colWidths="304.0,96.0,70.0,325.0" style="TotalInfo">
             <tr>
                 <td>
                     <para> </para>
