@@ -197,6 +197,9 @@ class ocb_export_wizard(osv.osv_memory):
     def button_export(self, cr, uid, ids, context=None):
         report_name = 'hq.ocb'
         period_name = ''
+        if isinstance(ids, int):
+            ids = [ids]
+
         wizard = self.browse(cr, uid, ids[0], context=context)
         if wizard.period_id:
             period_name = strftime('%Y%m', strptime(wizard.period_id.date_start, '%Y-%m-%d'))
