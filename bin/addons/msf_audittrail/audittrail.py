@@ -1219,8 +1219,8 @@ class audittrail_log_line(osv.osv):
                     else:
                         new_args += [arg]
                 args = new_args
-        # TODO
-        if context['active_model'] == 'account.invoice' and context['active_id']:
+
+        if context.get('active_model') == 'account.invoice' and context.get('active_id'):
             # header
             cr.execute('''
                 update audittrail_log_line l
