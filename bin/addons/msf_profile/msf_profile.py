@@ -7673,15 +7673,21 @@ class patch_scripts(osv.osv):
         if instance:
             journal_obj = self.pool.get('account.analytic.journal')
 
-            journal_obj.create(cr, uid, {
-                'name': 'Other Financial Institutions',
-                'code': 'OFIN',
-                'active': True,
-                'company_id': 1,
-                'type': 'cash',
-                'instance_id': instance,
-                'is_current_instance': True,
-            }, context=None)
+            journal_ids = journal_obj.search(cr, uid, [
+                ('code', '=', 'OFIN'),
+                ('instance_id', '=', instance),
+            ])
+
+            if not journal_ids:
+                journal_obj.create(cr, uid, {
+                    'name': 'Other Financial Institutions',
+                    'code': 'OFIN',
+                    'active': True,
+                    'company_id': 1,
+                    'type': 'cash',
+                    'instance_id': instance,
+                    'is_current_instance': True,
+                }, context=None)
         return True
 
     def launch_patch_scripts(self, cr, uid, *a, **b):

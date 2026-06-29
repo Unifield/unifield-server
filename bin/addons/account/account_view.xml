@@ -673,6 +673,7 @@
             <field name="priority" eval="11"/>
             <field name="arch" type="xml">
                 <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
+                    <field name="instance_id" readonly="1"/>
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
