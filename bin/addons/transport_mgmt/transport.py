@@ -564,7 +564,7 @@ class transport_order(osv.osv):
         #'linked_transport_id': # TODO m2o vs free text
         'details': fields.char('Details', size=1024),
         'notes': fields.text('Notes'),
-        'merged_order': fields.boolean('Merged Order', help='If the Transport Order is merged, Cargo Type will be displayed on its Transport Object Lines', copy=False),
+        'merged_order': fields.boolean('Merged Transport Object', help='If the Transport Object is merged, Cargo Type will be displayed on its Transport Object Lines', copy=False),
 
         'transport_partner_id': fields.many2one('res.partner', 'Transporter', domain=[('transporter', '=', True)], select=1, ondelete='restrict'),
         'transport_mode': fields.selection([('air', 'Air Commercial'), ('air_charter', 'Air Charter'), ('msf_plane', 'MSF Plane'), ('sea', 'Sea'), ('road', 'Road'), ('msf_vehicle', 'MSF Vehicle'), ('train', 'Train'), ('boat', 'Boat'), ('hand','Hand carry')], 'Transport Mode'),
@@ -737,7 +737,14 @@ class transport_order(osv.osv):
     def create(self, cr, uid, vals, context=None):
         vals['name'] = self.pool.get('ir.sequence').get(cr, uid, self._name)
         self._clean_fields(cr, uid, vals, context=context)
-        return super(transport_order, self).create(cr, uid, vals, context=context)
+
+        transport_id = super(transport_order, self).create(cr, uid, vals, context=context)
+        # To update cargo_parcels, cargo_volume and cargo_weight
+        if transport_id and vals.get('line_ids'):
+            cargo_data = self._get_total(cr, uid, [transport_id], field_name=None, args=None, context=context)
+            self.write(cr, uid, transport_id, cargo_data.get(transport_id, {}), context=context)
+
+        return transport_id
 
     def write(self, cr, uid, ids, vals, context=None):
         self._clean_fields(cr, uid, vals, context=context)
@@ -1627,7 +1634,7 @@ class transport_order_in_line(osv.osv):
                                                                                                               ('delivered', 'Delivered'),
                                                                                                               ('cancel', 'Cancelled'),
                                                                                                               ('import', 'Import in progress'),]),
-        'merged_transport': fields.related('transport_id', 'merged_order', type='boolean', string='Merged Order'),
+        'merged_transport': fields.related('transport_id', 'merged_order', type='boolean', string='Merged Transport Object'),
         'process_parcels_nb': fields.integer_null('Number of Parcels'),
         'process_volume': fields.float_null('Volume [dm³]', digits=(16,2)),
         'process_weight': fields.float_null('Weight [kg]', digits=(16,2)),

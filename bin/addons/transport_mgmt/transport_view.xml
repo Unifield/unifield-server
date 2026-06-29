@@ -531,7 +531,7 @@
                     <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                     <field name="details" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                     <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
-                    <group colspan="2" col="4">
+                    <group colspan="2" col="4" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                         <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
                         <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
                     </group>

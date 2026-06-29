@@ -2,7 +2,7 @@
 <openerp>
     <data>
         <record id="view_merge_ito_wizard" model="ir.ui.view">
-            <field name="name">Merge Inbound Transport Orders</field>
+            <field name="name">Merge Inbound Transport Objects</field>
             <field name="model">merge.ito.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
@@ -11,12 +11,12 @@
                     <newline/>
                     <group colspan="4">
                         <html>
-                            <p><translate>Please note that the Inbound Transport Orders will only be merged if: </translate></p>
+                            <p><translate>Please note that the Inbound Transport Objects will only be merged if: </translate></p>
                             <ul>
                                 <li><translate>They have the same state and are in the state: Draft, Planned, Pre-Arrival, In Transit or At Customs Entry Point</translate></li>
                                 <li><translate>They have the International Zone Type</translate></li>
                                 <li><translate>They have the same Supplier Partner</translate></li>
-                                <li><translate>They have the same Shipment flow</translate></li>
+                                <li><translate>They have the same Shipment Flow</translate></li>
                                 <li><translate>They have the same Original Cargo ref</translate></li>
                             </ul>
                         </html>
@@ -28,16 +28,16 @@
                         <html colspan="4">
                             <p>
                                 <translate>
-                                    All information of the ITO template will be written in the new ITO, except the Cargo Type which will depend on the template and merged ITO data.<br/>If they are identical the merged Cargo Type will be the same, but if they are not the merged Cargo Type will be Mixed.<br/>A new Cargo Type will also be shown on the Lines of the merged ITO.
+                                    All information of the ITO template will be written in the new ITO, except the Cargo Type which will depend on the template and merged ITO data.<br/>If they are identical the merged Cargo Type will be the same, but if they are not the merged Cargo Type will be Mixed.<br/>A Cargo Type will also be shown on the Lines of the merged ITO.
                                 </translate>
                             </p>
                         </html>
                         <newline />
                         <group colspan="4" col="4" attrs="{'invisible': [('cant_merge_msg', '=', False)]}">
                             <html colspan="4">
-                                <p style="margin-top:10px;padding-left:5px;border-style:solid;border-width:1px;border-radius:5px;">
+                                <p style="margin:10px 0 10px 0;padding-left:5px;border-style:solid;border-width:1px;border-radius:5px;">
                                     <div style="font-weight:bold;color:red"><translate>IMPOSSIBLE TO MERGE:</translate></div>
-                                    <div><field name="cant_merge_msg" /></div>
+                                    <div><field name="cant_merge_msg" nolabel="1" /></div>
                                 </p>
                             </html>
                         </group>

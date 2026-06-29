@@ -26,7 +26,7 @@ from tools.translate import _
 
 class merge_ito_wizard(osv.osv_memory):
     _name = 'merge.ito.wizard'
-    _description = 'Inbound Transport Order Merge'
+    _description = 'Inbound Transport Object Merge'
 
     _columns = {
         'ito_template_id': fields.many2one('transport.order.in', string='Template ITO', help='All information of the ITO template will be written in the new ITO'),
@@ -74,13 +74,13 @@ class merge_ito_wizard(osv.osv_memory):
                 cant_merge_msg += _('%s: %s. ') % (ito, ', '.join(ito_errors[ito]))
 
         if len(states) > 1:
-            cant_merge_msg += _('The State of the second ITO is not consistent with the state of the template ITO. ')
+            cant_merge_msg += _('The State of an ITO to merge is not consistent with the State of the template ITO. ')
         if len(suppliers) > 1:
-            cant_merge_msg += _('The Supplier Partner of the second ITO is not consistent with the state of the template ITO. ')
+            cant_merge_msg += _('The Supplier Partner of an ITO to merge is not consistent with the Supplier Partner of the template ITO. ')
         if len(ship_flows) > 1:
-            cant_merge_msg += _('The Shipment Flow of the second ITO is not consistent with the state of the template ITO. ')
+            cant_merge_msg += _('The Shipment Flow of an ITO to merge is not consistent with the Shipment Flow of the template ITO. ')
         if len(cargo_refs) > 1:
-            cant_merge_msg += _('The Original Cargo ref of the second ITO is not consistent with the state of the template ITO. ')
+            cant_merge_msg += _('The Original Cargo ref of an ITO to merge is not consistent with the Original Cargo ref of the template ITO. ')
 
         res['cant_merge_msg'] = cant_merge_msg
 
@@ -197,7 +197,7 @@ class merge_ito_wizard(osv.osv_memory):
 
         return {
             'domain': "[('id', '=', %s)]" % (merged_ito_id,),
-            'name': 'Inbound Transport Object',
+            'name': _('Inbound Transport Object'),
             'view_type': 'form',
             'view_mode': 'tree,form',
             'res_model': 'transport.order.in',
