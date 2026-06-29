@@ -59,21 +59,36 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="token">${_("Temporary code:")}</label></td>
-                                    <td style="padding: 3px;">
+                                    <td style="padding: 3px; position:relative;">
                                         <input type="password" id="token" name="token" class="db_user_pass"
                                                value="${data.get('token','')}" autocomplete="off"/>
+                                        <img src="/openerp/static/images/eye.png"
+                                             style="position:absolute; right:8px; top:50%; transform:translateY(-50%); width:12px; height:12px; cursor:pointer;"
+                                             onmousedown="document.getElementById('token').type='text';"
+                                             onmouseup="document.getElementById('token').type='password';"
+                                             onmouseleave="document.getElementById('token').type='password';"/>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="password">${_("New password:")}</label></td>
-                                    <td style="padding: 3px;">
+                                    <td style="padding: 3px; position:relative;">
                                         <input type="password" id="password" name="password" class="db_user_pass" autocomplete="off"/>
+                                        <img src="/openerp/static/images/eye.png"
+                                             style="position:absolute; right:8px; top:50%; transform:translateY(-50%); width:12px; height:12px; cursor:pointer;"
+                                             onmousedown="document.getElementById('password').type='text';"
+                                             onmouseup="document.getElementById('password').type='password';"
+                                             onmouseleave="document.getElementById('password').type='password';"/>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="password2">${_("Confirm new password:")}</label></td>
-                                    <td style="padding: 3px;">
+                                    <td style="padding: 3px; position:relative;">
                                         <input type="password" id="password2" name="password2" class="db_user_pass" autocomplete="off"/>
+                                        <img src="/openerp/static/images/eye.png"
+                                             style="position:absolute; right:8px; top:50%; transform:translateY(-50%); width:12px; height:12px; cursor:pointer;"
+                                             onmousedown="document.getElementById('password2').type='text';"
+                                             onmouseup="document.getElementById('password2').type='password';"
+                                             onmouseleave="document.getElementById('password2').type='password';"/>
                                     </td>
                                 </tr>
 

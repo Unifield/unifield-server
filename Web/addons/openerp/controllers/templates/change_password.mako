@@ -64,23 +64,53 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="show_password">${_("Current password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
-                                    <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
-                                    <input type="hidden" name="password" id="password" />
+                                    <td style="padding:3px; position:relative;">
+                                        <input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown="if (event.keyCode == 13) disable_save()"/>
+                                        <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
+                                        <input type="hidden" name="password" id="password" />
+                                        <img
+                                            src="/openerp/static/images/eye.png"
+                                            alt=""
+                                            title="${_('Hold to show password')}"
+                                            style="width:12px;height:12px;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;"
+                                            onmousedown="document.getElementById('show_password').type='text';"
+                                            onmouseup="document.getElementById('show_password').type='password';"
+                                            onmouseleave="document.getElementById('show_password').type='password';"
+                                        />
                                     </td>
 
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="show_password">${_("New password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" id="show_new_password" name="new_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
-                                    <input id="new_password" type="text" class="db_user_pass" style="display:none;"/>
+                                    <td style="padding:3px; position:relative;">
+                                        <input type="password" id="show_new_password" name="new_password" class="db_user_pass" autocomplete="off" onkeydown="if (event.keyCode == 13) disable_save()"/>
+                                        <input id="new_password" type="text" class="db_user_pass" style="display:none;"/>
+                                        <img
+                                            src="/openerp/static/images/eye.png"
+                                            alt=""
+                                            title="${_('Hold to show password')}"
+                                            style="width:12px;height:12px;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;"
+                                            onmousedown="document.getElementById('show_new_password').type='text';"
+                                            onmouseup="document.getElementById('show_new_password').type='password';"
+                                            onmouseleave="document.getElementById('show_new_password').type='password';"
+                                        />
                                     </td>
 
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="show_password">${_("Confirm new password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" id="show_confirm_password" name="confirm_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
-                                    <input id="confirm_password" type="text" class="db_user_pass" style="display:none;"/>
+                                    <td style="padding:3px; position:relative;">
+                                        <input type="password" id="show_confirm_password" name="confirm_password" class="db_user_pass" autocomplete="off" onkeydown="if (event.keyCode == 13) disable_save()"/>
+                                        <input id="confirm_password" type="text" class="db_user_pass" style="display:none;"/>
+                                        <img
+                                            src="/openerp/static/images/eye.png"
+                                            alt=""
+                                            title="${_('Hold to show password')}"
+                                            style="width:12px;height:12px;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;"
+                                            onmousedown="document.getElementById('show_confirm_password').type='text';"
+                                            onmouseup="document.getElementById('show_confirm_password').type='password';"
+                                            onmouseleave="document.getElementById('show_confirm_password').type='password';"
+                                        />
                                     </td>
 
                                 </tr>
