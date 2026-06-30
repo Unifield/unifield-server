@@ -438,6 +438,21 @@ class ocp_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
 
         internal_report_name = 'hq.ocp'
         if wizard.export_type == 'workday':
+            if wizard.period_id and wizard.instance_id:
+                cr.execute('''
+                    select i.instance
+                        from msf_instance i
+                        left join account_period_state st on st.instance_id = i.id and st.period_id = %(period)s
+                    where
+                        i.parent_id = %(instance)s and
+                        i.state = 'active' and
+                        (st.id is null or st.state not in ('mission-closed', 'done'))
+                ''', {'period': wizard.period_id.id, 'instance': wizard.instance_id.id})
+                wrong_proj = [x[0] for x in cr.fetchall()]
+                if wrong_proj:
+                    raise osv.except_osv('Error', 'Period on project: %s is not Closed' % (', '.join(wrong_proj),))
+
+
             internal_report_name = 'hq.ocp.workday'
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
