@@ -7,6 +7,7 @@ import math
 import tools
 
 import decimal_precision as dp
+from datetime import datetime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 from osv import fields, osv
@@ -169,6 +170,9 @@ class PhysicalInventory(osv.osv):
         'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection'),
         'multiple_filter_months': fields.boolean('Multiple Selection'),
         'products_added': fields.function(_get_products_added, method=True, type='boolean', string='Has products'),
+        'sde_updated': fields.boolean('Updated by SDE'),
+        'sde_reset_date': fields.datetime('Reset action applied'),
+        'sde_update_msg': fields.text('Message to be displayed when SDE is updating a document'),
     }
 
     _defaults = {
@@ -182,6 +186,9 @@ class PhysicalInventory(osv.osv):
         'max_filter_months': -1,
         'multiple_filter_months': False,
         'products_added': False,
+        'sde_updated': False,
+        'sde_reset_date': False,
+        'sde_update_msg': False,
     }
 
     def create(self, cr, uid, values, context):
@@ -231,19 +238,10 @@ class PhysicalInventory(osv.osv):
         default['state'] = 'draft'
         default['date'] = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         default['type'] = 'partial'
-        fields_to_empty = ["ref",
-                           "full_inventory",
-                           "date_done",
-                           "bad_stock_msg",
-                           "has_bad_stock",
-                           "file_to_import",
-                           "file_to_import2",
-                           "counting_line_ids",
-                           "discrepancy_line_ids",
-                           "discrepancies_generated",
-                           "move_ids",
-                           "multiple_filter_months",
-                           "max_filter_months"]
+        fields_to_empty = ["ref", "full_inventory", "date_done", "bad_stock_msg", "has_bad_stock", "file_to_import",
+                           "file_to_import2", "counting_line_ids", "discrepancy_line_ids", "discrepancies_generated",
+                           "move_ids", "multiple_filter_months", "max_filter_months", "sde_updated", "sde_reset_date",
+                           "sde_update_msg"]
 
         for field in fields_to_empty:
             default[field] = False
@@ -871,7 +869,7 @@ class PhysicalInventory(osv.osv):
                     if not expiry_date and product_info['perishable'] and quantity is not None:
                         add_error(_('Expiry date is required'), row_index, 6)
 
-                    # Check duplicate line (Same product_id, batch_number, expirty_date)
+                    # Check duplicate line (Same product_id, batch_number, expiry_date)
                     item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
                     if item in line_items:
                         add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
@@ -1437,7 +1435,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
                             raise osv.except_osv(_('UserError'),
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
-            self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
+            self.write(cr, uid, [inv.id], {'state': 'cancel', 'sde_update_msg': False}, context=context)
             self.infolog(cr, uid, _("The Physical inventory id:%s (%s) has been cancelled") % (inv.id, inv.name))
         return {}
 
@@ -1463,6 +1461,21 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             return _('Only one Physical Inventory can be open per location at the same time. Please finalize or cancel Physical Inventory [%s] before creating a new one for this location') % (', '.join(pi_refs),)
 
         return False
+
+    def reset_sde_updated_flag(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No Physical Inventory selected'))
+
+        # Reset the quantity of the counting sheets
+        cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id IN %s""", (tuple(ids),))
+
+        self.write(cr, uid, ids, {'sde_updated': False, 'sde_reset_date': datetime.now()}, context=context)
+
+        return True
 
 PhysicalInventory()
 

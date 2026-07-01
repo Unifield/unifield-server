@@ -30,10 +30,12 @@ import json
 import math
 import threading
 import pooler
+import tools
 from tools.rpc_decorators import jsonrpc_orm_exposed
 
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from msf_order_date import TRANSPORT_TYPE
+from stock.physical_inventory import PHYSICAL_INVENTORIES_STATES
 
 LIST_ORDER_PRIORITY = {key: _(value) for key, value in ORDER_PRIORITY}
 LIST_ORDER_CATEGORY = {key: _(value) for key, value in ORDER_CATEGORY}
@@ -66,6 +68,11 @@ MOVE_STATE = {
     'done': _('Done'),
     'cancel': _('Cancelled'),
 }
+PI_STATES = {key: _(value) for key, value in PHYSICAL_INVENTORIES_STATES}
+
+
+class NegativeValueError(ValueError):
+    """Negative value Exception"""
 
 
 class sde_import(osv.osv_memory):
@@ -2086,7 +2093,7 @@ class sde_import(osv.osv_memory):
         return True
 
     # =============================================================================================================== #
-    #                                                       ALL                                                       #
+    #                                                ALL stock.picking                                                #
     # =============================================================================================================== #
     def sde_stock_picking_msg(self, cr, uid, json_text, doc_type, to_remove, context=None):
         '''
@@ -2576,6 +2583,750 @@ class sde_import(osv.osv_memory):
 
         return shipper_data
 
+    # =============================================================================================================== #
+    #                                               Physical Inventory                                                #
+    # =============================================================================================================== #
+    def wizard_sde_pi_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to set a banner message on Physical Inventories
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_pi_actions(cr, uid, ids, 'banner_msg', context=context)
+
+    def wizard_sde_pi_remove_msg(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to remove a banner message on Physical Inventories
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_pi_actions(cr, uid, ids, 'remove_banner_msg', context=context)
+    
+    def wizard_sde_pi_counting_sheet_import(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to import on a Physical Inventory's Counting Sheet
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_pi_actions(cr, uid, ids, 'pi_counting_sheet_import', context=context)
+
+    def wizard_sde_pi_counting_sheet_export(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export Physical Inventories' Counting Sheet
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_pi_actions(cr, uid, ids, 'pi_counting_sheet_export', context=context)
+
+    def wizard_sde_pi_actions(self, cr, uid, ids, action, context=None):
+        '''
+        Method to use instead of the JSONRPC
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        sde_imp = self.read(cr, uid, ids[0], ['json_text'], context=context)
+        if not sde_imp['json_text']:
+            raise osv.except_osv(_('Warning'), _('No JSON data to use'))
+
+        result = []
+        if action == 'banner_msg':
+            result = self.sde_physical_inventory_msg(cr, uid, sde_imp['json_text'], False, context=context)
+        elif action == 'remove_banner_msg':
+            result = self.sde_physical_inventory_msg(cr, uid, sde_imp['json_text'], True, context=context)
+        elif action == 'pi_counting_sheet_import':
+            result = self.sde_pi_counting_sheet_import(cr, uid, sde_imp['json_text'], context=context)
+        elif action == 'pi_counting_sheet_export':
+            result = self.sde_pi_export(cr, uid, sde_imp['json_text'], 'count', context=context)
+        # elif action == 'pi_discr_lines_import':
+        #     result = self.sde_pi_discr_lines_import(cr, uid, sde_imp['json_text'], context=context)
+        # elif action == 'pi_cdiscr_lines_export':
+        #     result = self.sde_pi_export(cr, uid, sde_imp['json_text'], 'discr', context=context)
+
+        return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_pi_msg')
+    def sde_pi_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to set a 'SDE is updating' message on a list of Physical Inventories
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_physical_inventory_msg(cr, uid, json_text, False, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_pi_remove_msg')
+    def sde_pi_remove_msg(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to remove a 'SDE is updating' message on a list of Physical Inventories
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_physical_inventory_msg(cr, uid, json_text, True, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_pi_counting_sheet_export')
+    def sde_pi_counting_sheet_export(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to export info of Physical Inventories' Counting sheet
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_pi_export(cr, uid, json_text, 'count', context=context)
+
+    def sde_physical_inventory_msg(self, cr, uid, json_text, to_remove, context=None):
+        '''
+        Method used by the SDE script to set a 'SDE is updating' message on a list of Physical Inventories
+        '''
+        if context is None:
+            context = {}
+
+        pi_obj = self.pool.get('physical.inventory')
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+
+        result = {'database': instance_name, 'error': False, 'message': ''}
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)')
+                                     % (json_data['database'], instance_name))
+
+            # Get the documents with the references given
+            if not json_data.get('pi_list') or not isinstance(json_data['pi_list'], list):
+                raise osv.except_osv(_('Error'), _('The main key "pi_list" is mandatory and should be a non-empty list of Physical Inventory names'))
+            try:
+                json_data['pi_list'] = [str(pi_name).strip() for pi_name in json_data['pi_list']]
+            except:
+                raise osv.except_osv(_('Error'), _('One or more of the Physical Inventory names in the key "pi_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
+            pi_ids = self.get_pi_from_refs(cr, uid, json_data['pi_list'], False, context=context)
+
+            if to_remove:
+                pi_obj.write(cr, uid, pi_ids, {'sde_update_msg': False}, context=context)
+            else:
+                update_msg = _('This Physical Inventory is currently being updated via SDE since %s, please avoid making any direct change in UniField') \
+                    % (datetime.now().strftime('%d/%m/%Y %H:%M'),)
+                pi_obj.write(cr, uid, pi_ids, {'sde_update_msg': update_msg}, context=context)
+
+            result['message'] = _('The "updated via SDE" banner message has been %s on the Physical Inventories %s') \
+                % (to_remove and _('removed') or _('put'), ', '.join(json_data['pi_list']),)
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+
+        return result
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_pi_counting_sheet_import')
+    def sde_pi_counting_sheet_import(self, cr, uid, json_text, context=None):
+        '''
+        Method used by the SDE script to import JSON data.
+        A pagination system has been added to the import to allow users to import several JSONs for the same document
+        before trying to process the data. The keys sde_pagination_id, sde_pagination_page and sde_pagination_end are
+        necessary to allow the pagination.
+        '''
+        if context is None:
+            context = {}
+
+        pagi_obj = self.pool.get('sde.import.pagination')
+        pi_obj = self.pool.get('physical.inventory')
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        counting_obj = self.pool.get('physical.inventory.counting')
+
+        context['sde_flow'] = True
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        result = {'database': instance_name, 'error': False, 'message': _('Done')}
+        pagi_msg, sde_pagi_end_msg, sde_pagi_id = False, False, False
+        pagi_json_text = ''
+        pagi_json_data, pi_ids = [], []
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)') % (json_data['database'], instance_name))
+
+            sde_pagi_error = False
+            if json_data.get('sde_pagination_id'):
+                if 'sde_pagination_page' not in json_data or 'sde_pagination_end' not in json_data:
+                    sde_pagi_error = _('The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_end are mandatory to use the pagination in the SDE Physical Inventory Counting sheet import')
+                else:
+                    sde_pagi_end_msg = json_data.get('sde_pagination_end') and _(' and finished') or ''
+                    sde_pagi_page = json_data['sde_pagination_page']
+                    try:
+                        sde_pagi_page = int(sde_pagi_page)
+                    except ValueError:
+                        sde_pagi_error = _('The page number must be an integer')
+                    sde_pagi_ids = pagi_obj.search(cr, 1, [('pagination_json_id', '=', json_data['sde_pagination_id'])], context=context)
+                    if sde_pagi_ids:
+                        sde_pagi_id = sde_pagi_ids[0]
+                        sde_pagi = pagi_obj.read(cr, 1, sde_pagi_id, context=context)
+                        if sde_pagi['state'] == 'done':
+                            sde_pagi_error = _('This SDE import ID is already finished, please use a new SDE import ID')
+                        elif sde_pagi_page - sde_pagi['page'] != 1:
+                            sde_pagi_error = _('The page number must be in sequential order without gaps: last page imported %s, imported page %s') \
+                                % (sde_pagi['page'], json_data['sde_pagination_page'])
+                        else:
+                            # Update the existing JSON with the new data in the key move_lines
+                            pagi_json_text = sde_pagi['pagination_json_text']
+                            pagi_json_data = json.loads(pagi_json_text)
+
+                            pagi_json_data['move_lines'].extend(json_data['move_lines'])
+                            pagi_json_text = json.dumps(pagi_json_data)
+
+                            pagi_vals = {
+                                'pagination_json_text': pagi_json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': sde_pagi_page,
+                                'last_modification': datetime.now(),
+                            }
+                            if sde_pagi_end_msg:
+                                pagi_vals['state'] = 'done'
+                            pagi_obj.write(cr, 1, sde_pagi_ids[0], pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s updated%s with page %s') % (json_data['sde_pagination_id'], sde_pagi_end_msg, sde_pagi_page)
+                    else:
+                        if sde_pagi_page != 1:
+                            sde_pagi_error = _('The first page of a paginated SDE import must be 1')
+                        else:
+                            sde_pagi_vals = {
+                                'state': json_data.get('sde_pagination_end') and 'done' or 'progress',
+                                'pagination_json_id': json_data['sde_pagination_id'],
+                                'pagination_json_text': json_text,
+                                'pagination_keys': json_data.get('name', ''),
+                                'page': 1,
+                                'last_modification': datetime.now(),
+                            }
+                            sde_pagi_id = pagi_obj.create(cr, 1, sde_pagi_vals, context=context)
+                            pagi_msg = _('SDE pagination for %s created%s') % (json_data['sde_pagination_id'], sde_pagi_end_msg)
+
+            if sde_pagi_error:
+                raise osv.except_osv(_('Error'), _('An error occurred during the management of the paginated SDE import "%s": %s')
+                                     % (json_data.get('sde_pagination_id'), sde_pagi_error))
+            elif not json_data.get('sde_pagination_id') or (sde_pagi_end_msg and sde_pagi_id):
+                # Get the correct JSON data if the pagination has been used
+                if sde_pagi_id and pagi_json_text and pagi_json_data:
+                    json_text = pagi_json_text
+                    json_data = pagi_json_data
+
+                # Get the Physical Inventory from the name
+                if not json_data.get('name'):
+                    raise osv.except_osv(_('Error'), _('The main key "name" is mandatory and should not be empty'))
+                pi_ids = self.get_pi_from_refs(cr, uid, [json_data['name']], 'count', context=context)
+                pi_id = pi_ids[0]
+                pi = pi_obj.browse(cr, uid, pi_id, fields_to_fetch=['ref', 'sde_updated', 'location_id'], context=context)
+                if pi.sde_updated:
+                    raise osv.except_osv(_('Error'), _('The Physical Inventory %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE update there') % (pi.ref,))
+
+                if not json_data.get('location'):
+                    raise osv.except_osv(_('Error'), _('The main key "location" is mandatory and should not be empty'))
+
+                # Reset the quantity of the counting sheet lines
+                cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id = %s""", (pi_id,))
+
+                # Import the data
+                line_items, errors, warnings = [], [], []
+
+                all_uom = {}
+                uom_ids = uom_obj.search(cr, uid, [], context=context)
+                for uom in uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
+                    all_uom[uom['name'].lower()] = uom['id']
+
+                if not json_data.get('location') or json_data.get('location').lower() != pi.location_id.name.lower():
+                    errors.append(_('Location is different to inventory location'))
+
+                for line in json_data.get('lines', []):
+                    line_errors, line_warnings = [], []
+
+                    # Check product_code and type
+                    product_code = line.get('product_code')
+                    product_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
+                    product_id = False
+                    if product_ids:
+                        product_id = product_ids[0]
+                        # Check if product is non-stockable
+                        if prod_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
+                            line_errors.append(_('Impossible to import non-stockable product %s') % (product_code,))
+                    else:
+                        line_errors.append(_('Product %s not found') % (product_code,))
+
+                    # Check UoM
+                    product_uom, product_uom_id = False, False
+                    if line.get('uom'):
+                        product_uom = line['uom']
+                        try:
+                            product_uom = tools.ustr(product_uom).lower()
+                            if product_uom not in all_uom:
+                                line_errors.append(_('UoM %s unknown') % (product_uom,))
+                            else:
+                                product_uom_id = all_uom[product_uom]
+                        except ValueError:
+                            line_errors.append(_('UoM %s is not valid') % (product_uom,))
+                    else:
+                        line_errors.append(_('UoM is mandatory'))
+
+                    # Check quantity
+                    quantity = None
+                    if 'product_qty' in line:
+                        quantity = line['product_qty']
+                    if quantity is not None:
+                        if isinstance(quantity, int) and quantity == 0:
+                            quantity = '0'
+                        try:
+                            quantity = counting_obj.quantity_validate(cr, uid, quantity, product_uom_id)
+                        except NegativeValueError:
+                            line_errors.append(_('Quantity %s is negative') % (quantity,))
+                            quantity = 0.0
+                        except ValueError:
+                            quantity = 0.0
+                            line_errors.append(_('Quantity %s is not valid') % (quantity,))
+
+                    if product_id and product_uom_id:
+                        product_info = prod_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'], context=context)
+                        if product_info['uom_id'] and product_info['uom_id'][0] != product_uom_id:
+                            line_errors.append(_('Product %s, UoM %s does not conform to that of product in stock')
+                                               % (product_info['default_code'], product_uom))
+
+                        # Check batch number
+                        batch_name = line.get('prodlot_id') or False
+                        if not batch_name and product_info['batch_management'] and quantity is not None:
+                            line_errors.append(_('Batch number is required'))
+
+                        if batch_name and not product_info['batch_management']:
+                            line_warnings.append(_('Product %s is not BN managed, BN ignored')
+                                                 % (product_info['default_code'],))
+                            batch_name = False
+
+                        # Check expiry date
+                        expiry_date = line.get('expired_date') or False
+                        if expiry_date and not product_info['perishable']:
+                            line_warnings.append(_('Product %s is not ED managed, ED ignored') % (product_info['default_code'],))
+                            expiry_date = False
+                        elif expiry_date:
+                            year = False
+                            try:
+                                expiry_date_date = datetime.strptime(expiry_date, '%Y-%m-%d')
+                                year = expiry_date_date.year
+                            except Exception as e:
+                                err_type = type(e).__name__
+                                if not year or year >= 1900 or err_type == 'ParserError':
+                                    line_errors.append(_("Expiry date '%s' is not valid") % (expiry_date,))
+                                    if err_type == 'ParserError':
+                                        expiry_date = False
+
+                            if year and year < 1900:
+                                line_errors.append(_('Expiry date: year must be after 1899'))
+
+                        if not expiry_date and product_info['perishable'] and quantity is not None:
+                            line_errors.append(_('Expiry date is required'))
+
+                        # Check duplicate line (Same product_id, batch_number, expiry_date)
+                        item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
+                        if item in line_items:
+                            line_errors.append(_('Product %s, Duplicate line (same product, batch number and expiry date)') % (product_info['default_code'],))
+                        elif quantity is not None:
+                            line_items.append(item)
+
+                        data = {
+                            'product_id': product_id,
+                            'batch_number': batch_name,
+                            'expiry_date': expiry_date,
+                            'quantity': False,
+                            'product_uom_id': product_uom_id,
+                        }
+
+                        if not line_errors:
+                            if quantity is not None:
+                                data['quantity'] = quantity
+                            # Check if line exist
+                            line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', pi_id),
+                                                                     ('product_id', '=', product_id),
+                                                                     ('batch_number', '=', batch_name),
+                                                                     ('expiry_date', '=', expiry_date)], context=context)
+                            # Search for empty BN/ED lines
+                            if not line_ids and (batch_name or expiry_date):
+                                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', pi_id),
+                                                                         ('product_id', '=', product_id),
+                                                                         ('batch_number', '=', False),
+                                                                         ('expiry_date', '=', False)], context=context)
+                            # Update or create the Counting line
+                            if line_ids:
+                                counting_obj.write(cr, uid, line_ids[0], data, context=context)
+                            else:
+                                data['inventory_id'] = pi_id
+                                counting_obj.create(cr, uid, data, context=context)
+
+                    if line_warnings:
+                        warnings.append(_('Line number %s: %s') % (line.get('line_number', _('empty')), '. '.join(line_warnings)))
+                    if line_errors:
+                        line_errors.extend(line_warnings)
+                        errors.append(_('Line number %s: %s') % (line.get('line_number', _('empty')), '. '.join(line_errors)))
+
+                if errors:
+                    error_msg = _('Some errors occurred during the import: %s') % ('; '.join(errors),)
+                    if warnings:
+                        error_msg += _('. Warning: %s') % ('; '.join(warnings),)
+                    raise osv.except_osv(_('Error'), error_msg)
+
+                result['message'] = pagi_msg or _('Done')
+                if warnings:
+                    result['message'] += _('. Warning: %s') % ('; '.join(warnings),)
+
+                # Set the Physical Inventory as sde_updated, remove the banner message, and update Responsible
+                pi_data = {'responsible': json_data.get('responsible', ''), 'sde_updated': True, 'sde_update_msg': False}
+                pi_obj.write(cr, uid, pi_id, pi_data, context=context)
+
+                # Log the update
+                self.pool.get('sde.update.log').create(cr, 1, {'date': datetime.now(), 'doc_type': 'pi_count', 'doc_ref': pi.ref}, context=context)
+            elif pagi_msg:
+                result['message'] = pagi_msg
+        except Exception as e:
+            cr.rollback()
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+        finally:
+            if 'sde_flow' in context:
+                context.pop('sde_flow')
+
+        return result
+
+    def sde_pi_export(self, cr, uid, json_text, pi_type, context=None):
+        '''
+        Method used by the SDE script to export info on Physical Inventories Counting/Discrepancy lines
+        '''
+        if context is None:
+            context = {}
+        if not pi_type:
+            raise osv.except_osv(_('Error'), _('Please specify a pi_type'))
+
+        pi_obj = self.pool.get('physical.inventory')
+        pagi_exp_obj = self.pool.get('sde.export.pagination')
+
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+        # if pi_type == 'discr':
+        #     export_name = _('Discrepancy lines')
+        #     export_type = 'pi_discr'
+        # else:
+        export_name = _('Counting sheet')
+        export_type = 'pi_count'
+
+        result = {'database': instance_name, 'error': False, 'message': '', 'data': []}
+        pagi_msg = ''
+        try:
+            json_data = json.loads(json_text)
+
+            # Check if the call was to the correct instance
+            if not json_data.get('database'):
+                raise osv.except_osv(_('Error'), _('The main key "database" is mandatory and should not be empty'))
+            if json_data['database'] != instance_name:
+                raise osv.except_osv(_('Error'), _('The database name in the given JSON (%s) does not correspond to the current instance (%s)')
+                                     % (json_data['database'], instance_name))
+
+            if json_data.get('sde_pagination_id'):
+                # Check the pagination data
+                if not json_data.get('sde_pagination_page'):
+                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" is mandatory and should not be empty when using "sde_pagination_id"'))
+                try:
+                    json_data['sde_pagination_page'] = int(json_data['sde_pagination_page'])
+                except:
+                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" must be an integer'))
+                if json_data['sde_pagination_page'] <= 0:
+                    raise osv.except_osv(_('Error'), _('The main key "sde_pagination_page" must be above 0'))
+
+                pagi_exp_domain = [('doc_type', '=', export_type), ('pagination_json_id', '=', json_data['sde_pagination_id']),
+                                   ('page', '=', json_data['sde_pagination_page'])]
+                pagi_exp_ids = pagi_exp_obj.search(cr, 1, pagi_exp_domain, context=context)
+                if pagi_exp_ids:
+                    pagi_exp = pagi_exp_obj.read(cr, 1, pagi_exp_ids[0], ['pagination_json_text'], context=context)
+                    result.update({
+                        'sde_pagination_id': json_data['sde_pagination_id'],
+                        'sde_pagination_page': json_data['sde_pagination_page'],
+                        'message': _('The Physical Inventory %s data from the page %s of %s have been exported')
+                        % (export_name, json_data['sde_pagination_page'], json_data['sde_pagination_id']),
+                        'data': json.loads(pagi_exp['pagination_json_text']),
+                    })
+                else:
+                    raise osv.except_osv(_('Error'), _('No Physical Inventory %s export data was found with the "sde_pagination_id" %s and the "sde_pagination_page" %s')
+                                         % (export_name, json_data['sde_pagination_id'], json_data['sde_pagination_page']))
+            else:
+                # Get the data with the references given
+                pi_ids, pi_names = [], []
+                if json_data.get('pi_list') and isinstance(json_data['pi_list'], list):
+                    try:
+                        json_data['pi_list'] = [str(pi_name).strip() for pi_name in json_data['pi_list']]
+                    except:
+                        raise osv.except_osv(_('Error'),  _('One or more of the Physical Inventory names in the key "pi_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
+                    pi_names = json_data['pi_list']
+                    pi_ids = self.get_pi_from_refs(cr, uid, pi_names, pi_type, context=context)
+                else:
+                    # if pi_type == 'discr':
+                    #     pi_domain = [('state', 'in', ['counted', 'validated', 'confirmed']), ('discrepancies_generated', '=', True)]
+                    # else:
+                    pi_domain = [('state', 'in', ['counting', 'counted']), ('discrepancies_generated', '=', False)]
+                    pi_ids = pi_obj.search(cr, uid, pi_domain, context=context)
+
+                if not pi_ids:
+                    raise osv.except_osv(_('Error'), _('There is no Physical Inventory %s to export') % (export_name,))
+
+                # Default number of lines per page is 100 if not specified
+                lines_per_page = 100
+                if json_data.get('lines_per_page'):
+                    try:
+                        json_data['lines_per_page'] = int(json_data['lines_per_page'])
+                    except:
+                        raise osv.except_osv(_('Error'), _('The main key "lines_per_page" must be an integer'))
+                    if json_data['lines_per_page'] <= 0:
+                        raise osv.except_osv(_('Error'), _('The main key "lines_per_page" must be above 0'))
+                    lines_per_page = json_data['lines_per_page']
+
+                # Count the number of lines
+                # if pi_type == 'discr':
+                #     cr.execute("""SELECT COUNT(id) FROM physical_inventory_discrepancy WHERE inventory_id IN %s AND ignored = False""", (tuple(pi_ids),))
+                # else:
+                cr.execute("""SELECT COUNT(id) FROM physical_inventory_counting WHERE inventory_id IN %s""", (tuple(pi_ids),))
+                nb_lines = cr.fetchone()[0]
+
+                data = {}
+                offset = 0
+                # if pi_type == 'discr':
+                #     threaded_method = self.create_pi_discrepancy_paginated_export
+                #     for pi in self.get_pi_discrepancy_export_data(cr, uid, pi_ids, offset, lines_per_page, context=context):
+                #         if not data.get(pi[0]):
+                #             data[pi[0]] = {
+                #                 'name': pi[1] or '',
+                #                 'lines': [],
+                #             }
+                #
+                #         data[pi[0]]['lines'].append({
+                #             'product_code': pi[2],
+                #         })
+                # else:
+                threaded_method = self.create_pi_counting_paginated_export
+                for pi in self.get_pi_counting_export_data(cr, uid, pi_ids, offset, lines_per_page, context=context):
+                    if not data.get(pi[0]):
+                        data[pi[0]] = {
+                            'details': pi[1] or '',
+                            'responsible': pi[2] or '',
+                            'date': pi[3] or '',
+                            'location': pi[4] or '',
+                            'updated_by_sde': pi[5] or False,
+                            # 'latest_log': pi[6] or '',
+                            # 'latest_log_date': pi[7] or '',
+                            'lines': [],
+                        }
+
+                    data[pi[0]]['lines'].append({
+                        'line_number': pi[7],
+                        'product_code': pi[8],
+                        'product_name': pi[9],
+                        'product_creator': pi[10],
+                        'nomen_main_type': pi[11],
+                        'uom': pi[12] or '',
+                        'product_qty': pi[13] and int(pi[13]) or False,
+                        'prodlot_id': pi[14] or '',
+                        'expired_date': pi[15] or '',
+                        'kc_check': pi[16] or False,
+                        'dg_check': pi[17] == 'True' and _('True') or pi[17] == 'no_know' and _('Unknown') or _('False'),
+                        'np_check': pi[18] or False,
+                        'batch_managed': pi[19] or False,
+                        'expiry_managed': pi[20] or False,
+                    })
+
+                if nb_lines > lines_per_page:
+                    sde_pagi_id = self.pool.get('ir.sequence').get(cr, uid, 'sde.export.pagination')
+                    sde_pagi_page = 1
+                    last_page = math.ceil(nb_lines / lines_per_page)
+
+                    pagi_exp_obj.create(cr, 1, {'pagination_json_id': sde_pagi_id, 'pagination_json_text': json.dumps(data),
+                                                'doc_type': export_type, 'page': sde_pagi_page, 'last_page': False,
+                                                'with_lines': True}, context=context)
+                    result.update({'sde_pagination_id': sde_pagi_id, 'sde_pagination_page': sde_pagi_page,
+                                   'sde_pagination_last_page': last_page})
+
+                    pagi_msg = _('. The export have been paginated into %s pages. If you want to retrieve the other pages, please use the "sde_pagination_id" data given') % (last_page,)
+
+                    # Create the remaining pages in the background
+                    while sde_pagi_page < last_page:
+                        sde_pagi_page += 1
+                        offset += lines_per_page
+                        threaded_exp_pagi = threading.Thread(target=threaded_method,
+                                                             args=(cr, uid, pi_ids, sde_pagi_id, sde_pagi_page,
+                                                                   last_page, offset, lines_per_page, context))
+                        threaded_exp_pagi.start()
+
+                final_msg_pi = pi_names and ', '.join(pi_names) or _('%s Physical Inventories') % (len(pi_ids), )
+                result.update({
+                    'data': data,
+                    'message': _('The Physical Inventory %s data of %s have been exported%s')% (export_name, final_msg_pi, pagi_msg)
+                })
+        except Exception as e:
+            # Rejection message to send back
+            if isinstance(e, osv.except_osv):
+                error_msg = e.value
+            else:
+                error_msg = e.args and '. '.join(e.args) or e
+            result.update({'error': True, 'message': error_msg})
+
+        return result
+
+    def get_pi_from_refs(self, cr, uid, pi_list, type, context=None):
+        if context is None:
+            context = {}
+
+        pi_obj = self.pool.get('physical.inventory')
+
+        states_msg, type_msg = '', ''
+        # if type == 'count':
+        pi_default_domain = [('state', 'in', ['counting', 'counted']), ('discrepancies_generated', '=', False)]
+        type_msg = _('for Counting sheet ')
+        # elif type == 'discr':
+        #     pi_default_domain = [('state', 'in', ['counted', 'validated', 'confirmed']), ('discrepancies_generated', '=', True))]
+        #     type_msg = _('for Discrepancy Lines ')
+        # else:
+        #     states = ['counting', 'counted', 'validated', 'confirmed']
+        #     states_msg = _('%s ') % ('/'.join([PI_STATES[state] for state in states]))
+        #     pi_default_domain = [('state', 'in', states)]
+
+        pi_ids, not_found = [], []
+        for pi_name in pi_list:
+            pi_domain = pi_default_domain.copy()
+            pi_domain.append(('ref', '=', pi_name))
+            pi_id = pi_obj.search(cr, uid, pi_domain, context=context)
+            if pi_id:
+                pi_ids.append(pi_id[0])
+            else:
+                not_found.append(pi_name)
+
+        if not_found:
+            raise osv.except_osv(_('Error'), _('The %sPhysical Inventories %s%s could not be found')
+                                 % (states_msg, type_msg, ', '.join(not_found),))
+
+        return pi_ids
+
+    def get_pi_counting_export_data(self, cr, uid, ids, offset, limit, context=None):
+        """
+        Get info from PIs, its Counting sheet, its latest Track Change
+        """
+        if context is None:
+            context = {}
+
+        cr.execute("""
+            SELECT
+                pi.ref, -- 0
+                pi.name, -- 1
+                pi.responsible, -- 2
+                pi.date, -- 3
+                l.name, -- 4
+                pi.sde_updated, -- 5
+                -- MAX(a.log), -- 6
+                -- MAX(a.timestamp), -- 7
+                picount.id, -- 8
+                picount.line_no, -- 9
+                pp.default_code, -- 10
+                pt.name, -- 11
+                pis.name, -- 12
+                pno.name, -- 13
+                u.name, -- 14
+                picount.quantity, -- 15
+                picount.batch_number, -- 16
+                picount.expiry_date, -- 17
+                pcc.cold_chain, -- 18 kc_check
+                pp.dangerous_goods, -- 19 dg_check
+                pp.controlled_substance, -- 20 np_check
+                pp.batch_management, -- 21
+                pp.perishable -- 22
+            FROM physical_inventory_counting picount
+                LEFT JOIN physical_inventory pi ON picount.inventory_id = pi.id
+                LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
+                LEFT JOIN stock_location l ON pi.location_id = l.id
+                LEFT JOIN product_product pp ON picount.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
+                LEFT JOIN product_international_status pis ON pp.international_status = pis.id
+                LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
+                LEFT JOIN product_uom u ON picount.product_uom_id = u.id
+            WHERE pi.id IN %s
+            GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.name, picount.line_no, picount.id, picount.id,
+                picount.line_no, pp.default_code, pt.name, pis.name, pno.name, u.name, picount.quantity,
+                picount.batch_number, picount.expiry_date, pcc.cold_chain, pp.dangerous_goods, pp.controlled_substance,
+                pp.batch_management, pp.perishable
+            ORDER BY pi.id, picount.line_no, picount.id OFFSET %s LIMIT %s
+        """, (tuple(ids), offset, limit)) # not_a_user_entry
+
+        return cr.fetchall()
+
+    def create_pi_counting_paginated_export(self, cr, uid, ids, pagi_ref, page, last_page, offset, limit, context=None):
+        '''
+        Method to be used in the background to create the paginated exports beyond page 1
+        '''
+        if context is None:
+            context = {}
+
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        data = {}
+        for pi in self.get_pi_counting_export_data(cr, uid, ids, offset, limit, context=context):
+            if not data.get(pi[0]):
+                data[pi[0]] = {
+                    'details': pi[1] or '',
+                    'responsible': pi[2] or '',
+                    'date': pi[3] or '',
+                    'location': pi[4] or '',
+                    'updated_by_sde': pi[5] or False,
+                    # 'latest_log': pi[6] or '',
+                    # 'latest_log_date': pi[7] or '',
+                    'lines': [],
+                }
+
+            data[pi[0]]['lines'].append({
+                'line_number': pi[7],
+                'product_code': pi[8],
+                'product_name': pi[9],
+                'product_creator': pi[10],
+                'nomen_main_type': pi[11],
+                'uom': pi[12] or '',
+                'product_qty': pi[13] and int(pi[13]) or False,
+                'prodlot_id': pi[14] or '',
+                'expired_date': pi[15] or '',
+                'kc_check': pi[16] or False,
+                'dg_check': pi[17] == 'True' and _('True') or pi[17] == 'no_know' and _('Unknown') or _('False'),
+                'np_check': pi[18] or False,
+                'batch_managed': pi[19] or False,
+                'expiry_managed': pi[20] or False,
+            })
+
+        pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'pi_count',
+                     'page': page, 'last_page': page == last_page, 'with_lines': True}
+        self.pool.get('sde.export.pagination').create(new_cr, 1, pagi_vals, context=context)
+
+        new_cr.commit()
+        new_cr.close(True)
+
+        return True
+
 
 sde_import()
 
@@ -2587,8 +3338,9 @@ class sde_update_log(osv.osv):
 
     _columns = {
         'date': fields.datetime('Update Date', required=True, readonly=True),
-        'doc_type': fields.selection(string='Document Type', selection=[('in', 'Incoming Shipment'), ('pick', 'Picking Ticket'), ('out', 'Delivery Order'), ('ppl', 'Pre-Packing List')],
-                                     required=True, readonly=True),
+        'doc_type': fields.selection(string='Document Type', selection=[('in', 'Incoming Shipment'), ('pick', 'Picking Ticket'),
+                                                                        ('out', 'Delivery Order'), ('ppl', 'Pre-Packing List'),
+                                                                        ('pi_count', 'Physical Inventory Counting Sheet')], required=True, readonly=True),
         'doc_ref': fields.char(string='Reference', size=64, required=True, readonly=True),
     }
 
@@ -2626,7 +3378,9 @@ class sde_export_pagination(osv.osv):
     _columns = {
         'pagination_json_id': fields.char(string='Pagination JSON ID', size=32, required=True, readonly=True),
         'pagination_json_text': fields.text(string='Pagination JSON text', required=True, readonly=True),
-        'doc_type': fields.selection(string='Document Type', selection=[('pick', 'Picking Ticket'), ('out', 'Delivery Order'), ('ppl', 'Pre-Packing List')], required=True, readonly=True),
+        'doc_type': fields.selection(string='Document Type', selection=[('pick', 'Picking Ticket'), ('out', 'Delivery Order'),
+                                                                        ('ppl', 'Pre-Packing List'), ('pi_count', 'Physical Inventory Counting Sheet')],
+                                     required=True, readonly=True),
         'page': fields.integer(string='SDE import page', required=True, readonly=True),
         'last_page': fields.boolean(string='Last page of the export', readonly=True),
         'with_lines': fields.boolean(string='Exported with lines', readonly=True),

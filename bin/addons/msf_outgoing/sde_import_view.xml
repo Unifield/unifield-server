@@ -45,41 +45,54 @@
                     <separator colspan="4" string="Data for the imports/tools" />
                     <field name="json_text" colspan="4" />
                     <field name="message" readonly="1" colspan="4" />
-                    <separator colspan="4" string="Import IN Tools" />
-                    <button name="wizard_sde_import_in" string="Import IN" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_import_in_updated" string="Import IN Updated" icon="gtk-execute" type="object" colspan="2" />
-                    <separator colspan="4" string="Add attachment to an IN" />
-                    <group colspan="4" col="6">
-                        <field name="po_ref_for_in" />
-                        <field name="pack_ref_for_in" />
-                        <field name="partner_fo_ref_for_in" />
-                    </group>
-                    <group colspan="4">
-                        <field name="file" filename="filename" />
-                        <field name="filename" invisible="1" />
-                        <button name="wizard_sde_file_to_in" string="Import attachment" icon="gtk-execute" type="object" colspan="1" />
-                    </group>
-                    <separator colspan="4" string="Picking Ticket Tools" />
-                    <button name="wizard_sde_picking_ticket_msg" string="Set banner on Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_picking_ticket_remove_msg" string="Remove banner on Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_picking_ticket_import" string="Import Picking Ticket" icon="gtk-execute" type="object" colspan="2" />
-                    <newline />
-                    <button name="wizard_sde_picking_ticket_export" string="Export Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_picking_ticket_export_lines" string="Export Picking Tickets with lines" icon="gtk-execute" type="object" colspan="2" />
-                    <separator colspan="4" string="OUT Tools" />
-                    <button name="wizard_sde_out_msg" string="Set banner on OUTs" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_out_remove_msg" string="Remove banner on OUTs" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_out_import" string="Import OUT" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_out_check_availability" string="Check Availability OUTs" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_out_export" string="Export OUTs" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_out_export_lines" string="Export OUTs with lines" icon="gtk-execute" type="object" colspan="2" />
-                    <separator colspan="4" string="PACK ONLY Tools" />
-                    <button name="wizard_sde_pack_only_msg" string="Set banner on PPLs" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_pack_only_remove_msg" string="Remove banner on PPLs" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_pack_only_import" string="Import PPL" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_pack_types_export" string="Export Pack Types" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_pack_only_export" string="Export PPLs" icon="gtk-execute" type="object" colspan="2" />
-                    <button name="wizard_sde_pack_only_export_lines" string="Export PPLs with lines" icon="gtk-execute" type="object" colspan="2" />
+                    <separator colspan="4" string="SDE Tools" />
+                    <notebook colspan="4">
+                        <page string="IN">
+                            <button name="wizard_sde_import_in" string="Import IN" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_import_in_updated" string="Import IN Updated" icon="gtk-execute" type="object" colspan="2" />
+                            <separator colspan="4" string="Add attachment to an IN" />
+                            <group colspan="4" col="6">
+                                <field name="po_ref_for_in" />
+                                <field name="pack_ref_for_in" />
+                                <field name="partner_fo_ref_for_in" />
+                            </group>
+                            <group colspan="4">
+                                <field name="file" filename="filename" />
+                                <field name="filename" invisible="1" />
+                                <button name="wizard_sde_file_to_in" string="Import attachment" icon="gtk-execute" type="object" colspan="1" />
+                            </group>
+                        </page>
+                        <page string="Picking Ticket">
+                            <button name="wizard_sde_picking_ticket_msg" string="Set banner on Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_picking_ticket_remove_msg" string="Remove banner on Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_picking_ticket_import" string="Import Picking Ticket" icon="gtk-execute" type="object" colspan="2" />
+                            <newline />
+                            <button name="wizard_sde_picking_ticket_export" string="Export Picking Tickets" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_picking_ticket_export_lines" string="Export Picking Tickets with lines" icon="gtk-execute" type="object" colspan="2" />
+                        </page>
+                        <page string="OUT">
+                            <button name="wizard_sde_out_msg" string="Set banner on OUTs" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_out_remove_msg" string="Remove banner on OUTs" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_out_import" string="Import OUT" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_out_check_availability" string="Check Availability OUTs" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_out_export" string="Export OUTs" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_out_export_lines" string="Export OUTs with lines" icon="gtk-execute" type="object" colspan="2" />
+                        </page>
+                        <page string="PACK ONLY">
+                            <button name="wizard_sde_pack_only_msg" string="Set banner on PPLs" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pack_only_remove_msg" string="Remove banner on PPLs" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pack_only_import" string="Import PPL" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pack_types_export" string="Export Pack Types" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pack_only_export" string="Export PPLs" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pack_only_export_lines" string="Export PPLs with lines" icon="gtk-execute" type="object" colspan="2" />
+                        </page>
+                        <page string="Physical Inventory">
+                            <button name="wizard_sde_pi_msg" string="Set banner on Physical Inventories" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pi_remove_msg" string="Remove banner on Physical Inventories" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pi_counting_sheet_import" string="Import Physical Inventory Counting Sheet" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pi_counting_sheet_export" string="Export Physical Inventory Counting Sheets" icon="gtk-execute" type="object" colspan="2" />
+                        </page>
+                    </notebook>
                     <separator colspan="4" string="Report Actions" />
                     <button name="generate_sde_dispatched_packing_list_report" string="Generate Dispatched Packing List report" icon="gtk-print" type="object" colspan="4" context="{'from_sde_wizard': True}" />
                 </form>
