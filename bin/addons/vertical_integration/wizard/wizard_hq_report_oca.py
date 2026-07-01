@@ -79,7 +79,7 @@ class wizard_export_vi_finance(osv.osv_memory):
         if not export_ids:
             return False
 
-        if not self.get_period_state(cr, uid, context=None):
+        if not self.get_period_state(cr, uid, context=context):
             return False
 
         export_obj = self.pool.get('automated.export')
