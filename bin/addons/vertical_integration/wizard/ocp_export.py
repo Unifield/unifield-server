@@ -440,7 +440,7 @@ class ocp_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
         if wizard.export_type == 'workday':
             if wizard.period_id and wizard.instance_id:
                 cr.execute('''
-                    select i.instance
+                    select coalesce(i.instance, i.code)
                         from msf_instance i
                         left join account_period_state st on st.instance_id = i.id and st.period_id = %(period)s
                     where
