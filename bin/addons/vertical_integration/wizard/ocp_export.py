@@ -446,7 +446,7 @@ class ocp_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
                     where
                         i.parent_id = %(instance)s and
                         i.state = 'active' and
-                        (st.id is null or st.state not in ('mission-closed', 'done'))
+                        (st.id is null or st.state not in ('field-closed', 'mission-closed', 'done'))
                 ''', {'period': wizard.period_id.id, 'instance': wizard.instance_id.id})
                 wrong_proj = [x[0] for x in cr.fetchall()]
                 if wrong_proj:

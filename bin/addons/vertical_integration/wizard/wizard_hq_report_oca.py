@@ -52,7 +52,7 @@ class wizard_export_vi_finance(osv.osv_memory):
                 inner join msf_instance coo on coo.id = st.instance_id
                 inner join account_period p on p.id = st.period_id
                 left join msf_instance proj on proj.parent_id = coo.id and proj.state = 'active'
-                left join account_period_state st_proj on st_proj.instance_id = proj.id and st_proj.period_id = st.period_id and st_proj.state in ('mission-closed', 'done')
+                left join account_period_state st_proj on st_proj.instance_id = proj.id and st_proj.period_id = st.period_id and st_proj.state in ('field-closed', 'mission-closed', 'done')
             where
                 st.state = 'mission-closed' and
                 coo.level = 'coordo' and
