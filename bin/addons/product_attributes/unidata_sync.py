@@ -585,6 +585,8 @@ class ud_sync():
             'ocb': 4,
             'ocg': 7,
             'ocp': 8,
+            'ubuntu': 14,
+            'waca': 15,
         }
 
         url = '%s/projects' % (self.url_msl, )
