@@ -278,7 +278,7 @@
                                     <field name="kit_pol_check_sale_order_line" invisible="True"/>
                                     <field name="so_state_stored" invisible="True"/>
                                     <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check_sale_order_line', '=', False), ('so_state_stored', 'not in', ['draft', 'validated'])]}"/>
-                                    <field name="type" />
+                                    <field name="type_display" />
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="state_to_display"/>
@@ -407,7 +407,7 @@
                             <field name="functional_subtotal"/>
                             <field name="functional_currency_id"/>
                             <field name="discount" attrs="{'readonly': [('state', '!=', '')]}"/>
-                            <field name="type" attrs="{'readonly': [('state', '!=', '')]}"/>
+                            <field name="type_display"/>
                             <field name="date_planned" readonly="1"/>
                             <field name="esti_dd" readonly="1"/>
                             <field name="confirmed_delivery_date" readonly="1"/>
