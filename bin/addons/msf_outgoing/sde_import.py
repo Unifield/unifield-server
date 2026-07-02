@@ -71,10 +71,6 @@ MOVE_STATE = {
 PI_STATES = {key: _(value) for key, value in PHYSICAL_INVENTORIES_STATES}
 
 
-class NegativeValueError(ValueError):
-    """Negative value Exception"""
-
-
 class sde_import(osv.osv_memory):
     _name = 'sde.import'
     _description = 'SDE Tools'
@@ -2854,132 +2850,16 @@ class sde_import(osv.osv_memory):
                 if not json_data.get('location') or json_data.get('location').lower() != pi.location_id.name.lower():
                     errors.append(_('Location is different to inventory location'))
 
-                for line in json_data.get('lines', []):
-                    line_errors, line_warnings = [], []
-
-                    # Check product_code and type
-                    product_code = line.get('product_code')
-                    product_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
-                    product_id = False
-                    if product_ids:
-                        product_id = product_ids[0]
-                        # Check if product is non-stockable
-                        if prod_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
-                            line_errors.append(_('Impossible to import non-stockable product %s') % (product_code,))
-                    else:
-                        line_errors.append(_('Product %s not found') % (product_code,))
-
-                    # Check UoM
-                    product_uom, product_uom_id = False, False
-                    if line.get('uom'):
-                        product_uom = line['uom']
-                        try:
-                            product_uom = tools.ustr(product_uom).lower()
-                            if product_uom not in all_uom:
-                                line_errors.append(_('UoM %s unknown') % (product_uom,))
-                            else:
-                                product_uom_id = all_uom[product_uom]
-                        except ValueError:
-                            line_errors.append(_('UoM %s is not valid') % (product_uom,))
-                    else:
-                        line_errors.append(_('UoM is mandatory'))
-
-                    # Check quantity
-                    quantity = None
-                    if 'product_qty' in line:
-                        quantity = line['product_qty']
-                    if quantity is not None:
-                        if isinstance(quantity, int) and quantity == 0:
-                            quantity = '0'
-                        try:
-                            quantity = counting_obj.quantity_validate(cr, uid, quantity, product_uom_id)
-                        except NegativeValueError:
-                            line_errors.append(_('Quantity %s is negative') % (quantity,))
-                            quantity = 0.0
-                        except ValueError:
-                            quantity = 0.0
-                            line_errors.append(_('Quantity %s is not valid') % (quantity,))
-
-                    if product_id and product_uom_id:
-                        product_info = prod_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'], context=context)
-                        if product_info['uom_id'] and product_info['uom_id'][0] != product_uom_id:
-                            line_errors.append(_('Product %s, UoM %s does not conform to that of product in stock')
-                                               % (product_info['default_code'], product_uom))
-
-                        # Check batch number
-                        batch_name = line.get('prodlot_id') or False
-                        if not batch_name and product_info['batch_management'] and quantity is not None:
-                            line_errors.append(_('Batch number is required'))
-
-                        if batch_name and not product_info['batch_management']:
-                            line_warnings.append(_('Product %s is not BN managed, BN ignored')
-                                                 % (product_info['default_code'],))
-                            batch_name = False
-
-                        # Check expiry date
-                        expiry_date = line.get('expired_date') or False
-                        if expiry_date and not product_info['perishable']:
-                            line_warnings.append(_('Product %s is not ED managed, ED ignored') % (product_info['default_code'],))
-                            expiry_date = False
-                        elif expiry_date:
-                            year = False
-                            try:
-                                expiry_date_date = datetime.strptime(expiry_date, '%Y-%m-%d')
-                                year = expiry_date_date.year
-                            except Exception as e:
-                                err_type = type(e).__name__
-                                if not year or year >= 1900 or err_type == 'ParserError':
-                                    line_errors.append(_("Expiry date '%s' is not valid") % (expiry_date,))
-                                    if err_type == 'ParserError':
-                                        expiry_date = False
-
-                            if year and year < 1900:
-                                line_errors.append(_('Expiry date: year must be after 1899'))
-
-                        if not expiry_date and product_info['perishable'] and quantity is not None:
-                            line_errors.append(_('Expiry date is required'))
-
-                        # Check duplicate line (Same product_id, batch_number, expiry_date)
-                        item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-                        if item in line_items:
-                            line_errors.append(_('Product %s, Duplicate line (same product, batch number and expiry date)') % (product_info['default_code'],))
-                        elif quantity is not None:
-                            line_items.append(item)
-
-                        data = {
-                            'product_id': product_id,
-                            'batch_number': batch_name,
-                            'expiry_date': expiry_date,
-                            'quantity': False,
-                            'product_uom_id': product_uom_id,
-                        }
-
-                        if not line_errors:
-                            if quantity is not None:
-                                data['quantity'] = quantity
-                            # Check if line exist
-                            line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', pi_id),
-                                                                     ('product_id', '=', product_id),
-                                                                     ('batch_number', '=', batch_name),
-                                                                     ('expiry_date', '=', expiry_date)], context=context)
-                            # Search for empty BN/ED lines
-                            if not line_ids and (batch_name or expiry_date):
-                                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', pi_id),
-                                                                         ('product_id', '=', product_id),
-                                                                         ('batch_number', '=', False),
-                                                                         ('expiry_date', '=', False)], context=context)
-                            # Update or create the Counting line
-                            if line_ids:
-                                counting_obj.write(cr, uid, line_ids[0], data, context=context)
-                            else:
-                                data['inventory_id'] = pi_id
-                                counting_obj.create(cr, uid, data, context=context)
-
-                    if line_warnings:
-                        warnings.append(_('Line number %s: %s') % (line.get('line_number', _('empty')), '. '.join(line_warnings)))
-                    if line_errors:
-                        line_errors.extend(line_warnings)
-                        errors.append(_('Line number %s: %s') % (line.get('line_number', _('empty')), '. '.join(line_errors)))
+                # Check for additional errors and update/create the counting lines
+                line_errors, line_warnings = pi_obj.import_counting_sheet_manage_lines(cr, uid, pi_id, json_data.get('lines', []), context=context)
+                for line_warn in line_warnings:
+                    if line_warnings[line_warn]:
+                        warnings.append(_('Line number %s: %s') % (line_warn or _('empty'), '. '.join(line_warnings[line_warn])))
+                for line_error in line_errors:
+                    if line_errors[line_error]:
+                        if line_warnings and line_warnings[line_error]:
+                            line_errors[line_error].extend(line_warnings[line_error])
+                        errors.append(_('Line number %s: %s') % (line_error or _('empty'), '. '.join(line_errors[line_error])))
 
                 if errors:
                     error_msg = _('Some errors occurred during the import: %s') % ('; '.join(errors),)
@@ -3201,10 +3081,10 @@ class sde_import(osv.osv_memory):
         states_msg, type_msg = '', ''
         # if type == 'count':
         pi_default_domain = [('state', 'in', ['counting', 'counted']), ('discrepancies_generated', '=', False)]
-        type_msg = _('for Counting sheet ')
+        type_msg = _('with a Counting sheet ')
         # elif type == 'discr':
         #     pi_default_domain = [('state', 'in', ['counted', 'validated', 'confirmed']), ('discrepancies_generated', '=', True))]
-        #     type_msg = _('for Discrepancy Lines ')
+        #     type_msg = _('with Discrepancy Lines ')
         # else:
         #     states = ['counting', 'counted', 'validated', 'confirmed']
         #     states_msg = _('%s ') % ('/'.join([PI_STATES[state] for state in states]))
