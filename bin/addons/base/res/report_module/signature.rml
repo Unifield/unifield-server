@@ -40,8 +40,8 @@
     <paraStyle name="center" fontName="Helvetica" fontSize="8" alignment="CENTER"/>
     <paraStyle name="line" fontName="Helvetica" fontSize="8" alignment="LEFT"/>
     <paraStyle name="text" fontName="Helvetica" fontSize="8"/>
-    <paraStyle name="title" fontName="Helvetica-bold" fontSize="8"/>
-    <paraStyle name="toptitle" fontName="Helvetica-bold" fontSize="10" alignment="CENTER" />
+    <paraStyle name="title" fontName="Helvetica-Bold" fontSize="8"/>
+    <paraStyle name="toptitle" fontName="Helvetica-Bold" fontSize="10" alignment="CENTER" />
 
   </stylesheet>
 
