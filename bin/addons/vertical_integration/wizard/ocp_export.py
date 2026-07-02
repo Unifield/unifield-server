@@ -450,7 +450,7 @@ class ocp_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
                 ''', {'period': wizard.period_id.id, 'instance': wizard.instance_id.id})
                 wrong_proj = [x[0] for x in cr.fetchall()]
                 if wrong_proj:
-                    raise osv.except_osv('Error', 'Period on project: %s is not Closed' % (', '.join(wrong_proj),))
+                    raise osv.except_osv('Error', _('Period on project: %s is not Closed') % (', '.join(wrong_proj),))
 
 
             internal_report_name = 'hq.ocp.workday'
