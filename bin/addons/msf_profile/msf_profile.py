@@ -36,7 +36,6 @@ import traceback
 import json
 
 from msf_field_access_rights.osv_override import _get_instance_level
-import io
 import csv
 import zlib
 import random
@@ -58,6 +57,47 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    # UF42.0
+    def us_11997_financing_contract_sync(self, cr, uid, *a, **b):
+        # on HQ trigger updates on financing object linked to mission-private rule
+        # this will unlock existing NR
+
+        # on sync server changer owner on rules from project to coordo
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''eligibility_from_date'']' where model='financing.contract.format'")
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''code'']' where model='financing.contract.contract'")
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''funded'']' where model='financing.contract.funding.pool.line'")
+            self.log_info(cr, uid, "US-11997 fixed at HQ")
+        elif cr.table_exists('sync_server_user_rights'):
+            cr.execute("""
+                update sync_server_update u
+                    set owner = (select parent_id from sync_server_entity where id=owner)
+                where
+                    rule_id in (select id from sync_server_sync_rule where sequence_number in (450, 455, 456, 457, 458)) and
+                    owner is not null and
+                    owner in (select id from sync_server_entity where instance_level='project') and
+                    u.id in (select min(id) from sync_server_update u2 where u2.session_id=u.session_id and u2.rule_id=u.rule_id and u2.sdref=u.sdref)
+            """)
+            self.log_info(cr, uid, "US-11997 fixed on sync server")
+
+        return True
+
+    def us_15346_OCBTD101_CHABUSD_no_delete(self, cr, uid, *a, **b):
+        """
+            do no sent sync update deletion on account.journal OCBSY101/CHABUSD
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.code == 'OCBTD101':
+            cr.execute('''
+                delete from ir_model_data
+                where name = 'journal_OCBSY101_CHABUSD_ARAB BANK USD' and
+                not exists(select id from account_journal where id=res_id)
+            ''')
+        return True
+
 
     # UF41.0
     def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
@@ -8341,67 +8381,6 @@ class sync_tigger_something(osv.osv):
                   product_catalog_path=NULL
                 where international_status=%s ''', (unidata_id,))
             _logger.warn('Reset %d UD products' % (cr.rowcount,))
-
-        if vals.get('name') == 'us-5398-product-price':
-            msf_instance_obj = self.pool.get('msf.instance')
-            prod_obj = self.pool.get('product.product')
-
-            instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-            if instance.instance.startswith('OCG') and \
-                '_KE1_' not in instance.instance and \
-                '_UA1_' not in instance.instance and \
-                '_MX1_' not in instance.instance and \
-                    '_LB1_' not in instance.instance:
-
-                setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-                if not setup_br:
-                    percent = 0
-                else:
-                    percent = setup_br.sale_price
-
-
-                data_file = tools.file_open(opj('msf_profile', 'data', 'us-5398-product-price.csv'), 'rb')
-                data = data_file.read()
-
-                hq_id = msf_instance_obj.search(cr, uid, [('code', '=', 'CH')])
-                hq_info =  msf_instance_obj.browse(cr, uid, hq_id[0])
-
-                crypt_o = tools.misc.crypt(hq_info.instance_identifier)
-                clear_data = io.StringIO(crypt_o.decrypt(data))
-                csv_reader = csv.reader(clear_data, delimiter=',')
-                next(csv_reader)
-                xmlid_price = {}
-                xmlid_code = {}
-                prod_id_price = {}
-
-                for line in csv_reader:
-                    xmlid_price[line[1]] = float(line[2])
-                    xmlid_code[line[1]] = line[0]
-
-
-                all_xmlid = list(xmlid_price.keys())
-
-                for sdref, p_id in prod_obj.find_sd_ref(cr, uid, all_xmlid).items():
-                    prod_id_price[p_id] = xmlid_price[sdref]
-                    del xmlid_code[sdref]
-
-                if xmlid_code:
-                    _logger.warn('OCG Prod price update, %d products not found: %s' % (len(xmlid_code), ', '.join(list(xmlid_code.values()))))
-
-                nb_updated= 0
-                nb_ignored = 0
-                for prod in prod_obj.read(cr, uid, list(prod_id_price.keys()), ['standard_price', 'product_tmpl_id']):
-                    if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.000001:
-                        list_price = round(prod_id_price[prod['id']] * (1 + (percent/100.00)), 5)
-                        nb_updated += 1
-                        cr.execute('update product_template set standard_price=%s, list_price=%s where id=%s', (prod_id_price[prod['id']], list_price, prod['product_tmpl_id'][0]))
-                        cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
-                            (1, NOW(), %s, %s, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
-                            """,  (prod['standard_price'], prod_id_price[prod['id']], prod['id']))
-                    else:
-                        nb_ignored += 1
-
-                _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
         if vals.get('name') == 'us-7295-delete-not-hq-links' and context.get('sync_update_execution'):
             cr.execute("""

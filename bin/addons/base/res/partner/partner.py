@@ -141,6 +141,8 @@ class res_partner(osv.osv):
         'employee': fields.boolean('Employee', help="Check this box if the partner is an Employee."),
         'email': fields.related('address', 'email', type='char', size=240, string='E-mail', write_relate=True),
         'company_id': fields.many2one('res.company', 'Company', select=1),
+        'tax_identification_number': fields.char('Tax Identification Number', size=15, help="Tax Identification Number"),
+        'business_registration_number': fields.char('Business Registration Number', size=15, help="Business Registration Number"),
     }
 
     def _default_category(self, cr, uid, context={}):

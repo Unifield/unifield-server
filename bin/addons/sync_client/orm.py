@@ -875,6 +875,20 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                     res[target_line.id] = res_data
         return res
 
+    def get_coordo_dest(self, cr, uid, ids, dest_field, context=None):
+        res = dict.fromkeys(ids, False)
+        for target_line in self.browse(cr, uid, ids, context=context, fields_to_fetch=[dest_field]):
+            if hasattr(target_line, dest_field):
+                instance = getattr(target_line, dest_field)
+                if instance and instance.state == 'active':
+                    res_data = []
+                    if instance.level == 'coordo':
+                        res_data = [instance.instance]
+                    elif instance.level == 'project':
+                        res_data = [instance.parent_id.instance]
+                    res[target_line.id] = res_data
+        return res
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         """
             @param ids : ids of the record from which we need to find the destination

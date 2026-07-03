@@ -2388,6 +2388,18 @@ msgstr "Quantité minimale"
 msgid "Posting"
 msgstr "Posting"
 
+#. module: account
+#: code:addons/account/report/account_general_ledger.py:442
+#, python-format
+msgid "The report has too many lines %s and cannot be generated. Please use the filters to reduce the number of lines"
+msgstr "Le rapport a trop de lignes %s et ne peut pas être généré. Veuillez utiliser les filtres pour réduire le nombre de lignes"
+
+#. module: account
+#: code:addons/account/report/account_general_ledger.py:442
+#, python-format
+msgid "The report has too many lines %s and cannot be generated. Please export the lines in xls format or use the filters to reduce the number of lines"
+msgstr "Le rapport a trop de lignes %s et ne peut pas être généré. Veuillez exporter au format xls ou utiliser les filtres pour réduire le nombre de lignes"
+
 #. module: base
 #: field:res.request,ref_doc1:0
 msgid "Document Ref 1"
@@ -3250,7 +3262,8 @@ msgstr "Sainte-Lucie"
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:287
 #: report:addons/account/report/account_profit_loss_xls.mako:112
 #: report:pl.account.horizontal:0
-#: report:addons/account/report/account_general_ledger_xls.mako:217
+#: report:addons/account/report/account_general_ledger_landscape.mako:164
+#: code:addons/account/report/account_general_ledger.py:665
 msgid "Fiscal Year"
 msgstr "Exercice Comptable"
 
@@ -5284,6 +5297,7 @@ msgstr "Nom de l'Employé"
 #: view:account.move.line.unreconcile.select:0
 #: view:account.unreconcile:0
 #: view:account.unreconcile.reconcile:0
+#: model:ir.model,name:account.model_account_move_line_unreconcile_select
 msgid "Unreconciliation"
 msgstr "Délettrage"
 
@@ -5910,7 +5924,6 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:account.cv.import.errors,name:0
 #: report:addons/account/report/export_cv.mako:121
 #: report:shipment.donation.certificate:0
-#: report:addons/account/report/account_general_ledger_xls.mako:275
 #: field:wizard.hard.posting.line,name:0
 #: field:wizard.ignore.posting.line,name:0
 #: field:wizard.temp.posting.line,name:0
@@ -5925,6 +5938,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:transport.order.in.line,description:0
 #: field:transport.order.line,description:0
 #: field:transport.order.out.line,description:0
+#: report:addons/account/report/account_general_ledger_landscape.mako:230
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8666,6 +8680,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:transport.order.in.line,incoming_state:0
 #: code:addons/msf_outgoing/sde_import.py:42
 #: code:addons/msf_outgoing/sde_import.py:62
+#: view:msf.instance:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -9128,8 +9143,9 @@ msgstr "%s successfully exported"
 #: field:account.employee.balance.tree,balance:0
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:357
 #: report:pl.account.horizontal:0
-#: report:addons/account/report/account_general_ledger_xls.mako:287
 #: code:addons/vertical_integration/report/field_balance_spec_report.py:586
+#: report:addons/account/report/account_general_ledger_landscape.mako:248
+#: report:addons/account/report/account_general_ledger_landscape.mako:280
 msgid "Balance"
 msgstr "Solde de la balance"
 
@@ -12096,6 +12112,13 @@ msgstr "La Régularisation \"%s\" est déjà au statut En cours !"
 msgid "The Accrual \"%s\" is already in Done state!"
 msgstr "La Régularisation \"%s\" est déjà au statut Terminé !"
 
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:57
+#, python-format
+msgid "The Accrual \"%s\" has all total debit/credit amounts equal to zero."
+msgstr "La Régularisation \"%s\" a tous les montants totaux débit/crédit égaux à zéro."
+
+
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:532
 #, python-format
@@ -13680,7 +13703,6 @@ msgstr "Action page d'accueil"
 #: field:base.language.export,only_translated_terms:0
 #: field:msf_field_access_rights.field_access_rule,domain_id:0
 #: field:ir.actions.act_window,filter:0
-#: report:addons/account/report/account_general_ledger_xls.mako:221
 msgid "Filter"
 msgstr "Filtre"
 
@@ -13732,7 +13754,6 @@ msgstr "The Internal request '%s' has been closed."
 #: selection:account.employee.ledger,display_employee:0
 #: selection:wizard.account.employee.balance.tree,display_employee:0
 #: report:account.account.balance:0
-#: report:addons/account/report/account_general_ledger_xls.mako:206
 #, python-format
 msgid "With balance is not equal to 0"
 msgstr "Avec un solde qui n'est pas égal à 0"
@@ -23665,10 +23686,11 @@ msgstr "Compte - Solde analytique Inversée"
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:268
 #: report:addons/account/report/account_profit_loss_xls.mako:111
 #: report:pl.account.horizontal:0
-#: report:addons/account/report/account_general_ledger_xls.mako:205
 #: report:account.account.balance:0
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
+#: report:addons/account/report/account_general_ledger_landscape.mako:160
+#: code:addons/account/report/account_general_ledger.py:659
 msgid "Chart of Account"
 msgstr "Plan comptable"
 
@@ -27753,7 +27775,8 @@ msgstr "Vous devez définir une zone de stock"
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:291
 #: report:addons/account/report/account_profit_loss_xls.mako:114
 #: report:pl.account.horizontal:0
-#: report:addons/account/report/account_general_ledger_xls.mako:221
+#: report:addons/account/report/account_general_ledger_landscape.mako:176
+#: code:addons/account/report/account_general_ledger.py:669
 msgid "Filter By"
 msgstr "Filtrer par"
 
@@ -28480,6 +28503,7 @@ msgstr "Non validé"
 #. module: account
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
+#: report:addons/account/report/account_general_ledger_landscape.mako:224
 msgid "Account/Entry Seq"
 msgstr "Compte/Entrée - Seq."
 
@@ -31729,6 +31753,12 @@ msgstr "Assistant de Réallocation Analytique"
 msgid "Register not open, you can't duplicate lines."
 msgstr "Registre pas ouvert, vous ne pouvez pas dupliquer les lignes."
 
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2868
+#, python-format
+msgid "Line from import cheque cannot be duplicated."
+msgstr "Une ligne provenant d'un import de chèque ne peut pas être dupliquée."
+
 #. module: account_override
 #: code:addons/account_override/invoice.py:1115
 #, python-format
@@ -32893,10 +32923,10 @@ msgstr "MSF Financing Module"
 #: field:supplier.performance.wizard,company_id:0
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:266
 #: code:addons/msf_homere_interface/hr.py:435
-#: report:addons/account/report/account_general_ledger_xls.mako:203
 #: report:account.account.balance:0
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
+#: report:addons/account/report/account_general_ledger_landscape.mako:158
 msgid "Company"
 msgstr "Société"
 
@@ -33774,7 +33804,6 @@ msgstr "Délai d'Expédition"
 #: selection:account.employee.ledger,display_employee:0
 #: selection:wizard.account.employee.balance.tree,display_employee:0
 #: report:account.account.balance:0
-#: report:addons/account/report/account_general_ledger_xls.mako:206
 #, python-format
 msgid "With movements"
 msgstr "Avec écritures"
@@ -34211,7 +34240,6 @@ msgid "Notification threshold for message"
 msgstr "Point de Notification pour les messages"
 
 #. modules: purchase_override, sale, account,base
-#: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
 #: report:msf.sale.order:0
@@ -40860,7 +40888,8 @@ msgstr "Le nom du batch sera ignoré car le batch est 'Interne' donc son nom ser
 #: view:wizard.account.employee.balance.tree:0
 #: field:wizard.account.employee.balance.tree,instance_ids:0
 #: report:addons/account/report/account_profit_loss_xls.mako:115
-#: report:addons/account/report/account_general_ledger_xls.mako:228
+#: report:addons/account/report/account_general_ledger_landscape.mako:179
+#: code:addons/account/report/account_general_ledger.py:671
 msgid "Proprietary Instances"
 msgstr "Instances Propriétaires"
 
@@ -53921,8 +53950,8 @@ msgstr "LIBERIAN DOLLAR"
 
 #. module: account, vertical_integration
 #: report:account.general.ledger:0
-#: report:addons/account/report/account_general_ledger_xls.mako:273
 #: field:ocb_vi.export_number,entry_sequence:0
+#: code:addons/account/report/account_general_ledger.py:703
 msgid "Entry Seq"
 msgstr "Entrée - Seq."
 
@@ -54152,13 +54181,9 @@ msgstr "Balance Agée Partenaire"
 #: report:addons/account/report/account_employee_ledger.mako:306
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:342
 #: report:addons/account/report/export_cv.mako:146
-#: report:addons/account/report/account_general_ledger_xls.mako:272
-#: report:addons/account/report/account_general_ledger_xls.mako:280
 #: field:wizard.hard.posting.line,account_id:0
 #: field:wizard.ignore.posting.line,account_id:0
 #: field:wizard.temp.posting.line,account_id:0
-#: report:addons/account/report/account_general_ledger_xls.mako:272
-#: report:addons/account/report/account_general_ledger_xls.mako:280
 #, python-format
 msgid "Account"
 msgstr "Compte"
@@ -58952,6 +58977,7 @@ msgstr "Lot atteignant probablement expiration"
 #: report:msf.pdf.engagement:0
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: code:addons/account/report/account_general_ledger.py:650
 msgid "Page"
 msgstr "Page"
 
@@ -62064,7 +62090,6 @@ msgstr "Albanie"
 #: field:wizard.ignore.posting.line,ref:0
 #: field:wizard.temp.posting.line,ref:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:275
-#: selection:account.journal.column,field:0
 #: field:sde.update.log,doc_ref:0
 #: field:transport.order,name:0
 #: field:transport.order.in,name:0
@@ -63922,7 +63947,10 @@ msgstr "Coefficient pour le parent"
 #: view:account.employee.balance.tree:0
 #: field:account.employee.balance.tree,credit:0
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:351
-#: report:addons/account/report/account_general_ledger_xls.mako:285
+#: report:addons/account/report/account_general_ledger_landscape.mako:242
+#: report:addons/account/report/account_general_ledger_landscape.mako:274
+#: code:addons/account/report/account_general_ledger.py:709
+#: code:addons/account/report/account_general_ledger.py:725
 msgid "Credit"
 msgstr "Crédit"
 
@@ -65602,7 +65630,7 @@ msgstr "PO line to confirm"
 #: report:addons/account/report/export_invoice.mako:108
 #: selection:account.report.general.ledger,sortby:0
 #: view:msf.accrual.line:0
-#: report:addons/account/report/account_general_ledger_xls.mako:274
+#: report:addons/account/report/account_general_ledger_landscape.mako:227
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"
@@ -66902,7 +66930,8 @@ msgstr "You can only do import invoice on a Debit Note!"
 #: report:account.employee_ledger_other:0
 #: report:addons/account/report/account_profit_loss_xls.mako:116
 #: report:pl.account.horizontal:0
-#: report:addons/account/report/account_general_ledger_xls.mako:222
+#: report:addons/account/report/account_general_ledger_landscape.mako:182
+#: code:addons/account/report/account_general_ledger.py:670
 msgid "Target Moves"
 msgstr "Transact. Cibles"
 
@@ -69351,7 +69380,8 @@ msgstr "Manage the VAT locally"
 #: report:addons/account/report/account_employee_ledger.mako:241
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:288
 #: field:wizard.account.employee.balance.tree,journal_ids:0
-#: report:addons/account/report/account_general_ledger_xls.mako:218
+#: report:addons/account/report/account_general_ledger_landscape.mako:167
+#: code:addons/account/report/account_general_ledger.py:666
 msgid "Journals"
 msgstr "Journaux"
 
@@ -70817,7 +70847,10 @@ msgstr "Solde de Caisse :"
 #: view:account.employee.balance.tree:0
 #: field:account.employee.balance.tree,debit:0
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:348
-#: report:addons/account/report/account_general_ledger_xls.mako:284
+#: report:addons/account/report/account_general_ledger_landscape.mako:239
+#: report:addons/account/report/account_general_ledger_landscape.mako:271
+#: code:addons/account/report/account_general_ledger.py:708
+#: code:addons/account/report/account_general_ledger.py:724
 msgid "Debit"
 msgstr "Débit"
 
@@ -77721,7 +77754,6 @@ msgstr "Générération du Rapport d'incohérence des NL/EXP"
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
 #: report:account.account.balance:0
-#: report:addons/account/report/account_general_ledger_xls.mako:221
 #, python-format
 msgid "No Filter"
 msgstr "Pas de filtre"
@@ -78745,12 +78777,12 @@ msgstr "Importation échouée Ecritures HQ"
 #: report:addons/financing_contract/report/project_expenses_xls.mako:485
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
-#: report:addons/account/report/account_general_ledger_xls.mako:247
 #: selection:account.report.general.ledger,sortby:0
 #: view:msf.accrual.line:0
 #: field:wizard.hard.posting.line,third:0
 #: field:wizard.ignore.posting.line,third:0
 #: field:wizard.temp.posting.line,third:0
+#: report:addons/account/report/account_general_ledger_landscape.mako:233
 #, python-format
 msgid "Third Party"
 msgstr "Tiers"
@@ -79730,7 +79762,8 @@ msgstr "Êtes-vous sûr de vouloir supprimer ces lignes ?"
 #: field:account.balance.report,open_items:0
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
-#: report:addons/account/report/account_general_ledger_xls.mako:213
+#: report:addons/account/report/account_general_ledger_landscape.mako:173
+#: code:addons/account/report/account_general_ledger.py:668
 msgid "Open Items at"
 msgstr "Écritures ouvertes à"
 
@@ -80040,7 +80073,8 @@ msgstr "Base"
 #: report:destruction.location:0
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
-#: report:addons/account/report/account_general_ledger_xls.mako:341
+#: report:addons/account/report/account_general_ledger_landscape.mako:322
+#: code:addons/account/report/account_general_ledger.py:766
 msgid "Sub Total"
 msgstr "Sous-total"
 
@@ -83416,7 +83450,6 @@ msgstr "SFTP connection succeeded"
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:827
 #: report:physical_inventory_discrepancies_report_pdf:0
 #: field:shipment,product_id:0
-#: selection:account.journal.column,field:0
 #: field:supplier.catalogue,product_id:0
 #, python-format
 msgid "Product"
@@ -84919,12 +84952,10 @@ msgstr "NOUVELLE QTÉ"
 #: code:addons/analytic_distribution/wizard/account_analytic_chart.py:215
 #: code:addons/account/report/account_partner_ledger.py:358
 #: code:addons/finance/report/account_partner_balance_tree.py:121
-#: report:addons/account/report/account_general_ledger_xls.mako:206
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:139
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:169
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:209
 #: report:account.account.balance:0
-#: report:addons/account/report/account_general_ledger_xls.mako:206
 #, python-format
 msgid "All"
 msgstr "Tous(tes)"
@@ -91592,7 +91623,7 @@ msgstr "Prix de base pour le calcul du prix client. Parfois appelé prix catalog
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:292
 #: report:addons/account/report/account_profit_loss_xls.mako:113
 #: report:pl.account.horizontal:0
-#: report:addons/account/report/account_general_ledger_xls.mako:219
+#: report:addons/account/report/account_general_ledger_landscape.mako:170
 #, python-format
 msgid "Display"
 msgstr "Afficher"
@@ -93699,9 +93730,6 @@ msgstr "America/Anguilla"
 #: report:addons/account/report/export_cv.mako:117
 #: report:shipment.donation.certificate:0
 #: field:esc.invoice.line,currency_id:0
-#: report:addons/account/report/account_general_ledger_xls.mako:229
-#: report:addons/account/report/account_general_ledger_xls.mako:277
-#: report:addons/account/report/account_general_ledger_xls.mako:282
 #: report:account.liquidity.balance.pdf:0
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:839
 #: report:physical_inventory_discrepancies_report_pdf:0
@@ -95305,7 +95333,10 @@ msgstr "Expense/income line status"
 #: report:account.employee_ledger_other:0
 #: report:addons/account/report/account_employee_ledger.mako:324
 #: report:addons/finance/report/account_employee_balance_tree_xls.mako:354
-#: report:addons/account/report/account_general_ledger_xls.mako:286
+#: report:addons/account/report/account_general_ledger_landscape.mako:245
+#: report:addons/account/report/account_general_ledger_landscape.mako:277
+#: code:addons/account/report/account_general_ledger.py:710
+#: code:addons/account/report/account_general_ledger.py:726
 msgid "Booking Balance"
 msgstr "Solde de la balance enreg."
 
@@ -95644,6 +95675,22 @@ msgstr "Completed Stock-Moves"
 #: view:account.bank.statement.line:0
 msgid "3RD Party Partner"
 msgstr "Partenaire tiers"
+
+#. modules: register_accounting, account_mcdb
+#: view:account.move:0
+#: view:account.move.line:0
+#: view:account.bank.statement.line:0
+#: field:account.move.line,tax_identification_number:0
+msgid "3RD Party Partner TIN"
+msgstr "NIF du Partenaire tiers"
+
+#. modules: register_accounting, account_mcdb
+#: view:account.move:0
+#: view:account.move.line:0
+#: view:account.bank.statement.line:0
+#: field:account.move.line,business_registration_number:0
+msgid "3RD Party Partner RCCM"
+msgstr "RCCM du Partenaire tiers"
 
 #. module: account, msf_outgoing
 #: report:account.tax.code.entries:0
@@ -101553,7 +101600,6 @@ msgstr "Information liée"
 #: report:account.third_party_ledger_other:0
 #: report:addons/account/report/account_partner_ledger.mako:310
 #: selection:account.report.general.ledger,sortby:0
-#: report:addons/account/report/account_general_ledger_xls.mako:289
 #: report:account.employee_ledger:0
 #: report:account.employee_ledger_other:0
 #: report:addons/account/report/account_employee_ledger.mako:312
@@ -113379,11 +113425,12 @@ msgstr " Demande Interne"
 msgid " Field Order"
 msgstr " Commande de Terrain"
 
-#. module: msf_supply_doc_export, transport_mgmt
+#. module: msf_supply_doc_export, transport_mgmt, account
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1064
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:237
 #: field:transport.order.customs.fees,purchase_details:0
 #: field:transport.order.transport.fees,purchase_details:0
+#: field:account.invoice,po_details:0
 #, python-format
 msgid "PO Details"
 msgstr "Détails BdC"
@@ -113784,8 +113831,10 @@ msgid "Incoming Shipment Information"
 msgstr "Informations de la Livraison Entrante"
 
 #. module: msf_doc_import
+#: view:msf.doc.import.accounting:0
 #: view:wizard.return.from.unit.import:0
 #: view:wizard.update.po.line.import:0
+#: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
 msgid "Save as"
 msgstr "Enregistrer sous"
 
@@ -129312,6 +129361,50 @@ msgstr "Fusion auto des Produits"
 msgid "Retry auto-merge"
 msgstr "Relancer fusion auto"
 
+#. module: base
+#: report:account.invoice2:0
+#: report:msf.purchase.order:0
+#: view:res.partner:0
+#, python-format
+msgid "TIN"
+msgstr "NIF"
+
+#. module: base
+#: field:res.partner,tax_identification_number:0
+#: help:res.partner,tax_identification_number:0
+msgid "Tax Identification Number"
+msgstr "Numéro d'Identification Fiscal/Tax"
+
+#. module: base
+#: field:res.partner,business_registration_number:0
+#: help:res.partner,business_registration_number:0
+msgid "Business Registration Number"
+msgstr "Numéro de Registre de Commerce/RCCM"
+
+#. module: base
+#: view:res.partner:0
+msgid "Business registration number"
+msgstr "Numéro de Registre de Commerce/RCCM"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Partner TIN"
+msgstr "Partenaire NIF"
+
+#. modules: account, transport_mgmt, register_accounting
+#: field:account.invoice,business_registration_number:0
+#: field:wizard.account.invoice,business_registration_number:0
+#: field:purchase.order,business_registration_number:0
+msgid "Supplier RCCM"
+msgstr "Fournisseur RCCM"
+
+#. modules: account, transport_mgmt, register_accounting
+#: field:account.invoice,tax_identification_number:0
+#: field:wizard.account.invoice,tax_identification_number:0
+#: field:purchase.order,tax_identification_number:0
+msgid "Supplier TIN"
+msgstr "Fournisseur NIF"
+
 #. modules: msf_supply_doc_export, msf_outgoing
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
@@ -129893,7 +129986,6 @@ msgstr "Le OUT %s a déjà été mis à jour par SDE. Veuillez traiter les donn�
 #, python-format
 msgid "One or more of the OUT names in the key \"pick_list\" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one"
 msgstr "Un ou plusieurs noms de OUT dans la clé \"pick_list\" sont inutilisables. Veuillez vous assurer que chaque nom dans cette liste est une chaîne de caractères ou peut être convertie en une"
-
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/sde_import.py:1174
@@ -130680,58 +130772,14 @@ msgstr "Type d'Entité MSF"
 #. module: base
 #: code:addons/base/res/res_user.py:1336
 #, python-format
-msgid ""
-"<p><strong>Password reset request</strong></p>"
-"<p>A request has been received to reset your password.</p>"
-"<p>This password reset request is valid for the next 6 hours.</p>"
-"<p>Otherwise you will need to renew your request for a new password via UF login screen.</p>"
-"<p>Here are the details of your account:</p>"
-"<ul>"
-"    <li><strong>User login:</strong> %s</li>"
-"    <li><strong>Temporary code:</strong> %s</li>"
-"</ul>"
-"<p>Please note this temporary code will only be valid 6 hours.</p>"
-"<p>Please return to UF login page and click on button \"Forgotten password?\".<br>"
-"In this screen click button \"Add temporary code\". Fill in details there.</p>"
-"<p>If it was not you who has triggered this password reset, please contact your IT - security responsible to alert them.</p>"
-msgstr ""
-"<p><strong>Demande de réinitialisation du mot de passe</strong></p>"
-"<p>Une demande de réinitialisation de votre mot de passe a été reçue.</p>"
-"<p>Cette demande de réinitialisation est valable pendant les 6 prochaines heures.</p>"
-"<p>Passé ce délai, vous devrez effectuer une nouvelle demande de mot de passe via l'écran de connexion UniField.</p>"
-"<p>Voici les informations de votre compte :</p>"
-"<ul>"
-"    <li><strong>Identifiant utilisateur :</strong> %s</li>"
-"    <li><strong>Code temporaire :</strong> %s</li>"
-"</ul>"
-"<p>Veuillez noter que ce code temporaire ne sera valable que pendant 6 heures.</p>"
-"<p>Veuillez retourner sur la page de connexion UniField et cliquer sur le bouton \"Mot de passe oublié ?\".<br>"
-"Dans cet écran, cliquez sur le bouton \"Ajouter un code temporaire\" et renseignez les informations demandées.</p>"
-"<p>Si vous n'êtes pas à l'origine de cette demande de réinitialisation, veuillez contacter votre responsable IT / sécurité afin de l'en informer.</p>"
-
+msgid "<p><strong>Password reset request</strong></p><p>A request has been received to reset your password.</p><p>This password reset request is valid for the next 6 hours.</p><p>Otherwise you will need to renew your request for a new password via UF login screen.</p><p>Here are the details of your account:</p><ul>    <li><strong>User login:</strong> %s</li>    <li><strong>Temporary code:</strong> %s</li></ul><p>Please note this temporary code will only be valid 6 hours.</p><p>Please return to UF login page and click on button \"Forgotten password?\".<br>In this screen click button \"Add temporary code\". Fill in details there.</p><p>If it was not you who has triggered this password reset, please contact your IT - security responsible to alert them.</p>"
+msgstr "<p><strong>Demande de réinitialisation du mot de passe</strong></p><p>Une demande de réinitialisation de votre mot de passe a été reçue.</p><p>Cette demande de réinitialisation est valable pendant les 6 prochaines heures.</p><p>Passé ce délai, vous devrez effectuer une nouvelle demande de mot de passe via l'écran de connexion UniField.</p><p>Voici les informations de votre compte :</p><ul>    <li><strong>Identifiant utilisateur :</strong> %s</li>    <li><strong>Code temporaire :</strong> %s</li></ul><p>Veuillez noter que ce code temporaire ne sera valable que pendant 6 heures.</p><p>Veuillez retourner sur la page de connexion UniField et cliquer sur le bouton \"Mot de passe oublié ?\".<br>Dans cet écran, cliquez sur le bouton \"Ajouter un code temporaire\" et renseignez les informations demandées.</p><p>Si vous n'êtes pas à l'origine de cette demande de réinitialisation, veuillez contacter votre responsable IT / sécurité afin de l'en informer.</p>"
 
 #. module: base
 #: code:addons/base/res/res_user.py:1379
 #, python-format
-msgid ""
-"<p><strong>Request to retrieve forgotten user login information</strong></p>"
-"<p>A request has been received to identify your user login.</p>"
-"<p>Here are the details of user login(s) linked to this email address for the selected instance:</p>"
-"<ul>"
-"    %(logins)s"
-"</ul>"
-"<p>To log in using correct login, please return to UniField login page and proceed as usual.</p>"
-"<p>If it was not you who has triggered this login request, please contact your IT security responsible.</p>"
-msgstr ""
-"<p><strong>Demande de récupération des informations de connexion oubliées</strong></p>"
-"<p>Une demande d'identification de votre identifiant de connexion a été reçue.</p>"
-"<p>Voici les informations de connexion liées à cette adresse e-mail pour l'instance sélectionnée :</p>"
-"<ul>"
-"    %(logins)s"
-"</ul>"
-"<p>Pour vous connecter avec le bon identifiant, veuillez retourner sur la page de connexion UniField et procéder comme d'habitude.</p>"
-"<p>Si vous n'êtes pas à l'origine de cette demande, veuillez contacter votre responsable IT sécurité.</p>"
-
+msgid "<p><strong>Request to retrieve forgotten user login information</strong></p><p>A request has been received to identify your user login.</p><p>Here are the details of user login(s) linked to this email address for the selected instance:</p><ul>    %(logins)s</ul><p>To log in using correct login, please return to UniField login page and proceed as usual.</p><p>If it was not you who has triggered this login request, please contact your IT security responsible.</p>"
+msgstr "<p><strong>Demande de récupération des informations de connexion oubliées</strong></p><p>Une demande d'identification de votre identifiant de connexion a été reçue.</p><p>Voici les informations de connexion liées à cette adresse e-mail pour l'instance sélectionnée :</p><ul>    %(logins)s</ul><p>Pour vous connecter avec le bon identifiant, veuillez retourner sur la page de connexion UniField et procéder comme d'habitude.</p><p>Si vous n'êtes pas à l'origine de cette demande, veuillez contacter votre responsable IT sécurité.</p>"
 
 #. module: base
 #: code:addons/base/res/res_user.py:1349
@@ -130854,3 +130902,21 @@ msgstr "Qté. Entrée"
 #: field:stock.mission.report.line,opdd_qty:0
 msgid "Output/Packing/Dispatch/Distribution Qty."
 msgstr "Qté. Sortie/Colisage/Expédition/Distribution"
+
+#. module: account
+#: code:addons/account/account.py:1616
+#, python-format
+msgid "Journal Entry \"%s\" has all debit/credit amounts equal to zero."
+msgstr "L’écriture comptable \"%s\" a tous les montants débit/crédit égaux à zéro."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2472
+#, python-format
+msgid "Entry \"%s\" has all total debit/credit amounts equal to zero."
+msgstr "L’écriture \"%s\" a tous les montants totaux débit/crédit égaux à zéro."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/invoice_date.py:92
+#, python-format
+msgid "Invoice line \"%s\" has all debit/credit amounts equal to zero."
+msgstr "La ligne de facture \"%s\" a tous les montants débit/crédit égaux à zéro."

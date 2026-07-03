@@ -51,6 +51,12 @@ class wizard_accrual_validation(osv.osv_memory):
                         if not expense_line.analytic_distribution_id:
                             raise osv.except_osv(_('Warning'), _('Some of the lines of the Accrual "%s" have no analytic distribution!') %
                                                  expense_line.description)
+                        if abs(expense_line.accrual_amount) < 0.0001 and abs(expense_line.functional_amount) < 0.0001:
+                            raise osv.except_osv(
+                                _('Warning'),
+                                _('The Accrual "%s" has all total debit/credit '
+                                  'amounts equal to zero.') % (expense_line.description)
+                            )
                 same_symbol = all(l.accrual_amount >= 0 for l in accrual_line.expense_line_ids) or \
                     all(l.accrual_amount < 0 for l in accrual_line.expense_line_ids)
                 if not same_symbol:

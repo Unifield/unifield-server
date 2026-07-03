@@ -89,6 +89,8 @@
                             <newline />
                             <field name="name" select="1"/>
                             <field name="ref" select="1"/>
+                            <field name="tax_identification_number" select="1"/>
+                            <field name="business_registration_number" select="1"/>
                             <field name="address" select="1"/>
                             <field name="country" select="1"/>
                             <field name="category_id" select="1" />
