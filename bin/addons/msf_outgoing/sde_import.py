@@ -68,7 +68,13 @@ MOVE_STATE = {
     'done': _('Done'),
     'cancel': _('Cancelled'),
 }
+
 PI_STATES = {key: _(value) for key, value in PHYSICAL_INVENTORIES_STATES}
+PI_TYPES = {
+    'full': _('Full Inventory count (planned)'),
+    'partial': _('Partial Inventory count (planned)'),
+    'correction': _('Stock correction (unplanned)'),
+}
 
 
 class sde_import(osv.osv_memory):

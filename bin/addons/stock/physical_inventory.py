@@ -34,6 +34,7 @@ class PhysicalInventory(osv.osv):
     _name = 'physical.inventory'
     _description = 'Physical Inventory'
     _order = "id desc, date desc"
+    _trace = True
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -1511,7 +1512,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         if 'pi_cancel_reset' in context:
             context.pop('pi_cancel_reset')
 
-        self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False, 'sde_updated': False}, context=context)
+        self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False, 'sde_updated': False, 'sde_update_msg': False}, context=context)
         return {}
 
     def action_cancel_inventary(self, cr, uid, ids, context=None):
