@@ -902,6 +902,35 @@ def round_aji_ji(cr, instance_ids, period_id, date_start, date_stop, excluded_jo
         'period_id': period_id,
         'j_type': tuple(excluded_journal_types),
     })
+    cr.execute('''
+        select
+            account_move_id, sum(rounded_amount)
+        from
+            hq_report_no_decimal d
+        where
+            period_id = %s and instance_id in %s
+        group by account_move_id
+        having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.01)
+    ''', (period_id, tuple(instance_ids)))
+    for x in cr.fetchall():
+        # add gap on the biggest B/S line
+        move_id, gap = x
+        cr.execute("""
+            update
+                hq_report_no_decimal d1 set rounded_amount = rounded_amount - %s 
+            where
+                d1.id in (
+                    select id
+                    from hq_report_no_decimal d2
+                    where
+                        d2.account_move_id=%s and period_id = %s
+                    order by
+                        account_analytic_line_id is not null,
+                        abs(rounded_amount) desc
+                    limit 1
+            )
+        """, (gap, move_id, period_id))
+
 
 
 class hq_report_ocp_workday(hq_report_ocp):
@@ -997,37 +1026,6 @@ class hq_report_ocp_workday(hq_report_ocp):
             'fiscalyear_id': period.fiscalyear_id.id,
         }
 
-
-        cr.execute('''
-            select
-                account_move_id, sum(rounded_amount)
-            from
-                hq_report_no_decimal d
-            where
-                period_id = %s and instance_id in %s
-            group by account_move_id
-            having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.01)
-        ''', (period_id, tuple(instance_ids)))
-        for x in cr.fetchall():
-            # add gap on the biggest B/S line
-            move_id, gap = x
-            cr.execute("""
-                update
-                    hq_report_no_decimal d1 set rounded_amount = rounded_amount - %s 
-                where
-                    d1.id in (
-                        select id
-                        from hq_report_no_decimal d2
-                        where
-                            d2.account_move_id=%s and period_id = %s
-                        order by
-                            account_analytic_line_id is not null,
-                            abs(rounded_amount) desc
-                        limit 1
-                )
-            """, (gap, move_id, period_id))
-
-        # end balance rounded amounts
 
         self.update_percent(cr, uid, 0.10)
         # analytic lines raw_data
@@ -1550,34 +1548,30 @@ class waca_export_accounting_lines(osv.osv):
     logger = logging.getLogger('WaCA lines export')
 
     _columns = {
-        'object': fields.char('Object', size=128),
-        'object_id': fields.integer('Object ID', size=128),
-        'instance': fields.char('Instance', size=128),
-        'entry_sequence': fields.char('Entry Sequence', size=128, select=1),
-        'posting_date': fields.date('Posting Date'),
-        'document_date': fields.date('Document Date'),
-        'journal_type': fields.char('Journal Type', size=64),
-        'book_debit': fields.float('Book Debit', digits=(16, 2)),
-        'book_credit': fields.float('Book Credit', digits=(16, 2)),
-        'booking_currency': fields.char('Book Curr', size=128),
-        'func_debit': fields.float('Func Debit', digits=(16, 2)),
-        'func_credit': fields.float('Func Credit', digits=(16, 2)),
-        'description': fields.char('Description', size=512),
-        'ref': fields.char('Description', size=128),
-        'cost_center':  fields.char('Cost Center', size=128),
-        'partner_id': fields.integer('Partner ID'),
-        'journal_code': fields.char('Cost Center', size=64),
-        'account_code': fields.char('Acount code', size=64),
-        'emplid': fields.char('Employee ID', size=64),
-        'account_move_line_id': fields.integer('account.move.line.id'),
-        'destination_code': fields.char('Destination Code', size=128),
-        'no_decimal':  fields.boolean('No decimal'),
-        'rounded_amount': fields.integer('Rounded Amount'),
-        'employee_type': fields.char('Employee Type', size=32),
-        'partner_txt': fields.text('Partner TXT'),
-        'period_id': fields.integer('Period ID'),
-        'instance_id': fields.integer('Instance ID'),
-
+        'object': fields.char('Object', size=128),  # 1
+        'object_id': fields.integer('Object ID', size=128), # 2
+        'instance': fields.char('Instance', size=128), # 3
+        'journal_code': fields.char('Cost Center', size=64), # 4
+        'entry_sequence': fields.char('Entry Sequence', size=128, select=1), # 5
+        'document_date': fields.date('Document Date'), # 6
+        'posting_date': fields.date('Posting Date'), # 7
+        'account_code': fields.char('Acount code', size=64), # 8
+        'partner_id': fields.integer('Partner ID'), # 9
+        'partner_txt': fields.text('Partner TXT'), # 10
+        'emplid': fields.char('Employee ID', size=64), # 11
+        'description': fields.char('Description', size=512), # 12
+        'ref': fields.char('Description', size=128), # 13
+        'booking_currency': fields.char('Book Curr', size=128), # 14
+        'book_debit': fields.float('Book Debit', digits=(16, 2)), # 15
+        'book_credit': fields.float('Book Credit', digits=(16, 2)), # 16
+        'func_debit': fields.float('Func Debit', digits=(16, 2)), # 17
+        'func_credit': fields.float('Func Credit', digits=(16, 2)), # 18
+        'reconcile': fields.char('Reconcile', size=128), # 19
+        'cost_center':  fields.char('Cost Center', size=128), # 20
+        'destination_code': fields.char('Destination Code', size=128), # 21
+        'fp_code': fields.char('FP Code', size=128), # 22
+        'period_id': fields.integer('Period ID'), # 24
+        'instance_id': fields.integer('Instance ID'), #25
     }
 
     def _auto_init(self, cr, context=None):
@@ -1686,27 +1680,7 @@ class waca_export_accounting_lines(osv.osv):
             if not isinstance(page, int) or not page > 0:
                 raise osv.except_osv('Error', 'Page attribute must be a positive integer and not zero')
 
-            journal_type = dict(self.pool.get('account.journal').fields_get(cr, uid)['type']['selection'])
-            # get budget rates
-            fx_budget_rate = {}
-            cr.execute('''
-                select
-                     DISTINCT ON (c.name) c.name, r.rate
-                from
-                    res_currency_rate r, res_currency c, res_currency_table t, account_period p
-                where
-                    c.currency_table_id = t.id and
-                    r.currency_id = c.id and
-                    t.state = 'valid' and
-                    r.name < p.date_stop and
-                    p.id = %s
-                    order by c.name, r.name desc
-                ''', (period_id, ))
-
-            for x in cr.fetchall():
-                fx_budget_rate[x[0]] = x[1]
-
-
+            period_name = self.pool.get('account.period').read(cr, uid, period_id, ['name'])['name']
             offset = (page - 1) * limit
             cr.execute('''
                 select
@@ -1723,53 +1697,29 @@ class waca_export_accounting_lines(osv.osv):
             nb = cr.rowcount
             ret['has_next_page'] = nb > limit
             for row in cr.dictfetchall():
-                if row['no_decimal'] and (row['book_credit'] or row['book_debit']):
-                    book_debit_round = 0
-                    book_credit_round = 0
-                    if row['rounded_amount'] > 0:
-                        book_debit_round = row['rounded_amount']
-                    else:
-                        book_credit_round = abs(row['rounded_amount'])
-
-                    ecart = round( (book_credit_round - book_debit_round) - (row['book_credit'] - row['book_debit']), 2)
-                else:
-                    book_debit_round = row['book_debit']
-                    book_credit_round = row['book_credit']
-                    ecart = 0
-                budget_amount = row['book_credit'] - row['book_debit']
-
-                local_employee = row['employee_type'] and row['employee_type'] != 'ex'
-                if fx_budget_rate.get(row['booking_currency']):
-                    budget_amount = round(budget_amount / fx_budget_rate.get(row['booking_currency']), 2)
                 ret['records'].append({
                     'db_id': finance_archive._get_hash(cr, uid, ids='%s' % row['object_id'], model=row['object']),  # DB-ID
                     'instance': row['instance'],
+                    'journal_code': row['journal_code'],
                     'entry_sequence': row['entry_sequence'],
-                    'fixed_value': 'Company_Reference_ID',
-                    'func_currency': 'EUR',
+                    'period_name': period_name,
+                    'document_date': row['document_date'],
                     'posting_date': row['posting_date'],
-                    'journal_type': journal_type.get(row['journal_type'], row['journal_type']),
-                    'booking_debit': row['book_debit'],
-                    'booking_credit': row['book_credit'],
-                    'booking_debit_rounded': book_debit_round,
-                    'booking_credit_rounded': book_credit_round,
-                    'gap': ecart,
-                    'booking_currency': row['booking_currency'],
-                    'func_debit': row['func_debit'],
-                    'funct_credit': row['func_credit'],
+                    'partner_id': row['partner_id'] or None,
+                    'partner_txt': row['partner_txt'] or None,
+                    'emplid': row['emplid'] or None,
                     'description': row['description'] or '',
                     'reference': row['ref'] or '',
-                    'document_date': row['document_date'],
+                    'booking_currency': row['booking_currency'],
+                    'booking_debit': row['book_debit'],
+                    'booking_credit': row['book_credit'],
+                    'func_currency': 'EUR',
+                    'func_debit': row['func_debit'],
+                    'func_credit': row['func_credit'],
+                    'reconcile': row['reconcile'],
                     'cost_center': row['cost_center'] or '',
-                    'partner_db_id': local_employee and row['emplid'] or row['partner_id'] or '',
-                    'cash_journal_code': row['journal_code'] if row['journal_type'] == 'cash' else '',
-                    'bank_cheque_journal_code': row['journal_code'] if row['journal_type'] in ('bank', 'cheque') else '',
-                    'gl_account': row['account_code'],
-                    'employee_id': not local_employee and row['emplid'] or '',
-                    'code_mission': row['entry_sequence'][0:3],
-                    'destination': row.get('destination_code') or '',
-                    'debit_credit_eur_budget_rate': budget_amount,
-                    'third_party_txt': row.get('partner_txt') or '',
+                    'destination_code': row['destination_code'] or '',
+                    'funding_pool': row['fp_code'] or ''
                 })
 
             if ret['has_next_page']:
@@ -1810,8 +1760,11 @@ class waca_export_accounting_lines(osv.osv):
             raise osv.except_osv(_('Error'), _('Period %s is not closed on %s') % (period_code, instance_code))
 
         project_ids = self.pool.get('msf.instance').search(cr, uid, [('parent_id', '=', coordo_ids[0])])
-
         instance_ids = project_ids+[coordo_ids[0]]
+
+        # check user rights
+        self.pool.get('ir.model.access').check(cr, uid, 'account.move.line', 'write')
+
         if already_exported and not force:
             return period_id, instance_ids
 
@@ -1833,7 +1786,7 @@ class waca_export_accounting_lines(osv.osv):
         cr.execute("delete from waca_export_accounting_lines where period_id=%s and instance_id in %s", (period_id, tuple(instance_ids)))
         cr.execute('delete from waca_export_balances where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
 
-        excluded_journal_types = ['migration', 'inkind', 'extra', 'engagement']  # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'engagement']  # journal types that should not be used to take lines
 
         period_obj = self.pool.get('account.period')
         period = period_obj.browse(cr, uid, period_id, context=context,
@@ -1870,67 +1823,34 @@ class waca_export_accounting_lines(osv.osv):
             'fiscalyear_id': period.fiscalyear_id.id,
         }
 
-        cr.execute('''
-            select
-                account_move_id, sum(rounded_amount)
-            from
-                hq_report_no_decimal d
-            where
-                period_id = %s and instance_id in %s
-            group by account_move_id
-            having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.01)
-        ''', (period_id, tuple(instance_ids)))
-        for x in cr.fetchall():
-            # add gap on the biggest B/S line
-            move_id, gap = x
-            cr.execute("""
-                update
-                    hq_report_no_decimal d1 set rounded_amount = rounded_amount - %s 
-                where
-                    d1.id in (
-                        select id
-                        from hq_report_no_decimal d2
-                        where
-                            d2.account_move_id=%s and period_id = %s
-                        order by
-                            account_analytic_line_id is not null,
-                            abs(rounded_amount) desc
-                        limit 1
-                )
-            """, (gap, move_id, period_id))
-
-        # end balance rounded amounts
 
         # analytic lines raw_data
         analytic_query = """
                 SELECT
-                    'account.analytic.line' as object,
-                    al.id as object_id,
-                    i.instance as instance, -- 1
-                    al.entry_sequence, -- 2
-                    al.date as posting_date, -- 3
-                    CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type, -- 4
-                    CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 5
-                    CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 6
-                    CASE WHEN aml.is_addendum_line = 'f' THEN c.name ELSE move_c.name END AS booking_currency, -- 7
-                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) < 0 THEN ABS(ROUND(coalesce(func_rounded.rounded_func_amount,al.amount), 2)) ELSE 0.0 END AS func_debit, -- 8
-                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) > 0 THEN ROUND(coalesce(func_rounded.rounded_func_amount, al.amount), 2) ELSE 0.0 END AS func_credit, -- 9
-                    al.name as description, -- 10
-                    al.ref, -- 11
-                    al.document_date, -- 12
-                    cost_center.code AS cost_center, -- 13
-                    aml.partner_id, -- 14
-                    aj.code as journal_code, -- 15
-                    a.code as account_code, -- 16
-                    coalesce(hr.workday_identification_id, hr.identification_id) as emplid, -- 17
-                    aml.id as account_move_line_id, -- 18
-                    dest.code as destination_code, -- 19
-                    c.ocp_workday_decimal = 0 as no_decimal, -- 20
-                    rounded.rounded_amount as rounded_amount, -- 21
-                    hr.employee_type as employee_type, -- 22
-                    al.partner_txt as partner_txt, -- 23
-                    i.id as instance_id,
-                    p.id as period_id
+                    'account.analytic.line' as object, -- 1
+                    al.id as object_id, -- 2
+                    i.instance as instance, -- 3
+                    j.code, -- 4
+                    al.entry_sequence, -- 5
+                    al.document_date, -- 6
+                    al.date as posting_date, -- 7
+                    a.code as account_code, -- 8
+                    aml.partner_id, -- 9
+                    al.partner_txt as partner_txt, -- 10
+                    hr.identification_id as emplid, -- 11
+                    al.name as description, -- 12
+                    al.ref, -- 13
+                    CASE WHEN aml.is_addendum_line = 'f' THEN c.name ELSE move_c.name END AS booking_currency, -- 14
+                    CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 15
+                    CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 16
+                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) < 0 THEN ABS(ROUND(coalesce(func_rounded.rounded_func_amount,al.amount), 2)) ELSE 0.0 END AS func_debit, -- 17
+                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) > 0 THEN ROUND(coalesce(func_rounded.rounded_func_amount, al.amount), 2) ELSE 0.0 END AS func_credit, -- 18
+                    '', -- 19
+                    cost_center.code AS cost_center, -- 20
+                    dest.code as destination_code, -- 21
+                    fp.code as funding_pool, -- 22
+                    i.id as instance_id, -- 23
+                    %(period_id)s as period_id -- 24
                 FROM
                     account_analytic_line AS al
                         left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id
@@ -1938,6 +1858,7 @@ class waca_export_accounting_lines(osv.osv):
                     account_account AS a,
                     account_analytic_account AS dest,
                     account_analytic_account AS cost_center,
+                    account_analytic_account AS fp,
                     res_currency AS c,
                     res_currency AS move_c,
                     account_analytic_journal AS j,
@@ -1950,6 +1871,7 @@ class waca_export_accounting_lines(osv.osv):
                 WHERE
                     dest.id = al.destination_id
                     AND cost_center.id = al.cost_center_id
+                    AND fp.id = al.account_id
                     AND a.id = al.general_account_id
                     AND c.id = al.currency_id
                     AND j.id = al.journal_id
@@ -1971,33 +1893,30 @@ class waca_export_accounting_lines(osv.osv):
 
         move_line_query = """
                 SELECT
-                    'account.move.line' as object,
-                    aml.id as object_id,
-                    i.instance as instance,  -- 1
-                    m.name as entry_sequence, -- 2
-                    aml.date as posting_date,  -- 3
-                    j.type as journal_type,  -- 4
-                    aml.debit_currency as book_debit,  -- 5
-                    aml.credit_currency as book_credit,  -- 6
-                    c.name AS booking_currency,  -- 7
-                    ROUND(aml.debit, 2) as func_debit, -- 8
-                    ROUND(aml.credit, 2) as func_credit,  -- 9
-                    aml.name as description, -- 10
-                    aml.ref,  -- 11
-                    aml.document_date,  -- 12
-                    '' as cost_center, -- 13
-                    aml.partner_id,  -- 14
-                    j.code as journal_code, -- 15
-                    a.code as account_code,  -- 16
-                    coalesce(hr.workday_identification_id, hr.identification_id) as emplid,  -- 17
-                    NULL, -- 18,
-                    NULL, -- 19
-                    c.ocp_workday_decimal = 0 as no_decimal, -- 20
-                    rounded.rounded_amount as rounded_amount, -- 21
-                    hr.employee_type as employee_type, -- 22
-                    aml.partner_txt as partner_txt, -- 23
-                    i.id as instance_id,
-                    aml.period_id as period_id
+                    'account.move.line' as object, -- 1
+                    aml.id as object_id, -- 2
+                    i.instance as instance,  -- 3
+                    j.code, -- 4
+                    m.name as entry_sequence, -- 5
+                    aml.document_date,  -- 6
+                    aml.date as posting_date,  -- 7
+                    a.code as account_code,  -- 8
+                    aml.partner_id,  -- 9
+                    aml.partner_txt as partner_txt, -- 10
+                    hr.identification_id as emplid, -- 11
+                    aml.name as description, -- 12
+                    aml.ref,  -- 13
+                    c.name AS booking_currency,  -- 14
+                    aml.debit_currency as book_debit,  -- 15
+                    aml.credit_currency as book_credit,  -- 16
+                    ROUND(aml.debit, 2) as func_debit, -- 17
+                    ROUND(aml.credit, 2) as func_credit,  -- 18
+                    rec.name, -- 19
+                    NULL, -- 20
+                    NULL, -- 21
+                    NULL, -- 22
+                    i.id as instance_id, -- 23
+                    aml.period_id as period_id -- 24
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -2007,7 +1926,8 @@ class waca_export_accounting_lines(osv.osv):
                     INNER JOIN account_journal AS j ON aml.journal_id = j.id
                     INNER JOIN msf_instance AS i ON aml.instance_id = i.id
                     LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
-                    left join hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
+                    LEFT JOIN hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
+                    LEFT JOIN account_move_reconcile rec ON rec.id = aml.reconcile_id
                 WHERE
                     aal.id IS NULL
                     AND aml.period_id = %(period_id)s
@@ -2019,10 +1939,16 @@ class waca_export_accounting_lines(osv.osv):
         for sql, obj in [
                 (analytic_query, 'account.analytic.line'),
                 (move_line_query, 'account.move.line')]:
-            cr.execute("""INSERT INTO waca_export_accounting_lines
-        (object, object_id, instance, entry_sequence, posting_date, journal_type, book_debit, book_credit, booking_currency, func_debit, func_credit,
-        description, ref, document_date, cost_center, partner_id, journal_code, account_code, emplid, account_move_line_id, destination_code, no_decimal, rounded_amount, employee_type,
-        partner_txt, instance_id, period_id)
+            cr.execute("""INSERT INTO waca_export_accounting_lines (
+                object, object_id, instance, journal_code,
+                entry_sequence, document_date, posting_date,
+                account_code, partner_id, partner_txt,
+                emplid, description, ref,
+                booking_currency, book_debit, book_credit,
+                func_debit, func_credit, reconcile,
+                cost_center, destination_code, fp_code,
+                instance_id, period_id
+            )
             """ + sql, sql_params) # not_a_user_entry
 
         cr.execute("""INSERT INTO waca_export_balances
