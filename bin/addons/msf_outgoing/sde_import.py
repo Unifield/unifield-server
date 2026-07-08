@@ -2793,11 +2793,11 @@ class sde_import(osv.osv_memory):
                             sde_pagi_error = _('The page number must be in sequential order without gaps: last page imported %s, imported page %s') \
                                 % (sde_pagi['page'], json_data['sde_pagination_page'])
                         else:
-                            # Update the existing JSON with the new data in the key move_lines
+                            # Update the existing JSON with the new data in the key lines
                             pagi_json_text = sde_pagi['pagination_json_text']
                             pagi_json_data = json.loads(pagi_json_text)
 
-                            pagi_json_data['move_lines'].extend(json_data['move_lines'])
+                            pagi_json_data['lines'].extend(json_data['lines'])
                             pagi_json_text = json.dumps(pagi_json_data)
 
                             pagi_vals = {
