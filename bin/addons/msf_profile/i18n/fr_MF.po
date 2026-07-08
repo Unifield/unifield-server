@@ -131273,3 +131273,43 @@ msgstr "Message à afficher quand SDE est en train de mettre à jour un document
 #, python-format
 msgid "with a Counting sheet "
 msgstr "avec une Feuille de Comptage "
+
+#. module: stock
+#: field:physical.inventory,cs_generated_prefill_bn:0
+msgid "Prefilled Batch Numbers"
+msgstr "Numéros de Lot Pré-remplis"
+
+#. module: stock
+#: field:physical.inventory,cs_generated_prefill_ed:0
+msgid "Prefilled Expiry Dates"
+msgstr "Dates d'Expiration Pré-remplies"
+
+#. module: stock
+#: field:physical.inventory,cs_generated_stock:0
+msgid "Only lines with stock"
+msgstr "Uniquement les produits avec un niveau de stock différent de 0"
+
+#. module: stock
+#: field:physical.inventory,cs_generated_stock_and_moves:0
+msgid "Only lines with stock & moves"
+msgstr "Uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0"
+
+#. module: stock
+#: help:physical.inventory,cs_generated_stock_and_moves:0
+msgid "During Counting Sheet generation, the \"Only count lines with stock & moves different than 0\" was ticked"
+msgstr "Pendant la génération de la Feuille de Comptage, \"Compter uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0\" a été coché"
+
+#. module: stock
+#: help:physical.inventory,cs_generated_stock:0
+msgid "During Counting Sheet generation, the \"Only count lines with stock different than 0\" was ticked"
+msgstr "Pendant la génération de la Feuille de Comptage, \"Compter uniquement les produits avec un niveau de stock différent de 0\" a été coché"
+
+#. module: stock
+#: help:physical.inventory,cs_generated_prefill_bn:0
+msgid "During Counting Sheet generation, the \"Prefill Batch Numbers\" checkbox was ticked"
+msgstr "Pendant la génération de la Feuille de Comptage, \"Pré-remplir les Numéros de Lot\" a été coché"
+
+#. module: stock
+#: help:physical.inventory,cs_generated_prefill_ed:0
+msgid "During Counting Sheet generation, the \"Prefill Expiry checkbox\" was ticked"
+msgstr "Pendant la génération de la Feuille de Comptage, \"Pré-remplir les Dates d'Expiration\" a été coché"

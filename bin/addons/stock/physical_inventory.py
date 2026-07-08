@@ -171,6 +171,10 @@ class PhysicalInventory(osv.osv):
         'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection'),
         'multiple_filter_months': fields.boolean('Multiple Selection'),
         'products_added': fields.function(_get_products_added, method=True, type='boolean', string='Has products'),
+        'cs_generated_prefill_bn': fields.boolean('Prefilled Batch Numbers', help='During Counting Sheet generation, the "Prefill Batch Numbers" checkbox was ticked'),
+        'cs_generated_prefill_ed': fields.boolean('Prefilled Expiry Dates', help='During Counting Sheet generation, the "Prefill Expiry checkbox" was ticked'),
+        'cs_generated_stock': fields.boolean('Only lines with stock', help='During Counting Sheet generation, the "Only count lines with stock different than 0" was ticked'),
+        'cs_generated_stock_and_moves': fields.boolean('Only lines with stock & moves', help='During Counting Sheet generation, the "Only count lines with stock & moves different than 0" was ticked'),
         'sde_updated': fields.boolean('Updated by SDE'),
         'sde_reset_date': fields.datetime('Reset action applied'),
         'sde_update_msg': fields.text('Message to be displayed when SDE is updating a document'),
@@ -187,6 +191,10 @@ class PhysicalInventory(osv.osv):
         'max_filter_months': -1,
         'multiple_filter_months': False,
         'products_added': False,
+        'cs_generated_prefill_bn': False,
+        'cs_generated_prefill_ed': False,
+        'cs_generated_stock': False,
+        'cs_generated_stock_and_moves': False,
         'sde_updated': False,
         'sde_reset_date': False,
         'sde_update_msg': False,
@@ -239,10 +247,11 @@ class PhysicalInventory(osv.osv):
         default['state'] = 'draft'
         default['date'] = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         default['type'] = 'partial'
+        default['max_filter_months'] = -1
         fields_to_empty = ["ref", "full_inventory", "date_done", "bad_stock_msg", "has_bad_stock", "file_to_import",
                            "file_to_import2", "counting_line_ids", "discrepancy_line_ids", "discrepancies_generated",
-                           "move_ids", "multiple_filter_months", "max_filter_months", "sde_updated", "sde_reset_date",
-                           "sde_update_msg"]
+                           "move_ids", "multiple_filter_months", "cs_generated_prefill_bn",  "cs_generated_prefill_ed",
+                           "cs_generated_stock", "cs_generated_stock_and_moves", "sde_updated", "sde_reset_date", "sde_update_msg"]
 
         for field in fields_to_empty:
             default[field] = False
@@ -1512,7 +1521,17 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         if 'pi_cancel_reset' in context:
             context.pop('pi_cancel_reset')
 
-        self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False, 'sde_updated': False, 'sde_update_msg': False}, context=context)
+        pi_vals = {
+            'state': 'draft',
+            'discrepancies_generated': False,
+            'cs_generated_prefill_bn': False,
+            'cs_generated_prefill_ed': False,
+            'cs_generated_stock': False,
+            'cs_generated_stock_and_moves': False,
+            'sde_updated': False,
+            'sde_update_msg': False
+        }
+        self.write(cr, uid, ids, pi_vals, context=context)
         return {}
 
     def action_cancel_inventary(self, cr, uid, ids, context=None):

@@ -427,25 +427,27 @@ class sde_import(osv.osv_memory):
         # Search the IN
         if not po_id:
             raise osv.except_osv(_('Error'), _('PO was not found with the given references'))
+        po = po_obj.read(cr, uid, po_id[0], ['name', 'partner_type'], context=context)
         if not po_name:
-            po_name = po_obj.read(cr, uid, po_id[0], ['name'], context=context)['name']
+            po_name = po['name']
         in_domain = [('purchase_id', '=', po_id[0]), ('type', '=', 'in'), ('claim', '=', False)]
         error_msg = _('No available IN found for the given PO %s') % po_name
 
         in_id = False
-        # Look for Available Updated IN first, if a Shipment Ref is given but no IN is found with it, search without it
+        # Look for Available Updated IN first
+        # If the Supplier is ESC and a Shipment Ref is given but no IN is found with it, search without it
         if in_updated:
             in_upd_domain = in_domain + [('state', '=', 'updated')]
             if ship_ref:
                 in_id = pick_obj.search(cr, uid, in_upd_domain + [('shipment_ref', '=ilike', ship_ref)], context=context)
-            if not in_id:
+            if not in_id and (not ship_ref or (ship_ref and po['partner_type'] == 'esc')):
                 in_id = pick_obj.search(cr, uid, in_upd_domain, context=context)
 
         if not in_id:
             if ship_ref:
                 error_msg = _('No available shipped IN found for the given PO %s and the given Ship Reference %s') % (po_name, ship_ref)
                 in_id = pick_obj.search(cr, uid, in_domain + [('shipment_ref', '=ilike', ship_ref), ('state', '=', 'shipped')], context=context)
-            if not in_id:
+            if not in_id and (not ship_ref or (ship_ref and po['partner_type'] == 'esc')):
                 in_id = pick_obj.search(cr, uid, in_domain + [('state', '=', 'assigned')], context=context)
                 if not in_id:
                     in_id = pick_obj.search(cr, uid, in_domain + [('state', 'in', ['assigned', 'shipped'])], context=context)
@@ -2994,8 +2996,7 @@ class sde_import(osv.osv_memory):
                 # if pi_type == 'discr':
                 #     cr.execute("""SELECT COUNT(id) FROM physical_inventory_discrepancy WHERE inventory_id IN %s AND ignored = False""", (tuple(pi_ids),))
                 # else:
-                cr.execute("""SELECT COUNT(id) FROM physical_inventory_counting WHERE inventory_id IN %s""", (tuple(pi_ids),))
-                nb_lines = cr.fetchone()[0]
+                nb_lines = self.get_nb_pi_counting_lines(cr, uid, pi_ids, context=context)
 
                 data = {}
                 offset = 0
@@ -3016,31 +3017,37 @@ class sde_import(osv.osv_memory):
                 for pi in self.get_pi_counting_export_data(cr, uid, pi_ids, offset, lines_per_page, context=context):
                     if not data.get(pi[0]):
                         data[pi[0]] = {
-                            'details': pi[1] or '',
-                            'responsible': pi[2] or '',
-                            'date': pi[3] or '',
-                            'location': pi[4] or '',
-                            'updated_by_sde': pi[5] or False,
-                            # 'latest_log': pi[6] or '',
-                            # 'latest_log_date': pi[7] or '',
+                            'details': pi[2] or '',
+                            'responsible': pi[3] or '',
+                            'date': pi[4] or '',
+                            'location': pi[5] or '',
+                            'type': pi[6] and PI_TYPES[pi[6]] or '',
+                            'cs_generated_prefill_bn': pi[7] or False,
+                            'cs_generated_prefill_ed': pi[8] or False,
+                            'cs_generated_stock': pi[9] or False,
+                            'cs_generated_stock_and_moves': pi[10] or False,
+                            'max_nb_months': pi[11] != -1 and pi[11] or 0,
+                            'updated_by_sde': pi[12] or False,
+                            'latest_log': pi[13] or '',
+                            'latest_log_date': pi[14] or '',
                             'lines': [],
                         }
 
                     data[pi[0]]['lines'].append({
-                        'line_number': pi[7],
-                        'product_code': pi[8],
-                        'product_name': pi[9],
-                        'product_creator': pi[10],
-                        'nomen_main_type': pi[11],
-                        'uom': pi[12] or '',
-                        'product_qty': pi[13] and int(pi[13]) or False,
-                        'prodlot_id': pi[14] or '',
-                        'expired_date': pi[15] or '',
-                        'kc_check': pi[16] or False,
-                        'dg_check': pi[17] == 'True' and _('True') or pi[17] == 'no_know' and _('Unknown') or _('False'),
-                        'np_check': pi[18] or False,
-                        'batch_managed': pi[19] or False,
-                        'expiry_managed': pi[20] or False,
+                        'line_number': pi[1],
+                        'product_code': pi[15],
+                        'product_name': pi[16],
+                        'product_creator': pi[17],
+                        'nomen_main_type': pi[18],
+                        'uom': pi[19] or '',
+                        'qty_in_stock': pi[27] or 0,
+                        'prodlot_id': pi[25] and pi[20] or '',  # Don't display the name on ED-only products
+                        'expired_date': pi[21] or '',
+                        'kc_check': pi[22] or False,
+                        'dg_check': pi[23] == 'True' and _('True') or pi[23] == 'no_know' and _('Unknown') or _('False'),
+                        'np_check': pi[24] or False,
+                        'batch_managed': pi[25] or False,
+                        'expiry_managed': pi[26] or False,
                     })
 
                 if nb_lines > lines_per_page:
@@ -3116,53 +3123,128 @@ class sde_import(osv.osv_memory):
 
     def get_pi_counting_export_data(self, cr, uid, ids, offset, limit, context=None):
         """
-        Get info from PIs, its Counting sheet, its latest Track Change
+        Get info from PIs, its Products generated as Counting sheet, its latest Track Change
         """
         if context is None:
             context = {}
 
         cr.execute("""
             SELECT
-                pi.ref, -- 0
-                pi.name, -- 1
-                pi.responsible, -- 2
-                pi.date, -- 3
-                l.name, -- 4
-                pi.sde_updated, -- 5
-                -- MAX(a.log), -- 6
-                -- MAX(a.timestamp), -- 7
-                picount.id, -- 8
-                picount.line_no, -- 9
-                pp.default_code, -- 10
-                pt.name, -- 11
-                pis.name, -- 12
-                pno.name, -- 13
-                u.name, -- 14
-                picount.quantity, -- 15
-                picount.batch_number, -- 16
-                picount.expiry_date, -- 17
-                pcc.cold_chain, -- 18 kc_check
-                pp.dangerous_goods, -- 19 dg_check
-                pp.controlled_substance, -- 20 np_check
-                pp.batch_management, -- 21
-                pp.perishable -- 22
-            FROM physical_inventory_counting picount
-                LEFT JOIN physical_inventory pi ON picount.inventory_id = pi.id
-                LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
-                LEFT JOIN stock_location l ON pi.location_id = l.id
-                LEFT JOIN product_product pp ON picount.product_id = pp.id
-                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
-                LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
-                LEFT JOIN product_international_status pis ON pp.international_status = pis.id
-                LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
-                LEFT JOIN product_uom u ON picount.product_uom_id = u.id
-            WHERE pi.id IN %s
-            GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.name, picount.line_no, picount.id, picount.id,
-                picount.line_no, pp.default_code, pt.name, pis.name, pno.name, u.name, picount.quantity,
-                picount.batch_number, picount.expiry_date, pcc.cold_chain, pp.dangerous_goods, pp.controlled_substance,
-                pp.batch_management, pp.perishable
-            ORDER BY pi.id, picount.line_no, picount.id OFFSET %s LIMIT %s
-        """, (tuple(ids), offset, limit)) # not_a_user_entry
+                rec.pi_ref, -- 0
+                row_number() OVER(PARTITION BY rec.pi_id), -- 1 line_number
+                rec.pi_name, -- 2
+                rec.pi_responsible, -- 3
+                rec.pi_date, -- 4
+                rec.loc_name, -- 5
+                rec.pi_type, -- 6
+                rec.cs_generated_prefill_bn, -- 7
+                rec.cs_generated_prefill_ed, -- 8
+                rec.cs_generated_stock, -- 9
+                rec.cs_generated_stock_and_moves, -- 10
+                rec.max_filter_months, -- 11
+                rec.sde_updated, -- 12
+                rec.log, -- 13
+                rec.log_timestamp, -- 14
+                rec.product_code, -- 15
+                rec.product_name, -- 16
+                rec.pis_name, -- 17
+                rec.pno_name, -- 18
+                rec.product_uom, -- 19
+                rec.lot_name, -- 20
+                rec.lot_expiry, -- 21
+                rec.cold_chain, -- 22 kc_check
+                rec.dangerous_goods, -- 23 dg_check
+                rec.controlled_substance, -- 24 np_check
+                rec.batch_management, -- 25
+                rec.perishable, -- 26
+                SUM(rec.product_qty) -- 27
+            FROM (
+                (SELECT pi.id AS pi_id, pi.ref AS pi_ref, pi.name AS pi_name, pi.responsible AS pi_responsible,
+                    pi.date AS pi_date, l.name AS loc_name, pi.type AS pi_type,
+                    pi.cs_generated_prefill_bn AS cs_generated_prefill_bn,
+                    pi.cs_generated_prefill_ed AS cs_generated_prefill_ed, pi.cs_generated_stock AS cs_generated_stock,
+                    pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
+                    pi.max_filter_months AS max_filter_months, pi.sde_updated AS sde_updated, MAX(a.log) AS log,
+                    MAX(a.timestamp) AS log_timestamp, pp.default_code AS product_code, pt.name AS product_name,
+                    pis.name AS pis_name, pno.name AS pno_name, pu.name AS product_uom, lot.name AS lot_name,
+                    lot.life_date AS lot_expiry, pcc.cold_chain AS cold_chain, pp.dangerous_goods AS dangerous_goods,
+                    pp.controlled_substance AS controlled_substance, pp.batch_management AS batch_management,
+                    pp.perishable AS perishable, MAX(m.date) AS last_move_date,
+                    CASE
+                        WHEN m.location_dest_id = pi.location_id AND pt.uom_id = m.product_uom THEN SUM(m.product_qty)
+                        WHEN m.location_dest_id = pi.location_id AND pt.uom_id != m.product_uom THEN SUM(ROUND((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
+                    ELSE 0 END AS product_qty
+                FROM product_product pp
+                    LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
+                    LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
+                    LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0 AND m.location_id != pi.location_id
+                        AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
+                        OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
+                    LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
+                    LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
+                    LEFT JOIN stock_location l ON pi.location_id = l.id
+                    LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                    LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
+                    LEFT JOIN product_international_status pis ON pp.international_status = pis.id
+                    LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
+                    LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                    LEFT JOIN product_uom mu ON m.product_uom = mu.id
+                WHERE pi.id IN %s
+                GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.id, l.name, pi.type, pi.cs_generated_prefill_bn,
+                    pi.cs_generated_prefill_ed, pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months,
+                    pi.sde_updated, pp.id, pp.default_code, pt.name, m.location_dest_id, pis.name, pno.name, pt.uom_id,
+                    m.product_uom, pu.name, lot.id, lot.name, lot.life_date, pcc.cold_chain, pp.dangerous_goods,
+                    pp.controlled_substance, pp.batch_management, pp.perishable)
+                UNION ALL
+                (SELECT pi.id AS pi_id, pi.ref AS pi_ref, pi.name AS pi_name, pi.responsible AS pi_responsible,
+                    pi.date AS pi_date, l.name AS loc_name, pi.type AS pi_type,
+                    pi.cs_generated_prefill_bn AS cs_generated_prefill_bn,
+                    pi.cs_generated_prefill_ed AS cs_generated_prefill_ed, pi.cs_generated_stock AS cs_generated_stock,
+                    pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
+                    pi.max_filter_months AS max_filter_months, pi.sde_updated AS sde_updated, MAX(a.log) AS log,
+                    MAX(a.timestamp) AS log_timestamp, pp.default_code AS product_code, pt.name AS product_name,
+                    pis.name AS pis_name, pno.name AS pno_name, pu.name AS product_uom, lot.name AS lot_name,
+                    lot.life_date AS lot_expiry, pcc.cold_chain AS cold_chain, pp.dangerous_goods AS dangerous_goods,
+                    pp.controlled_substance AS controlled_substance, pp.batch_management AS batch_management,
+                    pp.perishable AS perishable, MAX(m.date) AS last_move_date,
+                    CASE
+                        WHEN m.location_id = pi.location_id AND pt.uom_id = m.product_uom THEN -SUM(m.product_qty)
+                        WHEN m.location_id = pi.location_id AND pt.uom_id != m.product_uom THEN -SUM(ROUND((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
+                    ELSE 0 END AS product_qty
+                FROM product_product pp
+                    LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
+                    LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
+                    LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0 AND m.location_dest_id != pi.location_id
+                        AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
+                        OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
+                    LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
+                    LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
+                    LEFT JOIN stock_location l ON pi.location_id = l.id
+                    LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                    LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
+                    LEFT JOIN product_international_status pis ON pp.international_status = pis.id
+                    LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
+                    LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                    LEFT JOIN product_uom mu ON m.product_uom = mu.id
+                WHERE pi.id IN %s
+                GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.id, l.name, pi.type, pi.cs_generated_prefill_bn,
+                    pi.cs_generated_prefill_ed, pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months,
+                    pi.sde_updated, pp.id, pp.default_code, pt.name, m.location_id, pis.name, pno.name, pt.uom_id,
+                    m.product_uom, pu.name, lot.id, lot.name, lot.life_date, pcc.cold_chain, pp.dangerous_goods,
+                    pp.controlled_substance, pp.batch_management, pp.perishable)
+            ) AS rec
+            GROUP BY rec.pi_id, rec.pi_ref, rec.pi_name, rec.pi_responsible, rec.pi_date, rec.loc_name, rec.pi_type,
+                rec.cs_generated_prefill_bn, rec.cs_generated_prefill_ed, rec.cs_generated_stock,
+                rec.cs_generated_stock_and_moves, rec.max_filter_months, rec.sde_updated, rec.log, rec.log_timestamp,
+                rec.product_code, rec.product_name, rec.pis_name, rec.pno_name, rec.product_uom, rec.lot_name, rec.lot_expiry,
+                rec.cold_chain, rec.dangerous_goods, rec.controlled_substance, rec.batch_management, rec.perishable
+            HAVING (rec.cs_generated_stock = 't' AND SUM(rec.product_qty) != 0)
+                OR (rec.cs_generated_stock_and_moves = 't' AND (SUM(rec.product_qty) != 0
+                    OR (SUM(rec.product_qty) = 0 AND rec.max_filter_months > 0 AND
+                    MAX(rec.last_move_date) >= (CURRENT_DATE - (rec.max_filter_months::text || ' month')::interval))))
+                OR (rec.cs_generated_stock = 'f' AND cs_generated_stock_and_moves = 'f')
+            ORDER BY rec.pi_id, rec.product_code, rec.lot_expiry OFFSET %s LIMIT %s
+        """, (tuple(ids), tuple(ids), offset, limit)) # not_a_user_entry
 
         return cr.fetchall()
 
@@ -3176,34 +3258,40 @@ class sde_import(osv.osv_memory):
         new_cr = pooler.get_db(cr.dbname).cursor()
 
         data = {}
-        for pi in self.get_pi_counting_export_data(cr, uid, ids, offset, limit, context=context):
+        for pi in self.get_pi_counting_export_data(new_cr, uid, ids, offset, limit, context=context):
             if not data.get(pi[0]):
                 data[pi[0]] = {
-                    'details': pi[1] or '',
-                    'responsible': pi[2] or '',
-                    'date': pi[3] or '',
-                    'location': pi[4] or '',
-                    'updated_by_sde': pi[5] or False,
-                    # 'latest_log': pi[6] or '',
-                    # 'latest_log_date': pi[7] or '',
+                    'details': pi[2] or '',
+                    'responsible': pi[3] or '',
+                    'date': pi[4] or '',
+                    'location': pi[5] or '',
+                    'type': pi[6] and PI_TYPES[pi[6]] or '',
+                    'cs_generated_prefill_bn': pi[7] or False,
+                    'cs_generated_prefill_ed': pi[8] or False,
+                    'cs_generated_stock': pi[9] or False,
+                    'cs_generated_stock_and_moves': pi[10] or False,
+                    'max_nb_months': pi[11] != -1 and pi[11] or 0,
+                    'updated_by_sde': pi[12] or False,
+                    'latest_log': pi[13] or '',
+                    'latest_log_date': pi[14] or '',
                     'lines': [],
                 }
 
             data[pi[0]]['lines'].append({
-                'line_number': pi[7],
-                'product_code': pi[8],
-                'product_name': pi[9],
-                'product_creator': pi[10],
-                'nomen_main_type': pi[11],
-                'uom': pi[12] or '',
-                'product_qty': pi[13] and int(pi[13]) or False,
-                'prodlot_id': pi[14] or '',
-                'expired_date': pi[15] or '',
-                'kc_check': pi[16] or False,
-                'dg_check': pi[17] == 'True' and _('True') or pi[17] == 'no_know' and _('Unknown') or _('False'),
-                'np_check': pi[18] or False,
-                'batch_managed': pi[19] or False,
-                'expiry_managed': pi[20] or False,
+                'line_number': pi[1],
+                'product_code': pi[15],
+                'product_name': pi[16],
+                'product_creator': pi[17],
+                'nomen_main_type': pi[18],
+                'uom': pi[19] or '',
+                'qty_in_stock': pi[27] or 0,
+                'prodlot_id': pi[25] and pi[20] or '',  # Don't display the name on ED-only products
+                'expired_date': pi[21] or '',
+                'kc_check': pi[22] or False,
+                'dg_check': pi[23] == 'True' and _('True') or pi[23] == 'no_know' and _('Unknown') or _('False'),
+                'np_check': pi[24] or False,
+                'batch_managed': pi[25] or False,
+                'expiry_managed': pi[26] or False,
             })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'pi_count',
@@ -3214,6 +3302,69 @@ class sde_import(osv.osv_memory):
         new_cr.close(True)
 
         return True
+
+    def get_nb_pi_counting_lines(self, cr, uid, pi_ids, context=None):
+        '''
+        SQL request similar to get_pi_counting_export_data without offset or limits used once to get the total number of
+        generated Counting sheet lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(pi_ids, int):
+            pi_ids = [pi_ids]
+
+        cr.execute("""
+            SELECT SUM(rec.product_qty)
+            FROM (
+                (SELECT pi.id AS pi_id, pp.default_code AS product_code, m.expired_date AS lot_expiry,
+                    pi.cs_generated_stock AS cs_generated_stock, pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
+                    pi.max_filter_months AS max_filter_months, MAX(m.date) AS last_move_date,
+                    CASE
+                        WHEN m.location_dest_id = pi.location_id AND pt.uom_id = m.product_uom THEN SUM(m.product_qty)
+                        WHEN m.location_dest_id = pi.location_id AND pt.uom_id != m.product_uom THEN SUM(ROUND((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
+                    ELSE 0 END AS product_qty
+                FROM product_product pp
+                    LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
+                    LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
+                    LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0 AND m.location_id != pi.location_id
+                        AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
+                        OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
+                    LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                    LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                    LEFT JOIN product_uom mu ON m.product_uom = mu.id
+                WHERE pi.id IN %s
+                GROUP BY pi.id, pp.default_code, m.expired_date, m.location_dest_id, pt.uom_id, m.product_uom,
+                     pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months)
+            UNION ALL
+                (SELECT pi.id AS pi_id, pp.default_code AS product_code, m.expired_date AS lot_expiry,
+                    pi.cs_generated_stock AS cs_generated_stock, pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
+                    pi.max_filter_months AS max_filter_months, MAX(m.date) AS last_move_date,
+                    CASE
+                        WHEN m.location_id = pi.location_id AND pt.uom_id = m.product_uom THEN -SUM(m.product_qty)
+                        WHEN m.location_id = pi.location_id AND pt.uom_id != m.product_uom THEN -SUM(ROUND((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
+                    ELSE 0 END AS product_qty
+                FROM product_product pp
+                    LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
+                    LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
+                    LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0 AND m.location_dest_id != pi.location_id
+                        AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
+                        OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
+                    LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                    LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                    LEFT JOIN product_uom mu ON m.product_uom = mu.id
+                WHERE pi.id IN %s
+                GROUP BY pi.id, pp.default_code, m.expired_date, m.location_id, pt.uom_id, m.product_uom,
+                     pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months)
+            ) AS rec
+            GROUP BY rec.pi_id, rec.product_code, rec.lot_expiry, rec.cs_generated_stock, rec.cs_generated_stock_and_moves,
+                     rec.max_filter_months
+            HAVING (rec.cs_generated_stock = 't' AND SUM(rec.product_qty) != 0)
+                OR (rec.cs_generated_stock_and_moves = 't' AND (SUM(rec.product_qty) != 0
+                    OR (SUM(rec.product_qty) = 0 AND rec.max_filter_months > 0 AND
+                    MAX(rec.last_move_date) >= (CURRENT_DATE - (rec.max_filter_months::text || ' month')::interval))))
+                OR (rec.cs_generated_stock = 'f' AND cs_generated_stock_and_moves = 'f')""", (tuple(pi_ids), tuple(pi_ids)))
+
+        return cr.rowcount
 
 
 sde_import()
