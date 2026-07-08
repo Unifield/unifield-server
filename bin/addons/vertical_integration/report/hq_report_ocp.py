@@ -1474,6 +1474,22 @@ class hq_report_ocp_workday(hq_report_ocp):
 
 hq_report_ocp_workday('report.hq.ocp.workday', 'account.move.line', False, parser=False)
 
+class waca_matching_report(osv.osv):
+    _name = 'waca.matching.report'
+    _log_access = False
+
+    _columns = {
+        'db_id': fields.char('DBID', size=64, select=1),
+        'instance_id': fields.integer('Instance Id', select=1),
+        'period_id': fields.integer('Period Id', select=1),
+        'account_move_line_id': fields.integer('JI id', select=1),
+        'rec_name': fields.char('Rec name', size=512, select=1),
+        'unrec_name': fields.char('UnRec name', size=512, select=1),
+        'unrec_rec_date': fields.date('Rec/Unrec Date'),
+    }
+
+waca_matching_report()
+
 class waca_export_balances(osv.osv):
     _name = 'waca.export.balances'
     _log_access = False
@@ -1548,6 +1564,7 @@ class waca_export_accounting_lines(osv.osv):
     logger = logging.getLogger('WaCA lines export')
 
     _columns = {
+        'db_id': fields.char('DBID', size=64, select=1),
         'object': fields.char('Object', size=128),  # 1
         'object_id': fields.integer('Object ID', size=128), # 2
         'instance': fields.char('Instance', size=128), # 3
@@ -1566,7 +1583,6 @@ class waca_export_accounting_lines(osv.osv):
         'book_credit': fields.float('Book Credit', digits=(16, 2)), # 16
         'func_debit': fields.float('Func Debit', digits=(16, 2)), # 17
         'func_credit': fields.float('Func Credit', digits=(16, 2)), # 18
-        'reconcile': fields.char('Reconcile', size=128), # 19
         'cost_center':  fields.char('Cost Center', size=128), # 20
         'destination_code': fields.char('Destination Code', size=128), # 21
         'fp_code': fields.char('FP Code', size=128), # 22
@@ -1665,6 +1681,56 @@ class waca_export_accounting_lines(osv.osv):
         return ret
 
 
+    @jsonrpc_orm_exposed('waca.export.accounting.lines', 'matching_report')
+    def matching_report(self, cr, uid, period_code, instance_code, page=1, context=None):
+        limit = 200
+        ret = {
+            'page': page,
+            'limit': limit,
+            'success': True,
+            'records': [],
+            'has_next_page': False,
+        }
+        try:
+            period_id, instance_ids = self._pre_query(cr, uid, period_code, instance_code, force=False, context=context)
+            if not isinstance(page, int) or not page > 0:
+                raise osv.except_osv('Error', 'Page attribute must be a positive integer and not zero')
+            offset = (page - 1) * limit
+            cr.execute('''
+                select
+                        *
+                from
+                    waca_matching_report
+                where
+                    instance_id in %(instance_id)s and
+                    period_id = %(period_id)s
+                order by
+                    unrec_name NULLS last, rec_name, id
+                offset %(offset)s limit %(limit)s
+            ''', {'instance_id': tuple(instance_ids), 'period_id': period_id, 'offset': offset, 'limit': limit+1})
+
+            nb = cr.rowcount
+            ret['has_next_page'] = nb > limit
+            for row in cr.dictfetchall():
+                ret['records'].append({
+                    'db_id': row['db_id'],
+                    'Reconcile': row['rec_name'],
+                    'Reconcile date': row['rec_name'] and row['unrec_rec_date'] or '',
+                    'Unreconcile number': row['unrec_name'] or '',
+                    'Unreconcile date': row['unrec_name'] and row['unrec_rec_date'] or '',
+                    'line_id': row['account_move_line_id'],
+                })
+
+            if ret['has_next_page']:
+                ret['records'].pop(-1)
+        except Exception as e:
+            self.logger.exception(e)
+            cr.rollback()
+            ret['success'] = False
+            ret['error'] = '%s'%e
+
+        return ret
+
     @jsonrpc_orm_exposed('waca.export.accounting.lines', 'export')
     def export(self, cr, uid, period_code, instance_code, page=1, force=False, context=None):
         # add condition
@@ -1674,6 +1740,7 @@ class waca_export_accounting_lines(osv.osv):
             'limit': limit,
             'success': True,
             'records': [],
+            'has_next_page': False,
         }
         try:
             period_id, instance_ids = self._pre_query(cr, uid, period_code, instance_code, force=force, context=context)
@@ -1698,7 +1765,7 @@ class waca_export_accounting_lines(osv.osv):
             ret['has_next_page'] = nb > limit
             for row in cr.dictfetchall():
                 ret['records'].append({
-                    'db_id': finance_archive._get_hash(cr, uid, ids='%s' % row['object_id'], model=row['object']),  # DB-ID
+                    'db_id': row['db_id'],
                     'instance': row['instance'],
                     'journal_code': row['journal_code'],
                     'entry_sequence': row['entry_sequence'],
@@ -1716,7 +1783,6 @@ class waca_export_accounting_lines(osv.osv):
                     'func_currency': 'EUR',
                     'func_debit': row['func_debit'],
                     'func_credit': row['func_credit'],
-                    'reconcile': row['reconcile'],
                     'cost_center': row['cost_center'] or '',
                     'destination_code': row['destination_code'] or '',
                     'funding_pool': row['fp_code'] or ''
@@ -1781,16 +1847,20 @@ class waca_export_accounting_lines(osv.osv):
         if wrong_proj:
             raise osv.except_osv('Error', _('Period %s is not closed on project: %s') % (period_code, ', '.join(wrong_proj),))
 
+        period_obj = self.pool.get('account.period')
+        period = period_obj.browse(cr, uid, period_id, context=context,
+                                   fields_to_fetch=['date_start', 'date_stop', 'number', 'fiscalyear_id'])
+
+        if period.date_stop >= datetime.now().strftime('%Y-%m-%d'):
+            raise osv.except_osv('Error', _('You cannot extract a period before the end of the period: %s') % (period.date_stop, ))
 
         cr.execute("update account_period_state set already_exported='t' where id=%s", (state_id,))
         cr.execute("delete from waca_export_accounting_lines where period_id=%s and instance_id in %s", (period_id, tuple(instance_ids)))
         cr.execute('delete from waca_export_balances where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+        cr.execute('delete from waca_matching_report where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
 
         excluded_journal_types = ['hq', 'engagement']  # journal types that should not be used to take lines
 
-        period_obj = self.pool.get('account.period')
-        period = period_obj.browse(cr, uid, period_id, context=context,
-                                   fields_to_fetch=['date_start', 'date_stop', 'number', 'fiscalyear_id'])
         first_day_of_period = period.date_start
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
@@ -1806,6 +1876,80 @@ class waca_export_accounting_lines(osv.osv):
             exclude_period_closing = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('special', '=', 't'), ('number', '>', period.number)], context=context)
             if not exclude_period_closing:
                 exclude_period_closing = [0]
+
+        cr.execute(''' insert into waca_matching_report
+            (instance_id, period_id, account_move_line_id, unrec_name, unrec_rec_date, db_id)
+            select
+                aml.instance_id, aml.period_id, aml.id, aml.unreconcile_txt, aml.unreconcile_date, MD5(current_database()||',account.move.line,['||aml.id||']')
+            from
+                account_move_line aml, account_journal j, account_period p
+            where
+                aml.journal_id = j.id and
+                p.id = aml.period_id and
+                aml.date <= %(date_stop)s and
+                p.number not in (0, 16) and
+                j.type not in %(j_type)s and
+                aml.reconcile_id is NULL and
+                COALESCE(aml.unreconcile_txt, '') != '' and
+                aml.unreconcile_date >= %(date_start)s and
+                aml.instance_id in %(instance_ids)s
+        ''', {
+            'date_stop': period.date_stop,
+            'date_start': period.date_start,
+            'j_type': tuple(excluded_journal_types),
+            'instance_ids': tuple(instance_ids),
+
+        })
+
+        # get reconcile done in the past with a current period lines
+        cr.execute('''select
+                distinct(reconcile_id)
+            from
+                account_move_line
+            where
+                date >=%(date_start)s and
+                date <= %(date_stop)s and
+                reconcile_id is not null and
+                reconcile_date < %(date_start)s and
+                instance_id in %(instance_ids)s
+        ''', {
+            'date_stop': period.date_stop,
+            'date_start': period.date_start,
+            'instance_ids': tuple(instance_ids),
+        })
+
+        rec_ids = [x[0] for x in cr.fetchall()]
+        if not rec_ids:
+            rec_ids = [0]
+
+        cr.execute(''' insert into waca_matching_report
+            (instance_id, period_id, account_move_line_id, rec_name, unrec_rec_date, db_id)
+            select
+                aml.instance_id, aml.period_id, aml.id, rec.name, aml.reconcile_date, MD5(current_database()||',account.move.line,['||aml.id||']')
+            from
+                account_move_line aml, account_journal j, account_period p, account_move_reconcile rec
+            where
+                aml.journal_id = j.id and
+                p.id = aml.period_id and
+                aml.date <= %(date_stop)s and
+                p.number not in (0, 16) and
+                j.type not in %(j_type)s and
+                aml.instance_id in %(instance_ids)s and
+                aml.reconcile_id = rec.id and
+                not exists(select id from account_move_line where reconcile_id = rec.id and date > %(date_stop)s) and
+                (
+                    aml.reconcile_date >= %(date_start)s
+                    or aml.reconcile_id in %(rec_ids)s
+               )
+        ''', {
+            'date_stop': period.date_stop,
+            'date_start': period.date_start,
+            'j_type': tuple(excluded_journal_types),
+            'instance_ids': tuple(instance_ids),
+            'rec_ids': tuple(rec_ids),
+        })
+
+
 
         round_aji_ji(cr, instance_ids, period_id, period.date_start, period.date_stop, excluded_journal_types)
 
@@ -1845,12 +1989,12 @@ class waca_export_accounting_lines(osv.osv):
                     CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 16
                     CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) < 0 THEN ABS(ROUND(coalesce(func_rounded.rounded_func_amount,al.amount), 2)) ELSE 0.0 END AS func_debit, -- 17
                     CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) > 0 THEN ROUND(coalesce(func_rounded.rounded_func_amount, al.amount), 2) ELSE 0.0 END AS func_credit, -- 18
-                    '', -- 19
                     cost_center.code AS cost_center, -- 20
                     dest.code as destination_code, -- 21
                     fp.code as funding_pool, -- 22
                     i.id as instance_id, -- 23
-                    %(period_id)s as period_id -- 24
+                    %(period_id)s as period_id, -- 24
+                    MD5(current_database()||',account.analytic.line,['||al.id||']')
                 FROM
                     account_analytic_line AS al
                         left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id
@@ -1911,12 +2055,12 @@ class waca_export_accounting_lines(osv.osv):
                     aml.credit_currency as book_credit,  -- 16
                     ROUND(aml.debit, 2) as func_debit, -- 17
                     ROUND(aml.credit, 2) as func_credit,  -- 18
-                    rec.name, -- 19
                     NULL, -- 20
                     NULL, -- 21
                     NULL, -- 22
                     i.id as instance_id, -- 23
-                    aml.period_id as period_id -- 24
+                    aml.period_id as period_id, -- 24
+                    MD5(current_database()||',account.move.line,['||aml.id||']')
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -1927,7 +2071,6 @@ class waca_export_accounting_lines(osv.osv):
                     INNER JOIN msf_instance AS i ON aml.instance_id = i.id
                     LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
                     LEFT JOIN hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
-                    LEFT JOIN account_move_reconcile rec ON rec.id = aml.reconcile_id
                 WHERE
                     aal.id IS NULL
                     AND aml.period_id = %(period_id)s
@@ -1945,9 +2088,9 @@ class waca_export_accounting_lines(osv.osv):
                 account_code, partner_id, partner_txt,
                 emplid, description, ref,
                 booking_currency, book_debit, book_credit,
-                func_debit, func_credit, reconcile,
+                func_debit, func_credit,
                 cost_center, destination_code, fp_code,
-                instance_id, period_id
+                instance_id, period_id, db_id
             )
             """ + sql, sql_params) # not_a_user_entry
 
