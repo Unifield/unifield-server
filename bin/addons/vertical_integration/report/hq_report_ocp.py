@@ -1771,6 +1771,7 @@ class waca_export_accounting_lines(osv.osv):
                     'period_name': period_name,
                     'document_date': row['document_date'],
                     'posting_date': row['posting_date'],
+                    'account_code': row['account_code'],
                     'partner_id': row['partner_id'] or '',
                     'partner_txt': row['partner_txt'] or '',
                     'emplid': row['emplid'] or '',
