@@ -86464,11 +86464,12 @@ msgstr "Total des Dépenses"
 msgid "Costing Method"
 msgstr "Méthode de Valorisation"
 
-#. modules: account_override, account, analytic_override
+#. modules: account_override, account, analytic_override, account_mcdb
 #: field:account.move.line,exported:0
 #: field:account.analytic.line,exported:0
+#: field:account.period.state,already_exported:0
 msgid "Exported"
-msgstr "Exported"
+msgstr "Exporté"
 
 #. modules: base_setup, unifield_setup, base
 #: model:res.country,name:base.kh
@@ -130854,3 +130855,15 @@ msgstr "Qté. Entrée"
 #: field:stock.mission.report.line,opdd_qty:0
 msgid "Output/Packing/Dispatch/Distribution Qty."
 msgstr "Qté. Sortie/Colisage/Expédition/Distribution"
+
+#. module: vertical_integration, account_mcdb
+#: view:account.period.state:0
+#: field:account.period.state,ready_for_export:0
+msgid "Ready for Export"
+msgstr "Prêt pour l'exportation"
+
+#. module: vertical_integration
+#: view:account.period.state:0
+msgid "Reset Export"
+msgstr "Réinitialiser l'exportation"
+

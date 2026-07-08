@@ -31,19 +31,90 @@ from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
 class account_period_state(osv.osv):
     _name = "account.period.state"
     _description = "Period States"
+    _oder = "period_str desc, id"
+
+    def _get_ready_for_export(self, cr, uid, ids, name, args, context=None):
+        ret = {}
+        if not ids:
+            return []
+        for _id in ids:
+            ret[_id] = False
+
+        cr.execute('''
+            select
+                st.id
+            from
+                msf_instance i
+                inner join account_period_state st on st.instance_id = i.id
+                inner join account_period p on p.id = st.period_id
+                left join msf_instance project on project.parent_id = i.id and project.state = 'active'
+                left join account_period_state st_project on st_project.period_id = st.period_id and st_project.instance_id = project.id and st_project.state in ('field-closed', 'mission-closed', 'done')
+            where
+                coalesce(st.already_exported, 'f') = 'f' and
+                i.level = 'coordo' and
+                st.state in ('mission-closed', 'done') and
+                project.state = 'active' and
+                st.id in %s
+            group by
+                st.id, i.code, p.number, p.date_start
+            having
+                count(project.id) = count(st_project.id)
+        ''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
+    def _search_ready_for_export(self, cr, uid, obj, name, args, context=None):
+
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
+
+        cr.execute('''
+            select
+                st.id
+            from
+                msf_instance i
+                inner join account_period_state st on st.instance_id = i.id
+                inner join account_period p on p.id = st.period_id
+                left join msf_instance project on project.parent_id = i.id and project.state = 'active'
+                left join account_period_state st_project on st_project.period_id = st.period_id and st_project.instance_id = project.id and st_project.state in ('field-closed', 'mission-closed', 'done')
+            where
+                coalesce(st.already_exported, 'f') = 'f' and
+                i.level = 'coordo' and
+                st.state in ('mission-closed', 'done') and
+                project.state = 'active'
+            group by
+                st.id, i.code, p.number, p.date_start
+            having
+                count(project.id) = count(st_project.id)
+        ''')
+        return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1, join='LEFT'),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True),
         'auto_export_vi': fields.boolean('Auto VI exported', select=1),
-        'already_exported': fields.boolean('OCP field to not export the same period twice on reopen', readonly=1),
+        'already_exported': fields.boolean('Exported', readonly=1),
+        'ready_for_export': fields.function(_get_ready_for_export, type='boolean', size=64, string='Ready for Export', method=True, fnct_search=_search_ready_for_export),
     }
 
     _defaults = {
         'auto_export_vi': True,
         'already_exported': False,
     }
+
+    def reset_export(self, cr, uid, ids, context=None):
+        if self.pool.get('sync.client.entity').get_entity(cr, uid).oc != 'waca':
+            raise osv.except_osv(
+                'Error',
+                'Only available for WaCA'
+            )
+
+        self.write(cr, uid, ids, {'already_exported': False}, context=context)
+        return True
 
     def clean_auto_export(self, cr, uid, vals, context=None):
         '''
