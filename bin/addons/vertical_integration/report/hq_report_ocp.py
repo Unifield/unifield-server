@@ -1637,7 +1637,7 @@ class waca_export_accounting_lines(osv.osv):
         return ret
 
     @jsonrpc_orm_exposed('waca.export.accounting.lines', 'ready_to_export')
-    def ready_to_export(self, cr, uid, year, context=None):
+    def ready_to_export(self, cr, uid, context=None):
         ret = {
             'page': -1,
             'limit': -1,
@@ -1648,7 +1648,7 @@ class waca_export_accounting_lines(osv.osv):
         try:
             cr.execute('''
                 select
-                    i.code, p.number
+                    i.code, p.number, p.date_start
                 from
                     msf_instance i
                     inner join account_period_state st on st.instance_id = i.id
@@ -1659,17 +1659,16 @@ class waca_export_accounting_lines(osv.osv):
                     coalesce(st.already_exported, 'f') = 'f' and
                     i.level = 'coordo' and
                     st.state in ('mission-closed', 'done') and
-                    EXTRACT(YEAR from p.date_start) = %s and
                     project.state = 'active'
-                group by i.code, p.number
+                group by i.code, p.number, p.date_start
                 having
                     count(project.id) = count(st_project.id)
                 order by p.number, i.code
-            ''', (year, ))
+            ''')
             for x in cr.fetchall():
                 ret['records'].append({
                     'instance': x[0],
-                    'period': 'P%02d-%d' % (x[1], year)
+                    'period': 'P%02d-%s' % (x[1], x[2].split('-')[0])
                 })
 
         except Exception as e:
