@@ -1498,42 +1498,6 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
 
         return True
 
-    def action_cancel_draft(self, cr, uid, ids, context=None):
-        """ Cancels the stock move and change inventory state to draft."""
-        if context is None:
-            context = {}
-
-        for inv in self.read(cr, uid, ids, ['move_ids', 'location_id'], context=context):
-            states = ['confirmed', 'closed', 'cancel']
-            pi_loc_error_msg = self.get_non_finished_pi_for_loc_msg(cr, uid, [inv['id']], inv['location_id'][0], states, context=context)
-            if pi_loc_error_msg:
-                raise osv.except_osv(_('Error'), pi_loc_error_msg)
-
-            self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
-
-        for inv in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
-            if not inv.location_id.active:
-                raise osv.except_osv(_('Warning'), _("Location %s is inactive") % (inv.location_id.name,))
-
-        # Unsign the signed lines
-        context['pi_cancel_reset'] = True
-        self._unsign_all(cr, uid, ids, context=context)
-        if 'pi_cancel_reset' in context:
-            context.pop('pi_cancel_reset')
-
-        pi_vals = {
-            'state': 'draft',
-            'discrepancies_generated': False,
-            'cs_generated_prefill_bn': False,
-            'cs_generated_prefill_ed': False,
-            'cs_generated_stock': False,
-            'cs_generated_stock_and_moves': False,
-            'sde_updated': False,
-            'sde_update_msg': False
-        }
-        self.write(cr, uid, ids, pi_vals, context=context)
-        return {}
-
     def action_cancel_inventary(self, cr, uid, ids, context=None):
         """ Cancels both stock move and inventory"""
         move_obj = self.pool.get('stock.move')
@@ -1587,7 +1551,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         # Reset the quantity of the counting sheets
         cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id IN %s""", (tuple(ids),))
 
-        self.write(cr, uid, ids, {'sde_updated': False, 'sde_reset_date': datetime.now()}, context=context)
+        self.write(cr, uid, ids, {'sde_updated': False, 'sde_update_msg': False, 'sde_reset_date': datetime.now()}, context=context)
 
         return True
 

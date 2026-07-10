@@ -61,7 +61,7 @@
                         <page string="Products">
                             <group colspan="4" attrs="{'invisible': [('type', '=', False)]}">
                                 <button name="action_select_products" states="draft" string="Products Selection" type="object"
-                                        icon="gtk-add" attrs="{'invisible': [('type', '=', 'correction')]}"/>
+                                        icon="gtk-add" attrs="{'invisible': ['|', ('type', '=', 'correction'), ('state', '!=', 'draft')]}"/>
                                     <field colspan="4" name="product_ids" nolabel="1" on_change="onchange_products(product_ids)"
                                            attrs="{'readonly': ['|', ('type', '=', 'full'), ('state', '!=', 'draft')]}">
                                     <tree string="Products" noteditable="1">
@@ -263,9 +263,6 @@
 
                         <button name="action_done" states="confirmed" string="Close Inventory"
                                 type="object" icon="gtk-jump-to" confirm="Do you confirm that you want to close the inventory ?"/>
-
-                        <button name="action_cancel_draft" states="cancel" string="Set to Draft"
-                                type="object" icon="gtk-convert"/>
                     </group>
                 </form>
             </field>

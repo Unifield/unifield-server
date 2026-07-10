@@ -62989,11 +62989,15 @@ msgstr "Impossible de supprimer des factures générées par un flux \"Supply\" 
 msgid "Cannot delete invoice(s) set as \"Synchronized\"!"
 msgstr "Impossible de supprimer des factures marquées comme \"Synchronisées\" !"
 
-#. module: stock, msf_outgoing
+#. module: stock
 #: view:physical.inventory:0
-#: code:addons/msf_outgoing/sde_import.py:3030
 msgid "Counting sheet"
 msgstr "Feuille de comptage"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3030
+msgid " Counting sheet"
+msgstr " de Feuille de comptage"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:62
@@ -92302,7 +92306,6 @@ msgid "CHINESE YUAN"
 msgstr "YUAN CHINOIS"
 
 #. modules: stock, purchase,account,specific_rules
-#: view:physical.inventory:0
 #: view:account.invoice:0
 #: view:account.period:0
 #: view:purchase.order:0
@@ -103077,12 +103080,6 @@ msgstr "La Zone est des DI ouverte"
 #, python-format
 msgid "Location is inactive"
 msgstr "Zone inactive"
-
-#. module: stock
-#: code:addons/stock/physical_inventory.py:1207
-#, python-format
-msgid "Location %s is inactive"
-msgstr "Zone %s inactive"
 
 #. module: msf_config_locations
 #: view:stock.remove.location.wizard:0
@@ -116773,18 +116770,21 @@ msgstr "Une erreur est survenue: %s"
 msgid "There is not enough stock in Cross Docking which can be allocated to process the product %s with a quantity of %s. Please check if there is some other (forced) availability of this product."
 msgstr "Il n'y a pas assez de stock attribuable en Transbordement pour traiter le produit %s avec une quantité de %s. Veuillez vérifier si il y a d'autres disponibilités (forcées) pour ce produit."
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: selection:physical.inventory,type:0
+#: code:addons/msf_outgoing/sde_import.py:74
 msgid "Full Inventory count (planned)"
 msgstr "Comptage complet de l'Inventaire (planifié)"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: selection:physical.inventory,type:0
+#: code:addons/msf_outgoing/sde_import.py:75
 msgid "Partial Inventory count (planned)"
 msgstr "Comptage partiel de l'Inventaire (planifié)"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: selection:physical.inventory,type:0
+#: code:addons/msf_outgoing/sde_import.py:75
 msgid "Stock correction (unplanned)"
 msgstr "Correction du Stock (non planifiée)"
 
@@ -131147,8 +131147,8 @@ msgstr "Cet Inventaire Physique est en train d'être mis à jour via SDE depuis 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/sde_import.py:3089
 #, python-format
-msgid "There is no Physical Inventory %s to export"
-msgstr "Il n'y a pas d'Inventaire Physique %s à exporter"
+msgid "There is no Physical Inventory%s to export"
+msgstr "Il n'y a pas d'Inventaire Physique%s à exporter"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/sde_import.py:2725
@@ -131204,20 +131204,20 @@ msgstr ". Attention: %s"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/sde_import.py:3064
 #, python-format
-msgid "The Physical Inventory %s data from the page %s of %s have been exported"
-msgstr "Les données de %s de l'Inventaire Physique de la page %s de %s ont été exportées"
+msgid "The Physical Inventory%s data from the page %s of %s have been exported"
+msgstr "Les données%s de l'Inventaire Physique de la page %s de %s ont été exportées"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/sde_import.py:3180
 #, python-format
-msgid "The Physical Inventory %s data of %s have been exported%s"
-msgstr "Les données de %s de l'Inventaire Physique de %s ont été exportées%s"
+msgid "The Physical Inventory%s data of %s have been exported%s"
+msgstr "Les données%s de l'Inventaire Physique de %s ont été exportées%s"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/sde_import.py:3069
 #, python-format
-msgid "No Physical Inventory %s export data was found with the \"sde_pagination_id\" %s and the \"sde_pagination_page\" %s"
-msgstr "Aucun export de données de %s d'Inventaire Physique n'a été trouvé pour le \"sde_pagination_id\" %s et la \"sde_pagination_page\" %s"
+msgid "No Physical Inventory%s export data was found with the \"sde_pagination_id\" %s and the \"sde_pagination_page\" %s"
+msgstr "Aucun export de données de%s d'Inventaire Physique n'a été trouvé pour le \"sde_pagination_id\" %s et la \"sde_pagination_page\" %s"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/sde_import.py:3177
@@ -131313,3 +131313,8 @@ msgstr "Pendant la génération de la Feuille de Comptage, \"Pré-remplir les Nu
 #: help:physical.inventory,cs_generated_prefill_ed:0
 msgid "During Counting Sheet generation, the \"Prefill Expiry checkbox\" was ticked"
 msgstr "Pendant la génération de la Feuille de Comptage, \"Pré-remplir les Dates d'Expiration\" a été coché"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Export Physical Inventories"
+msgstr "Exporter des Inventaires Physiques"

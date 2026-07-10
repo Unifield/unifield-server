@@ -2624,13 +2624,23 @@ class sde_import(osv.osv_memory):
 
     def wizard_sde_pi_counting_sheet_export(self, cr, uid, ids, context=None):
         '''
-        Method to use instead of the JSONRPC to export Physical Inventories' Counting Sheet
+        Method to use instead of the JSONRPC to export Physical Inventories'
         '''
         if context is None:
             context = {}
         if not ids:
             return True
         return self.wizard_sde_pi_actions(cr, uid, ids, 'pi_counting_sheet_export', context=context)
+
+    def wizard_sde_pi_counting_sheet_export_lines(self, cr, uid, ids, context=None):
+        '''
+        Method to use instead of the JSONRPC to export Physical Inventories' Counting Sheet
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        return self.wizard_sde_pi_actions(cr, uid, ids, 'pi_counting_sheet_export_lines', context=context)
 
     def wizard_sde_pi_actions(self, cr, uid, ids, action, context=None):
         '''
@@ -2653,11 +2663,13 @@ class sde_import(osv.osv_memory):
         elif action == 'pi_counting_sheet_import':
             result = self.sde_pi_counting_sheet_import(cr, uid, sde_imp['json_text'], context=context)
         elif action == 'pi_counting_sheet_export':
-            result = self.sde_pi_export(cr, uid, sde_imp['json_text'], 'count', context=context)
+            result = self.sde_pi_export(cr, uid, sde_imp['json_text'], 'pi_count', with_lines=False, context=context)
+        elif action == 'pi_counting_sheet_export_lines':
+            result = self.sde_pi_export(cr, uid, sde_imp['json_text'], 'pi_count', with_lines=True, context=context)
         # elif action == 'pi_discr_lines_import':
         #     result = self.sde_pi_discr_lines_import(cr, uid, sde_imp['json_text'], context=context)
         # elif action == 'pi_cdiscr_lines_export':
-        #     result = self.sde_pi_export(cr, uid, sde_imp['json_text'], 'discr', context=context)
+        #     result = self.sde_pi_export(cr, uid, sde_imp['json_text'], 'pi_discr', context=context)
 
         return self.write(cr, uid, ids, {'message': json.dumps(result)}, context=context)
 
@@ -2684,12 +2696,22 @@ class sde_import(osv.osv_memory):
     @jsonrpc_orm_exposed('sde.import', 'sde_pi_counting_sheet_export')
     def sde_pi_counting_sheet_export(self, cr, uid, json_text, context=None):
         '''
+        Method used by the SDE script to export info of Physical Inventories
+        '''
+        if context is None:
+            context = {}
+
+        return self.sde_pi_export(cr, uid, json_text, 'pi_count', with_lines=False, context=context)
+
+    @jsonrpc_orm_exposed('sde.import', 'sde_pi_counting_sheet_export_lines')
+    def sde_pi_counting_sheet_export_lines(self, cr, uid, json_text, context=None):
+        '''
         Method used by the SDE script to export info of Physical Inventories' Counting sheet
         '''
         if context is None:
             context = {}
 
-        return self.sde_pi_export(cr, uid, json_text, 'count', context=context)
+        return self.sde_pi_export(cr, uid, json_text, 'pi_count', with_lines=True, context=context)
 
     def sde_physical_inventory_msg(self, cr, uid, json_text, to_remove, context=None):
         '''
@@ -2719,7 +2741,7 @@ class sde_import(osv.osv_memory):
                 json_data['pi_list'] = [str(pi_name).strip() for pi_name in json_data['pi_list']]
             except:
                 raise osv.except_osv(_('Error'), _('One or more of the Physical Inventory names in the key "pi_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
-            pi_ids = self.get_pi_from_refs(cr, uid, json_data['pi_list'], False, context=context)
+            pi_ids = self.get_pi_from_refs(cr, uid, json_data['pi_list'], 'pi_count', with_lines=True, context=context)
 
             if to_remove:
                 pi_obj.write(cr, uid, pi_ids, {'sde_update_msg': False}, context=context)
@@ -2753,9 +2775,7 @@ class sde_import(osv.osv_memory):
 
         pagi_obj = self.pool.get('sde.import.pagination')
         pi_obj = self.pool.get('physical.inventory')
-        prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
-        counting_obj = self.pool.get('physical.inventory.counting')
 
         context['sde_flow'] = True
         instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
@@ -2837,7 +2857,7 @@ class sde_import(osv.osv_memory):
                 # Get the Physical Inventory from the name
                 if not json_data.get('name'):
                     raise osv.except_osv(_('Error'), _('The main key "name" is mandatory and should not be empty'))
-                pi_ids = self.get_pi_from_refs(cr, uid, [json_data['name']], 'count', context=context)
+                pi_ids = self.get_pi_from_refs(cr, uid, [json_data['name']], 'pi_count', with_lines=True, context=context)
                 pi_id = pi_ids[0]
                 pi = pi_obj.browse(cr, uid, pi_id, fields_to_fetch=['ref', 'sde_updated', 'location_id'], context=context)
                 if pi.sde_updated:
@@ -2903,25 +2923,25 @@ class sde_import(osv.osv_memory):
 
         return result
 
-    def sde_pi_export(self, cr, uid, json_text, pi_type, context=None):
+    def sde_pi_export(self, cr, uid, json_text, export_type, with_lines=False, context=None):
         '''
         Method used by the SDE script to export info on Physical Inventories Counting/Discrepancy lines
         '''
         if context is None:
             context = {}
-        if not pi_type:
-            raise osv.except_osv(_('Error'), _('Please specify a pi_type'))
+        if not export_type:
+            raise osv.except_osv(_('Error'), _('Please specify an export_type'))
 
         pi_obj = self.pool.get('physical.inventory')
         pagi_exp_obj = self.pool.get('sde.export.pagination')
 
         instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
-        # if pi_type == 'discr':
-        #     export_name = _('Discrepancy lines')
-        #     export_type = 'pi_discr'
-        # else:
-        export_name = _('Counting sheet')
-        export_type = 'pi_count'
+        if export_type == 'pi_count' and with_lines:
+            export_name = _(' Counting sheet')
+        # elif export_type == 'pi_discr' and with_lines:
+        #     export_name = _(' Discrepancy lines')
+        else:
+            export_name = ''
 
         result = {'database': instance_name, 'error': False, 'message': '', 'data': []}
         pagi_msg = ''
@@ -2954,12 +2974,12 @@ class sde_import(osv.osv_memory):
                     result.update({
                         'sde_pagination_id': json_data['sde_pagination_id'],
                         'sde_pagination_page': json_data['sde_pagination_page'],
-                        'message': _('The Physical Inventory %s data from the page %s of %s have been exported')
+                        'message': _('The Physical Inventory%s data from the page %s of %s have been exported')
                         % (export_name, json_data['sde_pagination_page'], json_data['sde_pagination_id']),
                         'data': json.loads(pagi_exp['pagination_json_text']),
                     })
                 else:
-                    raise osv.except_osv(_('Error'), _('No Physical Inventory %s export data was found with the "sde_pagination_id" %s and the "sde_pagination_page" %s')
+                    raise osv.except_osv(_('Error'), _('No Physical Inventory%s export data was found with the "sde_pagination_id" %s and the "sde_pagination_page" %s')
                                          % (export_name, json_data['sde_pagination_id'], json_data['sde_pagination_page']))
             else:
                 # Get the data with the references given
@@ -2970,16 +2990,18 @@ class sde_import(osv.osv_memory):
                     except:
                         raise osv.except_osv(_('Error'),  _('One or more of the Physical Inventory names in the key "pi_list" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one'))
                     pi_names = json_data['pi_list']
-                    pi_ids = self.get_pi_from_refs(cr, uid, pi_names, pi_type, context=context)
+                    pi_ids = self.get_pi_from_refs(cr, uid, pi_names, export_type, with_lines=with_lines, context=context)
                 else:
-                    # if pi_type == 'discr':
+                    if not with_lines:
+                        pi_domain = [('state', '!=', 'closed')]
+                    # if export_type == 'pi_discr':
                     #     pi_domain = [('state', 'in', ['counted', 'validated', 'confirmed']), ('discrepancies_generated', '=', True)]
-                    # else:
-                    pi_domain = [('state', 'in', ['counting', 'counted']), ('discrepancies_generated', '=', False)]
+                    else:
+                        pi_domain = [('state', 'in', ['counting', 'counted']), ('discrepancies_generated', '=', False)]
                     pi_ids = pi_obj.search(cr, uid, pi_domain, context=context)
 
                 if not pi_ids:
-                    raise osv.except_osv(_('Error'), _('There is no Physical Inventory %s to export') % (export_name,))
+                    raise osv.except_osv(_('Error'), _('There is no Physical Inventory%s to export') % (export_name,))
 
                 # Default number of lines per page is 100 if not specified
                 lines_per_page = 100
@@ -2993,16 +3015,19 @@ class sde_import(osv.osv_memory):
                     lines_per_page = json_data['lines_per_page']
 
                 # Count the number of lines
-                # if pi_type == 'discr':
-                #     cr.execute("""SELECT COUNT(id) FROM physical_inventory_discrepancy WHERE inventory_id IN %s AND ignored = False""", (tuple(pi_ids),))
-                # else:
-                nb_lines = self.get_nb_pi_counting_lines(cr, uid, pi_ids, context=context)
+                if with_lines:
+                    # if pi_type == 'pi_discr':
+                    #     cr.execute("""SELECT COUNT(id) FROM physical_inventory_discrepancy WHERE inventory_id IN %s AND ignored = False""", (tuple(pi_ids),))
+                    # else:
+                    nb_lines = self.get_nb_pi_counting_lines(cr, uid, pi_ids, context=context)
+                else:
+                    nb_lines = len(pi_ids)
 
                 data = {}
                 offset = 0
-                # if pi_type == 'discr':
+                # if export_type == 'pi_discr':
                 #     threaded_method = self.create_pi_discrepancy_paginated_export
-                #     for pi in self.get_pi_discrepancy_export_data(cr, uid, pi_ids, offset, lines_per_page, context=context):
+                #     for pi in self.get_pi_discrepancy_export_data(cr, uid, pi_ids, offset, lines_per_page, with_lines=with_lines context=context):
                 #         if not data.get(pi[0]):
                 #             data[pi[0]] = {
                 #                 'name': pi[1] or '',
@@ -3014,41 +3039,44 @@ class sde_import(osv.osv_memory):
                 #         })
                 # else:
                 threaded_method = self.create_pi_counting_paginated_export
-                for pi in self.get_pi_counting_export_data(cr, uid, pi_ids, offset, lines_per_page, context=context):
+                for pi in self.get_pi_counting_export_data(cr, uid, pi_ids, offset, lines_per_page, with_lines=with_lines, context=context):
                     if not data.get(pi[0]):
                         data[pi[0]] = {
-                            'details': pi[2] or '',
-                            'responsible': pi[3] or '',
-                            'date': pi[4] or '',
-                            'location': pi[5] or '',
-                            'type': pi[6] and PI_TYPES[pi[6]] or '',
-                            'cs_generated_prefill_bn': pi[7] or False,
-                            'cs_generated_prefill_ed': pi[8] or False,
-                            'cs_generated_stock': pi[9] or False,
-                            'cs_generated_stock_and_moves': pi[10] or False,
-                            'max_nb_months': pi[11] != -1 and pi[11] or 0,
-                            'updated_by_sde': pi[12] or False,
+                            'details': pi[1] or '',
+                            'responsible': pi[2] or '',
+                            'date': pi[3] or '',
+                            'location': pi[4] or '',
+                            'type': pi[5] and PI_TYPES[pi[5]] or '',
+                            'cs_generated_prefill_bn': pi[6] or False,
+                            'cs_generated_prefill_ed': pi[7] or False,
+                            'cs_generated_stock': pi[8] or False,
+                            'cs_generated_stock_and_moves': pi[9] or False,
+                            'max_nb_months': pi[10] != -1 and pi[10] or 0,
+                            'updated_by_sde': pi[11] or False,
+                            'state': pi[12] and PI_STATES[pi[12]] or '',
                             'latest_log': pi[13] or '',
                             'latest_log_date': pi[14] or '',
-                            'lines': [],
                         }
 
-                    data[pi[0]]['lines'].append({
-                        'line_number': pi[1],
-                        'product_code': pi[15],
-                        'product_name': pi[16],
-                        'product_creator': pi[17],
-                        'nomen_main_type': pi[18],
-                        'uom': pi[19] or '',
-                        'qty_in_stock': pi[27] or 0,
-                        'prodlot_id': pi[25] and pi[20] or '',  # Don't display the name on ED-only products
-                        'expired_date': pi[21] or '',
-                        'kc_check': pi[22] or False,
-                        'dg_check': pi[23] == 'True' and _('True') or pi[23] == 'no_know' and _('Unknown') or _('False'),
-                        'np_check': pi[24] or False,
-                        'batch_managed': pi[25] or False,
-                        'expiry_managed': pi[26] or False,
-                    })
+                    if with_lines:
+                        if 'lines' not in data[pi[0]]:
+                            data[pi[0]]['lines'] = []
+                        data[pi[0]]['lines'].append({
+                            'line_number': pi[15],
+                            'product_code': pi[16],
+                            'product_name': pi[17],
+                            'product_creator': pi[18],
+                            'nomen_main_type': pi[19],
+                            'uom': pi[20] or '',
+                            'qty_in_stock': pi[28] or 0,
+                            'prodlot_id': pi[26] and pi[21] or '',  # Don't display the name on ED-only products
+                            'expired_date': pi[22] or '',
+                            'kc_check': pi[23] or False,
+                            'dg_check': pi[24] == 'True' and _('True') or pi[24] == 'no_know' and _('Unknown') or _('False'),
+                            'np_check': pi[25] or False,
+                            'batch_managed': pi[26] or False,
+                            'expiry_managed': pi[27] or False,
+                        })
 
                 if nb_lines > lines_per_page:
                     sde_pagi_id = self.pool.get('ir.sequence').get(cr, uid, 'sde.export.pagination')
@@ -3057,7 +3085,7 @@ class sde_import(osv.osv_memory):
 
                     pagi_exp_obj.create(cr, 1, {'pagination_json_id': sde_pagi_id, 'pagination_json_text': json.dumps(data),
                                                 'doc_type': export_type, 'page': sde_pagi_page, 'last_page': False,
-                                                'with_lines': True}, context=context)
+                                                'with_lines': with_lines}, context=context)
                     result.update({'sde_pagination_id': sde_pagi_id, 'sde_pagination_page': sde_pagi_page,
                                    'sde_pagination_last_page': last_page})
 
@@ -3069,13 +3097,13 @@ class sde_import(osv.osv_memory):
                         offset += lines_per_page
                         threaded_exp_pagi = threading.Thread(target=threaded_method,
                                                              args=(cr, uid, pi_ids, sde_pagi_id, sde_pagi_page,
-                                                                   last_page, offset, lines_per_page, context))
+                                                                   last_page, offset, lines_per_page, with_lines, context))
                         threaded_exp_pagi.start()
 
                 final_msg_pi = pi_names and ', '.join(pi_names) or _('%s Physical Inventories') % (len(pi_ids), )
                 result.update({
                     'data': data,
-                    'message': _('The Physical Inventory %s data of %s have been exported%s')% (export_name, final_msg_pi, pagi_msg)
+                    'message': _('The Physical Inventory%s data of %s have been exported%s') % (export_name, final_msg_pi, pagi_msg)
                 })
         except Exception as e:
             # Rejection message to send back
@@ -3087,23 +3115,22 @@ class sde_import(osv.osv_memory):
 
         return result
 
-    def get_pi_from_refs(self, cr, uid, pi_list, type, context=None):
+    def get_pi_from_refs(self, cr, uid, pi_list, type, with_lines, context=None):
         if context is None:
             context = {}
 
         pi_obj = self.pool.get('physical.inventory')
 
         states_msg, type_msg = '', ''
-        # if type == 'count':
-        pi_default_domain = [('state', 'in', ['counting', 'counted']), ('discrepancies_generated', '=', False)]
-        type_msg = _('with a Counting sheet ')
-        # elif type == 'discr':
+        if type == 'count' and with_lines:
+            pi_default_domain = [('state', 'in', ['counting', 'counted']), ('discrepancies_generated', '=', False)]
+            type_msg = _('with a Counting sheet ')
+        # elif type == 'pi_discr':
         #     pi_default_domain = [('state', 'in', ['counted', 'validated', 'confirmed']), ('discrepancies_generated', '=', True))]
         #     type_msg = _('with Discrepancy Lines ')
-        # else:
-        #     states = ['counting', 'counted', 'validated', 'confirmed']
-        #     states_msg = _('%s ') % ('/'.join([PI_STATES[state] for state in states]))
-        #     pi_default_domain = [('state', 'in', states)]
+        else:
+            pi_default_domain = [('state', '!=', 'closed')]
+            states_msg = _('%s ') % ('/'.join([PI_STATES[state] for state in PI_STATES if state != 'closed']))
 
         pi_ids, not_found = [], []
         for pi_name in pi_list:
@@ -3121,138 +3148,167 @@ class sde_import(osv.osv_memory):
 
         return pi_ids
 
-    def get_pi_counting_export_data(self, cr, uid, ids, offset, limit, context=None):
+    def get_pi_counting_export_data(self, cr, uid, ids, offset, limit, with_lines=False, context=None):
         """
         Get info from PIs, its Products generated as Counting sheet, its latest Track Change
         """
         if context is None:
             context = {}
 
-        cr.execute("""
-            SELECT
-                rec.pi_ref, -- 0
-                row_number() OVER(PARTITION BY rec.pi_id), -- 1 line_number
-                rec.pi_name, -- 2
-                rec.pi_responsible, -- 3
-                rec.pi_date, -- 4
-                rec.loc_name, -- 5
-                rec.pi_type, -- 6
-                rec.cs_generated_prefill_bn, -- 7
-                rec.cs_generated_prefill_ed, -- 8
-                rec.cs_generated_stock, -- 9
-                rec.cs_generated_stock_and_moves, -- 10
-                rec.max_filter_months, -- 11
-                rec.sde_updated, -- 12
-                rec.log, -- 13
-                rec.log_timestamp, -- 14
-                rec.product_code, -- 15
-                rec.product_name, -- 16
-                rec.pis_name, -- 17
-                rec.pno_name, -- 18
-                rec.product_uom, -- 19
-                rec.lot_name, -- 20
-                rec.lot_expiry, -- 21
-                rec.cold_chain, -- 22 kc_check
-                rec.dangerous_goods, -- 23 dg_check
-                rec.controlled_substance, -- 24 np_check
-                rec.batch_management, -- 25
-                rec.perishable, -- 26
-                SUM(rec.product_qty) -- 27
-            FROM (
-                (SELECT pi.id AS pi_id, pi.ref AS pi_ref, pi.name AS pi_name, pi.responsible AS pi_responsible,
-                    pi.date AS pi_date, l.name AS loc_name, pi.type AS pi_type,
-                    pi.cs_generated_prefill_bn AS cs_generated_prefill_bn,
-                    pi.cs_generated_prefill_ed AS cs_generated_prefill_ed, pi.cs_generated_stock AS cs_generated_stock,
-                    pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
-                    pi.max_filter_months AS max_filter_months, pi.sde_updated AS sde_updated, MAX(a.log) AS log,
-                    MAX(a.timestamp) AS log_timestamp, pp.default_code AS product_code, pt.name AS product_name,
-                    pis.name AS pis_name, pno.name AS pno_name, pu.name AS product_uom, lot.name AS lot_name,
-                    lot.life_date AS lot_expiry, pcc.cold_chain AS cold_chain, pp.dangerous_goods AS dangerous_goods,
-                    pp.controlled_substance AS controlled_substance, pp.batch_management AS batch_management,
-                    pp.perishable AS perishable, MAX(m.date) AS last_move_date,
-                    CASE
-                        WHEN m.location_dest_id = pi.location_id AND pt.uom_id = m.product_uom THEN SUM(m.product_qty)
-                        WHEN m.location_dest_id = pi.location_id AND pt.uom_id != m.product_uom THEN SUM(ROUND((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
-                    ELSE 0 END AS product_qty
-                FROM product_product pp
-                    LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
-                    LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
-                    LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0
-                        AND ((pi.cs_generated_stock_and_moves = 't' AND m.location_id != pi.location_id)
-                            OR (pi.cs_generated_stock_and_moves = 'f' AND m.location_dest_id = pi.location_id))
-                        AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
-                            OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
+        if with_lines:
+            cr.execute("""
+                SELECT
+                    rec.pi_ref, -- 0
+                    rec.pi_name, -- 1
+                    rec.pi_responsible, -- 2
+                    rec.pi_date, -- 3
+                    rec.loc_name, -- 4
+                    rec.pi_type, -- 5
+                    rec.cs_generated_prefill_bn, -- 6
+                    rec.cs_generated_prefill_ed, -- 7
+                    rec.cs_generated_stock, -- 8
+                    rec.cs_generated_stock_and_moves, -- 9
+                    rec.max_filter_months, -- 10
+                    rec.sde_updated, -- 11
+                    rec.state, -- 12
+                    rec.log, -- 13
+                    rec.log_timestamp, -- 14
+                    row_number() OVER(PARTITION BY rec.pi_id), -- 15 line_number
+                    rec.product_code, -- 16
+                    rec.product_name, -- 17
+                    rec.pis_name, -- 18
+                    rec.pno_name, -- 19
+                    rec.product_uom, -- 20
+                    rec.lot_name, -- 21
+                    rec.lot_expiry, -- 22
+                    rec.cold_chain, -- 23 kc_check
+                    rec.dangerous_goods, -- 24 dg_check
+                    rec.controlled_substance, -- 25 np_check
+                    rec.batch_management, -- 26
+                    rec.perishable, -- 27
+                    SUM(rec.product_qty) -- 28
+                FROM (
+                    (SELECT pi.id AS pi_id, pi.ref AS pi_ref, pi.name AS pi_name, pi.responsible AS pi_responsible,
+                        pi.date AS pi_date, l.name AS loc_name, pi.type AS pi_type,
+                        pi.cs_generated_prefill_bn AS cs_generated_prefill_bn,
+                        pi.cs_generated_prefill_ed AS cs_generated_prefill_ed, pi.cs_generated_stock AS cs_generated_stock,
+                        pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
+                        pi.max_filter_months AS max_filter_months, pi.sde_updated AS sde_updated, pi.state AS state,
+                        MAX(a.log) AS log, MAX(a.timestamp) AS log_timestamp, pp.default_code AS product_code,
+                        pt.name AS product_name, pis.name AS pis_name, pno.name AS pno_name, pu.name AS product_uom, lot.name AS lot_name,
+                        lot.life_date AS lot_expiry, pcc.cold_chain AS cold_chain, pp.dangerous_goods AS dangerous_goods,
+                        pp.controlled_substance AS controlled_substance, pp.batch_management AS batch_management,
+                        pp.perishable AS perishable, MAX(m.date) AS last_move_date,
+                        CASE
+                            WHEN m.location_dest_id = pi.location_id AND pt.uom_id = m.product_uom THEN SUM(m.product_qty)
+                            WHEN m.location_dest_id = pi.location_id AND pt.uom_id != m.product_uom THEN SUM(ROUND((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
+                        ELSE 0 END AS product_qty
+                    FROM product_product pp
+                        LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
+                        LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
+                        LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0
+                            AND ((pi.cs_generated_stock_and_moves = 't' AND m.location_id != pi.location_id)
+                                OR (pi.cs_generated_stock_and_moves = 'f' AND m.location_dest_id = pi.location_id))
+                            AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
+                                OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
+                        LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
+                        LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
+                        LEFT JOIN stock_location l ON pi.location_id = l.id
+                        LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                        LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
+                        LEFT JOIN product_international_status pis ON pp.international_status = pis.id
+                        LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
+                        LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                        LEFT JOIN product_uom mu ON m.product_uom = mu.id
+                    WHERE pi.id IN %s
+                    GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.id, l.name, pi.type, pi.cs_generated_prefill_bn,
+                        pi.cs_generated_prefill_ed, pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months,
+                        pi.sde_updated, pi.state, pp.id, pp.default_code, pt.name, m.location_dest_id, pis.name, pno.name,
+                        pt.uom_id, m.product_uom, pu.name, lot.id, lot.name, lot.life_date, pcc.cold_chain, pp.dangerous_goods,
+                        pp.controlled_substance, pp.batch_management, pp.perishable)
+                    UNION ALL
+                    (SELECT pi.id AS pi_id, pi.ref AS pi_ref, pi.name AS pi_name, pi.responsible AS pi_responsible,
+                        pi.date AS pi_date, l.name AS loc_name, pi.type AS pi_type,
+                        pi.cs_generated_prefill_bn AS cs_generated_prefill_bn,
+                        pi.cs_generated_prefill_ed AS cs_generated_prefill_ed, pi.cs_generated_stock AS cs_generated_stock,
+                        pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
+                        pi.max_filter_months AS max_filter_months, pi.sde_updated AS sde_updated, pi.state AS state,
+                        MAX(a.log) AS log, MAX(a.timestamp) AS log_timestamp, pp.default_code AS product_code,
+                        pt.name AS product_name, pis.name AS pis_name, pno.name AS pno_name, pu.name AS product_uom, lot.name AS lot_name,
+                        lot.life_date AS lot_expiry, pcc.cold_chain AS cold_chain, pp.dangerous_goods AS dangerous_goods,
+                        pp.controlled_substance AS controlled_substance, pp.batch_management AS batch_management,
+                        pp.perishable AS perishable, MAX(m.date) AS last_move_date,
+                        CASE
+                            WHEN m.location_id = pi.location_id AND pt.uom_id = m.product_uom THEN -SUM(m.product_qty)
+                            WHEN m.location_id = pi.location_id AND pt.uom_id != m.product_uom THEN -SUM(ROUND((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
+                        ELSE 0 END AS product_qty
+                    FROM product_product pp
+                        LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
+                        LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
+                        LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0
+                            AND ((pi.cs_generated_stock_and_moves = 't' AND m.location_dest_id != pi.location_id)
+                                OR (pi.cs_generated_stock_and_moves = 'f' AND m.location_id = pi.location_id))
+                            AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
+                                OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
+                        LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
+                        LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
+                        LEFT JOIN stock_location l ON pi.location_id = l.id
+                        LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                        LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
+                        LEFT JOIN product_international_status pis ON pp.international_status = pis.id
+                        LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
+                        LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                        LEFT JOIN product_uom mu ON m.product_uom = mu.id
+                    WHERE pi.id IN %s
+                    GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.id, l.name, pi.type, pi.cs_generated_prefill_bn,
+                        pi.cs_generated_prefill_ed, pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months,
+                        pi.sde_updated, pi.state, pp.id, pp.default_code, pt.name, m.location_id, pis.name, pno.name,
+                        pt.uom_id, m.product_uom, pu.name, lot.id, lot.name, lot.life_date, pcc.cold_chain, pp.dangerous_goods,
+                        pp.controlled_substance, pp.batch_management, pp.perishable)
+                ) AS rec
+                GROUP BY rec.pi_id, rec.pi_ref, rec.pi_name, rec.pi_responsible, rec.pi_date, rec.loc_name, rec.pi_type,
+                    rec.cs_generated_prefill_bn, rec.cs_generated_prefill_ed, rec.cs_generated_stock,
+                    rec.cs_generated_stock_and_moves, rec.max_filter_months, rec.sde_updated, rec.state, rec.log, rec.log_timestamp,
+                    rec.product_code, rec.product_name, rec.pis_name, rec.pno_name, rec.product_uom, rec.lot_name, rec.lot_expiry,
+                    rec.cold_chain, rec.dangerous_goods, rec.controlled_substance, rec.batch_management, rec.perishable
+                HAVING (rec.cs_generated_stock = 't' AND SUM(rec.product_qty) != 0)
+                    OR (rec.cs_generated_stock_and_moves = 't' AND (SUM(rec.product_qty) != 0
+                        OR (SUM(rec.product_qty) = 0 AND rec.max_filter_months > 0 AND
+                        MAX(rec.last_move_date) >= (CURRENT_DATE - (rec.max_filter_months::text || ' month')::interval))))
+                    OR (rec.cs_generated_stock = 'f' AND cs_generated_stock_and_moves = 'f')
+                ORDER BY rec.pi_id, rec.product_code, rec.lot_expiry OFFSET %s LIMIT %s
+            """, (tuple(ids), tuple(ids), offset, limit)) # not_a_user_entry
+        else:
+            cr.execute("""
+                SELECT
+                    pi.ref, -- 0
+                    pi.name, -- 1
+                    pi.responsible, -- 2
+                    pi.date, -- 3
+                    l.name, -- 4
+                    pi.type, -- 5
+                    pi.cs_generated_prefill_bn, -- 6
+                    pi.cs_generated_prefill_ed, -- 7
+                    pi.cs_generated_stock, -- 8
+                    pi.cs_generated_stock_and_moves, -- 9
+                    pi.max_filter_months, -- 10
+                    pi.sde_updated, -- 11
+                    pi.state, -- 12
+                    MAX(a.log), -- 13
+                    MAX(a.timestamp) -- 14
+                FROM physical_inventory pi
                     LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
-                    LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
                     LEFT JOIN stock_location l ON pi.location_id = l.id
-                    LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
-                    LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
-                    LEFT JOIN product_international_status pis ON pp.international_status = pis.id
-                    LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
-                    LEFT JOIN product_uom pu ON pt.uom_id = pu.id
-                    LEFT JOIN product_uom mu ON m.product_uom = mu.id
                 WHERE pi.id IN %s
-                GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.id, l.name, pi.type, pi.cs_generated_prefill_bn,
+                GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.name, pi.type, pi.cs_generated_prefill_bn,
                     pi.cs_generated_prefill_ed, pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months,
-                    pi.sde_updated, pp.id, pp.default_code, pt.name, m.location_dest_id, pis.name, pno.name, pt.uom_id,
-                    m.product_uom, pu.name, lot.id, lot.name, lot.life_date, pcc.cold_chain, pp.dangerous_goods,
-                    pp.controlled_substance, pp.batch_management, pp.perishable)
-                UNION ALL
-                (SELECT pi.id AS pi_id, pi.ref AS pi_ref, pi.name AS pi_name, pi.responsible AS pi_responsible,
-                    pi.date AS pi_date, l.name AS loc_name, pi.type AS pi_type,
-                    pi.cs_generated_prefill_bn AS cs_generated_prefill_bn,
-                    pi.cs_generated_prefill_ed AS cs_generated_prefill_ed, pi.cs_generated_stock AS cs_generated_stock,
-                    pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
-                    pi.max_filter_months AS max_filter_months, pi.sde_updated AS sde_updated, MAX(a.log) AS log,
-                    MAX(a.timestamp) AS log_timestamp, pp.default_code AS product_code, pt.name AS product_name,
-                    pis.name AS pis_name, pno.name AS pno_name, pu.name AS product_uom, lot.name AS lot_name,
-                    lot.life_date AS lot_expiry, pcc.cold_chain AS cold_chain, pp.dangerous_goods AS dangerous_goods,
-                    pp.controlled_substance AS controlled_substance, pp.batch_management AS batch_management,
-                    pp.perishable AS perishable, MAX(m.date) AS last_move_date,
-                    CASE
-                        WHEN m.location_id = pi.location_id AND pt.uom_id = m.product_uom THEN -SUM(m.product_qty)
-                        WHEN m.location_id = pi.location_id AND pt.uom_id != m.product_uom THEN -SUM(ROUND((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
-                    ELSE 0 END AS product_qty
-                FROM product_product pp
-                    LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
-                    LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
-                    LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0
-                        AND ((pi.cs_generated_stock_and_moves = 't' AND m.location_dest_id != pi.location_id)
-                            OR (pi.cs_generated_stock_and_moves = 'f' AND m.location_id = pi.location_id))
-                        AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
-                            OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
-                    LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
-                    LEFT JOIN stock_production_lot lot ON m.prodlot_id = lot.id
-                    LEFT JOIN stock_location l ON pi.location_id = l.id
-                    LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
-                    LEFT JOIN product_cold_chain pcc ON pp.cold_chain = pcc.id
-                    LEFT JOIN product_international_status pis ON pp.international_status = pis.id
-                    LEFT JOIN product_nomenclature pno ON pt.nomen_manda_0 = pno.id
-                    LEFT JOIN product_uom pu ON pt.uom_id = pu.id
-                    LEFT JOIN product_uom mu ON m.product_uom = mu.id
-                WHERE pi.id IN %s
-                GROUP BY pi.id, pi.ref, pi.name, pi.responsible, pi.date, l.id, l.name, pi.type, pi.cs_generated_prefill_bn,
-                    pi.cs_generated_prefill_ed, pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months,
-                    pi.sde_updated, pp.id, pp.default_code, pt.name, m.location_id, pis.name, pno.name, pt.uom_id,
-                    m.product_uom, pu.name, lot.id, lot.name, lot.life_date, pcc.cold_chain, pp.dangerous_goods,
-                    pp.controlled_substance, pp.batch_management, pp.perishable)
-            ) AS rec
-            GROUP BY rec.pi_id, rec.pi_ref, rec.pi_name, rec.pi_responsible, rec.pi_date, rec.loc_name, rec.pi_type,
-                rec.cs_generated_prefill_bn, rec.cs_generated_prefill_ed, rec.cs_generated_stock,
-                rec.cs_generated_stock_and_moves, rec.max_filter_months, rec.sde_updated, rec.log, rec.log_timestamp,
-                rec.product_code, rec.product_name, rec.pis_name, rec.pno_name, rec.product_uom, rec.lot_name, rec.lot_expiry,
-                rec.cold_chain, rec.dangerous_goods, rec.controlled_substance, rec.batch_management, rec.perishable
-            HAVING (rec.cs_generated_stock = 't' AND SUM(rec.product_qty) != 0)
-                OR (rec.cs_generated_stock_and_moves = 't' AND (SUM(rec.product_qty) != 0
-                    OR (SUM(rec.product_qty) = 0 AND rec.max_filter_months > 0 AND
-                    MAX(rec.last_move_date) >= (CURRENT_DATE - (rec.max_filter_months::text || ' month')::interval))))
-                OR (rec.cs_generated_stock = 'f' AND cs_generated_stock_and_moves = 'f')
-            ORDER BY rec.pi_id, rec.product_code, rec.lot_expiry OFFSET %s LIMIT %s
-        """, (tuple(ids), tuple(ids), offset, limit)) # not_a_user_entry
+                    pi.sde_updated, pi.state
+                ORDER BY pi.id OFFSET %s LIMIT %s
+            """, (tuple(ids), offset, limit))  # not_a_user_entry
 
         return cr.fetchall()
 
-    def create_pi_counting_paginated_export(self, cr, uid, ids, pagi_ref, page, last_page, offset, limit, context=None):
+    def create_pi_counting_paginated_export(self, cr, uid, ids, pagi_ref, page, last_page, offset, limit, with_lines=False, context=None):
         '''
         Method to be used in the background to create the paginated exports beyond page 1
         '''
@@ -3262,41 +3318,44 @@ class sde_import(osv.osv_memory):
         new_cr = pooler.get_db(cr.dbname).cursor()
 
         data = {}
-        for pi in self.get_pi_counting_export_data(new_cr, uid, ids, offset, limit, context=context):
+        for pi in self.get_pi_counting_export_data(new_cr, uid, ids, offset, limit, with_lines=with_lines, context=context):
             if not data.get(pi[0]):
                 data[pi[0]] = {
-                    'details': pi[2] or '',
-                    'responsible': pi[3] or '',
-                    'date': pi[4] or '',
-                    'location': pi[5] or '',
-                    'type': pi[6] and PI_TYPES[pi[6]] or '',
-                    'cs_generated_prefill_bn': pi[7] or False,
-                    'cs_generated_prefill_ed': pi[8] or False,
-                    'cs_generated_stock': pi[9] or False,
-                    'cs_generated_stock_and_moves': pi[10] or False,
-                    'max_nb_months': pi[11] != -1 and pi[11] or 0,
-                    'updated_by_sde': pi[12] or False,
+                    'details': pi[1] or '',
+                    'responsible': pi[2] or '',
+                    'date': pi[3] or '',
+                    'location': pi[4] or '',
+                    'type': pi[5] and PI_TYPES[pi[5]] or '',
+                    'cs_generated_prefill_bn': pi[6] or False,
+                    'cs_generated_prefill_ed': pi[7] or False,
+                    'cs_generated_stock': pi[8] or False,
+                    'cs_generated_stock_and_moves': pi[9] or False,
+                    'max_nb_months': pi[10] != -1 and pi[10] or 0,
+                    'updated_by_sde': pi[11] or False,
+                    'state': pi[12] and PI_STATES[pi[12]] or '',
                     'latest_log': pi[13] or '',
                     'latest_log_date': pi[14] or '',
-                    'lines': [],
                 }
 
-            data[pi[0]]['lines'].append({
-                'line_number': pi[1],
-                'product_code': pi[15],
-                'product_name': pi[16],
-                'product_creator': pi[17],
-                'nomen_main_type': pi[18],
-                'uom': pi[19] or '',
-                'qty_in_stock': pi[27] or 0,
-                'prodlot_id': pi[25] and pi[20] or '',  # Don't display the name on ED-only products
-                'expired_date': pi[21] or '',
-                'kc_check': pi[22] or False,
-                'dg_check': pi[23] == 'True' and _('True') or pi[23] == 'no_know' and _('Unknown') or _('False'),
-                'np_check': pi[24] or False,
-                'batch_managed': pi[25] or False,
-                'expiry_managed': pi[26] or False,
-            })
+            if with_lines:
+                if 'lines' not in data[pi[0]]:
+                    data[pi[0]]['lines'] = []
+                data[pi[0]]['lines'].append({
+                    'line_number': pi[15],
+                    'product_code': pi[16],
+                    'product_name': pi[17],
+                    'product_creator': pi[18],
+                    'nomen_main_type': pi[19],
+                    'uom': pi[20] or '',
+                    'qty_in_stock': pi[28] or 0,
+                    'prodlot_id': pi[26] and pi[21] or '',  # Don't display the name on ED-only products
+                    'expired_date': pi[22] or '',
+                    'kc_check': pi[23] or False,
+                    'dg_check': pi[24] == 'True' and _('True') or pi[24] == 'no_know' and _('Unknown') or _('False'),
+                    'np_check': pi[25] or False,
+                    'batch_managed': pi[26] or False,
+                    'expiry_managed': pi[27] or False,
+                })
 
         pagi_vals = {'pagination_json_id': pagi_ref, 'pagination_json_text': json.dumps(data), 'doc_type': 'pi_count',
                      'page': page, 'last_page': page == last_page, 'with_lines': True}

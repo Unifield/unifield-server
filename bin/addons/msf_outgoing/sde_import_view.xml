@@ -90,7 +90,9 @@
                             <button name="wizard_sde_pi_msg" string="Set banner on Physical Inventories" icon="gtk-execute" type="object" colspan="2" />
                             <button name="wizard_sde_pi_remove_msg" string="Remove banner on Physical Inventories" icon="gtk-execute" type="object" colspan="2" />
                             <button name="wizard_sde_pi_counting_sheet_import" string="Import Physical Inventory Counting Sheet" icon="gtk-execute" type="object" colspan="2" />
-                            <button name="wizard_sde_pi_counting_sheet_export" string="Export Physical Inventory Counting Sheets" icon="gtk-execute" type="object" colspan="2" />
+                            <newline />
+                            <button name="wizard_sde_pi_counting_sheet_export" string="Export Physical Inventories" icon="gtk-execute" type="object" colspan="2" />
+                            <button name="wizard_sde_pi_counting_sheet_export_lines" string="Export Physical Inventory Counting Sheets" icon="gtk-execute" type="object" colspan="2" />
                         </page>
                     </notebook>
                     <separator colspan="4" string="Report Actions" />
