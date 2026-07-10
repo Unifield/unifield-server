@@ -58,23 +58,19 @@ class manage_expired_stock(osv.osv):
         ),
     }
 
-    def get_exp_data(self, cr, uid, ids, context=False, expiring=False):
+    def get_exp_data(self, cr, uid, ids, context=False, expiring=False, reason_type_id=False):
         '''
         Fetch the data for the expired prodlot and sometimes soon to expire as well
+        The Reason Type changes depending on the locations of the wizard
         '''
         if context is None:
             context = {}
+        if not reason_type_id:
+            raise osv.except_osv(_('Error'), _('Please give a Reason Type to generate the INT.'))
 
-        ir_obj = self.pool.get('ir.model.data')
         lot_obj = self.pool.get('stock.production.lot')
 
         wizard = self.browse(cr, uid, ids[0], context=context)
-        if wizard.location_id.id == wizard.dest_loc_id.id:
-            raise osv.except_osv(
-                _('Error'),
-                _('You cannot have the sourcing location and destination location with the same location.')
-            )
-
         today = date.today()
         if expiring:
             expiring_date = (today + relativedelta(weeks=int(wizard.in_next_x_weeks))).strftime('%Y-%m-%d')
@@ -83,8 +79,6 @@ class manage_expired_stock(osv.osv):
             lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', today)])
 
         dest_loc_id = wizard.dest_loc_id.id
-        exp_rt_id = ir_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1]
-
         moves_lines = []
         context['location_id'] = wizard.location_id.id
 
@@ -98,7 +92,7 @@ class manage_expired_stock(osv.osv):
                     'product_uom': lot.product_id.uom_id.id,
                     'location_id': wizard.location_id.id,
                     'location_dest_id': dest_loc_id,
-                    'reason_type_id': exp_rt_id,
+                    'reason_type_id': reason_type_id,
                     'prodlot_id': lot.id,
                     'expired_date': lot.life_date,
                 }))
@@ -118,7 +112,12 @@ class manage_expired_stock(osv.osv):
             return True
 
         v_exp_obj = self.pool.get('view.expired.expiring.stock')
-        data = {'mng_exp_id': ids[0], 'v_mng_exp_lines_ids': self.get_exp_data(cr, uid, ids, context=context, expiring=True)}
+
+        rt_id = self.check_data_get_reason_type(cr, uid, ids, context=context)
+        data = {
+            'mng_exp_id': ids[0],
+            'v_mng_exp_lines_ids': self.get_exp_data(cr, uid, ids, context=context, expiring=True, reason_type_id=rt_id),
+        }
         wiz_id = v_exp_obj.create(cr, uid, data, context=context)
 
         return {
@@ -142,14 +141,15 @@ class manage_expired_stock(osv.osv):
 
         pick_obj = self.pool.get('stock.picking')
 
+        rt_id = self.check_data_get_reason_type(cr, uid, ids, context=context)
         int_values = {
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
             'type': 'internal',
             'subtype': 'standard',
             'invoice_state': 'none',
-            'reason_type_id': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1],
+            'reason_type_id': rt_id,
             'from_manage_expired': True,
-            'move_lines': self.get_exp_data(cr, uid, ids, context=context, expiring=False),
+            'move_lines': self.get_exp_data(cr, uid, ids, context=context, expiring=False, reason_type_id=rt_id),
         }
         new_int_id = self.pool.get('stock.picking').create(cr, uid, int_values, context=context)
 
@@ -167,6 +167,48 @@ class manage_expired_stock(osv.osv):
             'res_id': new_int_id,
             'context': context,
         }
+
+    def check_data_get_reason_type(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+        exp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1]
+        if not ids:
+            return exp_rt_id
+
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        if wizard.location_id.id == wizard.dest_loc_id.id:
+            raise osv.except_osv(
+                _('Error'),
+                _('You cannot have the sourcing location and destination location with the same location.')
+            )
+
+        # Check the locations
+        exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+        quarantine_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+        destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+        restr_loc_ids = [
+            data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
+            data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
+            data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1]
+        ]
+        child_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'in', restr_loc_ids)], context=context)
+        restr_loc_ids.extend(child_loc_ids)
+        if wizard.dest_loc_id.id == destr_loc_id and wizard.location_id.id != exp_dam_scrap_loc_id:
+            raise osv.except_osv(_('Error'), _('You can only select "Destruction" as Destination Location when the Source Location is "Expired / Damaged / For Scrap"'))
+
+        # Get the Reason Type
+        int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+        destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+        if wizard.location_id.id in restr_loc_ids and wizard.dest_loc_id.id == quarantine_loc_id:
+            rt_id = int_move_rt_id
+        elif wizard.dest_loc_id.id == destr_loc_id:
+            rt_id = destr_rt_id
+        else:
+            rt_id = exp_rt_id
+
+        return rt_id
 
 
 manage_expired_stock()
@@ -201,11 +243,14 @@ class view_expired_expiring_stock(osv.osv):
         if not ids:
             return True
         pick_obj = self.pool.get('stock.picking')
+        data_obj = self.pool.get('ir.model.data')
         wizard = self.browse(cr, uid, ids[0], context=context)
 
         moves_lines = []
         context['location_id'] = wizard.mng_exp_id.location_id.id
+        rt_id = False
         for line in wizard.v_mng_exp_lines_ids:
+            rt_id = line.reason_type_id.id
             moves_lines.append((0, 0, {
                 'name': line.name,
                 'product_id': line.product_id.id,
@@ -213,7 +258,7 @@ class view_expired_expiring_stock(osv.osv):
                 'product_uom': line.product_uom.id,
                 'location_id': line.location_id.id,
                 'location_dest_id': line.location_dest_id.id,
-                'reason_type_id': line.reason_type_id.id,
+                'reason_type_id': rt_id,
                 'prodlot_id': line.prodlot_id.id,
                 'expired_date': line.expired_date,
             }))
@@ -226,7 +271,7 @@ class view_expired_expiring_stock(osv.osv):
             'type': 'internal',
             'subtype': 'standard',
             'invoice_state': 'none',
-            'reason_type_id': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1],
+            'reason_type_id': rt_id or data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1],
             'from_manage_expired': True,
             'move_lines': moves_lines,
         }
@@ -242,7 +287,7 @@ class view_expired_expiring_stock(osv.osv):
             'view_type': 'form',
             'view_mode': 'form, tree',
             'target': 'crush',
-            'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_form')[1]],
+            'view_id': [data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_form')[1]],
             'res_id': new_int_id,
             'context': context,
         }

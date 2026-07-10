@@ -2499,12 +2499,12 @@ class stock_move(osv.osv):
                             'message': _('If the Destination Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)", you can not select "Expired / Damaged / For Scrap" as the Source Location')
                         }
                     }
-                if rt_id == int_move_rt_id and location_id not in restr_loc_ids:
+                if rt_id == int_move_rt_id and location_id not in restr_qua_loc_ids:
                     return {
                         'value': {'location_id': False},
                         'warning': {
                             'title': _('Warning'),
-                            'message': _('The selected Source Location can not be used with the Reason Type "Internal Move". Please use a Stock location, an Intermediate Stocks location or an EPREP Stocks location')
+                            'message': _('The selected Source Location can not be used with the Reason Type "7 Internal Move". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
                         }
                     }
                 elif rt_id and location_id in restr_qua_loc_ids and location_dest_id == exp_dam_scrap_loc_id:
@@ -2515,7 +2515,7 @@ class stock_move(osv.osv):
                             'value': {'reason_type_id': False},
                             'warning': {
                                 'title': _('Warning'),
-                                'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "Loss / Scrap", "Loss / Sample", "Loss / Expiry", "Loss / Damage" and "Loss / Batch Recall"')
+                                'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
                             }
                         }
                 elif rt_id == destr_rt_id and ((location_id and location_id != exp_dam_scrap_loc_id) or
@@ -2524,7 +2524,7 @@ class stock_move(osv.osv):
                         'value': {'reason_type_id': False},
                         'warning': {
                             'title': _('Warning'),
-                            'message': _('The Reason Type "Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
+                            'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
                         }
                     }
 
@@ -2574,12 +2574,28 @@ class stock_move(osv.osv):
                             'message': _('If the Source Location is "Expired / Damaged / For Scrap", you can not select a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" as Destination Location')
                         }
                     }
-                if rt_id == int_move_rt_id and location_dest_id != quarantine_loc_id:
+                if rt_id == int_move_rt_id and location_dest_id not in restr_qua_loc_ids:
                     return {
                         'value': {'location_dest_id': False},
                         'warning': {
                             'title': _('Warning'),
-                            'message': _('The selected Destination Location can not be used with the Reason Type "Internal Move". Please use "Quarantine (analyze)"')
+                            'message': _('The selected Destination Location can not be used with the Reason Type "7 Internal Move". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                        }
+                    }
+                elif location_id in restr_loc_ids and location_dest_id == quarantine_loc_id and rt_id != int_move_rt_id:
+                    return {
+                        'value': {'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Source Location is a Stock location, an Intermediate Stocks location or an EPREP Stocks location and the Destination Location is "Quarantine (analyze)", the only authorized Reason Type is "7 Internal Move"')
+                        }
+                    }
+                elif location_id == quarantine_loc_id and location_dest_id in restr_loc_ids and rt_id != int_move_rt_id:
+                    return {
+                        'value': {'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Source Location is "Quarantine (analyze)" and the Destination Location is a Stock location, an Intermediate Stocks location or an EPREP Stocks location, the only authorized Reason Type is "7 Internal Move"')
                         }
                     }
                 elif rt_id and location_id in restr_qua_loc_ids and location_dest_id == exp_dam_scrap_loc_id:
@@ -2590,7 +2606,7 @@ class stock_move(osv.osv):
                             'value': {'reason_type_id': False},
                             'warning': {
                                 'title': _('Warning'),
-                                'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "Loss / Scrap", "Loss / Sample", "Loss / Expiry", "Loss / Damage" and "Loss / Batch Recall"')
+                                'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
                             }
                         }
                 elif rt_id == destr_rt_id and ((location_id and location_id != exp_dam_scrap_loc_id) or
@@ -2599,7 +2615,7 @@ class stock_move(osv.osv):
                         'value': {'reason_type_id': False},
                         'warning': {
                             'title': _('Warning'),
-                            'message': _('The Reason Type "Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
+                            'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
                         }
                     }
 
@@ -2640,19 +2656,27 @@ class stock_move(osv.osv):
             restr_loc_ids.extend(child_loc_ids)
             restr_qua_loc_ids = restr_loc_ids.copy()
             restr_qua_loc_ids.append(quarantine_loc_id)
-            if rt_id == int_move_rt_id and ((loc_id and loc_id not in restr_loc_ids) or
-                                                      (loc_dest_id and loc_dest_id != quarantine_loc_id)):
+            if rt_id == int_move_rt_id and ((loc_id and loc_id not in restr_qua_loc_ids) or
+                                            (loc_dest_id and loc_dest_id not in restr_qua_loc_ids)):
                 res.update({
                     'value': {'reason_type_id': False},
                     'warning': {
                         'title': _('Warning'),
-                        'message': _('The Reason Type "Internal Move" can only be selected if the Source is a Stock location, Intermediate Stocks location or EPREP Stocks location and the Destination is "Quarantine (analyze)"')
+                        'message': _('The Reason Type "7 Internal Move" can only be selected if the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                    }
+                })
+            elif loc_id in restr_qua_loc_ids and loc_dest_id in restr_qua_loc_ids and rt_id != int_move_rt_id:
+                res.update({
+                    'value': {'reason_type_id': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('If the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)", the only authorized Reason Type is "7 Internal Move"')
                     }
                 })
             elif rt_id == loss_rt_id:
                 res.update({
                     'value': {'reason_type_id': False},
-                    'warning': {'title': _('Warning'), 'message': _('You can not select the Reason Type "Loss" manually')}
+                    'warning': {'title': _('Warning'), 'message': _('You can not select the Reason Type "12 Loss" manually')}
                 })
             elif loc_id in restr_qua_loc_ids and loc_dest_id == exp_dam_scrap_loc_id:
                 loss_children_rt_ids = rt_obj.search(cr, uid, [('parent_id', '=', loss_rt_id)], context=context)
@@ -2661,7 +2685,7 @@ class stock_move(osv.osv):
                         'value': {'reason_type_id': False},
                         'warning': {
                             'title': _('Warning'),
-                            'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "Loss / Scrap", "Loss / Sample", "Loss / Expiry", "Loss / Damage" and "Loss / Batch Recall"')
+                            'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
                         }
                     })
             elif rt_id == destr_rt_id and ((loc_id and loc_id != exp_dam_scrap_loc_id) or (loc_dest_id and loc_dest_id != destr_loc_id)):
@@ -2669,7 +2693,7 @@ class stock_move(osv.osv):
                     'value': {'reason_type_id': False},
                     'warning': {
                         'title': _('Warning'),
-                        'message': _('The Reason Type "Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
+                        'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
                     }
                 })
 
