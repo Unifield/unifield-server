@@ -554,7 +554,8 @@ class waca_fin_sync(osv.osv):
                 j.id,
                 j.type as j_type,
                 j.code as j_code,
-                j.name as j_name,
+                coalesce(en.value, j.name) as j_name_en,
+                coalesce(fr.value, j.name) as j_name_fr,
                 c.name as curr_code,
                 j.is_active as is_active,
                 i.mission as mission,
@@ -564,10 +565,12 @@ class waca_fin_sync(osv.osv):
                 inner join msf_instance i on i.id = j.instance_id
                 left join res_currency c on c.id = j.currency
                 left join audittrail_log_line l on l.field_id in %s and l.res_id = j.id and l.object_id = %s
+                left join ir_translation fr on fr.lang='fr_MF' and fr.name='account.journal,name' and fr.res_id=j.id
+                left join ir_translation en on en.lang='en_MF' and en.name='account.journal,name' and en.res_id=j.id
             where
                 (l.id > %s and l.id <= %s ''' + cond + ''')
             group by
-                j.id, j.type, j.code, j.name, c.name, j.is_active, i.mission, i.code
+                j.id, j.type, j.code, j.name, c.name, j.is_active, i.mission, i.code, en.value, fr.value
             order by j.bank_journal_id NULLS first, j.code, j.id
             offset %s
             limit %s
@@ -577,7 +580,8 @@ class waca_fin_sync(osv.osv):
                 'Journal Code/ID': x.get('id'),
                 'Journal Type': j_type_dict.get(x['j_type']),
                 'Journal Code': x.get('j_code'),
-                'Journal Name': x.get('j_name'),
+                'Journal Name EN': x.get('j_name_en'),
+                'Journal Name FR': x.get('j_name_fr'),
                 'Currency': x.get('curr_code') or '',
                 'Active': x['is_active'] and 'Yes' or 'No',
                 'Mission': x['mission'] or '',

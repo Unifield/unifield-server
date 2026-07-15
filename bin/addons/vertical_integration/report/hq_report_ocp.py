@@ -1486,6 +1486,8 @@ class waca_matching_report(osv.osv):
         'rec_name': fields.char('Rec name', size=512, select=1),
         'unrec_name': fields.char('UnRec name', size=512, select=1),
         'unrec_rec_date': fields.date('Rec/Unrec Date'),
+        'post_date': fields.date('post date'),
+        'sequence': fields.char('seq', size=256),
     }
 
 waca_matching_report()
@@ -1718,6 +1720,8 @@ class waca_export_accounting_lines(osv.osv):
                     'Unreconcile number': row['unrec_name'] or '',
                     'Unreconcile date': row['unrec_name'] and row['unrec_rec_date'] or '',
                     'line_id': row['account_move_line_id'],
+                    'posting_date': row['post_date'],
+                    'sequence': row['sequence']
                 })
 
             if ret['has_next_page']:
@@ -1878,16 +1882,17 @@ class waca_export_accounting_lines(osv.osv):
                 exclude_period_closing = [0]
 
         cr.execute(''' insert into waca_matching_report
-            (instance_id, period_id, account_move_line_id, unrec_name, unrec_rec_date, db_id)
+            (instance_id, period_id, account_move_line_id, unrec_name, unrec_rec_date, db_id, post_date, sequence)
             select
-                aml.instance_id, aml.period_id, aml.id, aml.unreconcile_txt, aml.unreconcile_date, MD5(current_database()||',account.move.line,['||aml.id||']')
+                aml.instance_id, %(period_id)s, aml.id, aml.unreconcile_txt, aml.unreconcile_date, MD5(current_database()||',account.move.line,['||aml.id||']'), aml.date, m.name
             from
-                account_move_line aml, account_journal j, account_period p
+                account_move_line aml, account_journal j, account_period p, account_move m
             where
                 aml.journal_id = j.id and
                 p.id = aml.period_id and
                 aml.date <= %(date_stop)s and
                 p.number not in (0, 16) and
+                m.id = aml.move_id and
                 j.type not in %(j_type)s and
                 aml.reconcile_id is NULL and
                 COALESCE(aml.unreconcile_txt, '') != '' and
@@ -1898,6 +1903,7 @@ class waca_export_accounting_lines(osv.osv):
             'date_start': period.date_start,
             'j_type': tuple(excluded_journal_types),
             'instance_ids': tuple(instance_ids),
+            'period_id': period.id,
 
         })
 
@@ -1923,16 +1929,17 @@ class waca_export_accounting_lines(osv.osv):
             rec_ids = [0]
 
         cr.execute(''' insert into waca_matching_report
-            (instance_id, period_id, account_move_line_id, rec_name, unrec_rec_date, db_id)
+            (instance_id, period_id, account_move_line_id, rec_name, unrec_rec_date, db_id, post_date, sequence)
             select
-                aml.instance_id, aml.period_id, aml.id, rec.name, aml.reconcile_date, MD5(current_database()||',account.move.line,['||aml.id||']')
+                aml.instance_id, %(period_id)s, aml.id, rec.name, aml.reconcile_date, MD5(current_database()||',account.move.line,['||aml.id||']'), aml.date, m.name
             from
-                account_move_line aml, account_journal j, account_period p, account_move_reconcile rec
+                account_move_line aml, account_journal j, account_period p, account_move_reconcile rec, account_move m
             where
                 aml.journal_id = j.id and
                 p.id = aml.period_id and
                 aml.date <= %(date_stop)s and
                 p.number not in (0, 16) and
+                m.id = aml.move_id and
                 j.type not in %(j_type)s and
                 aml.instance_id in %(instance_ids)s and
                 aml.reconcile_id = rec.id and
@@ -1947,6 +1954,7 @@ class waca_export_accounting_lines(osv.osv):
             'j_type': tuple(excluded_journal_types),
             'instance_ids': tuple(instance_ids),
             'rec_ids': tuple(rec_ids),
+            'period_id': period.id,
         })
 
 
