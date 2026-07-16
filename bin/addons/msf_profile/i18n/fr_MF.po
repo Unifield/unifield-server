@@ -125338,8 +125338,8 @@ msgstr "Attention! Ajouter la signature via un éditeur de PDF ne fonctionnera p
 
 #. module: base
 #: report:signature.import.template.report:0
-msgid "Please sign inside the box without going beyond the frame. Then scan this paper and save the scan in your computer in portrait mode, and follow the instructions below:"
-msgstr "Veuillez signer à l'intérieur du cadre sans dépasser. Ensuite, scannez cette feuille et sauvegardez le scan en mode portrait, puis suivez les instructions ci-dessous:"
+msgid "Please sign inside the box without going beyond the frame. For best results, please use a black colored pen or marker when adding your signature. Then scan this paper and save the scan in your computer in portrait mode, and follow the instructions below:"
+msgstr "Veuillez signer à l'intérieur du cadre sans dépasser. Pour un résultat optimal, veuillez utiliser un stylo ou un marqueur noir pour apposer votre signature. Ensuite, scannez cette feuille et sauvegardez le scan en mode portrait, puis suivez les instructions ci-dessous:"
 
 #. module: base
 #: report:signature.import.template.report:0

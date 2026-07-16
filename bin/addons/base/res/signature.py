@@ -1594,7 +1594,7 @@ class signature_set_user(osv.osv_memory):
         W, H = image.size
         font, fit = False, False
         font_path = customfonts.GetFontPath('DejaVuSans.ttf')
-        init_font_size = 28
+        init_font_size = 33
         font_size = init_font_size
         w_font, h_font = 0, 0
         while not fit and font_size > 11:
