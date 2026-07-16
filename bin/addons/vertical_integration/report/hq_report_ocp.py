@@ -1570,7 +1570,7 @@ class waca_export_accounting_lines(osv.osv):
         'object': fields.char('Object', size=128),  # 1
         'object_id': fields.integer('Object ID', size=128), # 2
         'instance': fields.char('Instance', size=128), # 3
-        'journal_code': fields.char('Cost Center', size=64), # 4
+        'journal_code': fields.char('Journal Code', size=64), # 4
         'entry_sequence': fields.char('Entry Sequence', size=128, select=1), # 5
         'document_date': fields.date('Document Date'), # 6
         'posting_date': fields.date('Posting Date'), # 7
@@ -1589,7 +1589,9 @@ class waca_export_accounting_lines(osv.osv):
         'destination_code': fields.char('Destination Code', size=128), # 21
         'fp_code': fields.char('FP Code', size=128), # 22
         'period_id': fields.integer('Period ID'), # 24
-        'instance_id': fields.integer('Instance ID'), #25
+        'instance_id': fields.integer('Instance ID', select=1), #25
+        'journal_id': fields.integer('Journal ID'), #26
+        'ana_journal_type': fields.char('Analytic Journal Type', size=64, select=1),
     }
 
     def _auto_init(self, cr, context=None):
@@ -1771,6 +1773,7 @@ class waca_export_accounting_lines(osv.osv):
                     'db_id': row['db_id'],
                     'instance': row['instance'],
                     'journal_code': row['journal_code'],
+                    'journal_id': row['journal_id'],
                     'entry_sequence': row['entry_sequence'],
                     'period_name': period_name,
                     'document_date': row['document_date'],
@@ -1982,7 +1985,7 @@ class waca_export_accounting_lines(osv.osv):
                     'account.analytic.line' as object, -- 1
                     al.id as object_id, -- 2
                     i.instance as instance, -- 3
-                    j.code, -- 4
+                    aj.code, -- 4
                     al.entry_sequence, -- 5
                     al.document_date, -- 6
                     al.date as posting_date, -- 7
@@ -2002,7 +2005,9 @@ class waca_export_accounting_lines(osv.osv):
                     fp.code as funding_pool, -- 22
                     i.id as instance_id, -- 23
                     %(period_id)s as period_id, -- 24
-                    MD5(current_database()||',account.analytic.line,['||al.id||']')
+                    MD5(current_database()||',account.analytic.line,['||al.id||']'),
+                    aj.id,
+                    j.type
                 FROM
                     account_analytic_line AS al
                         left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id
@@ -2068,7 +2073,9 @@ class waca_export_accounting_lines(osv.osv):
                     NULL, -- 22
                     i.id as instance_id, -- 23
                     aml.period_id as period_id, -- 24
-                    MD5(current_database()||',account.move.line,['||aml.id||']')
+                    MD5(current_database()||',account.move.line,['||aml.id||']'),
+                    j.id,
+                    NULL
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -2098,9 +2105,22 @@ class waca_export_accounting_lines(osv.osv):
                 booking_currency, book_debit, book_credit,
                 func_debit, func_credit,
                 cost_center, destination_code, fp_code,
-                instance_id, period_id, db_id
+                instance_id, period_id, db_id, journal_id, ana_journal_type
             )
             """ + sql, sql_params) # not_a_user_entry
+
+        # OD / ODHQ journal to be replaced by account.journal ID
+        cr.execute('''update waca_export_accounting_lines e set (journal_id, journal_code)=(
+                select j.id, j.code from account_journal j where instance_id = e.instance_id and j.type = ana_journal_type limit 1
+            )
+            where
+                ana_journal_type in ('correction', 'correction_hq') and
+                instance_id IN %(instance_ids)s and
+                period_id = %(period_id)s
+        ''', {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+        })
 
         cr.execute("""INSERT INTO waca_export_balances
             (instance, account_code, account_name, period, booking_currency,
