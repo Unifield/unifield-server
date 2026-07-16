@@ -730,12 +730,30 @@ class sale_order_line_followup(osv.osv_memory):
 
         return res
 
+    def _get_procure_method(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get the procurement method to display
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for solf in self.browse(cr, uid, ids, fields_to_fetch=['line_id'], context=context):
+            if solf.line_id.state in ['draft', 'validated']:
+                res[solf.id] = 'na'
+            else:
+                res[solf.id] = solf.line_id.type
+
+        return res
+
     _columns = {
         'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True, on_delete='cascade'),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
         'original_order_id': fields.many2one('sale.order', string='Orig. line', readonly=True),
         'first_line': fields.boolean(string='First line'),
-        'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
+        'procure_method': fields.function(_get_procure_method, method=True, type='selection', selection=[('na', 'N/A'), ('make_to_stock', 'From stock'), ('make_to_order', 'On order')], string='Proc. Method', readonly=True),
         'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT'), ('pli', 'PLI')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
         'product_id': fields.related('line_id', 'product_id', string='Product Code', readonly=True,

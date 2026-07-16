@@ -47654,6 +47654,7 @@ msgstr "Legal    3   8.5 x 14  pouces, 215.9 x 355.6 mm"
 #: selection:procurement.order,procure_method:0
 #: selection:sale.order.line,type:0
 #: selection:multiple.sourcing.wizard,type:0
+#: selection:sale.order.line,type_display:0
 msgid "from stock"
 msgstr "Du stock"
 
@@ -54709,6 +54710,7 @@ msgstr "Déc"
 #: selection:procurement.order,procure_method:0
 #: selection:sale.order.line,type:0
 #: selection:multiple.sourcing.wizard,type:0
+#: selection:sale.order.line,type_display:0
 msgid "on order"
 msgstr "Sur commande"
 
@@ -75120,6 +75122,7 @@ msgstr "Groupes Associés"
 #: report:stock.forecast.report:0
 #: field:product.mass.update,procure_method:0
 #: selection:unidata.default_product_value,field:0
+#: field:sale.order.line,type_display:0
 msgid "Procurement Method"
 msgstr "Approvisionnement- Méthode"
 
