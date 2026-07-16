@@ -130930,3 +130930,11 @@ msgstr "L’écriture \"%s\" a tous les montants totaux débit/crédit égaux à
 #, python-format
 msgid "Invoice line \"%s\" has all debit/credit amounts equal to zero."
 msgstr "La ligne de facture \"%s\" a tous les montants débit/crédit égaux à zéro."
+
+#. module: supplier_catalogue
+#: code:addons/supplier_catalogue/supplier_catalogue.py:93
+#: code:addons/supplier_catalogue/supplier_catalogue.py:705
+#: code:addons/supplier_catalogue/supplier_catalogue.py:1070
+#, python-format
+msgid "For an ESC Supplier you must create the catalogue on a HQ instance."
+msgstr "Pour un Fournisseur ESC, le catalogue doit être créé sur une instance HQ."
