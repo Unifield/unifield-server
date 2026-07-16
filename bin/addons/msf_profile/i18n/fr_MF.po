@@ -18130,6 +18130,12 @@ msgstr "Liste pas trouvée !"
 msgid "Export to HQ system (OCP)"
 msgstr "Export to HQ system (OCP)"
 
+#. module: vertical_integration
+#: code:addons/vertical_integration/wizard/ocp_export.py:453
+#, python-format
+msgid "Period on project: %s is not Closed"
+msgstr "La période n'est pas fermée au projet: %s"
+
 #. module: stock
 #: code:addons/stock/physical_inventory.py:1422
 #: field:physical.inventory.discrepancy,total_product_discrepancy_value:
