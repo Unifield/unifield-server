@@ -60,6 +60,16 @@
         <Font ss:Size="10"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
+    <Style ss:ID="line_right_price">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="10"/>
+    </Style>
      <Style ss:ID="line_center">
         <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
          <Borders>
@@ -190,14 +200,14 @@
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${computeCurrency(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_price"><Data ss:Type="Number">${computeCurrency(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${userCompany['currency_id'].name|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${computeCurrency(o) * getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_price"><Data ss:Type="Number">${computeCurrency(o) * getQty(o)|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${computeCurrency(o) * getQty(o)|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
+                <Cell ss:StyleID="line_right_price"><Data ss:Type="Number">0.00</Data></Cell>
                 % endif
                 % if r.display_bn_ed:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.state == 'done' and o.prodlot_id and o.prodlot_id.name or ''|x}</Data></Cell>
