@@ -546,10 +546,10 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 else:
                     qty_errors = _('Quantities errors : \n') + qty_errors
 
-            # Reject the SDE import if all lines have not been imported
+            # Reject the SDE import if all Available lines have not been imported
             if context.get('sde_flow') and not error_log and not from_to_pack_errors and not qty_errors:
-                cr.execute("""SELECT DISTINCT(line_number) FROM stock_move WHERE picking_id = %s AND id NOT IN %s"""
-                           , (wiz_browse.picking_id.id, tuple(treated_lines)))
+                cr.execute("""SELECT DISTINCT(line_number) FROM stock_move WHERE picking_id = %s AND id NOT IN %s
+                           AND state = 'assigned'""", (wiz_browse.picking_id.id, tuple(treated_lines)))
                 missing_lines = [str(x[0]) for x in cr.fetchall()]
                 if missing_lines:
                     error_log = _("Reported errors : The line(s) %s are missing from the SDE import. Please ensure that all lines of the PPL are in the SDE import or it will be rejected.")\
