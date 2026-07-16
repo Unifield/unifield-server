@@ -65,7 +65,8 @@ class patch_scripts(osv.osv):
         Add complete_code data to the existing Reason Types
         For some of the OCs, DF moves to fix the Reason Type:
             - From "Expired/Damaged/Scrap" to "Destruction": RT Destruction (OCB, OCP, OCG).
-            - On claim INs from "MSF/Other Supplier" to "Quarantine (analyze)": RT Internal move (OCB, OCG).
+            - On claim INs or INs linked to a claim from "MSF/Other Supplier" to "Quarantine (analyze)": RT Internal
+            move (OCB, OCG).
             - From "Stock/Intermediate Stocks/EPREP Stocks" location and their children to "Quarantine (analyze)" and
             the opposite: RT Internal move (OCB, OCG).
             - Specific RT depending on the current RT, the source location and the destination location (OCG: File in US-14170).
@@ -148,7 +149,8 @@ class patch_scripts(osv.osv):
                     UPDATE stock_move SET reason_type_id = %s WHERE location_id = %s AND location_dest_id = %s
                 """, (destr_rt_id, exp_dam_scrap_loc_id, destr_loc_id))
                 self.log_info(cr, uid, 'US-12708-14170-15700: The Reason Type of %s moves was set to "Destruction"' % (cr.rowcount,))
-            # On claim INs from "MSF/Other Supplier" to "Quarantine (analyze)": RT Internal move (OCB, OCG).
+            # On claim INs or IN linked to a claim from "MSF/Other Supplier" to "Quarantine (analyze)": RT Internal
+            # move (OCB, OCG).
             # From "Stock/Intermediate Stocks/EPREP Stocks" location and their children to "Quarantine (analyze)" and
             # the opposite: RT Internal move (OCB, OCG).
             if oc in ['ocb', 'ocg']:
@@ -157,7 +159,9 @@ class patch_scripts(osv.osv):
                 cr.execute("""
                     UPDATE stock_move SET reason_type_id = %s
                     WHERE reason_type_id != %s AND((location_id IN %s AND location_dest_id = %s
-                        AND picking_id IN (SELECT id FROM stock_picking WHERE type = 'in' AND subtype = 'standard' AND claim = 't')) OR
+                        AND picking_id IN (SELECT id FROM stock_picking WHERE type = 'in' AND subtype = 'standard' AND 
+                            (claim = 't' OR id IN (SELECT DISTINCT(picking_id_return_claim) FROM return_claim
+                            WHERE picking_id_return_claim IS NOT NULL)))) OR
                         (location_id IN %s AND location_dest_id = %s) OR
                         (location_id = %s AND location_dest_id IN %s))
                 """, (int_move_rt_id, int_move_rt_id, tuple([other_sup_loc_id, msf_sup_loc_id]), quarantine_loc_id,
