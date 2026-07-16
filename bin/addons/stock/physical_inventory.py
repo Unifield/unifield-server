@@ -175,6 +175,7 @@ class PhysicalInventory(osv.osv):
         'cs_generated_prefill_ed': fields.boolean('Prefilled Expiry Dates', help='During Counting Sheet generation, the "Prefill Expiry checkbox" was ticked'),
         'cs_generated_stock': fields.boolean('Only lines with stock', help='During Counting Sheet generation, the "Only count lines with stock different than 0" was ticked'),
         'cs_generated_stock_and_moves': fields.boolean('Only lines with stock & moves', help='During Counting Sheet generation, the "Only count lines with stock & moves different than 0" was ticked'),
+        'pi_before_sde': fields.boolean('The Physical Inventory was created before the SDE tools for it were added', help='Used to change the behavior of the method "reset_sde_updated_flag" of the Physical Inventory', readonly=True),
         'sde_updated': fields.boolean('Updated by SDE'),
         'sde_reset_date': fields.datetime('Reset action applied'),
         'sde_update_msg': fields.text('Message to be displayed when SDE is updating a document'),
@@ -195,6 +196,7 @@ class PhysicalInventory(osv.osv):
         'cs_generated_prefill_ed': False,
         'cs_generated_stock': False,
         'cs_generated_stock_and_moves': False,
+        'pi_before_sde': False,
         'sde_updated': False,
         'sde_reset_date': False,
         'sde_update_msg': False,
@@ -251,7 +253,8 @@ class PhysicalInventory(osv.osv):
         fields_to_empty = ["ref", "full_inventory", "date_done", "bad_stock_msg", "has_bad_stock", "file_to_import",
                            "file_to_import2", "counting_line_ids", "discrepancy_line_ids", "discrepancies_generated",
                            "move_ids", "multiple_filter_months", "cs_generated_prefill_bn",  "cs_generated_prefill_ed",
-                           "cs_generated_stock", "cs_generated_stock_and_moves", "sde_updated", "sde_reset_date", "sde_update_msg"]
+                           "cs_generated_stock", "cs_generated_stock_and_moves", "pi_before_sde", "sde_updated",
+                           "sde_reset_date", "sde_update_msg"]
 
         for field in fields_to_empty:
             default[field] = False
@@ -1548,8 +1551,28 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         if not ids:
             raise osv.except_osv(_('Error'), _('No Physical Inventory selected'))
 
-        # Reset the quantity of the counting sheets
-        cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id IN %s""", (tuple(ids),))
+        ftf = ['cs_generated_prefill_bn', 'cs_generated_prefill_ed', 'cs_generated_stock', 'cs_generated_stock_and_moves',
+               'pi_before_sde']
+        for pi in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            if pi.pi_before_sde:
+                # Reset the quantity of the counting sheets
+                cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id = %s""", (pi.id,))
+            else:
+                # Regenerate the Counting Sheet
+                pi_cs_gen_obj = self.pool.get('physical.inventory.generate.counting.sheet')
+                wiz_vals = {
+                    'inventory_id': pi.id,
+                    'prefill_bn': pi.cs_generated_prefill_bn,
+                    'prefill_ed': pi.cs_generated_prefill_ed,
+                    'only_with_stock_level': pi.cs_generated_stock,
+                    'only_with_pos_move': pi.cs_generated_stock_and_moves,
+                }
+                wiz_id = pi_cs_gen_obj.create(cr, uid, wiz_vals, context=context)
+
+                context['sde_reset'] = True
+                pi_cs_gen_obj.generate_counting_sheet(cr, uid, [wiz_id], context=context)
+                if 'sde_reset' in context:
+                    context.pop('sde_reset')
 
         self.write(cr, uid, ids, {'sde_updated': False, 'sde_update_msg': False, 'sde_reset_date': datetime.now()}, context=context)
 

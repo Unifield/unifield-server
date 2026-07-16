@@ -59,6 +59,15 @@ class patch_scripts(osv.osv):
     }
 
     # UF42.0
+    def us_15880_15972_sde_pi(self, cr, uid, *a, **b):
+        '''
+        Set a flag on older Physical Inventories to change how the "reset_sde_updated_flag" behaves
+        '''
+        cr.execute("""UPDATE physical_inventory SET pi_before_sde = 't'""")
+        self.log_info(cr, uid, 'US-15880-15972: A flag was set on %s Physical Inventories' % (cr.rowcount,))
+
+        return True
+
     def us_11997_financing_contract_sync(self, cr, uid, *a, **b):
         # on HQ trigger updates on financing object linked to mission-private rule
         # this will unlock existing NR

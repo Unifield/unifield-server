@@ -191,7 +191,10 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         }
         write("physical.inventory", inventory_id, pi_vals)
 
-        return {'type': 'ir.actions.act_window_close'}
+        if context.get('sde_reset'):
+            return True
+        else:
+            return {'type': 'ir.actions.act_window_close'}
 
     def get_BN_and_ED_for_products_at_location(self, cr, uid, location_id, product_ids, context=None):
         if context is None:

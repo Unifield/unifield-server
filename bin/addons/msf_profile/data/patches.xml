@@ -1345,5 +1345,9 @@
         <record id="us_15346_OCBTD101_CHABUSD_no_delete" model="patch.scripts">
             <field name="method">us_15346_OCBTD101_CHABUSD_no_delete</field>
         </record>
+
+        <record id="us_15880_15972_sde_pi" model="patch.scripts">
+            <field name="method">us_15880_15972_sde_pi</field>
+        </record>
     </data>
 </openerp>
