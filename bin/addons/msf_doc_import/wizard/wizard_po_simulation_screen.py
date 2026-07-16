@@ -1543,6 +1543,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         write_vals['ad_error'] = 'ok'
                     else:
                         warnings += errors_ad
+                    if context.get('auto_import_ok'):
+                        job_comment = context.get('job_comment', [])
+                        error_ad_msg = _('%s: error on line %s %s') % (line.simu_id.order_id.name, line.in_line_number, '. '.join(errors_ad))
+                        job_comment.append({'res_model': 'purchase.order', 'res_id': line.simu_id.order_id.id, 'msg': error_ad_msg})
+                        context['job_comment'] = job_comment
                 elif ad_info:
                     write_vals['ad_info'] = ad_info
 

@@ -102143,6 +102143,12 @@ msgid "%s: New line #%s created."
 msgstr "%s: Nouvelle ligne #%s créée."
 
 #. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1548
+#, python-format
+msgid "%s: error on line %s %s"
+msgstr "%s: erreur à la ligne %s %s"
+
+#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1688
 #, python-format
 msgid "%s: %s on line %s %s"
