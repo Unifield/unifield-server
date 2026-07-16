@@ -128746,8 +128746,8 @@ msgstr "Autoriser les notifications par courriel"
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import_job.py:512
 #, python-format
-msgid "%s: Error during automated import job (ID %s) on %s at %s"
-msgstr "%s: Erreur lors de l'import automatisé (ID %s) le %s à %s"
+msgid "%s: Error Auto-VI with the file %s on %s at %s"
+msgstr "%s: Erreur Auto-VI avec le fichier %s le %s à %s"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import_job.py:513
