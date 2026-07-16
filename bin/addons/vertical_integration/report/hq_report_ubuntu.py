@@ -137,7 +137,11 @@ class hq_report_ubuntu(report_sxw.report_sxw):
                         order by
                             kes_rate.name desc
                         limit 1
-                    ) as kes_rate
+                    ) as kes_rate,
+                    0.0::numeric(16,2) as eur_amount,
+                    0.0::numeric(16,2) as kes_amount,
+                    NULL::numeric(16,2) as eur_amount_rounded,
+                    NULL::numeric(16,2) as kes_amount_rounded
                 FROM
                     account_analytic_line AS al,
                     account_account AS a,
@@ -268,6 +272,10 @@ class hq_report_ubuntu(report_sxw.report_sxw):
             ('Functionnal Currency', False),
             ('%s rate' % company_curr, ),
             ('KES rate', ),
+            ('EUR amount', ),
+            ('EUR rounded amount', False),
+            ('KES amount', ),
+            ('KES rounded amount', False),
         ]
 
         formatted_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
@@ -282,6 +290,38 @@ class hq_report_ubuntu(report_sxw.report_sxw):
 
         for sql in [analytic_query, move_line_query]:
             cr.execute(sql, sql_params)
+        cr.execute("update export_ubuntu_temp set eur_amount=(book_debit-book_credit)/fx_rate, kes_amount=(book_debit-book_credit)*(kes_rate/fx_rate) where journal_type not in ('cur_adj', 'revaluation')")
+        cr.execute("update export_ubuntu_temp set eur_amount=func_debit-func_credit, kes_amount=(func_debit-func_credit)*kes_rate where journal_type in ('cur_adj', 'revaluation')")
+        cr.execute("create index export_ubuntu_temp_entry_sequence on export_ubuntu_temp(entry_sequence)")
+        cr.execute("analyze export_ubuntu_temp")
+
+        for col in ['eur_amount', 'kes_amount']:
+            cr.execute('''
+                select
+                    entry_sequence, sum('''+col+''')
+                from
+                    export_ubuntu_temp
+                group by entry_sequence
+                having(sum('''+col+''')!=0)
+            ''') # not_a_user_entry
+
+            for x in cr.fetchall():
+                # add gap on the biggest line
+                entry_sequence, gap = x
+                cr.execute('''
+                    update
+                        export_ubuntu_temp d1 set '''+col+''' = '''+col+''' - %s, '''+col+'''_rounded = %s
+                    where
+                        (d1.id, d1.object) in (
+                            select id, object
+                            from export_ubuntu_temp d2
+                            where
+                                d2.entry_sequence=%s
+                            order by
+                                abs('''+col+''') desc
+                            limit 1
+                    )
+                ''', (gap, gap, entry_sequence)) # not_a_user_entry
 
         cr.execute('select * from export_ubuntu_temp order by entry_sequence')
         while True:
@@ -339,7 +379,11 @@ class hq_report_ubuntu(report_sxw.report_sxw):
                     row['func_credit'],
                     company_curr,
                     rate,
-                    kes_rate
+                    kes_rate,
+                    row['eur_amount'],
+                    row['eur_amount_rounded'],
+                    row['kes_amount'],
+                    row['kes_amount_rounded']
                 ]
 
 
