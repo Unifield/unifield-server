@@ -1345,5 +1345,9 @@
         <record id="us_15346_OCBTD101_CHABUSD_no_delete" model="patch.scripts">
             <field name="method">us_15346_OCBTD101_CHABUSD_no_delete</field>
         </record>
+
+        <record id="us_15593_15666_fix_local_products" model="patch.scripts">
+            <field name="method">us_15593_15666_fix_local_products</field>
+        </record>
     </data>
 </openerp>
