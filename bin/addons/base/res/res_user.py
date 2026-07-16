@@ -1518,11 +1518,18 @@ class users(osv.osv):
         security.check_password_validity(self, cr, 1, '', new_password, new_password, user.login)
         new_passwd = bcrypt.encrypt(tools.ustr(new_password))
 
-        self.write(cr, 1, user_ids[0], {
+        vals = {
             'password': new_passwd,
             'reset_password_token': False,
             'reset_password_date': False,
-        }, context=dict(context or {}, from_reset_password=True))
+        }
+        if user.force_password_change:
+            vals['force_password_change'] = False
+
+        self.write(
+            cr, 1, user_ids[0], vals,
+            context=dict(context or {}, from_reset_password=True)
+        )
         cr.commit()
         cr.close()
 
