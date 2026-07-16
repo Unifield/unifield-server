@@ -131318,3 +131318,8 @@ msgstr "Pendant la génération de la Feuille de Comptage, \"Pré-remplir les Da
 #: view:sde.import:0
 msgid "Export Physical Inventories"
 msgstr "Exporter des Inventaires Physiques"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Resetting the SDE update will also remove all the counted quantities, do you wish to continue ?"
+msgstr "Réinitialiser la mise à jour par SDE supprimera également toutes les quantitiés comptées, voulez-vous continuer ?"

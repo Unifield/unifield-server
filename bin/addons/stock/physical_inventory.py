@@ -1236,7 +1236,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             error.insert(0, _('Probably due to BN/ED changes on product, you have duplicates, please remove Qty on duplicated lines'))
             return wizard_obj.message_box(cr, uid, title=_('Error'), message='\n'.join(error))
 
-        self.write(cr, uid, ids, {'state': 'counted', 'sde_update_msg': False}, context=context)
+        self.write(cr, uid, ids, {'state': 'counted'}, context=context)
         return {}
 
     def action_done(self, cr, uid, ids, context=None):
