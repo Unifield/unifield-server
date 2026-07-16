@@ -8351,7 +8351,6 @@ msgstr "Générer les écarts"
 #: field:stock.forecast,qty:0
 #: field:stock.forecast.line,qty:0
 #: report:stock.forecast.report:0
-#: report:delivery.order:0
 #: report:internal.move:0
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:132
 #: code:addons/sale/wizard/internal_request_import.py:45
@@ -40958,8 +40957,9 @@ msgstr "Ce délai de paiement sera utilisé, au lieu de celui utilisé par défa
 msgid "Button Access Rule"
 msgstr "Droits d'accès aux boutons"
 
-#. modules: msf_outgoing
+#. modules: msf_outgoing, stock_override
 #: report:picking.ticket:0
+#: report:delivery.order:0
 msgid "Qty to Pick"
 msgstr "Qté à Prélever"
 
@@ -99963,7 +99963,6 @@ msgstr "Langues"
 #: field:substitute.item.mirror,hidden_asset_mandatory:0
 #: field:stock.move,asset_id:0
 #: field:claim.product.line,asset_id_claim_product_line:0
-#: report:delivery.order:0
 #: report:internal.move:0
 #: selection:report.account.receivable,type:0
 #: view:stock.mission.report.line:0
@@ -99986,7 +99985,6 @@ msgstr "Langues"
 #: field:account.move,asset_id:0
 #: field:wizard.account.invoice.line,is_asset:0
 #: field:product.asset.event,asset_name:0
-#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:364
 #: field:import.asset.reference.lines,asset_id:0
 #, python-format
 msgid "Asset"
@@ -104303,12 +104301,14 @@ msgstr "Validé par :"
 msgid "Specific Batch number"
 msgstr "Numéro de Lot spécifique"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, stock
+#: view:stock.picking:0
 #: view:stock.picking:0
 msgid "Show not available lines"
 msgstr "Voir les lignes non disponibles"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, stock
+#: view:stock.picking:0
 #: view:stock.picking:0
 msgid "Show unprocessed lines"
 msgstr "Voir les lignes non traitées"
@@ -104685,8 +104685,11 @@ msgstr "Ligne %s: La Colonne \"Date d'Expiration\" doit être une date"
 msgid "FO Ref."
 msgstr "Ref. CdT"
 
-#. module: msf_supply_doc_export
+#. module: msf_supply_doc_export, stock_override
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:155
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:383
+#: report:delivery.order:0
+#, python-format
 msgid "Qty in Stock"
 msgstr "Qté en Stock"
 
@@ -107607,7 +107610,8 @@ msgstr "Coût Total Fonctionnel :"
 msgid "Show available lines"
 msgstr "Afficher les lignes disponibles"
 
-#. module: stock
+#. module: stock, msf_outgoing
+#: view:stock.picking:0
 #: view:stock.picking:0
 msgid "Show cancelled lines"
 msgstr "Afficher les lignes annulées"
@@ -124891,12 +124895,6 @@ msgstr "La reférence du OUT dans le fichier d'import ne correspond pas au OUT c
 #, python-format
 msgid "Line %s: Column \"Qty to Process\" (%s) cannot be greater than \"Ordered Qty\" (%s)"
 msgstr "Ligne %s: La colonne \"Qté à Traiter\" (%s) ne peut pas être supérieure à la \"Qté Commandée\" (%s)"
-
-#. module: msf_supply_doc_export
-#: code:addons/msf_supply_doc_export/wizard/wizard_out_import.py:326
-#, python-format
-msgid "Line %s: Product %s must have an Asset"
-msgstr "Ligne %s: Le Produit %s doit avoir un Actif"
 
 #. module: stock
 #: view:stock.picking:0
