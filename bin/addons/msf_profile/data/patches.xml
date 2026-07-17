@@ -1337,7 +1337,6 @@
         </record>
 
         <!-- UF42.0 -->
-
         <record id="us_11997_financing_contract_sync" model="patch.scripts">
             <field name="method">us_11997_financing_contract_sync</field>
         </record>
@@ -1348,6 +1347,10 @@
 
         <record id="us_15593_15666_fix_local_products" model="patch.scripts">
             <field name="method">us_15593_15666_fix_local_products</field>
+        </record>
+
+        <record id="us_15663_15664_customs_transport_fees_state" model="patch.scripts">
+            <field name="method">us_15663_15664_customs_transport_fees_state</field>
         </record>
     </data>
 </openerp>

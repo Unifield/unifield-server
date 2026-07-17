@@ -8679,6 +8679,8 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: code:addons/msf_outgoing/sde_import.py:42
 #: code:addons/msf_outgoing/sde_import.py:62
 #: view:msf.instance:0
+#: selection:transport.order.customs.fees,state:0
+#: selection:transport.order.transport.fees,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -44844,6 +44846,8 @@ msgstr "Sync order line DB ID"
 #: selection:replenishment.order_calc.line,calc_state:0
 #: selection:transport.order.customs.fees,purchase_state:0
 #: selection:transport.order.transport.fees,purchase_state:0
+#: selection:transport.order.customs.fees,state:0
+#: selection:transport.order.transport.fees,state:0
 #, python-format
 msgid "Validated"
 msgstr "Validé"
@@ -45260,10 +45264,12 @@ msgstr "Ligne de facture"
 msgid "Available for DPO"
 msgstr "Disponible pour BC directe"
 
-#. modules: purchase, sale, procurement_request, tender_flow
+#. modules: purchase, sale, procurement_request, tender_flow, transport_mgmt
 #: view:sale.order:0
 #: view:purchase.order:0
 #: view:sale.order:0
+#: view:transport.order.in:0
+#: view:transport.order.out:0
 msgid "Hide cancelled"
 msgstr "Non Annulées"
 
@@ -77895,6 +77901,8 @@ msgstr "Valeur totale"
 #: selection:transport.order.in.line,incoming_state:0
 #: code:addons/msf_outgoing/sde_import.py:49
 #: code:addons/msf_outgoing/sde_import.py:67
+#: selection:transport.order.customs.fees,state:0
+#: selection:transport.order.transport.fees,state:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -82502,6 +82510,8 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:sde.availability.check,state:0
 #: field:transport.order.in.line,incoming_state:0
 #: field:unidata.auto_merge,state:0
+#: field:transport.order.customs.fees,state:0
+#: field:transport.order.transport.fees,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -127170,8 +127180,8 @@ msgstr "Afficher les Expéditions compatible avec l'OTS"
 #. module: transport_mgmt
 #: view:transport.order.in:0
 #: view:transport.order.out:0
-msgid "Do you really want to delete the record ?"
-msgstr "Voulez-vous vraiment supprimer le(s) enregistrement(s) ?"
+msgid "Do you really want to cancel the record ?"
+msgstr "Voulez-vous vraiment annuler l(es) enregistrement(s) ?"
 
 #. module: transport_mgmt
 #: field:transport.order,donation_link:0
@@ -127237,8 +127247,8 @@ msgstr "Grouper les lignes cochées dans un nouvel OTS"
 #. module: transport_mgmt
 #: view:transport.order.in:0
 #: view:transport.order.out:0
-msgid "Hide Validate"
-msgstr "Cacher Validé"
+msgid "Hide validated"
+msgstr "Cacher validé"
 
 #. module: transport_mgmt
 #: field:transport.order.customs.fees,transport_in_id:0
@@ -127689,8 +127699,8 @@ msgstr "Charge Utile du Camion"
 #. module: transport_mgmt
 #: view:transport.order.in:0
 #: view:transport.order.out:0
-msgid "Validated Only"
-msgstr "Uniquement Validé"
+msgid "Validated only"
+msgstr "Uniquement validé"
 
 #. module: transport_mgmt
 #: field:transport.order.in.line,amount:0
@@ -130950,3 +130960,15 @@ msgstr "La combinaison du Statut UniField et du Créateur Produit sélectionné 
 #, python-format
 msgid "The combination of Product Creator \"Local\" and the selected UniField Status are not allowed"
 msgstr "La combinaison du Créateur Produit \"Local\" et du Status UniField sélectionné n'est pas autorisée"
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/transport.py:117
+#, python-format
+msgid "You can not cancel a non-Draft Customs Fee"
+msgstr "Vous ne pouvez pas annuler un Frais de Douane non-Brouillon"
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/transport.py:216
+#, python-format
+msgid "You can not cancel a non-Draft Transport Fee"
+msgstr "Vous ne pouvez pas annuler un Frais de Transport non-Brouillon"
