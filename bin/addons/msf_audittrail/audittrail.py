@@ -890,7 +890,7 @@ class audittrail_rule(osv.osv):
                             # or in stock.picking for the field sde_reset_date
                             if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and \
                                     old_value[:10] == new_value[:10] and \
-                                    (model_name_tolog not in ['automated.import', 'automated.export', 'stock.picking']
+                                    (model_name_tolog not in ['automated.import', 'automated.export', 'stock.picking', 'physical.inventory']
                                      or field not in ('start_time', 'sde_reset_date')):
                                 continue
                             # US-13017
