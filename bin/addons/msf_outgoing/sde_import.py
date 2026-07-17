@@ -3379,7 +3379,7 @@ class sde_import(osv.osv_memory):
         cr.execute("""
             SELECT SUM(rec.product_qty)
             FROM (
-                (SELECT pi.id AS pi_id, pp.default_code AS product_code, m.expired_date AS lot_expiry,
+                (SELECT pi.id AS pi_id, pp.default_code AS product_code, m.prodlot_id AS lot_id, m.expired_date AS lot_expiry,
                     pi.cs_generated_stock AS cs_generated_stock, pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
                     pi.max_filter_months AS max_filter_months, MAX(m.date) AS last_move_date,
                     CASE
@@ -3398,10 +3398,10 @@ class sde_import(osv.osv_memory):
                     LEFT JOIN product_uom pu ON pt.uom_id = pu.id
                     LEFT JOIN product_uom mu ON m.product_uom = mu.id
                 WHERE pi.id IN %s
-                GROUP BY pi.id, pp.default_code, m.expired_date, m.location_dest_id, pt.uom_id, m.product_uom,
+                GROUP BY pi.id, pp.default_code, m.prodlot_id, m.expired_date, m.location_dest_id, pt.uom_id, m.product_uom,
                      pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months)
             UNION ALL
-                (SELECT pi.id AS pi_id, pp.default_code AS product_code, m.expired_date AS lot_expiry,
+                (SELECT pi.id AS pi_id, pp.default_code AS product_code, m.prodlot_id AS lot_id, m.expired_date AS lot_expiry,
                     pi.cs_generated_stock AS cs_generated_stock, pi.cs_generated_stock_and_moves AS cs_generated_stock_and_moves,
                     pi.max_filter_months AS max_filter_months, MAX(m.date) AS last_move_date,
                     CASE
@@ -3420,11 +3420,11 @@ class sde_import(osv.osv_memory):
                     LEFT JOIN product_uom pu ON pt.uom_id = pu.id
                     LEFT JOIN product_uom mu ON m.product_uom = mu.id
                 WHERE pi.id IN %s
-                GROUP BY pi.id, pp.default_code, m.expired_date, m.location_id, pt.uom_id, m.product_uom,
+                GROUP BY pi.id, pp.default_code, m.prodlot_id, m.expired_date, m.location_id, pt.uom_id, m.product_uom,
                      pi.cs_generated_stock, pi.cs_generated_stock_and_moves, pi.max_filter_months)
             ) AS rec
-            GROUP BY rec.pi_id, rec.product_code, rec.lot_expiry, rec.cs_generated_stock, rec.cs_generated_stock_and_moves,
-                     rec.max_filter_months
+            GROUP BY rec.pi_id, rec.product_code, rec.lot_id, rec.lot_expiry, rec.cs_generated_stock,
+                     rec.cs_generated_stock_and_moves, rec.max_filter_months
             HAVING (rec.cs_generated_stock = 't' AND SUM(rec.product_qty) != 0)
                 OR (rec.cs_generated_stock_and_moves = 't' AND (SUM(rec.product_qty) != 0
                     OR (SUM(rec.product_qty) = 0 AND rec.max_filter_months > 0 AND
