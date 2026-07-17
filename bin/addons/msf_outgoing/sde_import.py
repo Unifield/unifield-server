@@ -3122,7 +3122,7 @@ class sde_import(osv.osv_memory):
         pi_obj = self.pool.get('physical.inventory')
 
         states_msg, type_msg = '', ''
-        if type == 'count' and with_lines:
+        if type == 'pi_count' and with_lines:
             pi_default_domain = [('state', 'in', ['counting', 'counted']), ('discrepancies_generated', '=', False)]
             type_msg = _('with a Counting sheet ')
         # elif type == 'pi_discr':
