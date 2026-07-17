@@ -16848,6 +16848,7 @@ msgstr "%s update%s"
 #: view:signature.remove_signature.wizard:0
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:24
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:101
+#: code:addons/stock/physical_inventory.py:1563
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -25210,6 +25211,7 @@ msgstr "Europe/Bucharest"
 #: view:signature.remove_signature.wizard:0
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:24
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:101
+#: code:addons/stock/physical_inventory.py:1562
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -58845,6 +58847,7 @@ msgstr "Déplacer id."
 #: code:addons/stock/stock.py:1438
 #: code:addons/stock/wizard/stock_inventory_merge.py:43
 #: code:addons/stock/wizard/stock_inventory_merge.py:63
+#: code:addons/stock/physical_inventory.py:1555
 #: code:addons/stock_override/stock.py:399
 #: code:addons/stock_override/stock.py:877
 #: code:addons/stock_schedule/schedule.py:582
@@ -131320,6 +131323,25 @@ msgid "Export Physical Inventories"
 msgstr "Exporter des Inventaires Physiques"
 
 #. module: stock
-#: view:physical.inventory:0
-msgid "Resetting the SDE update will also remove all the counted quantities, do you wish to continue ?"
-msgstr "Réinitialiser la mise à jour par SDE supprimera également toutes les quantitiés comptées, voulez-vous continuer ?"
+#: code:addons/stock/physical_inventory.py:1557
+#, python-format
+msgid "This action will reset the counting sheet to its initial state:"
+msgstr "Cette action réinitialisera la feuille de comptage dans son état originel:"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1558
+#, python-format
+msgid "All entered data (counted quantities, etc...) will be permanently removed."
+msgstr "Toutes les données saisies (quantités comptées, etc...) seront supprimées de manière permanente."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1559
+#, python-format
+msgid "If SmartScan is being used, these SmartScan tasks will be reset."
+msgstr "Si SmartScan a été utilisé, ces tâches SmartScan seront réinitialisées."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1560
+#, python-format
+msgid "Do you want to proceed ?"
+msgstr "Voulez-vous continuer ?"

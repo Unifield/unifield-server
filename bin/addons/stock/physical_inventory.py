@@ -1543,6 +1543,29 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
 
         return False
 
+    def reset_sde_updated_flag_warn(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No Physical Inventory selected'))
+
+        context['popup_reset'] = True
+        msg = self.pool.get('message.action').create(cr, uid, {
+            'title': _('Warning'),
+            'message': '<h3>%s<ul><li>%s</li><li>%s</li></ul>%s</h3>'
+                       % (_('This action will reset the counting sheet to its initial state:'),
+                          _('All entered data (counted quantities, etc...) will be permanently removed.'),
+                          _('If SmartScan is being used, these SmartScan tasks will be reset.'),
+                          _('Do you want to proceed ?')),
+            'yes_action': lambda cr, uid, context: self.reset_sde_updated_flag(cr, uid, ids, context=context),
+            'yes_label': _('Yes'),
+            'no_label': _('No'),
+        }, context=context)
+
+        return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
+
     def reset_sde_updated_flag(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -1576,7 +1599,11 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
 
         self.write(cr, uid, ids, {'sde_updated': False, 'sde_update_msg': False, 'sde_reset_date': datetime.now()}, context=context)
 
-        return True
+        if context.get('popup_reset'):
+            context.pop('popup_reset')
+            return {'type': 'ir.actions.act_window_close'}
+        else:
+            return True
 
 PhysicalInventory()
 

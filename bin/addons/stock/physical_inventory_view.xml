@@ -49,9 +49,8 @@
                         <group colspan="1">
                             <field name="sde_updated" readonly="1"/>
                             <!-- For now Counting sheet only-->
-                            <button name="reset_sde_updated_flag" string="Reset SDE update" type="object" icon="gtk-refresh"
-                                    attrs="{'invisible': [('state', '!=', 'counting')]}"
-                                    confirm="Resetting the SDE update will also remove all the counted quantities, do you wish to continue ?"/>
+                            <button name="reset_sde_updated_flag_warn" string="Reset SDE update" type="object" icon="gtk-refresh"
+                                    attrs="{'invisible': [('state', '!=', 'counting')]}"/>
                         </group>
                     </group>
                     <field name="discrepancies_generated" invisible="1" readonly="1"/>

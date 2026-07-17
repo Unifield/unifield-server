@@ -2993,7 +2993,7 @@ class sde_import(osv.osv_memory):
                     pi_ids = self.get_pi_from_refs(cr, uid, pi_names, export_type, with_lines=with_lines, context=context)
                 else:
                     if not with_lines:
-                        pi_domain = [('state', '!=', 'closed')]
+                        pi_domain = [('state', '!=', 'draft')]
                     # if export_type == 'pi_discr':
                     #     pi_domain = [('state', 'in', ['counted', 'validated', 'confirmed']), ('discrepancies_generated', '=', True)]
                     else:
@@ -3129,8 +3129,8 @@ class sde_import(osv.osv_memory):
         #     pi_default_domain = [('state', 'in', ['counted', 'validated', 'confirmed']), ('discrepancies_generated', '=', True))]
         #     type_msg = _('with Discrepancy Lines ')
         else:
-            pi_default_domain = [('state', '!=', 'closed')]
-            states_msg = _('%s ') % ('/'.join([PI_STATES[state] for state in PI_STATES if state != 'closed']))
+            pi_default_domain = [('state', '!=', 'draft')]
+            states_msg = _('%s ') % ('/'.join([PI_STATES[state] for state in PI_STATES if state != 'draft']))
 
         pi_ids, not_found = [], []
         for pi_name in pi_list:
