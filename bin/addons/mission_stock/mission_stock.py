@@ -327,8 +327,21 @@ class stock_mission_report(osv.osv):
         except:
             raise osv.except_osv(_('Warning !'), _('The template file could not be loaded'))
 
-        wb = openpyxl.Workbook()
-        sheet = wb.active
+        wb = openpyxl.Workbook(write_only = True)
+        sheet = wb.create_sheet()
+        sheet.freeze_panes = 'A5'
+        sheet.row_dimensions[4].height = 45
+
+        # Columns size
+        for x in range(1, len(header) + 1):
+            letter = get_column_letter(x)
+            if letter == 'A':
+                width = 31
+            elif letter == 'B':
+                width = 39
+            else:
+                width = 11
+            sheet.column_dimensions[letter].width = width
 
         # Styles
         default_style = self.create_style_from_template(wb, template_sheet, 'default_style', 'A1')
@@ -337,7 +350,6 @@ class stock_mission_report(osv.osv):
         float_style = self.create_style_from_template(wb, template_sheet, 'float_style', 'G5')
         red_style = self.create_style_from_template(wb, template_sheet, 'red_style', 'A10')
         red_float_style = self.create_style_from_template(wb, template_sheet, 'red_float_style', 'G10')
-
         # Header data
         gen_title_cell = WriteOnlyCell(sheet, value=_('Generating Instance'))
         gen_title_cell.style = default_style
@@ -364,20 +376,7 @@ class stock_mission_report(osv.osv):
             header_cell.style = header_style
             header_row.append(header_cell)
         sheet.append(header_row)
-        sheet.row_dimensions[4].height = 45
 
-        sheet.freeze_panes = 'A%s' % (sheet._current_row + 1,)
-
-        # Columns size
-        for x in range(1, len(header_row) + 1):
-            letter = get_column_letter(x)
-            if letter == 'A':
-                width = 31
-            elif letter == 'B':
-                width = 39
-            else:
-                width = 11
-            sheet.column_dimensions[letter].width = width
 
         # Lines
         for row in request_result:
@@ -476,36 +475,9 @@ class stock_mission_report(osv.osv):
         except:
             raise osv.except_osv(_('Warning !'), _('The template file could not be loaded'))
 
-        wb = openpyxl.Workbook()
-        sheet = wb.active
-
-        # Styles
-        default_style = self.create_style_from_template(wb, template_sheet, 'default_style', 'A1')
-        empty_style = self.create_style_from_template(wb, template_sheet, 'empty_style', 'D1')
-        yellow_header_style = self.create_style_from_template(wb, template_sheet, 'yellow_header_style', 'A5')
-        green_header_style = self.create_style_from_template(wb, template_sheet, 'green_header_style', 'AN5')
-        date_style = self.create_style_from_template(wb, template_sheet, 'date_style', 'B3')
-        float_style = self.create_style_from_template(wb, template_sheet, 'float_style', 'G6')
-
-        # Header data
-        gen_title_cell = WriteOnlyCell(sheet, value=_('Generating Instance'))
-        gen_title_cell.style = default_style
-        gen_val_cell = WriteOnlyCell(sheet, value=local_instance.name)
-        gen_val_cell.style = default_style
-        sheet.append([gen_title_cell, gen_val_cell])
-
-        inst_title_cell = WriteOnlyCell(sheet, value=_('Instance selection'))
-        inst_title_cell.style = default_style
-        inst_val_cell = WriteOnlyCell(sheet, value=_('All loc'))
-        inst_val_cell.style = default_style
-        sheet.append([inst_title_cell, inst_val_cell])
-
-        date_title_cell = WriteOnlyCell(sheet, value=_('Last update'))
-        date_title_cell.style = default_style
-        date_val_cell = WriteOnlyCell(sheet, value=report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '')
-        date_val_cell.style = date_style
-        sheet.append([date_title_cell, date_val_cell])
-
+        wb = openpyxl.Workbook(write_only = True)
+        sheet = wb.create_sheet()
+        sheet.freeze_panes = 'F5'
         # Lines headers
         if local_instance.level == 'section':
             fixed_data = [
@@ -554,6 +526,48 @@ class stock_mission_report(osv.osv):
             else:
                 width = default_width
             sheet.column_dimensions[letter].width = width
+
+        col_num = len(fixed_data) + 1
+        for inst_id in all_instances:
+            for x in repeated_data:
+                letter = get_column_letter(col_num)
+                sheet.column_dimensions[letter].width = default_width
+                col_num += 1
+            for x in instance_loc.get(inst_id, []):
+                letter = get_column_letter(col_num)
+                sheet.column_dimensions[letter].width = default_width
+                col_num += 1
+        sheet.row_dimensions[4].height = 45
+        sheet.row_dimensions[5].height = 45
+
+        # Styles
+        default_style = self.create_style_from_template(wb, template_sheet, 'default_style', 'A1')
+        empty_style = self.create_style_from_template(wb, template_sheet, 'empty_style', 'D1')
+        yellow_header_style = self.create_style_from_template(wb, template_sheet, 'yellow_header_style', 'A5')
+        green_header_style = self.create_style_from_template(wb, template_sheet, 'green_header_style', 'AN5')
+        date_style = self.create_style_from_template(wb, template_sheet, 'date_style', 'B3')
+        float_style = self.create_style_from_template(wb, template_sheet, 'float_style', 'G6')
+
+        # Header data
+        gen_title_cell = WriteOnlyCell(sheet, value=_('Generating Instance'))
+        gen_title_cell.style = default_style
+        gen_val_cell = WriteOnlyCell(sheet, value=local_instance.name)
+        gen_val_cell.style = default_style
+        sheet.append([gen_title_cell, gen_val_cell])
+
+        inst_title_cell = WriteOnlyCell(sheet, value=_('Instance selection'))
+        inst_title_cell.style = default_style
+        inst_val_cell = WriteOnlyCell(sheet, value=_('All loc'))
+        inst_val_cell.style = default_style
+        sheet.append([inst_title_cell, inst_val_cell])
+
+        date_title_cell = WriteOnlyCell(sheet, value=_('Last update'))
+        date_title_cell.style = default_style
+        date_val_cell = WriteOnlyCell(sheet, value=report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '')
+        date_val_cell.style = date_style
+        sheet.append([date_title_cell, date_val_cell])
+
+        for col_num, header in enumerate(fixed_data):
             empty_cell = WriteOnlyCell(sheet, value='')
             empty_cell.style = empty_style
             top_header_row.append(empty_cell)
@@ -564,15 +578,13 @@ class stock_mission_report(osv.osv):
         header_styles = [yellow_header_style, green_header_style]
         i = 0
         col_num = len(fixed_data) + 1
-        next_row = sheet._current_row + 1
-        cells_to_merge = []
+        next_row = 4
         letter = False
         for inst_id in all_instances:
             header_style = header_styles[i]
             first_letter = False
             for x in repeated_data:
                 letter = get_column_letter(col_num)
-                sheet.column_dimensions[letter].width = default_width
                 if not first_letter:
                     first_letter = letter
                     top_header_cell = WriteOnlyCell(sheet, value=instance_dict[inst_id])
@@ -588,7 +600,6 @@ class stock_mission_report(osv.osv):
                 col_num += 1
             for x in instance_loc.get(inst_id, []):
                 letter = get_column_letter(col_num)
-                sheet.column_dimensions[letter].width = default_width
                 if not first_letter:
                     first_letter = letter
                     top_header_cell = WriteOnlyCell(sheet, value=instance_dict[inst_id])
@@ -601,16 +612,12 @@ class stock_mission_report(osv.osv):
                 header_row.append(header_cell)
                 col_num += 1
             if first_letter:
-                cells_to_merge.append("%s%s:%s%s" % (first_letter, next_row, letter, next_row))
+                sheet.merged_cells.ranges.append("%s%s:%s%s" % (first_letter, next_row, letter, next_row))
             i = 1 - i
 
         sheet.append(top_header_row)
-        sheet.row_dimensions[sheet._current_row].height = 45
-        sheet.merged_cells.ranges = cells_to_merge
         sheet.append(header_row)
-        sheet.row_dimensions[sheet._current_row].height = 45
 
-        sheet.freeze_panes = 'F%s' % (sheet._current_row + 1,)
 
         # Lines
         report_id_by_instance_id = {}
