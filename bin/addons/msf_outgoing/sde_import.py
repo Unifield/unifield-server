@@ -3206,9 +3206,8 @@ class sde_import(osv.osv_memory):
                     FROM product_product pp
                         LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
                         LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
-                        LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0
-                            AND ((pi.cs_generated_stock_and_moves = 't' AND m.location_id != pi.location_id)
-                                OR (pi.cs_generated_stock_and_moves = 'f' AND m.location_dest_id = pi.location_id))
+                        LEFT JOIN stock_move m ON m.product_id = pp.id AND m.state = 'done' AND m.product_qty != 0
+                            AND m.location_dest_id = pi.location_id
                             AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
                                 OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
                         LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
@@ -3245,9 +3244,8 @@ class sde_import(osv.osv_memory):
                     FROM product_product pp
                         LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
                         LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
-                        LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0
-                            AND ((pi.cs_generated_stock_and_moves = 't' AND m.location_dest_id != pi.location_id)
-                                OR (pi.cs_generated_stock_and_moves = 'f' AND m.location_id = pi.location_id))
+                        LEFT JOIN stock_move m ON m.product_id = pp.id AND m.state = 'done' AND m.product_qty != 0
+                            AND m.location_id = pi.location_id
                             AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
                                 OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
                         LEFT JOIN audittrail_log_line a ON pi.id = a.res_id AND object_id = (SELECT id FROM ir_model WHERE model = 'physical.inventory' LIMIT 1)
@@ -3389,9 +3387,8 @@ class sde_import(osv.osv_memory):
                 FROM product_product pp
                     LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
                     LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
-                    LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0
-                        AND ((pi.cs_generated_stock_and_moves = 't' AND m.location_id != pi.location_id)
-                            OR (pi.cs_generated_stock_and_moves = 'f' AND m.location_dest_id = pi.location_id))
+                    LEFT JOIN stock_move m ON m.product_id = pp.id AND m.state = 'done' AND m.product_qty != 0
+                        AND m.location_dest_id = pi.location_id
                         AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
                             OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
                     LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -3411,9 +3408,8 @@ class sde_import(osv.osv_memory):
                 FROM product_product pp
                     LEFT JOIN physical_inventory_product_rel pip ON pip.inventory_id = pp.id
                     LEFT JOIN physical_inventory pi ON pip.product_id = pi.id
-                    LEFT JOIN stock_move m ON m.product_id = pp.id  AND m.state = 'done' AND m.product_qty != 0
-                        AND ((pi.cs_generated_stock_and_moves = 't' AND m.location_dest_id != pi.location_id)
-                            OR (pi.cs_generated_stock_and_moves = 'f' AND m.location_id = pi.location_id))
+                    LEFT JOIN stock_move m ON m.product_id = pp.id AND m.state = 'done' AND m.product_qty != 0
+                        AND m.location_id = pi.location_id
                         AND ((pp.batch_management = 'f' AND pp.perishable = 'f' AND m.prodlot_id IS NULL)
                             OR ((pp.batch_management = 'f' OR pp.perishable = 't') AND m.prodlot_id IS NOT NULL))
                     LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
