@@ -20,8 +20,15 @@ jQuery(document).ready(function () {
         }
     }
     if (concurrencyInfo && concurrencyInfo.length) {
+        var pairs = concurrencyInfo.map(function(pair) {
+            return "'" + pair[0] + "', '" + pair[1] + "'";
+        });
+        var pyStyleValue = concurrencyInfo.length === 1
+            ? "(" + pairs[0] + ")"
+            : "[" + pairs.map(function(p) { return "(" + p + ")"; }).join(", ") + "]";
+
         $("[name='_terp_concurrency_info']", window.parent.document)
-            .val(JSON.stringify(concurrencyInfo));
+            .val(pyStyleValue);
     }
     window.frameElement.close();
 })
