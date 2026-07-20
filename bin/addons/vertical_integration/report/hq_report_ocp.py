@@ -1577,7 +1577,7 @@ class waca_export_accounting_lines(osv.osv):
         'account_code': fields.char('Acount code', size=64), # 8
         'partner_id': fields.integer('Partner ID'), # 9
         'partner_txt': fields.text('Partner TXT'), # 10
-        'emplid': fields.char('Employee ID', size=64), # 11
+        'emplid': fields.integer('Employee ID', size=64), # 11
         'description': fields.char('Description', size=512), # 12
         'ref': fields.char('Description', size=128), # 13
         'booking_currency': fields.char('Book Curr', size=128), # 14
@@ -1992,7 +1992,7 @@ class waca_export_accounting_lines(osv.osv):
                     a.code as account_code, -- 8
                     aml.partner_id, -- 9
                     al.partner_txt as partner_txt, -- 10
-                    hr.identification_id as emplid, -- 11
+                    hr.id as emplid, -- 11
                     al.name as description, -- 12
                     al.ref, -- 13
                     CASE WHEN aml.is_addendum_line = 'f' THEN c.name ELSE move_c.name END AS booking_currency, -- 14
@@ -2060,7 +2060,7 @@ class waca_export_accounting_lines(osv.osv):
                     a.code as account_code,  -- 8
                     aml.partner_id,  -- 9
                     aml.partner_txt as partner_txt, -- 10
-                    hr.identification_id as emplid, -- 11
+                    hr.id as emplid, -- 11
                     aml.name as description, -- 12
                     aml.ref,  -- 13
                     c.name AS booking_currency,  -- 14
