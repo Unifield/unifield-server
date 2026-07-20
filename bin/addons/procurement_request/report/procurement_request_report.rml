@@ -361,10 +361,10 @@
                     <para style="LFooterEnd">Signature</para>
                 </td>
                 <td>
-                    <image width="280" height="60" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image') ]]</image>
+                    <image width="280" height="70" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <image width="280" height="60" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image') ]]</image>
+                    <image width="280" height="70" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image') ]]</image>
                 </td>
             </tr>
         </blockTable>

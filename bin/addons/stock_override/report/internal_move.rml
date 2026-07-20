@@ -366,11 +366,11 @@
                 <td>
                     <para style="LFooterEnd">Signature</para>
                 </td>
-                <td><image width="160" height="50" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image')]]</image></td>
-                <td><image width="160" height="50" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image')]]</image></td>
-                <td><image width="160" height="50" mask="auto">[[ getSign(objects[0], 'fr', 'image') or removeParentNode('image')]]</image></td>
+                <td><image width="160" height="40" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image')]]</image></td>
+                <td><image width="160" height="40" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image')]]</image></td>
+                <td><image width="160" height="40" mask="auto">[[ getSign(objects[0], 'fr', 'image') or removeParentNode('image')]]</image></td>
             </tr>
         </blockTable>
 
-    </story>
+    </story>m
 </document>
