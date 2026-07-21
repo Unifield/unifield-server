@@ -266,7 +266,7 @@
                                     <field name="incoterm_location" />
                                 </group>
                             </group>
-                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" on_change="onchange_line_ids(line_ids)" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id, 'parent_merged': merged_order}" on_change="onchange_line_ids(line_ids)" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                                 <tree string="Lines" editable="top">
                                     <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
                                     <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>
@@ -276,12 +276,11 @@
                                     <field name="weight" />
                                     <field name="amount" />
                                     <field name="currency_id" attrs="{'required': [('amount', '!=', False)]}"/>
-                                    <field name="cargo_category" attrs="{'invisible': [('merged_transport', '=', False)]}"/>
+                                    <field name="cargo_category" invisible="not context.get('parent_merged', False)"/>
                                     <field name="comment" />
                                     <field name="kc" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
                                     <field name="dg" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
                                     <field name="cs" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
-                                    <field name="merged_transport" invisible="1" />
                                 </tree>
 
                             </field>

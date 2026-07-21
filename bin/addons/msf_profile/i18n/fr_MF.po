@@ -131018,7 +131018,6 @@ msgstr "Vers Planifié"
 #. module: transport_mgmt
 #: field:transport.order,merged_order:0
 #: field:transport.order.in,merged_order:0
-#: field:transport.order.in.line,merged_transport:0
 #: field:transport.order.out,merged_order:0
 msgid "Merged Transport Object"
 msgstr "Objet de Transport Fusionné"

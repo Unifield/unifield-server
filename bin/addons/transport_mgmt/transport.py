@@ -1656,7 +1656,6 @@ class transport_order_in_line(osv.osv):
                                                                                                               ('delivered', 'Delivered'),
                                                                                                               ('cancel', 'Cancelled'),
                                                                                                               ('import', 'Import in progress'),]),
-        'merged_transport': fields.related('transport_id', 'merged_order', type='boolean', string='Merged Transport Object'),
         'process_parcels_nb': fields.integer_null('Number of Parcels'),
         'process_volume': fields.float_null('Volume [dm³]', digits=(16,2)),
         'process_weight': fields.float_null('Weight [kg]', digits=(16,2)),
