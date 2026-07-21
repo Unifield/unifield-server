@@ -474,10 +474,10 @@
           <image width="180" height="45" mask="auto">[[ getSign(o, 'wr', 'image') or removeParentNode('image') ]]</image>
         </td>
         <td>
-          <image width="180" height="45" mask="auto">[[ getSign(o, 'sr', 'image') or removeParentNode('image') ]]</image>
+          <image width="160" height="40" mask="auto">[[ getSign(o, 'sr', 'image') or removeParentNode('image') ]]</image>
         </td>
         <td>
-          <image width="180" height="45" mask="auto">[[ getSign(o, 'so', 'image') or removeParentNode('image') ]]</image>
+          <image width="160" height="40" mask="auto">[[ getSign(o, 'so', 'image') or removeParentNode('image') ]]</image>
         </td>
         <td><para></para></td>
       </tr>
