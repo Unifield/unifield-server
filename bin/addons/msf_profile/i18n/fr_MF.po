@@ -131345,3 +131345,21 @@ msgstr "Si SmartScan a été utilisé, ces tâches SmartScan seront réinitialis
 #, python-format
 msgid "Do you want to proceed ?"
 msgstr "Voulez-vous continuer ?"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2992
+#, python-format
+msgid "One or more of the states in the key \"pi_states\" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one"
+msgstr "Un ou plusieurs états dans la clé \"pi_states\" sont inutilisables. Veuillez vous assurer que chaque nom dans cette liste est une chaîne de caractères ou peut être convertie en une"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2996
+#, python-format
+msgid "The states %s in the key \"pi_states\" are not authorized. Please use \"counting\", \"counted\", \"validated\", \"confirmed\", \"closed\" and/or \"cancel\""
+msgstr "Les états %s dans la clé \"pi_states\" ne sont pas autorisés. Veuillez utiliser \"counting\", \"counted\", \"validated\", \"confirmed\", \"closed\" et/out \"cancel\""
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3000
+#, python-format
+msgid "The key \"pi_states\" should be a non-empty list of states if it is used"
+msgstr "Si elle est utilisée, a clé \"pi_states\" devrait être une liste d'états non vide"
