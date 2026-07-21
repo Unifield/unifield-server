@@ -88,6 +88,9 @@ class RemoteOneDrive(RemoteInterface):
 
     def connect(self):
         try:
+            for x in [self.tenant, self.client_id, self.cert_content]:
+                if not x:
+                    raise Exception(_('all fields: Tenant-id, App-id and Certificate must be filled.'))
             self.dav = webdav.Client(host=self.host, tenant=self.tenant, client_id=self.client_id, cert_content=self.cert_content, max_retry=20, path=self.path)
         except webdav.ConnectionFailed as e:
             raise Exception(_('Unable to connect: %s') % (e,))

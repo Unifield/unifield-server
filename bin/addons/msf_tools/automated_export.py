@@ -193,7 +193,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
                     dav.connect()
                 except Exception as e:
                     self.infolog(cr, uid, traceback.format_exc())
-                    raise osv.except_osv(_('Error'), _('Not able to connect to OneDrive server at location %s') % e)
+                    raise osv.except_osv(_('Error'), _('OneDrive error: %s') % e)
                 if not context.get('no_raise_if_ok'):
                     raise osv.except_osv(_('Info'), _('Connection succeeded'))
                 return dav
