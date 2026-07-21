@@ -26,7 +26,8 @@ div#search_filter_data table tr:nth-child(2) div.group-collapse
     margin-top: 6px;
 }
 
-td.item.search_filters {
+td.item.search_filters,
+td.item-group {
     width: 1%;
 }
 
