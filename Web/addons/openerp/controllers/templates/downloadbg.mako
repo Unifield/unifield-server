@@ -116,7 +116,8 @@
     %endif
     <div id="report_name">${_('Name of the requested report: ')}${report_name}
     %if exception:
-        <pre style="text-align: left;">${exception}</pre>
+        <pre style="text-align: center; font-weight: bold; font-size:200%">${exception}</pre>
+        <pre style="text-align: left;">${exception_tb}</pre>
     %elif total == 'True':
         <div>
             <input type="button" value="${_('Download report')}"

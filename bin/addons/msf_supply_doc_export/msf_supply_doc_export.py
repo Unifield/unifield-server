@@ -234,6 +234,22 @@ class report_out_export_parser(XlsxReportParser):
             new_cell.number_format = number_format
         self.rows.append(new_cell)
 
+    def get_qty_available(self, cr, uid, product_id, location_id, prodlot_id, context=None):
+        """
+        Get the available quantity for a move, with the product id and the info put in the context
+        """
+        if context is None:
+            context = {}
+        copy_context = context.copy()
+
+        if location_id:
+            copy_context.update({'location': location_id, 'location_id': location_id, 'prodlot_id': prodlot_id})
+
+        prod = self.pool.get('product.product').read(cr, uid, product_id, ['qty_available'], context=copy_context)
+        qty_available = prod and prod['qty_available'] or 0.00
+
+        return qty_available
+
     def generate(self, context=None):
         if context is None:
             context = {}
@@ -249,10 +265,10 @@ class report_out_export_parser(XlsxReportParser):
         sheet.column_dimensions['B'].width = 45.0
         sheet.column_dimensions['C'].width = 75.0
         sheet.column_dimensions['D'].width = 55.0
-        sheet.column_dimensions['E'].width = 22.0
-        sheet.column_dimensions['F'].width = 15.0
+        sheet.column_dimensions['E'].width = 15.0
+        sheet.column_dimensions['F'].width = 25.0
         sheet.column_dimensions['G'].width = 25.0
-        sheet.column_dimensions['H'].width = 25.0
+        sheet.column_dimensions['H'].width = 15.0
         sheet.column_dimensions['I'].width = 15.0
         sheet.column_dimensions['J'].width = 15.0
         sheet.column_dimensions['K'].width = 7.0
@@ -361,10 +377,10 @@ class report_out_export_parser(XlsxReportParser):
             (_('Code')),
             (_('Description')),
             (_('Comment')),
-            (_('Asset')),
             (_('Kit')),
             (_('Src. Location')),
             (_('Dest. Location')),
+            (_('Qty in Stock')),
             (_('Ordered Qty')),
             (_('Qty to Process')),
             (_('UoM')),
@@ -400,11 +416,14 @@ class report_out_export_parser(XlsxReportParser):
                         self.add_cell(move.product_id and move.product_id.default_code or '', line_style)
                         self.add_cell(move.product_id and move.product_id.name or '', line_style)
                         self.add_cell(move.comment or '', line_style)
-                        self.add_cell(proc_move.asset_id and proc_move.asset_id.name or '', line_style)
                         self.add_cell(proc_move.composition_list_id and proc_move.composition_list_id.composition_reference
                                       or '', line_style)
                         self.add_cell(move.location_id and move.location_id.name or '', line_style)
                         self.add_cell(move.location_dest_id and move.location_dest_id.name or '', line_style)
+                        self.add_cell(self.get_qty_available(self.cr, self.uid, move.product_id and move.product_id.id or False,
+                                                             move.location_id and move.location_id.id or False,
+                                                             proc_move.prodlot_id and proc_move.prodlot_id.id or False, context=context)
+                                      , float_style)
                         self.add_cell(proc_move.ordered_quantity, float_style)
                         self.add_cell(proc_move.quantity or 0.00, float_style)
                         self.add_cell(proc_move.uom_id and proc_move.uom_id.name or '', line_style)
@@ -423,10 +442,13 @@ class report_out_export_parser(XlsxReportParser):
                     self.add_cell(move.product_id and move.product_id.default_code or '', line_style)
                     self.add_cell(move.product_id and move.product_id.name or '', line_style)
                     self.add_cell(move.comment or '', line_style)
-                    self.add_cell(move.asset_id and move.asset_id.name or '', line_style)
                     self.add_cell(move.composition_list_id and move.composition_list_id.composition_reference or '', line_style)
                     self.add_cell(move.location_id and move.location_id.name or '', line_style)
                     self.add_cell(move.location_dest_id and move.location_dest_id.name or '', line_style)
+                    self.add_cell(self.get_qty_available(self.cr, self.uid, move.product_id and move.product_id.id or False,
+                                                         move.location_id and move.location_id.id or False,
+                                                         move.prodlot_id and move.prodlot_id.id or False, context=context)
+                                  , float_style)
                     self.add_cell(move.product_qty, float_style)
                     self.add_cell(0.00, float_style)
                     self.add_cell(move.product_uom and move.product_uom.name or '', line_style)

@@ -35,7 +35,7 @@ from base import currency_date
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 from spreadsheet_xml import SPECIAL_CHAR
 import re
-
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -748,6 +748,12 @@ class msf_doc_import_accounting_lines(osv.osv):
     }
 
 msf_doc_import_accounting_lines()
+
+SpreadsheetReport(
+    'report.msf.doc.import.mako.template',
+    'msf.doc.import.accounting',
+    'addons/msf_doc_import/import_entries_template.mako',
+)
 
 class msf_doc_import_accounting_errors(osv.osv_memory):
     _name = 'msf.doc.import.accounting.errors'

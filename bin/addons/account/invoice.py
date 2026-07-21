@@ -366,6 +366,8 @@ class account_invoice(osv.osv):
         'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
         'is_partner_active': fields.related('partner_id', 'active', type='boolean', string='Partner Active', store=False, write_relate=False),
         'po_details': fields.char(size=86, string='PO Details'),
+        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15, string='Supplier TIN', store=False, readonly=True, context={'active_test': False}),
+        'business_registration_number': fields.related('partner_id', 'business_registration_number', type='char', size=15, string='Supplier RCCM', store=False, readonly=True, context={'active_test': False}),
     }
     _defaults = {
         'type': _get_type,
@@ -441,7 +443,7 @@ class account_invoice(osv.osv):
             elif context.get('journal_type', False) == 'inkind':
                 partner_string = _('Donor')
             elif context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
-                partner_string = _('Supplier')
+                partner_string = _('Partner')
             else:
                 partner_string = _('Customer')
             for node in nodes:

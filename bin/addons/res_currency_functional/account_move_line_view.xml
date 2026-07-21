@@ -86,6 +86,8 @@
                             context="{'curr': currency_id}"
                             />
                         <field name="partner_type_mandatory" invisible="1" colspan="2"/>
+                        <field name="tax_identification_number" invisible="1"/>
+                        <field name="business_registration_number" invisible="1"/>
                         <field name="employee_id" invisible="1"/>
                         <field name="transfer_journal_id" invisible="1"/>
                         <newline />
