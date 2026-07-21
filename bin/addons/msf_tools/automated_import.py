@@ -123,8 +123,8 @@ class RemoteOneDrive(RemoteInterface):
         self.dav.move_to_file(src_file_name, dest_file_name)
         return True
 
-    def push(self, local_name, remote_name):
-        f = open(local_name, 'r')
+    def push(self, local_name, remote_name, mode='r'):
+        f = open(local_name, mode)
         retries = 0
         max_retries = 2
         while True:
