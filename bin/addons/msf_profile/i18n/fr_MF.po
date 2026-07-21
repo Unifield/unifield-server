@@ -3469,11 +3469,6 @@ msgstr "Date d'Engagement"
 msgid "Document name"
 msgstr "Nom du Document"
 
-#. module: msf_tools
-#: help:automated.export,ftp_ok:0
-msgid "Enable FTP server if you want to read or write from a remote FTP server"
-msgstr "Activez le serveur FTP pour pouvoir lire ou écrire depuis un server FTP distant"
-
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:4282
 #, python-format
@@ -6651,11 +6646,6 @@ msgstr "Début de Période"
 #: help:product.packaging,sequence:0
 msgid "Gives the sequence order when displaying a list of packaging."
 msgstr "Donne l'ordre séquenciel lors de l'affichage d'une liste de colisage"
-
-#. module: msf_tools
-#: field:automated.export,ftp_login:0
-msgid "FTP login"
-msgstr "FTP login"
 
 #. module: base
 #: model:res.currency,currency_name:base.RUB
@@ -12118,7 +12108,6 @@ msgstr "La Régularisation \"%s\" est déjà au statut Terminé !"
 msgid "The Accrual \"%s\" has all total debit/credit amounts equal to zero."
 msgstr "La Régularisation \"%s\" a tous les montants totaux débit/crédit égaux à zéro."
 
-
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:532
 #, python-format
@@ -13038,13 +13027,6 @@ msgstr "La ligne de produit %s a une qté minimale négative ou égale à 0 !"
 #, python-format
 msgid "Percent of lines with discrepancies"
 msgstr "Pourcentage de lignes avec des écarts"
-
-#. module: msf_tools
-#: field:automated.export,ftp_dest_fail_ok:0
-#: field:automated.export,ftp_dest_ok:0
-#: field:automated.export,ftp_report_ok:0
-msgid "on FTP server"
-msgstr "sur le serveur FTP"
 
 #. module: msf_tools
 #: field:automated.export,pause:0
@@ -16052,13 +16034,6 @@ msgstr "Assistant Importation Ecritures HQ"
 #: help:purchase.order,name:0
 msgid "unique number of the purchase order,computed automatically when the purchase order is created"
 msgstr "Numéro unique du bon de commande, calculé automatiquement à la création du bon de commande"
-
-#. module: msf_tools
-#: help:automated.export,ftp_dest_fail_ok:0
-#: help:automated.export,ftp_dest_ok:0
-#: help:automated.export,ftp_report_ok:0
-msgid "Is given path is located on FTP server ?"
-msgstr "Est-ce que le chemin donné est situé sur le serveur FTP ?"
 
 #. modules: account, analytic_distribution, account_mcdb
 #: model:ir.actions.act_window,name:account.action_account_analytic_account_tree2
@@ -20280,11 +20255,6 @@ msgstr "Simulation en cours"
 msgid "# of Entries "
 msgstr "Nombre d'Ecritures "
 
-#. module: msf_tools
-#: field:automated.export,ftp_url:0
-msgid "FTP server address"
-msgstr "Adresse serveur FTP"
-
 #. module: account
 #: view:res.partner:0
 msgid "Customer Accounting Properties"
@@ -22692,6 +22662,7 @@ msgstr "Le type de partnenaire et le type de commande sont incompatibles. Veuill
 #. module: base, msf_tools
 #: help:res.log,name:0
 #: help:log.phase.out.partner.deactivation,message:0
+#: help:res.log.catalogue.deletion,name:0
 msgid "The logging message."
 msgstr "Le message d'enregistrement"
 
@@ -24164,11 +24135,6 @@ msgstr "If checked, the location is the output location of a warehouse or a chil
 #: view:mission.stock.wizard:0
 msgid "Open Consolidated XLSX file"
 msgstr "Ouvrir ficher XLSX Consolidé"
-
-#. module: msf_tools
-#: field:automated.export,ftp_ok:0
-msgid "Enable FTP server"
-msgstr "Activer serveur FTP"
 
 #. module: tender_flow
 #: model:process.transition,name:tender_flow.process_transition_tender_draft_rfq
@@ -27892,11 +27858,6 @@ msgstr "Vous ne pouvez pas changer la distribution."
 msgid "Gives the sequence order                         when displaying a list of board lines."
 msgstr "Donne l'ordre de séquence lors de l'affichage d'une liste de lignes de tableau."
 
-#. module: msf_tools
-#: field:automated.export,ftp_password:0
-msgid "FTP password"
-msgstr "Mot de passe FTP"
-
 #. module: msf_outgoing, product_attributes
 #: selection:stock.picking,flow_type:0
 #: selection:unidata.sync,last_execution_sync_type:0
@@ -30471,7 +30432,7 @@ msgstr "America/Argentina/San_Juan"
 msgid "Operator '%s' not suported"
 msgstr "Operator '%s' not suported"
 
-#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account, purchase, product, product_asset, msf_accrual, tender_flow, msf_outgoing
+#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account, purchase, product, product_asset, msf_accrual, tender_flow, msf_outgoing, msf_tools
 #: view:account.line.csv.export:0
 #: field:account.line.csv.export,message:0
 #: field:import.commitment.wizard,last_error:0
@@ -30535,6 +30496,8 @@ msgstr "Operator '%s' not suported"
 #: field:import.asset.reference,message:0
 #: field:sde.import,message:0
 #: field:wizard.rfq.sent.import,message:0
+#: field:log.phase.out.partner.deactivation,message:0
+#: field:res.log.catalogue.deletion,name:0
 msgid "Message"
 msgstr "Message"
 
@@ -33519,11 +33482,13 @@ msgstr "Vous ne pouvez pas supprimer cette ligne !"
 msgid "- Items from engagement journal"
 msgstr "- Items from engagement journal"
 
-#. modules: account, base, msf_audittrail, register_accounting
+#. modules: account, base, msf_audittrail, register_accounting, msf_tools
 #: view:audittrail.log.line:0
 #: view:res.log:0
 #: view:audittrail.log.line:0
 #: view:audittrail.log.line:0
+#: view:log.phase.out.partner.deactivation:0
+#: view:res.log.catalogue.deletion:0
 msgid "Logs"
 msgstr "Journaux"
 
@@ -50076,6 +50041,7 @@ msgstr "kit.selection.sale"
 #: field:shipment,consignee_email:0
 #: field:shipment,shipper_email:0
 #: field:automated.import,email:0
+#: model:ir.ui.menu,name:msf_tools.email_main_menu
 msgid "Email"
 msgstr "Courriel"
 
@@ -69008,11 +68974,6 @@ msgstr "Expédié - Statut de l'expédition."
 #, python-format
 msgid "Cannot reconcile entries : Cross check between transfer currencies fails."
 msgstr "Ne peut lettrer les écritures: la vérification entre les devises de transfert a échoué."
-
-#. module: msf_tools
-#: field:automated.export,ftp_port:0
-msgid "FTP server port"
-msgstr "Port FTP"
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:902
@@ -87997,11 +87958,6 @@ msgstr "Etat fédéral"
 #: field:purchase.line.import.xml.line,line_ignored_ok:0
 msgid "Ignored?"
 msgstr "Ignoré?"
-
-#. module: msf_tools
-#: view:automated.export:0
-msgid "FTP server"
-msgstr "Serveur FTP"
 
 #. modules: base, procurement_report, consumption_calculation, msf_tools
 #: selection:weekly.forecast.report,interval_type:0
@@ -112314,8 +112270,8 @@ msgstr "Le chemin local %s n'existe pas."
 
 #. module: msf_tools
 #: view:automated.export:0
-msgid "Manually send to FTP"
-msgstr "Envoyer manuellement sur le serveur FTP"
+msgid "Manually send to remote"
+msgstr "Envoyer manuellement sur le serveur distant"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import_job.py:102
@@ -116858,6 +116814,7 @@ msgstr "Sous-type de Raison"
 
 #. module: msf_tools
 #: field:automated.import,ftp_ok:0
+#: field:automated.export,ftp_ok:0
 msgid "Enable remote server"
 msgstr "Activer serveur Distant"
 
@@ -116871,11 +116828,15 @@ msgstr "Activez le serveur distant pour pouvoir lire ou écrire depuis un server
 #: help:automated.import,ftp_dest_ok:0
 #: help:automated.import,ftp_report_ok:0
 #: help:automated.import,ftp_source_ok:0
+#: help:automated.export,ftp_dest_fail_ok:0
+#: help:automated.export,ftp_dest_ok:0
+#: help:automated.export,ftp_report_ok:0
 msgid "Is given path is located on remote server ?"
 msgstr "Est-ce que le chemin donné est situé sur le serveur Distant ?"
 
 #. module: msf_tools
 #: selection:automated.import,ftp_protocol:0
+#: selection:automated.export,ftp_protocol:0
 msgid "OneDrive"
 msgstr "OneDrive"
 
@@ -116887,11 +116848,13 @@ msgstr "Veuillez indiquer le Chemin du Rapport"
 
 #. module: msf_tools
 #: field:automated.import,ftp_login:0
+#: field:automated.export,ftp_login:0
 msgid "Remote login"
 msgstr "Identifiant Distant"
 
 #. module: msf_tools
 #: field:automated.import,ftp_password:0
+#: field:automated.export,ftp_password:0
 msgid "Remote password"
 msgstr "Mot de passe Distant"
 
@@ -116902,11 +116865,13 @@ msgstr "Serveur Distant"
 
 #. module: msf_tools
 #: field:automated.import,ftp_url:0
+#: field:automated.export,ftp_url:0
 msgid "Remote server address"
 msgstr "Adresse Serveur Distant"
 
 #. module: msf_tools
 #: field:automated.import,ftp_port:0
+#: field:automated.export,ftp_port:0
 msgid "Remote server port"
 msgstr "Port Distant"
 
@@ -116915,6 +116880,9 @@ msgstr "Port Distant"
 #: field:automated.import,ftp_dest_ok:0
 #: field:automated.import,ftp_report_ok:0
 #: field:automated.import,ftp_source_ok:0
+#: field:automated.export,ftp_dest_fail_ok:0
+#: field:automated.export,ftp_dest_ok:0
+#: field:automated.export,ftp_report_ok:0
 msgid "on remote server"
 msgstr "sur le serveur distant"
 
@@ -117812,7 +117780,7 @@ msgid "Signature: Start Date must be before End Date !"
 msgstr "Signature: la date de début doit être avant la date de fin !"
 
 #. modules: purchase, account, procurement_request, register_accounting,
-#. account_override, stock
+#. account_override, stock, msf_tools
 #: view:account.invoice:0
 #: view:account.invoice:0
 #: view:sale.order:0
@@ -117820,6 +117788,7 @@ msgstr "Signature: la date de début doit être avant la date de fin !"
 #: view:account.bank.statement:0
 #: view:stock.picking:0
 #: view:physical.inventory:0
+#: field:email.log,signature_ids:0
 msgid "Signatures"
 msgstr "Signatures"
 
@@ -130182,6 +130151,7 @@ msgstr "Notification par Courriel pour la Signature est Active"
 #: code:addons/msf_tools/email_signature_notification.py:65
 #: code:addons/msf_tools/email_signature_notification.py:128
 #: field:email.signature.notification.doc.applicability,email_sign_notif_id:0
+#: model:ir.model,name:msf_tools.model_email_signature_notification
 #, python-format
 msgid "Email Notification for Signatures"
 msgstr "Notification par Courriel pour les Signatures"
@@ -130972,3 +130942,17 @@ msgstr "Vous ne pouvez pas annuler un Frais de Douane non-Brouillon"
 #, python-format
 msgid "You can not cancel a non-Draft Transport Fee"
 msgstr "Vous ne pouvez pas annuler un Frais de Transport non-Brouillon"
+
+#. module: msf_tools
+#: field:automated.export,sharepoint_cert:0
+#: field:automated.import,sharepoint_cert:0
+msgid "Certificate"
+msgstr "Certificat"
+
+#. module: msf_tools
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import.py:93
+#, python-format
+msgid "all fields: Tenant-id, App-id and Certificate must be filled."
+msgstr "tous les champs Tenant-id, App-id et Certificat doivent être renseignés."
+

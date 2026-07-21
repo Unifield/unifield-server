@@ -114,7 +114,7 @@ class automated_export(osv.osv):
             help="""Defines the priority of the automated export processing because some of them needs other data
 to export well some data (e.g: Product Categories needs Product nomenclatures)."""
         ),
-        'ftp_ok': fields.boolean(string='Enable remote server', help='Enable remote server if you want to read or write from a remote remotr server'),
+        'ftp_ok': fields.boolean(string='Enable remote server', help='Enable remote server if you want to read or write from a remote server'),
         'ftp_protocol': fields.selection([('ftp', 'FTP'), ('sftp','SFTP'), ('onedrive', 'OneDrive')], string='Protocol', required=True),
         'ftp_url': fields.char(string='Remote server address', size=256),
         'ftp_port': fields.char(string='Remote server port', size=56),
