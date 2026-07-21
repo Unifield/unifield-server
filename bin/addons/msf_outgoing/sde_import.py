@@ -3071,7 +3071,7 @@ class sde_import(osv.osv_memory):
                             'max_nb_months': pi[10] != -1 and pi[10] or 0,
                             'updated_by_sde': pi[11] or False,
                             'discrepancies_generated': pi[12] or False,
-                            'state': pi[12] and PI_STATES[pi[13]] or '',
+                            'state': pi[13] and PI_STATES[pi[13]] or '',
                             'latest_log': not with_lines and pi[14] or '',
                             'latest_log_date': not with_lines and pi[15] or '',
                         }
@@ -3359,7 +3359,7 @@ class sde_import(osv.osv_memory):
                     'max_nb_months': pi[10] != -1 and pi[10] or 0,
                     'updated_by_sde': pi[11] or False,
                     'discrepancies_generated': pi[12] or False,
-                    'state': pi[12] and PI_STATES[pi[13]] or '',
+                    'state': pi[13] and PI_STATES[pi[13]] or '',
                     'latest_log': not with_lines and pi[14] or '',
                     'latest_log_date': not with_lines and pi[15] or '',
                 }
