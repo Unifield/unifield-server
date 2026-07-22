@@ -555,6 +555,11 @@
                     <filter icon="terp-personal" name="supplier" string="Supplier" domain="[('usage', '=', 'supplier')]" help="Supplier Locations" />
                     <separator orientation="vertical" />
                     <group name="display_active_filter" invisible="1">
+                        <html>
+                            <script language="javascript">
+                                $('[for="display_active_filter"]').css('width', '1%%');
+                            </script>
+                        </html>
                         <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
                         <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
                     </group>
