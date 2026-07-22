@@ -267,7 +267,7 @@ class automated_export_job(osv.osv):
             except:
                 raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
         elif on_ftp and job_brw.export_id.ftp_protocol == 'onedrive':
-            webdav.push(temp_path, posixpath.join(job_brw.export_id.report_path, temp_file))
+            webdav.push(temp_path, posixpath.join(job_brw.export_id.report_path, filename))
 
         csvfile = open(on_ftp and temp_path or pth_filename, 'rb')
         att_obj.create(cr, uid, {

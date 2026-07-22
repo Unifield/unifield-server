@@ -492,7 +492,7 @@ class purchase_order(osv.osv):
                 tmp_file.close()
 
                 try:
-                    webdav.push(tmpname, posixpath.join(export_wiz.dest_path, filename))
+                    webdav.push(tmpname, posixpath.join(export_wiz.dest_path, filename), mode='rb')
                 except:
                     raise osv.except_osv(_('Error'), _('Unable to write on OneDrive server at location %s') % export_wiz.dest_path)
 
