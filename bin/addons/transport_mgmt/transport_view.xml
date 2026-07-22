@@ -682,7 +682,7 @@
                         <button string="To Planned" states="draft" type="object" name="button_to_planned" icon="terp-check" />
                         <button string="Dispatch" states="planned" type="object" name="button_dispatch" icon="terp-dialog-close" />
                         <button string="Validate" states="dispatched" type="object" name="button_validate"  icon="terp-check" />
-                        <button string="Cancel document" states="planned,dispatched" type="object" name="button_cancel" icon="gtk-cancel"/>
+                        <button string="Cancel document" states="draft,planned,dispatched" type="object" name="button_cancel" icon="gtk-cancel"/>
                     </group>
 
                 </form>
