@@ -59,6 +59,23 @@ class patch_scripts(osv.osv):
     }
 
     # UF42.0
+    def us_15901_change_customs_transport_fees(self, cr, uid, *a, **b):
+        '''
+        Fix the name of existing Customs/Transport Fees, fix the selected fees' type on ITO/OTO and delete unneeded fees
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        fees_obj = self.pool.get('transport.order.fees.type')
+        customs_fees_obj = self.pool.get('transport.order.customs.fees')
+        transport_fees_obj = self.pool.get('transport.order.transport.fees')
+
+        # fees_freight_negotiable: Change code, name
+        fees_freight_negotiable_id = data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'fees_freight_negotiable')[1]
+        if fees_freight_negotiable_id:
+            fees_vals = {'code': 'negotiated_transport', 'name': 'Negotiated transport cost'}
+            fees_obj.write(cr, uid, fees_freight_negotiable_id, fees_vals)
+
+        return True
+
     def us_11997_financing_contract_sync(self, cr, uid, *a, **b):
         # on HQ trigger updates on financing object linked to mission-private rule
         # this will unlock existing NR

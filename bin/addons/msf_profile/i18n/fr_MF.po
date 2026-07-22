@@ -127211,13 +127211,13 @@ msgstr "Lien vers le Manifeste de Fret"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_freight_fixed
-msgid "Freight Service fees (fixed)"
-msgstr "Frais de Service de Fret (forfaitaires)"
+msgid "3rd party transport charges"
+msgstr "Frais de transport de tiers"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_freight_negotiable
-msgid "Freight Service fees (negotiable)"
-msgstr "Frais de Service de Fret (négotiable)"
+msgid "Negotiated transport cost"
+msgstr "Coût de transport négotié"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_freight_return

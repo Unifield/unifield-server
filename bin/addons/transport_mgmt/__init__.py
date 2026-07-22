@@ -23,12 +23,12 @@ from tools.translate import _
 
 
 TRANSPORT_FEES_HELP = [
-    ('freight_fixed', _("""What:
+    ('transport_charges', _("""What:
 Use this type when encoding sum of any official fees paid to government authorities (with official receipts) that are not part of the transport costs negotiated in the MSF contract or quotation agreed with the service provider/transporter.
 
 How:
 Identify all transport-related expenses that MSF is paying to transporters when they provide these transportation services to MSF. MSF or Transporter has no control on these fees.""")),
-    ('freight_negotiable', _("""What:
+    ('negotiated_transport', _("""What:
 Use this type when encoding the actual transport costs according to what is negotiated in the MSF contract or quotation agreed with the service provider/transporter.
 
 How:
