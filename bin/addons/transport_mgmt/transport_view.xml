@@ -713,7 +713,7 @@
                         <child1>
                             <action colspan="4" height="220" name="%(transport_order_in_draft_action)d" string="Inbound Cargo Awaiting Validation" width="510" menu_ref="%(transport_order_in_menu)d"/>
                             <action colspan="4" height="220" name="%(transport_order_in_planned_action)d" string="Planned Inbound Cargo" width="510" menu_ref="%(transport_order_in_menu)d"/>
-                            <action colspan="4" height="220" name="%(transport_order_in_prearrival_action)d" string="Inbound Cargo Under Pre Clearance" width="510" menu_ref="%(transport_order_in_menu)d"/>
+                            <action colspan="4" height="220" name="%(transport_order_in_prearrival_action)d" string="Inbound Cargo Under Pre-Arrival" width="510" menu_ref="%(transport_order_in_menu)d"/>
                             <action colspan="4" height="220" name="%(transport_order_in_waiting_action)d" string="Inbound Cargo Awaiting Parcel Reception" width="510" menu_ref="%(transport_order_in_menu)d" />
                             <action colspan="4" height="220" name="%(transport_order_out_draft_action)d" string="Outbound Cargo Awaiting Validation" width="510" menu_ref="%(transport_order_out_menu)d"/>
                             <action colspan="4" height="220" name="%(transport_order_out_planned_action)d" string="Planned Outbound Cargo" width="510" menu_ref="%(transport_order_out_menu)d"/>
