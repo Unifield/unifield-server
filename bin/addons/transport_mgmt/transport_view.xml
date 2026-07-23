@@ -268,7 +268,7 @@
                             </group>
                             <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id, 'parent_merged': merged_order}" on_change="onchange_line_ids(line_ids)" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                                 <tree string="Lines" editable="top">
-                                    <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
+                                    <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')]), ('state', '!=', 'cancel')]" on_change="change_incoming(incoming_id)"/>
                                     <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>
                                     <field name="incoming_state" />
                                     <field name="parcels_nb" required="1"/>
@@ -586,7 +586,7 @@
 
                             <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                                 <tree string="Lines" editable="top">
-                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [[parent.customer_partner_id, parent.transit_partner_id], context.get('parent_doc_id')])]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
+                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [[parent.customer_partner_id, parent.transit_partner_id], context.get('parent_doc_id')]), ('state', '!=', 'cancel')]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
                                     <field name="is_split" />
                                     <field name="description" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="parcels_nb" attrs="{'readonly': [('shipment_id', '!=', False)]}" required="1"/>
