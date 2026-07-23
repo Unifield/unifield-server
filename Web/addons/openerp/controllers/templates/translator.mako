@@ -8,7 +8,7 @@
 
 % if close_popup:
 <script type="text/javascript">
-var concurrencyInfo = JSON.parse(window.atob("${concurrency_info}"));
+var concurrencyInfo = window.atob("${concurrency_info}");
 var fields_values = JSON.parse(window.atob("${fields_values}"));
 jQuery(document).ready(function () {
     for (var i = 0; i < fields_values.length; i++) {
@@ -19,16 +19,8 @@ jQuery(document).ready(function () {
             $(field_id, window.parent.document).val(fields_values[i].value);
         }
     }
-    if (concurrencyInfo && concurrencyInfo.length) {
-        var pairs = concurrencyInfo.map(function(pair) {
-            return "'" + pair[0] + "', '" + pair[1] + "'";
-        });
-        var pyStyleValue = concurrencyInfo.length === 1
-            ? "(" + pairs[0] + ")"
-            : "[" + pairs.map(function(p) { return "(" + p + ")"; }).join(", ") + "]";
-
-        $("[name='_terp_concurrency_info']", window.parent.document)
-            .val(pyStyleValue);
+    if (concurrencyInfo) {
+        $("[name='_terp_concurrency_info']", window.parent.document).val(concurrencyInfo);
     }
     window.frameElement.close();
 })
