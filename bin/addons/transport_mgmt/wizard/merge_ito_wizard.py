@@ -139,24 +139,26 @@ class merge_ito_wizard(osv.osv_memory):
             }))
         # Copy Customs Fees
         for cfee in tmpl_ito.transport_customs_fees_ids:
-            merged_ito_data['transport_customs_fees_ids'].append((0, 0, {
-                'name': cfee.name.id,
-                'purchase_id': cfee.purchase_id and cfee.purchase_id.id or False,
-                'value': cfee.value,
-                'currency_id': cfee.currency_id.id,
-                'details': cfee.details,
-                'validated': cfee.validated,
-            }))
+            if cfee.state != 'cancel':
+                merged_ito_data['transport_customs_fees_ids'].append((0, 0, {
+                    'name': cfee.name.id,
+                    'purchase_id': cfee.purchase_id and cfee.purchase_id.id or False,
+                    'value': cfee.value,
+                    'currency_id': cfee.currency_id.id,
+                    'details': cfee.details,
+                    'state': cfee.state,
+                }))
         # Copy Transport Fees
         for tfee in tmpl_ito.transport_transport_fees_ids:
-            merged_ito_data['transport_transport_fees_ids'].append((0, 0, {
-                'name': tfee.name.id,
-                'purchase_id': tfee.purchase_id and tfee.purchase_id.id or False,
-                'value': tfee.value,
-                'currency_id': tfee.currency_id.id,
-                'details': tfee.details,
-                'validated': tfee.validated,
-            }))
+            if tfee.state != 'cancel':
+                merged_ito_data['transport_transport_fees_ids'].append((0, 0, {
+                    'name': tfee.name.id,
+                    'purchase_id': tfee.purchase_id and tfee.purchase_id.id or False,
+                    'value': tfee.value,
+                    'currency_id': tfee.currency_id.id,
+                    'details': tfee.details,
+                    'state': tfee.state,
+                }))
 
         merged_cargo_category = tmpl_ito.cargo_category
         merged_sync_refs = tmpl_ito.sync_ref and tmpl_ito.sync_ref.split(';') or []

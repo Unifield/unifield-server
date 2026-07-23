@@ -127567,7 +127567,7 @@ msgstr "Référence de l'Expedition"
 #. module: transport_mgmt
 #: field:transport.order.out.line,shipment_state:0
 msgid "Shipment State"
-msgstr "Statut de l'Expedition"
+msgstr "Statut de l'Expédition"
 
 #. module: transport_mgmt
 #: field:transport.order,shipment_type:0
@@ -131152,3 +131152,8 @@ msgstr "L'État d'un OTE à fusionner n'est pas cohérent avec l'État de l'OTE 
 #, python-format
 msgid "The Supplier Partner of an ITO to merge is not consistent with the Supplier Partner of the template ITO. "
 msgstr "Le Partenaire du Fournisseur d'un OTE à fusionner n'est pas cohérent avec le Partenaire du Fournisseur de l'OTE modèle. "
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "They have the same Shipment Flow"
+msgstr "Ils ont le même Flux d'Expédition"
