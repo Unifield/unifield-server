@@ -158,6 +158,7 @@ class RemoteSFTP(RemoteInterface):
         try:
             cnopts = pysftp.CnOpts()
             cnopts.hostkeys = None
+            cnopts.compression = True
             self.sftp = pysftp.Connection(self.url, username=self.username, password=self.password, cnopts=cnopts)
             self.sftp._transport.set_keepalive(15)
         except:

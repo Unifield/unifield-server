@@ -215,6 +215,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             try:
                 cnopts = pysftp.CnOpts()
                 cnopts.hostkeys = None
+                cnopts.compression = True
                 sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password, cnopts=cnopts)
                 sftp._transport.set_keepalive(15)
             except:
