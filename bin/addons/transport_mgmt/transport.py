@@ -1036,7 +1036,7 @@ class transport_order_in(osv.osv):
         'oto_created': fields.boolean('Corresponding OTO created', readonly=True, copy=False),
         'oto_id': fields.many2one('transport.order.out', 'OTO', readonly=True, copy=False),
         'from_sync': fields.boolean('From sync', readonly=True, copy=False),
-        'sync_ref': fields.char('OTO Reference', size=64, readonly=True, copy=False, select=1),
+        'sync_ref': fields.char('OTO Reference', size=1024, readonly=True, copy=False, select=1),
         'select_incoming': fields.many2one('stock.picking', string='IN'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
     }
