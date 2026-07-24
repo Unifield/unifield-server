@@ -250,6 +250,8 @@
                     <para style="HeaderInfosValue">[[ pt.partner_id and pt.partner_id.name or ' ' ]]</para>
                     <para style="HeaderInfosValue">[[ pt.address_id and '%s %s' % (pt.address_id.street, pt.address_id.street2) or ' ' ]]</para>
                     <para style="HeaderInfosValue">[[ pt.address_id and '%s %s' % (pt.address_id.zip, pt.address_id.city) or ' ' ]][[ pt.address_id and pt.address_id.country_id and ', %s' % pt.address_id.country_id.name or ' ' ]]</para>
+                    <para style="HeaderInfosTitle">Destination Location:</para>
+                    <para style="HeaderInfosValue">[[ pt.ext_cu and pt.ext_cu.name or ' ' ]]</para>
                 </td>
                 <td>
                     <para style="HeaderInfosTitle"></para>

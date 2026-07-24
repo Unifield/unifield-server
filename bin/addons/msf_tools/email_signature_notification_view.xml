@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <!-- The 2 associated ir_cron will be created during the task creation -->
+        <record id="email_signature_notification_default" model="email.signature.notification">
+            <field name="active" eval="False"/>
+            <field name="reminder_active" eval="False"/>
+        </record>
+
+        <!-- All documents types that are signable are added to the configuration -->
+        <record id="email_sig_notif_doc_applicability_fo" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">sale.order.fo</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_ir" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">sale.order.ir</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_po" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">purchase.order</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_in" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">stock.picking.in</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_int" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">stock.picking.int</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_out" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">stock.picking.out</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_pick" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">stock.picking.pick</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_cash" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">account.bank.statement.cash</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_bank" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">account.bank.statement.bank</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_cheque" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">account.bank.statement.cheque</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_invoice" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">account.invoice</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+        <record id="email_sig_notif_doc_applicability_phys" model="email.signature.notification.doc.applicability">
+            <field name="doc_type">physical.inventory</field>
+            <field name="active" eval="False"/>
+            <field name="email_sign_notif_id" eval="ref('email_signature_notification_default')" />
+        </record>
+    </data>
+
+    <data>
+        <record id="email_signature_notification_form_view" model="ir.ui.view">
+            <field name="name">email.signature.notification.form.view</field>
+            <field name="model">email.signature.notification</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Email Notification for Signatures Configuration" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <separator colspan="4" string="Electronic Signature Notification Settings" />
+                    <field name="active" />
+                    <field name="delay" />
+                    <field name="check_signature_expiry" />
+                    <newline />
+                    <button name="run_email_signature_notification" string="Send initial Email manually" colspan="2" type="object" icon="gtk-execute" />
+                    <button name="run_email_signature_notification_reminder" string="Send reminder Email manually" colspan="2" type="object" icon="gtk-execute" />
+
+                    <separator colspan="4" string="Reminder configuration" />
+                    <group colspan="4" col="4"  attrs="{'readonly':[('active','=','False')]}">
+                        <field name="reminder_active" />
+                    </group>
+
+                    <separator colspan="4" string="Document Applicability" />
+                    <field name="doc_applicability_ids" nolabel="1" colspan="4">
+                        <tree editable="top" hide_new_button="1" hide_delete_button="1">
+                            <field name="doc_type"/>
+                            <field name="active"/>
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
+
+        <menuitem id="email_main_menu" name="Email" parent="base.menu_config" sequence="10025" />
+
+        <record id="ir_actions_server_email_signature_notification" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'email_signature_notification_default')
+action = {
+'res_model' : 'email.signature.notification',
+'view_type' : 'form',
+'view_mode' : 'form',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_email_signature_notification"/>
+            <field name="condition">True</field>
+            <field name="name">Open Email Notification for Signatures Configuration</field>
+        </record>
+
+        <record id="email_signature_notification_menu" model="ir.ui.menu">
+            <field name="name">Email Notification for Signatures Configuration</field>
+            <field name="parent_id" ref="email_main_menu"/>
+            <field name="sequence" eval="15" />
+        </record>
+        <record id="ir_values_menuitem_email_signature_notification" model="ir.values">
+            <field name="name">Menuitem Email Notification for Signatures Configuration</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('msf_tools.ir_actions_server_email_signature_notification')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('email_signature_notification_menu')" name="res_id"/>
+        </record>
+
+        <record id="email_signature_notification_doc_applicability_form_view" model="ir.ui.view">
+            <field name="name">email.signature.notification.doc.applicability.form.view</field>
+            <field name="model">email.signature.notification.doc.applicability</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Email Notification for Signatures Configuration Document Applicability" noteditable="1">
+                    <field name="doc_type" />
+                    <field name="active" />
+                </form>
+            </field>
+        </record>
+
+
+        <record id="ir_actions_server_signature_email_log" model="ir.actions.server">
+            <field name="code">
+action = self.view_signature_email_logs(cr, uid, ids, context=context)
+            </field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_email_log"/>
+            <field name="condition">True</field>
+            <field name="name">Open Signature email logs</field>
+        </record>
+
+        <record id="signature_email_log_menu" model="ir.ui.menu">
+            <field name="name">Signature email logs</field>
+            <field name="parent_id" ref="email_log_menu"/>
+            <field name="sequence" eval="2" />
+        </record>
+        <record id="ir_values_menuitem_signature_email_log" model="ir.values">
+            <field name="name">Menuitem Signature email logs</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('msf_tools.ir_actions_server_signature_email_log')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('signature_email_log_menu')" name="res_id"/>
+        </record>
+    </data>
+</openerp>

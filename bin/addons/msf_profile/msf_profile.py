@@ -36,7 +36,6 @@ import traceback
 import json
 
 from msf_field_access_rights.osv_override import _get_instance_level
-import io
 import csv
 import zlib
 import random
@@ -59,7 +58,224 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF42.0
+    def us_11997_financing_contract_sync(self, cr, uid, *a, **b):
+        # on HQ trigger updates on financing object linked to mission-private rule
+        # this will unlock existing NR
+
+        # on sync server changer owner on rules from project to coordo
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''eligibility_from_date'']' where model='financing.contract.format'")
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''code'']' where model='financing.contract.contract'")
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''funded'']' where model='financing.contract.funding.pool.line'")
+            self.log_info(cr, uid, "US-11997 fixed at HQ")
+        elif cr.table_exists('sync_server_user_rights'):
+            cr.execute("""
+                update sync_server_update u
+                    set owner = (select parent_id from sync_server_entity where id=owner)
+                where
+                    rule_id in (select id from sync_server_sync_rule where sequence_number in (450, 455, 456, 457, 458)) and
+                    owner is not null and
+                    owner in (select id from sync_server_entity where instance_level='project') and
+                    u.id in (select min(id) from sync_server_update u2 where u2.session_id=u.session_id and u2.rule_id=u.rule_id and u2.sdref=u.sdref)
+            """)
+            self.log_info(cr, uid, "US-11997 fixed on sync server")
+
+        return True
+
+    def us_15346_OCBTD101_CHABUSD_no_delete(self, cr, uid, *a, **b):
+        """
+            do no sent sync update deletion on account.journal OCBSY101/CHABUSD
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.code == 'OCBTD101':
+            cr.execute('''
+                delete from ir_model_data
+                where name = 'journal_OCBSY101_CHABUSD_ARAB BANK USD' and
+                not exists(select id from account_journal where id=res_id)
+            ''')
+        return True
+
+    def us_15593_15666_fix_local_products(self, cr, uid, *a, **b):
+        """
+        At Coordo:
+            - Set the Standardization Level of Local Products from Standard/Non-Standard Local to Non-Standard.
+            - Try to deactivate all active Local Products with the UniField Status Forbidden or Archived. If one or more
+            products can not be deactivated, set their UniField Status to Phase Out and create a Product Mass Update for them.
+            - Set the UniField Status of inactive Local Products with the UniField Status Forbidden or Archived to Phase Out
+        """
+        if _get_instance_level(self, cr, uid) == 'coordo':
+            # Local Products to Non-Standard
+            cr.execute("""
+                SELECT p.id FROM product_product p LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE pis.code = 'local' AND p.standard_ok IN ('standard', 'non_standard_local')
+            """)
+            prod_st_ok_ids = [x[0] for x in cr.fetchall()]
+            if prod_st_ok_ids:
+                cr.execute("""UPDATE product_product SET standard_ok = 'non_standard' WHERE id IN %s""", (tuple(prod_st_ok_ids),))  # not_a_user_entry
+                self.log_info(cr, uid, "US-15593-15666: %d Local product(s) had their Standardization Level set to Non-standard" % (cr.rowcount,))
+
+            # Try to deactivate Forbidden/Archived Local Products
+            not_deactivated, not_deac_prod_ids = [], []
+            cr.execute("""
+                SELECT p.id FROM product_product p
+                    LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                    LEFT JOIN product_status ps ON pt.state = ps.id
+                    LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE p.active = 't' AND pis.code = 'local' AND ps.code IN ('archived', 'forbidden')
+            """)
+            prod_to_deac_ids = [x[0] for x in cr.fetchall()]
+            for prod_id in prod_to_deac_ids:
+                deactivated = self.pool.get('product.product').deactivate_product(cr, uid, [prod_id])
+                if deactivated != True:  # If it doesn't return True, the product has not been deactivated
+                    not_deactivated.append(deactivated.get('res_id'))
+            self.log_info(cr, uid, "US-15593-15666: %d Local product(s) were deactivated" % (len(prod_to_deac_ids) - len(not_deactivated),))
+
+            # Create the Product Mass Update with the non-deactivated products
+            # Then set the UF State of non-deactivated products and the already Archived/Forbidden inactive products to Phase Out
+            cr.execute("""
+                SELECT p.id FROM product_product p
+                    LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                    LEFT JOIN product_status ps ON pt.state = ps.id
+                    LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE p.active = 'f' AND pis.code = 'local' AND ps.code IN ('archived', 'forbidden')
+            """)
+            to_phase_out_prod_ids = [x[0] for x in cr.fetchall()]
+
+            for wiz_prod_error in self.pool.get('product.deactivation.error').browse(cr, uid, not_deactivated):
+                not_deac_prod_ids.append(wiz_prod_error.product_id.id)
+            if not_deac_prod_ids:
+                to_phase_out_prod_ids = list(set(to_phase_out_prod_ids + not_deac_prod_ids))
+                p_mass_upd_vals = {
+                    'name': '(US-15593) Local Products UF Status Archived/Forbidden Correction',
+                    'active_product': 'no',
+                    'product_ids': [(6, 0, not_deac_prod_ids)],
+                }
+                self.pool.get('product.mass.update').create(cr, uid, p_mass_upd_vals)
+
+            if to_phase_out_prod_ids:
+                phase_out_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
+                cr.execute("""
+                    UPDATE product_template SET state = %s 
+                    WHERE id IN (SELECT p.product_tmpl_id FROM product_product p WHERE id IN %s)
+                """, (phase_out_id, tuple(to_phase_out_prod_ids)))  # not_a_user_entry
+                self.log_info(cr, uid, "US-15593-15666: %d Local product(s) had their UniField Status set to Phase Out" % (cr.rowcount,))
+
+            # Update the ir_model_data of all products updated by SQL
+            mod_prod_ids = list(set(prod_st_ok_ids + to_phase_out_prod_ids))
+            if mod_prod_ids:
+                cr.execute("""UPDATE ir_model_data SET last_modification = NOW(), touched = '["transport_ok", "state"]'
+                              WHERE model = 'product.product' AND res_id IN %s""", (tuple(mod_prod_ids),))  # not_a_user_entry
+
+        return True
+
+    def us_15663_15664_customs_transport_fees_state(self, cr, uid, *a, **b):
+        """
+        Set the state of Customs/Transport fees to Validated if they have been validated, to Draft otherwise
+        """
+        cr.execute("""UPDATE transport_order_customs_fees SET state = 'draft' WHERE validated = 'f'""")
+        cr.execute("""UPDATE transport_order_customs_fees SET state = 'validated' WHERE validated = 't'""")
+        cr.execute("""UPDATE transport_order_transport_fees SET state = 'draft' WHERE validated = 'f'""")
+        cr.execute("""UPDATE transport_order_transport_fees SET state = 'validated' WHERE validated = 't'""")
+        return True
+
     # UF41.0
+    def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
+        '''
+        Hide the 4 Single Data Entry menus used for manual actions. Then menus will need be manually activated if
+        someone want to test SDE from Unifield
+        Give the new user "sde_tool" the Groups "Sync / User", "Sup_Warehouse_Manager" and "Sup_Transport_Manager"
+        '''
+        # Hide the menu
+        menu_obj = self.pool.get('ir.ui.menu')
+
+        sde_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_main_menu')[1]
+        sde_tools_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_menu')[1]
+        sde_pagi_imp_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_import_menu')[1]
+        sde_pagi_exp_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_export_menu')[1]
+        sde_avchk_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_availability_check_menu')[1]
+
+        menu_obj.write(cr, uid, sde_menu_id, {'active': False}, context={})
+        menu_ids = [sde_tools_menu_id, sde_pagi_imp_menu_id, sde_pagi_exp_menu_id, sde_avchk_menu_id]
+        menu_obj.write(cr, uid, menu_ids, {'active': False}, context={})
+
+        # SQL request to activate the menus, then restart the server
+        # UPDATE ir_ui_menu SET active = 't' WHERE id IN (SELECT res_id FROM ir_model_data WHERE name IN ('sde_import_menu', 'sde_import_main_menu', 'sde_paginated_import_menu', 'sde_paginated_export_menu', 'sde_availability_check_menu'));
+
+        # Set the needed Groups to "sde_tool" user, exclude sync server
+        if not cr.table_exists('sync_server_user_rights'):
+            user_obj = self.pool.get('res.users')
+            sde_tool_user_id = user_obj._get_sde_tool_user_id(cr)
+            if sde_tool_user_id:
+                group_obj = self.pool.get('res.groups')
+                sync_user_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+                group_ids = []
+                if sync_user_ids:
+                    group_ids.append(sync_user_ids[0])
+                sup_wh_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Warehouse_Manager')])
+                if sup_wh_man_group_ids:
+                    group_ids.append(sup_wh_man_group_ids[0])
+                sup_tr_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Transport_Manager')])
+                if sup_tr_man_group_ids:
+                    group_ids.append(sup_tr_man_group_ids[0])
+
+                user_obj.write(cr, uid, sde_tool_user_id, {'groups_id': [(6, 0, group_ids)]}, context={})
+        return True
+
+    def us_15197_replace_product_id_into_counter(self, cr, uid, *a, **b):
+        """
+        Count the number of times a product is merged into instead of storing the product info
+        """
+        cr.execute("""UPDATE product_product SET nb_merge_from = 1 WHERE replace_product_id IS NOT NULL""")
+        return True
+
+    def us_14532_email_signature_notification(self, cr, uid, *a, **b):
+        '''
+        Give default access read rights to all users and read+write rights to Sync_Config group for
+            email.signature.notification and email.signature.notification.doc.applicability at HQ level
+        Add the missing rights for manual signature request email
+        Hide the email.signature.notification configuration menu if necessary
+        '''
+        group_obj = self.pool.get('res.groups')
+        if _get_instance_level(self, cr, uid) == 'hq':
+            sc_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync_Config')])
+            for model in ['email.signature.notification', 'email.signature.notification.doc.applicability']:
+                model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model)])
+                self.pool.get('ir.model.access').create(cr, uid, {
+                    'name': 'common',
+                    'model_id': model_id[0],
+                    'perm_read': True,
+                })
+                if sc_group_ids:
+                    self.pool.get('ir.model.access').create(cr, uid, {
+                        'name': 'Sync_Config',
+                        'model_id': model_id[0],
+                        'groups': [(6, 0, sc_group_ids)],
+                        'perm_read': True,
+                        'perm_write': True,
+                    })
+
+        if not cr.table_exists('sync_server_user_rights'):
+            # exclude sync server
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            for group_name, model, b_names in [
+                ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement', 'physical.inventory'], ['specific_email_signature_notification']),
+                ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order', 'physical.inventory'], ['specific_email_signature_notification'])
+            ]:
+                group_ids = group_obj.search(cr, uid, [('name', '=', group_name)], context=None)
+                if group_ids:
+                    bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
+                    bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+
+        setup_config = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup_config:
+            menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'email_signature_notification_menu')[1]
+            self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': setup_config.signature})
+
+        return True
+
     def us_15072_po_detail(self, cr, uid, *a, **b):
         """
         Add the PO details to the invoice
@@ -7923,15 +8139,9 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def _get_default_ctx_lang(self, cr, uid, context=None):
-        config_obj = self.pool.get('unifield.setup.configuration')
-        if config_obj.search_exists(cr, uid, [], context=context):
-            # if not record, get_config create a record
-            # incorrect in case of user creation during install
-            config_lang = config_obj.get_config(cr, uid).lang_id
-            if config_lang:
-                return config_lang
-        if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
-            return 'en_MF'
+        for lang in ['en_MF', 'fr_MF', 'sp_MF']:
+            if self.pool.get('res.lang').search_exists(cr, uid, [('translatable','=',True), ('code', '=', lang)]):
+                return lang
         return 'en_US'
 
     def set_default_partner_lang(self, cr, uid, context=None):
@@ -8279,67 +8489,6 @@ class sync_tigger_something(osv.osv):
                   product_catalog_path=NULL
                 where international_status=%s ''', (unidata_id,))
             _logger.warn('Reset %d UD products' % (cr.rowcount,))
-
-        if vals.get('name') == 'us-5398-product-price':
-            msf_instance_obj = self.pool.get('msf.instance')
-            prod_obj = self.pool.get('product.product')
-
-            instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-            if instance.instance.startswith('OCG') and \
-                '_KE1_' not in instance.instance and \
-                '_UA1_' not in instance.instance and \
-                '_MX1_' not in instance.instance and \
-                    '_LB1_' not in instance.instance:
-
-                setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-                if not setup_br:
-                    percent = 0
-                else:
-                    percent = setup_br.sale_price
-
-
-                data_file = tools.file_open(opj('msf_profile', 'data', 'us-5398-product-price.csv'), 'rb')
-                data = data_file.read()
-
-                hq_id = msf_instance_obj.search(cr, uid, [('code', '=', 'CH')])
-                hq_info =  msf_instance_obj.browse(cr, uid, hq_id[0])
-
-                crypt_o = tools.misc.crypt(hq_info.instance_identifier)
-                clear_data = io.StringIO(crypt_o.decrypt(data))
-                csv_reader = csv.reader(clear_data, delimiter=',')
-                next(csv_reader)
-                xmlid_price = {}
-                xmlid_code = {}
-                prod_id_price = {}
-
-                for line in csv_reader:
-                    xmlid_price[line[1]] = float(line[2])
-                    xmlid_code[line[1]] = line[0]
-
-
-                all_xmlid = list(xmlid_price.keys())
-
-                for sdref, p_id in prod_obj.find_sd_ref(cr, uid, all_xmlid).items():
-                    prod_id_price[p_id] = xmlid_price[sdref]
-                    del xmlid_code[sdref]
-
-                if xmlid_code:
-                    _logger.warn('OCG Prod price update, %d products not found: %s' % (len(xmlid_code), ', '.join(list(xmlid_code.values()))))
-
-                nb_updated= 0
-                nb_ignored = 0
-                for prod in prod_obj.read(cr, uid, list(prod_id_price.keys()), ['standard_price', 'product_tmpl_id']):
-                    if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.000001:
-                        list_price = round(prod_id_price[prod['id']] * (1 + (percent/100.00)), 5)
-                        nb_updated += 1
-                        cr.execute('update product_template set standard_price=%s, list_price=%s where id=%s', (prod_id_price[prod['id']], list_price, prod['product_tmpl_id'][0]))
-                        cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
-                            (1, NOW(), %s, %s, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
-                            """,  (prod['standard_price'], prod_id_price[prod['id']], prod['id']))
-                    else:
-                        nb_ignored += 1
-
-                _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
         if vals.get('name') == 'us-7295-delete-not-hq-links' and context.get('sync_update_execution'):
             cr.execute("""

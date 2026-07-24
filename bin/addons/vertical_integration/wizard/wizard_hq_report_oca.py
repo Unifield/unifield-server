@@ -37,13 +37,39 @@ class wizard_export_vi_finance(osv.osv_memory):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             return []
 
-        coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
-        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16)], context=context)
+        if context is None:
+            context = {}
+
+        if not context.get('check_project_state'):
+            coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
+            return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16)], context=context)
+
+        cr.execute('''
+            select
+                st.id
+            from
+                account_period_state st
+                inner join msf_instance coo on coo.id = st.instance_id
+                inner join account_period p on p.id = st.period_id
+                left join msf_instance proj on proj.parent_id = coo.id and proj.state = 'active'
+                left join account_period_state st_proj on st_proj.instance_id = proj.id and st_proj.period_id = st.period_id and st_proj.state in ('field-closed', 'mission-closed', 'done')
+            where
+                st.state = 'mission-closed' and
+                coo.level = 'coordo' and
+                coalesce(st.auto_export_vi, 'f') = 'f' and
+                p.number > 0 and
+                p.number < 16
+            group by
+                st.id
+            having
+                count(proj.id) = count(st_proj.id)
+            ''')
+        return [x[0] for x in cr.fetchall()]
 
 
     def get_active_export_ids(self, cr, uid, context=None):
         instance = self.pool.get('res.company')._get_instance_record(cr, uid)
-        if not instance or instance.instance not in ('HQ_OCA', 'OCP_HQ'):
+        if not instance or instance.instance not in ('HQ_OCA', 'OCP_HQ', 'HQ_UBUNTU'):
             return False
 
         return self.pool.get('automated.export').search(cr, uid, [('active', '=', True), ('function_id.model_id', '=', self._name)], context=context)
@@ -53,7 +79,7 @@ class wizard_export_vi_finance(osv.osv_memory):
         if not export_ids:
             return False
 
-        if not self.get_period_state(cr, uid, context=None):
+        if not self.get_period_state(cr, uid, context=context):
             return False
 
         export_obj = self.pool.get('automated.export')
@@ -113,6 +139,7 @@ class wizard_export_vi_finance(osv.osv_memory):
                         year=strptime(period_state.period_id.date_start, '%Y-%m-%d').tm_year,
                         month=period_state.period_id.number or 0,
                         date=time.strftime('%Y%m%d%H%M%S'),
+                        instance3char=period_state.instance_id.code[0:3],
                     )
                     if period_state.already_exported:
                         file_name = 'reopen_%s' % file_name

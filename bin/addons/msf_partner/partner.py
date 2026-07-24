@@ -26,6 +26,7 @@ from msf_partner import PARTNER_TYPE
 from account_override import ACCOUNT_RESTRICTED_AREA
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
+import re
 from tools.translate import _
 from lxml import etree
 from msf_field_access_rights.osv_override import _record_matches_domain
@@ -307,6 +308,38 @@ class res_partner(osv.osv):
             return [('locally_created', '=', False)]
         return []
 
+    def _get_can_be_msf_entity(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Only External Partners, and External Partners with non "EXXX " names on OCB can use msf_entity
+        """
+        if not ids:
+            return {}
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        oc = ''
+        entity_obj = self.pool.get('sync.client.entity')
+
+        local_market_id = 0
+        try:
+            local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
+        except ValueError:
+            pass
+
+
+        if entity_obj:
+            oc = entity_obj.get_entity(cr, uid).oc
+        for partner in self.read(cr, uid, ids, ['name', 'partner_type'], context=context):
+            allowed = False
+            if partner['id'] != local_market_id and partner['partner_type'] == 'external' and \
+                    (oc != 'ocb' or (oc == 'ocb' and not re.match('^E[0-9]{3} ', partner['name']))):
+                allowed = True
+            res[partner['id']] = allowed
+        return res
+
 
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
@@ -374,6 +407,9 @@ class res_partner(osv.osv):
         'locally_created': fields.boolean('Locally Created', help='Partner Created on this instance', readonly=1),
         'allow_external_edition': fields.function(_get_allow_external_edition, type='boolean', method=True, fnct_search=_search_allow_external_edition, string="Editable ext. partner"),
         'instance_creator': fields.char('Instance Creator', size=64, readonly=1, select=1),
+        'can_be_msf_entity': fields.function(_get_can_be_msf_entity, type='boolean', method=True, string="The Partner can be a MSF Entity"),
+        'is_msf_entity': fields.boolean('MSF Entity'),
+        'msf_entity': fields.selection(string='MSF Entity Type', selection=[('oca', 'OCA'), ('ocb', 'OCB'), ('ocg', 'OCG'), ('ocp', 'OCP'), ('ocba', 'OCBA'),('ubutu', 'UBUNTU'),('waca', 'WACA')]),
     }
 
     _defaults = {
@@ -387,6 +423,8 @@ class res_partner(osv.osv):
         'instance_creator': lambda obj, cr, uid, c: obj._get_instance_creator(cr, uid, c),
         'property_product_pricelist_purchase': lambda self, cr, uid, c: self.pool.get('product.pricelist').get_company_default_pricelist(cr, uid, 'purchase', c),
         'property_product_pricelist': lambda self, cr, uid, c: self.pool.get('product.pricelist').get_company_default_pricelist(cr, uid, 'sale', c),
+        'is_msf_entity': lambda *a: False,
+        'msf_entity': lambda *a: False,
     }
 
     def _get_instance_creator(self, cr, uid, context=None):
@@ -794,6 +832,16 @@ class res_partner(osv.osv):
         if vals and ('customer' in vals or 'supplier' in vals) and not vals.get('customer') and not vals.get('supplier'):
             type_changed = True
 
+        oc = ''
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj:
+            oc = entity_obj.get_entity(cr, uid).oc
+        if vals.get('partner_type') and (vals['partner_type'] != 'external' or
+                                         (vals['partner_type'] == 'external' and oc == 'ocb' and re.match('^E[0-9]{3} ', vals.get('name', '')))):
+            vals['is_msf_entity'] = False
+        if not vals.get('is_msf_entity'):
+            vals['msf_entity'] = False
+
         res = super(res_partner, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
 
         if type_changed:
@@ -972,7 +1020,8 @@ class res_partner(osv.osv):
             context = {}
         # reset the second value, otherwise the content of the field triggers the creation of a new company
         fields_to_reset = ['ref_companies', 'state', 'instance_creator', 'property_product_pricelist_purchase',
-                           'property_product_pricelist', 'property_account_payable', 'property_account_receivable']
+                           'property_product_pricelist', 'property_account_payable', 'property_account_receivable',
+                           'is_msf_entity', 'msf_entity']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:
@@ -985,6 +1034,18 @@ class res_partner(osv.osv):
         for ftd in to_del:
             if ftd in res:
                 del(res[ftd])
+        return res
+
+    def on_change_is_msf_entity(self, cr, uid, ids, is_msf_entity, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        if not is_msf_entity:
+            res['value'] = {'msf_entity': False}
+
         return res
 
     def on_change_active(self, cr, uid, ids, active, name, partner_type, context=None):
@@ -1067,8 +1128,21 @@ class res_partner(osv.osv):
             if other_supplier:
                 r.update({'property_stock_supplier': other_supplier[1]})
 
-        if partner_type and partner_type == 'esc':
-            r['zone'] = 'international'
+        if partner_type:
+            if partner_type == 'esc':
+                r['zone'] = 'international'
+            if partner_type != 'external':
+                r.update({'can_be_msf_entity': False, 'is_msf_entity': False, 'msf_entity': False})
+            else:
+                local_market_id = 0
+                try:
+                    local_market_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'order_types', 'res_partner_local_market')[1]
+                except ValueError:
+                    pass
+                if ids and ids[0] == local_market_id:
+                    r['can_be_msf_entity'] = False
+                else:
+                    r['can_be_msf_entity'] = True
 
         return {'value': r}
 

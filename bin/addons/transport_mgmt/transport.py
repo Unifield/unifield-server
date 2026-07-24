@@ -28,8 +28,8 @@ transport_order_fees_type()
 class transport_order_customs_fees(osv.osv):
     _name = 'transport.order.customs.fees'
     _description = 'Fees'
-
     _order = 'name, id'
+    _trace = True
 
     def _get_vals(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -61,6 +61,8 @@ class transport_order_customs_fees(osv.osv):
         'value': fields.float('Cost', decimal=(16,2)),
         'currency_id': fields.many2one('res.currency', 'Currency', required=1, domain=[('active', '=', True)]),
         'details': fields.char('Details', size=512),
+        'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancelled')], 'State', required=1, readonly=1),
+        # TODO: Remove validated field after UF42.0 because it is replaced by a state field
         'validated': fields.boolean('Validated', readonly=1),
         'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
@@ -83,8 +85,8 @@ class transport_order_customs_fees(osv.osv):
         'name_help': fields.function(_get_vals, method=True, string='Customs fees help message', type='text', multi='get_vals'),
     }
 
-    _default = {
-        'validated': False,
+    _defaults = {
+        'state': 'draft',
     }
 
     def onchange_purchase_id(self, cr, uid, ids, purchase_id):
@@ -104,7 +106,16 @@ class transport_order_customs_fees(osv.osv):
 
         if self.search_exists(cr, uid, [('id', 'in', ids), ('value', '<=', 0)], context=context):
             raise osv.except_osv(_('Error'), _('You can not have a cost with a negative or zero value'))
-        self.write(cr, uid, ids, {'validated': True}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        return True
+
+    def cancel(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '!=', 'draft')], context=context):
+            raise osv.except_osv(_('Error'), _('You can not cancel a non-Draft Customs Fee'))
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         return True
 
     def dummy(self, cr, uid, ids, context=None):
@@ -116,8 +127,8 @@ transport_order_customs_fees()
 class transport_order_transport_fees(osv.osv):
     _name = 'transport.order.transport.fees'
     _description = 'Transport Fees'
-
     _order = 'name, id'
+    _trace = True
 
     def _get_vals(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -149,6 +160,8 @@ class transport_order_transport_fees(osv.osv):
         'value': fields.float('Cost', decimal=(16,2)),
         'currency_id': fields.many2one('res.currency', 'Currency', required=1, domain=[('active', '=', True)]),
         'details': fields.char('Details', size=512),
+        'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancelled')], 'State', required=1, readonly=1),
+        # TODO: Remove validated field after UF42.0 because it is replaced by a state field
         'validated': fields.boolean('Validated', readonly=1),
         'transport_out_id': fields.many2one('transport.order.out', 'OTO', select=1),
         'transport_in_id': fields.many2one('transport.order.in', 'ITO', select=1),
@@ -171,8 +184,8 @@ class transport_order_transport_fees(osv.osv):
         'name_help': fields.function(_get_vals, method=True, string='Transport fees help message', type='text', multi='get_vals'),
     }
 
-    _default = {
-        'validated': False,
+    _defaults = {
+        'state': 'draft',
     }
 
     def onchange_purchase_id(self, cr, uid, ids, purchase_id):
@@ -192,7 +205,16 @@ class transport_order_transport_fees(osv.osv):
 
         if self.search_exists(cr, uid, [('id', 'in', ids), ('value', '<=', 0)], context=context):
             raise osv.except_osv(_('Error'), _('You can not have a cost with a negative or zero value'))
-        self.write(cr, uid, ids, {'validated': True}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        return True
+
+    def cancel(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '!=', 'draft')], context=context):
+            raise osv.except_osv(_('Error'), _('You can not cancel a non-Draft Transport Fee'))
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         return True
 
     def dummy(self, cr, uid, ids, context=None):
@@ -394,8 +416,8 @@ transport_sub_step()
 class transport_order_step(osv.osv):
     _name = 'transport.order.step'
     _description = 'Steps'
-
     _order = 'step_id'
+    _trace = True
 
     def _auto_init(self, cr, context=None):
         res = super(transport_order_step, self)._auto_init(cr, context)

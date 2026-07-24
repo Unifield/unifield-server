@@ -330,7 +330,7 @@
     <Cell ss:Index="10"><Data ss:Type="String"></Data></Cell>
    </Row>
    <Row>
-    <Cell><Data ss:Type="String"></Data></Cell>
+    <Cell ss:MergeAcross="1"/>
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299328"><Data ss:Type="String">${_('Your Ref.:')|x}</Data></Cell>
@@ -412,7 +412,7 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299448"><Data ss:Type="String">${_('Transport mode:')|x}</Data></Cell>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getSel(objects[0], 'transport_type'))|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getSel(objects[0], 'transport_type') or '-')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_other or '')|x}</Data></Cell>
@@ -422,8 +422,8 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299448"><Data ss:Type="String">${_('Transport mode')|x}:</Data></Cell>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getSel(objects[0], 'transport_type'))|x}</Data></Cell> 
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299448"/>
+    <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_other or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
@@ -442,7 +442,29 @@
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s118"/>
-</Row>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="12">
+    <Cell ss:MergeAcross="1" ss:StyleID="s124"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s16"><Data ss:Type="String">${_('Destination Location:')|x}</Data></Cell>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s118"/>
+   </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="12">
+    <Cell ss:MergeAcross="1" ss:StyleID="s124"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${p['ppl'].ext_cu and p['ppl'].ext_cu.name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s125"/>
+    <Cell ss:StyleID="s118"/>
+   </Row>
    % if not p['pf']:
    <Row>
        <Cell ss:StyleID="NoPack" ss:MergeAcross="11"><Data ss:Type="String">${_('NO PACK FAMILIES IN THIS PPL')|x}</Data></Cell>

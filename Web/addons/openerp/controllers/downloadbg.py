@@ -38,6 +38,7 @@ class DownLoadBg(SecuredController):
         finished = "False"
         data_collected = "False"
         exception = False
+        exception_tb = ''
         if data_bg['percent'] >= 1.00:
             data_collected = "True"
             if not data_bg['finished']:
@@ -48,6 +49,7 @@ class DownLoadBg(SecuredController):
                 if finish:
                     finished = "True"
                 exception = report_state[1]
+                exception_tb = report_state[2]
                 if not exception and from_button:
                     report = rpc.session.execute('report', 'report_get', data_bg['report_id'])
                     report_type = report['format']
@@ -57,7 +59,7 @@ class DownLoadBg(SecuredController):
                     return actions._print_data(report)
 
         return dict(finish=finish, percent=data_bg['percent'], total=finished,
-                    data_collected=data_collected, report_name=data_bg['report_name'], res_id=res_id, exception=exception)
+                    data_collected=data_collected, report_name=data_bg['report_name'], res_id=res_id, exception=exception, exception_tb=exception_tb)
     @expose('json')
     def kill(self, res_id):
         return {'result': rpc.RPCProxy('memory.background.report').kill_report(int(res_id), rpc.session.context)}

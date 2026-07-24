@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="report_signature_email_logs"
+            string="Signature Email Logs Report"
+            model="email.log"
+            name="report_signature_email_logs"
+            report_type="openpyxl"
+            auto="False"
+            target_filename="Signature_Email_Logs_Report"
+            menu="False"
+         />
+    </data>
+</openerp>

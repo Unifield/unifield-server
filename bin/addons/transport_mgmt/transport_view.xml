@@ -279,11 +279,11 @@
                             <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', 'not in', ['planned', 'cancel'])]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
-                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
-                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    filter_selector="[('Show all', []), ('Hide cancelled', [('state', '!=', 'cancel')]), ('Validated only', [('state', '=', 'validated')]), ('Hide validated', [('state', 'not in', ['validated', 'cancel'])])]"
+                                    default_selector="'1'" attrs="{'readonly': [('state', '=', 'cancel')]}"
                                     o2m_selectable="2"
                                 >
-                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                <tree string="Fees" colors="grey:state=='cancel'" editable="top" noteditable="state != 'draft'" hide_delete_button="1">
                                     <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}" help=""/>
                                     <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
@@ -294,20 +294,21 @@
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
-                                    <field name="validated" />
-                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
-                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                    <field name="state" />
+                                    <field name="parent_state" invisible="1" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
                         </page>
 
                         <page string="Transport Fees">
                             <field name="transport_transport_fees_ids" nolabel="1" colspan="4"
-                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
-                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    filter_selector="[('Show all', []), ('Hide cancelled', [('state', '!=', 'cancel')]), ('Validated only', [('state', '=', 'validated')]), ('Hide validated', [('state', 'not in', ['validated', 'cancel'])])]"
+                                    default_selector="'1'" attrs="{'readonly': [('state', '=', 'cancel')]}"
                                     o2m_selectable="2"
                                 >
-                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                <tree string="Fees" colors="grey:state=='cancel'" editable="top" noteditable="state != 'draft'" hide_delete_button="1">
                                     <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
                                     <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
@@ -318,9 +319,10 @@
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
-                                    <field name="validated" />
-                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
-                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                    <field name="state" />
+                                    <field name="parent_state" invisible="1" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
                         </page>
@@ -591,11 +593,11 @@
                             <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', 'not in', ['planned', 'cancel'])]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
-                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
-                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    filter_selector="[('Show all', []), ('Hide cancelled', [('state', '!=', 'cancel')]), ('Validated only', [('state', '=', 'validated')]), ('Hide validated', [('state', 'not in', ['validated', 'cancel'])])]"
+                                    default_selector="'1'" attrs="{'readonly': [('state', '=', 'cancel')]}"
                                     o2m_selectable="2"
                                 >
-                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                <tree string="Fees" colors="grey:state=='cancel'" editable="top" noteditable="state != 'draft'" hide_delete_button="1">
                                     <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
                                     <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
@@ -606,20 +608,21 @@
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
-                                    <field name="validated" />
-                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
-                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                    <field name="state" />
+                                    <field name="parent_state" invisible="1" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
                         </page>
 
                         <page string="Transport Fees">
                             <field name="transport_transport_fees_ids" nolabel="1" colspan="4"
-                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
-                                    attrs="{'readonly': [('state', '=', 'cancel')]}"
+                                    filter_selector="[('Show all', []), ('Hide cancelled', [('state', '!=', 'cancel')]), ('Validated only', [('state', '=', 'validated')]), ('Hide validated', [('state', 'not in', ['validated', 'cancel'])])]"
+                                    default_selector="'1'" attrs="{'readonly': [('state', '=', 'cancel')]}"
                                     o2m_selectable="2"
                                 >
-                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                <tree string="Fees" colors="grey:state=='cancel'" editable="top" noteditable="state != 'draft'" hide_delete_button="1">
                                     <button name="dummy" type="object" icon="gtk-help" attrs="{'invisible': [('name', '=', False)]}"/>
                                     <field name="name" widget="selection" />
                                     <field name="name_help" invisible="1" />
@@ -630,9 +633,10 @@
                                     <field name="value" />
                                     <field name="currency_id" />
                                     <field name="details" />
-                                    <field name="validated" />
-                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
-                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                    <field name="state" />
+                                    <field name="parent_state" invisible="1" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="cancel" string="Cancel" confirm="Do you really want to cancel the record ?" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('parent_state', '=', 'cancel')]}" type="object" icon="gtk-del"/>
                                 </tree>
                             </field>
                         </page>

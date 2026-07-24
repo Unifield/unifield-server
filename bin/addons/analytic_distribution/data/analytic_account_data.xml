@@ -26,6 +26,7 @@
             <field name="type">view</field>
             <field name="active">True</field>
             <field name="category">FUNDING</field>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
         </record>
         
         <record id="analytic_account_free_1" model="account.analytic.account">

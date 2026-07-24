@@ -151,11 +151,16 @@ class outgoing_delivery_processor(osv.osv):
                 _('No data to process !'),
             )
 
+        pick_obj = self.pool.get('stock.picking')
+
         pick_id = []
         for proc in self.browse(cr, uid, ids, context=context):
             pick_id = proc['picking_id']['id']
 
-        self.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False}, context=context)
+        self.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False, 'sde_updated': False}, context=context)
+
+        # Remove the sde_updated flag from the OUT
+        pick_obj.write(cr, uid, pick_id, {'sde_updated': False}, context=context)
 
         # Remove all KCL references from the OUT process wizard lines
         out_m_proc_obj = self.pool.get('outgoing.delivery.move.processor')
@@ -163,7 +168,7 @@ class outgoing_delivery_processor(osv.osv):
         if out_m_proc_ids:
             out_m_proc_obj.write(cr, uid, out_m_proc_ids, {'composition_list_id': False}, context=context)
 
-        return self.pool.get('stock.picking').action_process(cr, uid, pick_id, context=context)
+        return pick_obj.action_process(cr, uid, pick_id, context=context)
 
     def do_save_draft(self, cr, uid, ids, context=None):
         if context is None:

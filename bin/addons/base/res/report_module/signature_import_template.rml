@@ -45,6 +45,11 @@
         <blockTable colWidths="565.0" style="NonSignBlock">
             <tr>
                 <td>
+                    <para style="TextInformation"><b>Warning! Adding the signature via PDF editor software will not work. Please do not use this option and follow the correct procedure below.</b></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <para style="TextInformation">Please sign inside the box without going beyond the frame. Then scan this paper and save the scan in your computer in portrait mode, and follow the instructions below:</para>
                 </td>
             </tr>

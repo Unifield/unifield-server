@@ -24,6 +24,7 @@ import math
 from osv import fields,osv
 import tools
 import pooler
+import re
 from tools.translate import _
 
 
@@ -140,6 +141,8 @@ class res_partner(osv.osv):
         'employee': fields.boolean('Employee', help="Check this box if the partner is an Employee."),
         'email': fields.related('address', 'email', type='char', size=240, string='E-mail', write_relate=True),
         'company_id': fields.many2one('res.company', 'Company', select=1),
+        'tax_identification_number': fields.char('Tax Identification Number', size=15, help="Tax Identification Number"),
+        'business_registration_number': fields.char('Business Registration Number', size=15, help="Business Registration Number"),
     }
 
     def _default_category(self, cr, uid, context={}):
@@ -185,6 +188,23 @@ class res_partner(osv.osv):
         name = self.read(cr, uid, [id], ['name'])[0]['name']
         default.update({'name': name+ _(' (copy)'), 'events':[]})
         return super(res_partner, self).copy(cr, uid, id, default, context)
+
+    def on_change_name(self, cr, uid, ids, name, partner_type, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        if name and partner_type:
+            entity_obj = self.pool.get('sync.client.entity')
+            if entity_obj and partner_type == 'external':
+                if entity_obj.get_entity(cr, uid).oc == 'ocb' and re.match('^E[0-9]{3} ', name):
+                    res['value'] = {'can_be_msf_entity': False, 'is_msf_entity': False, 'msf_entity': False}
+                else:
+                    res['value'] = {'can_be_msf_entity': True}
+
+        return res
 
     def do_share(self, cr, uid, ids, *args):
         return True

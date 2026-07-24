@@ -74,7 +74,7 @@ class AccountDrill(object):
     # move lines base query
     _sql = '''SELECT sum(debit), sum(credit),
         sum(debit_currency), sum(credit_currency),
-        max(c.name)
+        max(c.name), count(*)
         FROM account_move_line l
         JOIN account_move am ON (am.id = l.move_id)
         JOIN res_currency c ON (c.id = l.currency_id)
@@ -86,7 +86,7 @@ class AccountDrill(object):
     # initial balance move lines base query (from IB journal period 0)
     _sql_ib = '''SELECT sum(debit), sum(credit),
         sum(debit_currency), sum(credit_currency),
-        max(c.name)
+        max(c.name), count(*)
         FROM account_move_line l
         JOIN account_move am ON (am.id = l.move_id)
         JOIN res_currency c ON (c.id = l.currency_id)
@@ -113,6 +113,8 @@ class AccountDrill(object):
         self.account_report_types = account_report_types
         self.with_balance_only = with_balance_only
         self.reconcile_filter = reconcile_filter
+
+        self.total_count = 0
         if self.account_report_types and not self.include_accounts:
             # deduce included accounts from report type filter
             domain = [
@@ -234,6 +236,7 @@ class AccountDrill(object):
         create a new node, if of move line level, compute amounts to
         consolidate up later with reduce()
         """
+
         def prepare_sql(sql, sub_query, node):
             # MEMO: be aware that _query_get append an account_id in sub_query
             # clause due to 'chart_account_id' in context
@@ -256,7 +259,7 @@ class AccountDrill(object):
                 total_debit = 0.
                 total_credit = 0.
 
-                for debit, credit, debit_ccy, credit_ccy, ccy_name \
+                for debit, credit, debit_ccy, credit_ccy, ccy_name, count \
                         in cr.fetchall():
                     if not append or ccy_name not in node.data:
                         node.data[ccy_name] = {}
@@ -269,6 +272,7 @@ class AccountDrill(object):
                     node.data[ccy_name]['credit_ccy'] += float(credit_ccy or 0.)
                     total_debit += float(debit or 0.)
                     total_credit += float(credit or 0.)
+                    self.total_count += count
 
                 # total functional all currencies
                 node.data['*']['debit'] += total_debit
@@ -298,7 +302,6 @@ class AccountDrill(object):
                 sql = prepare_sql(self._sql_ib, self.query_ib, node)
                 self.cr.execute(sql, (account_id, ))
                 register_sql_result(self.cr, node, append=True)
-
         return node
 
     def _search(self, domain):

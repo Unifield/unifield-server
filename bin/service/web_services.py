@@ -601,6 +601,77 @@ class common(_ObjectService):
                     msg = tools.ustr(e)
                 return msg
             return True
+        elif method == 'send_reset_password_email':
+            try:
+                db_name = params[0]
+                login = params[1]
+                email = params[2]
+                db, pool = pooler.get_db_and_pool(db_name)
+                cr = db.cursor()
+                try:
+                    user_obj = pool.get('res.users')
+                    result = user_obj.send_reset_password_email(db_name, login, email)
+                finally:
+                    cr.close()
+                return result
+            except Exception as e:
+                if hasattr(e, 'value'):
+                    msg = tools.ustr(e.value)
+                else:
+                    msg = tools.ustr(e)
+                return msg
+        elif method == 'send_login_email':
+            try:
+                db_name = params[0]
+                email = params[1]
+                db, pool = pooler.get_db_and_pool(db_name)
+                cr = db.cursor()
+                try:
+                    user_obj = pool.get('res.users')
+                    result = user_obj.send_login_email(db_name, email)
+                finally:
+                    cr.close()
+                return result
+            except Exception as e:
+                if hasattr(e, 'value'):
+                    msg = tools.ustr(e.value)
+                else:
+                    msg = tools.ustr(e)
+                return msg
+        elif method == 'reset_password_from_token':
+            try:
+                db_name = params[0]
+                login = params[1]
+                email = params[2]
+                token = params[3]
+                new_password = params[4]
+                db, pool = pooler.get_db_and_pool(db_name)
+                cr = db.cursor()
+                try:
+                    user_obj = pool.get('res.users')
+                    result = user_obj.reset_password_from_token(db_name, login, email, token, new_password)
+                finally:
+                    cr.close()
+                return result
+            except Exception as e:
+                if hasattr(e, 'value'):
+                    msg = tools.ustr(e.value)
+                else:
+                    msg = tools.ustr(e)
+                return msg
+        elif method == 'is_mail_configured':
+            try:
+                db_name = params[0]
+                db, pool = pooler.get_db_and_pool(db_name)
+                cr = db.cursor()
+                try:
+                    user_obj = pool.get('res.users')
+                    result = user_obj.is_mail_configured(db_name)
+                finally:
+                    cr.close()
+                return result
+            except Exception:
+                return False
         elif method == 'logout':
             if auth:
                 auth.logout(params[1])
@@ -1127,7 +1198,9 @@ class report_spool(netsvc.ExportService):
                     logger = netsvc.Logger()
                     logger.notifyChannel('web-services', netsvc.LOG_ERROR,
                                          'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
-                    if hasattr(exception, 'name') and hasattr(exception, 'value'):
+                    if isinstance(exception, osv.except_message):
+                        self._reports[id]['exception'] = exception
+                    elif hasattr(exception, 'name') and hasattr(exception, 'value'):
                         self._reports[id]['exception'] = ExceptionWithTraceback('%s %s' % (tools.ustr(exception.name), tools.ustr(exception.value)), tb_s)
                     else:
                         self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb_s)
@@ -1173,8 +1246,10 @@ class report_spool(netsvc.ExportService):
             if self._reports[report_id]['uid'] == uid:
                 result = self._reports[report_id]
                 if result.get('exception'):
-                    return result['state'], '%s %s' % (result['exception'].message, result['exception'].traceback)
-                return result['state'], ''
+                    if isinstance(result.get('exception'), osv.except_message):
+                        return result['state'], result['exception'].value, ''
+                    return result['state'], result['exception'].message, result['exception'].traceback
+                return result['state'], '', ''
             else:
                 raise Exception('AccessDenied')
         else:

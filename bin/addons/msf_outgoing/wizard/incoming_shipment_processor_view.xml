@@ -78,6 +78,7 @@
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree" context="{'display_process_to_ship_button': display_process_to_ship_button}"
                         colspan="4" nolabel="1" />
+                    <field name="sde_updated" readonly="1" attrs="{'invisible': [('sde_updated', '=', False)]}"/>
                     <group colspan="4" col="4" name="claim">
                         <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
                         <notebook colspan="4">

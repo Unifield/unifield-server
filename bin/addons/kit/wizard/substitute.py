@@ -112,17 +112,21 @@ class substitute(osv.osv_memory):
     def _create_picking(self, cr, uid, ids, obj, date, context=None):
         '''
         create internal picking object
-
         name of picking according to actual step
         '''
         # objects
         kit_obj = self.pool.get('composition.kit')
         pick_obj = self.pool.get('stock.picking')
         # different behavior depending on step
+        text = ''
         if context.get('step', False) == 'substitute':
             text = 'Kit Substitution'
         elif context.get('step', False) == 'de_kitting':
             text = 'De-Kitting'
+        elif context.get('step', False) == 'kcl_add_items':
+            text = 'Kit Items Addition'
+        elif context.get('step', False) == 'kcl_remove_items':
+            text = 'Kit Items Removal'
         # we create the internal picking object
         name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
         data = name.split('/')
@@ -267,6 +271,142 @@ class substitute(osv.osv_memory):
         pick_obj.action_move(cr, uid, [pick_id])
         wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_done', cr)
         return True
+
+    def do_add_items(self, cr, uid, ids, context=None):
+        '''
+        method to add items to a KCL
+        '''
+        # objects
+        move_obj = self.pool.get('stock.move')
+        kit_obj = self.pool.get('composition.kit')
+        item_obj = self.pool.get('composition.item')
+        data_tools_obj = self.pool.get('data.tools')
+        # load default data
+        data_tools_obj.load_common_data(cr, uid, ids, context=context)
+
+        # date is today
+        date = context['common']['date']
+        # default company id
+        company_id = context['common']['company_id']
+        # reason type
+        reason_type_id = context['common']['reason_type_id']
+        # kitting location
+        kitting_id = context['common']['kitting_id']
+        # kit ids
+        kit_ids = context['active_ids']
+        # integrity constraint
+        integrity_check = self._check_integrity(cr, uid, ids, context=context)
+        if not integrity_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, w_type='update', context=context)
+        for obj in self.browse(cr, uid, ids, context=context):
+            # we create the internal picking object
+            pick_id = self._create_picking(cr, uid, ids, obj, date, context=context)
+            # items to add cannot be empty
+            if not len(obj.replacement_item_ids):
+                raise osv.except_osv(_('Warning !'), _('Replacement Items cannot be empty.'))
+            # for each replacement item, we create a stock move from source location to kitting location and create a kit item
+            for item in obj.replacement_item_ids:
+                # we check the batch if exists, should be linked to selected product
+                if item.lot_id_substitute_item:
+                    if item.lot_id_substitute_item.product_id.id != item.product_id_substitute_item.id:
+                        raise osv.except_osv(_('Warning !'), _('Selected Batch Number does not correspond to selected Product'))
+                # we check product qty
+                if item.qty_substitute_item <= 0:
+                    raise osv.except_osv(_('Warning !'), _('Replacement Item quantity must be greater than 0.'))
+                # we check kcl
+                if item.kcl_id_substitute_item and item.qty_substitute_item > 1:
+                    raise osv.except_osv(_('Warning !'), _('Replacement Item quantity must be no greater than 1 if there is a KCL reference.'))
+                # create corresponding stock move
+                move_values = {'name': item.product_id_substitute_item.name[:64],
+                               'picking_id': pick_id,
+                               'product_id': item.product_id_substitute_item.id,
+                               'asset_id': item.asset_id_substitute_item.id,
+                               'date': date,
+                               'date_expected': date,
+                               'product_qty': item.qty_substitute_item,
+                               'product_uom': item.uom_id_substitute_item.id,
+                               'product_uos_qty': item.qty_substitute_item,
+                               'product_uos': item.uom_id_substitute_item.id,
+                               'product_packaging': False,
+                               'address_id': False,
+                               'location_id': item.location_id_substitute_item.id,
+                               'location_dest_id': kitting_id,
+                               'sale_line_id': False,
+                               'tracking_id': False,
+                               'state': 'draft',
+                               'note': 'Kit Substitution - Go to Kit',
+                               'company_id': company_id,
+                               'reason_type_id': reason_type_id,
+                               'prodlot_id': item.lot_id_substitute_item.id,
+                               }
+                move_obj.create(cr, uid, move_values, context=context)
+                # create corresponding kit item
+                item_values = {'item_module': item.module_substitute_item,
+                               'item_product_id': item.product_id_substitute_item.id,
+                               'item_qty': item.qty_substitute_item,
+                               'item_uom_id': item.uom_id_substitute_item.id,
+                               'item_asset_id': item.asset_id_substitute_item.id,
+                               'kcl_id': item.kcl_id_substitute_item and item.kcl_id_substitute_item.id or False,
+                               'item_lot_id': item.lot_id_substitute_item.id,
+                               'item_exp': item.exp_substitute_item,
+                               'item_kit_id': obj.kit_id.id,
+                               'item_description': 'Replacement Item from %s location.'%item.location_id_substitute_item.name,
+                               'comment': item.comment or '',
+                               }
+                item_obj.create(cr, uid, item_values, context=context)
+            # confirm - force availability and validate the internal picking
+            self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
+
+        # Modify expiry date step
+        res = kit_obj.modify_expiry_date(cr, uid, kit_ids, context=context)
+        return res
+
+    def do_remove_items(self, cr, uid, ids, context=None):
+        '''
+        method to remove items from a KCL, partially or in full
+        '''
+        # objects
+        kit_obj = self.pool.get('composition.kit')
+        item_obj = self.pool.get('composition.item')
+        data_tools_obj = self.pool.get('data.tools')
+        # load default data
+        data_tools_obj.load_common_data(cr, uid, ids, context=context)
+
+        # date is today
+        date = context['common']['date']
+        # kit ids
+        kit_ids = context['active_ids']
+        # integrity constraint
+        integrity_check = self._check_integrity(cr, uid, ids, context=context)
+        if not integrity_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, w_type='update', context=context)
+        for obj in self.browse(cr, uid, ids, context=context):
+            # we create the internal picking object
+            pick_id = self._create_picking(cr, uid, ids, obj, date, context=context)
+            # list of items to be deleted (removed ones)
+            items_to_stock_ids = []
+            # items to remove cannot be empty
+            if not len(obj.composition_item_ids):
+                raise osv.except_osv(_('Warning !'), _('Items to remove cannot be empty.'))
+            # for each item to remove, we create a stock move from kitting to destination location
+            for item in obj.composition_item_ids:
+                kit_item = item_obj.browse(cr, uid, item.item_id_mirror, fields_to_fetch=['item_qty'], context=context)
+                # analyze each item
+                self._handle_compo_item(cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=context)
+                if item.qty_substitute_item == kit_item.item_qty:
+                    # we delete the corresponding items from the kit if the whole quantity is removed
+                    item_obj.unlink(cr, uid, item.item_id_mirror, context=context)
+                else:
+                    # we remove the chosen qty from the corresponding kit item
+                    item_obj.write(cr, uid, item.item_id_mirror, {'item_qty': kit_item.item_qty - item.qty_substitute_item}, context=context)
+            # confirm - force availability and validate the internal picking
+            self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
+
+        # Modify expiry date step
+        res = kit_obj.modify_expiry_date(cr, uid, kit_ids, context=context)
+        return res
 
     def do_substitute(self, cr, uid, ids, context=None):
         '''
@@ -506,7 +646,8 @@ class substitute(osv.osv_memory):
             # load the xml tree
             root = etree.fromstring(result['arch'])
             # xpath of fields to be modified
-            list = ['//button[@name="do_de_kitting"]', '//field[@name="source_location_id"]']
+            list = ['//field[@name="source_location_id"]', '//button[@name="do_add_items"]',
+                    '//button[@name="do_remove_items"]', '//button[@name="do_de_kitting"]']
             for xpath in list:
                 fields = root.xpath(xpath)
                 if not fields:
@@ -528,7 +669,8 @@ class substitute(osv.osv_memory):
             # load the xml tree
             root = etree.fromstring(result['arch'])
             # fields to be modified
-            list = ['//field[@name="replacement_item_ids"]', '//button[@name="check_availability"]', '//button[@name="do_substitute"]']
+            list = ['//field[@name="replacement_item_ids"]', '//button[@name="check_availability"]',
+                    '//button[@name="do_add_items"]', '//button[@name="do_remove_items"]', '//button[@name="do_substitute"]']
             for xpath in list:
                 fields = root.xpath(xpath)
                 if not fields:
@@ -537,14 +679,53 @@ class substitute(osv.osv_memory):
                     field.set('invisible', 'True')
             result['arch'] = etree.tostring(root, encoding='unicode')
 
+        if view_type == 'form' and context.get('step', False) == 'kcl_add_items':
+            # load the xml tree
+            root = etree.fromstring(result['arch'])
+            # fields to be modified
+            list = ['//field[@name="source_location_id"]', '//field[@name="destination_location_id"]',
+                    '//field[@name="composition_item_ids"]', '//button[@name="do_remove_items"]',
+                    '//button[@name="do_substitute"]', '//button[@name="do_de_kitting"]']
+            for xpath in list:
+                fields = root.xpath(xpath)
+                if not fields:
+                    raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                for field in fields:
+                    field.set('invisible', 'True')
+            result['arch'] = etree.tostring(root, encoding='unicode')
+
+        if view_type == 'form' and context.get('step', False) == 'kcl_remove_items':
+            # load the xml tree
+            root = etree.fromstring(result['arch'])
+            # fields to be modified
+            list = ['//field[@name="source_location_id"]', '//field[@name="replacement_item_ids"]',
+                    '//button[@name="check_availability"]', '//button[@name="do_add_items"]',
+                    '//button[@name="do_substitute"]', '//button[@name="do_de_kitting"]']
+            for xpath in list:
+                fields = root.xpath(xpath)
+                if not fields:
+                    raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                for field in fields:
+                    field.set('invisible', 'True')
+            result['arch'] = etree.tostring(root, encoding='unicode')
+            # remove the hide_new_button/hide_delete button
+            # both button are originally hidden, because in de-kitting, we do not want the user to change anything
+            # for removing items, we need these button because the user can choose the products from the kit
+            # load the xml tree
+            root = etree.fromstring(result['fields']['composition_item_ids']['views']['tree']['arch'])
+            # root is the tree, we change the attribute to False
+            root.set('hide_new_button', 'False')
+            root.set('hide_delete_button', 'False')
+            result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root, encoding='unicode')
+
         return result
 
     _columns = {'wizard_id': fields.integer(string='Wizard Id', readonly=True),
-                'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
+                'kit_id': fields.many2one('composition.kit', string='Composition List Reference', readonly=True),
                 'step_substitute': fields.char(string='Step', size=1024, readonly=True),
                 'product_id_substitute': fields.many2one('product.product', string='Product', readonly=True),
                 'lot_id_substitute': fields.many2one('stock.production.lot', string='Batch Nb', readonly=True),
-                'destination_location_id': fields.many2one('stock.location', string='Destination Location of Items', domain=[('usage', '=', 'internal')], required=True),
+                'destination_location_id': fields.many2one('stock.location', string='Destination Location of Items', domain=[('usage', '=', 'internal')]),
                 'source_location_id': fields.many2one('stock.location', string='Source Location of Kit', domain=[('usage', '=', 'internal')]),
                 # m2m
                 'composition_item_ids': fields.many2many('substitute.item.mirror', 'substitute_items_rel', 'wizard_id', 'item_id', string='Items to replace'),
@@ -692,7 +873,7 @@ class substitute_item(osv.osv_memory):
         else:
             ctx['prodlot_id'] = False
         qty = 0.0
-        if step_substitute != 'substitute':
+        if step_substitute not in ['kcl_add_items', 'substitute']:
             product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=ctx)
             qty = product_obj.qty_allocable
         # update the result

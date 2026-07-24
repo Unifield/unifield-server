@@ -24,6 +24,7 @@
 
 from osv import osv
 from osv import fields
+import time
 from time import strftime
 from tools.translate import _
 from tools.misc import ustr
@@ -1580,6 +1581,18 @@ class account_invoice(osv.osv):
         """
         Opens the Export Invoice report
         """
+        if context is None:
+            context = {}
+        report_date = time.strftime('%Y%m%d')
+        prop_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.name
+
+        data = {
+            'ids': context.get('active_ids', []),
+            'model': 'account.invoice',
+        }
+
+        data['target_filename'] = '%s_Export - Invoice_%s' % (prop_instance, report_date)
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.export_invoice',

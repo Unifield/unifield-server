@@ -28,6 +28,7 @@ from passlib.hash import bcrypt
 from tools.translate import _
 from osv import osv
 from psycopg2._psycopg import ProgrammingError
+from tools.rpc_decorators import jsonrpc_exposed
 PASSWORD_MIN_LENGHT = 8
 
 # When rejecting a password, hide the traceback
@@ -90,6 +91,7 @@ def get_user_email(db_name, login, password):
     finally:
         cr.close()
 
+@jsonrpc_exposed("common", "login")
 def login(db_name, login, password):
     # it is required here not to get pool but only the db, if the pool it also
     # get, then the server will update the module at this step without display

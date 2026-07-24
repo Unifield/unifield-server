@@ -25,6 +25,7 @@ import time
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
+import json
 
 class account_cashbox_line(osv.osv):
 
@@ -72,12 +73,89 @@ class account_cashbox_line(osv.osv):
         self._check_number_size(cr, uid, vals, context=context)
         return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
 
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution'):
+            to_touch = set()
+            for line in self.browse(cr, uid, ids, context=context):
+                if line.starting_id:
+                    other_lines = line.starting_id.starting_details_ids
+                else:
+                    other_lines = line.ending_id.ending_details_ids
+
+                to_touch.update([x.id for x in other_lines if x not in ids])
+            if to_touch:
+                self.sql_touch(cr, list(to_touch), ['number'])
+
+        return super(account_cashbox_line, self).unlink(cr, uid, ids, context=context)
+
+    def _get_register_lines(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.starting_id:
+                other_lines = line.starting_id.starting_details_ids
+            else:
+                other_lines = line.ending_id.ending_details_ids
+
+            lines_data = []
+            if other_lines:
+                sdref = self.get_sd_ref(cr, uid, [x.id for x in other_lines], context=context)
+                for l in other_lines:
+                    if l.id != line.id:
+                        lines_data.append([sdref[l.id], l.number, f'{l.pieces}'])
+            res[line.id] = json.dumps(lines_data)
+        return res
+
+    def _set_register_lines(self, cr, uid, id, name, value, arg, context=None):
+        if context is None:
+            context = {}
+        if not value:
+            return
+
+        value = json.loads(value)
+        cash_line = self.browse(cr, uid, id, context=context)
+        if cash_line.ending_id:
+            register = cash_line.ending_id
+            all_lines = self.get_sd_ref(cr, uid, [x.id for x in register.ending_details_ids], context=context)
+            field = 'ending_details_ids'
+            line_field = 'ending_id'
+        else:
+            register = cash_line.starting_id
+            all_lines = self.get_sd_ref(cr, uid, [x.id for x in register.starting_details_ids], context=context)
+            field = 'starting_details_ids'
+            line_field = 'starting_id'
+
+
+        inv_map = {sdref: item_id for item_id, sdref in all_lines.items()}
+
+        sdref_to_import = [x[0] for x in value]
+        to_delete = [inv_map[sdref] for sdref in inv_map if sdref not in sdref_to_import and inv_map[sdref] != id]
+        to_update = []
+        to_create = []
+        for line in value:
+            if line[0] in inv_map:
+                to_update.append([1, inv_map[line[0]], {'number': line[1], 'pieces': line[2]}])
+            else:
+                to_create.append((line[0], line[1], line[2], register.id))
+
+        if to_delete:
+            self.unlink(cr, uid, to_delete, context=context)
+        if to_update:
+            self.pool.get('account.bank.statement').write(cr, uid, [register.id], {field: to_update}, context=context)
+        if to_create:
+            res = self.import_data(cr, uid, ['id', 'number', 'pieces', f'{line_field}.id'], to_create, mode='update', current_module='sd', noupdate=True, context=context)
+            if res[0] == -1:
+                raise Exception(res[2])
+
     _columns = {
         'pieces': fields.float('Values', digits_compute=dp.get_precision('Account')),
         'number': fields.integer('Number'),
         'subtotal': fields.function(_sub_total, method=True, string='Sub Total', type='float', digits_compute=dp.get_precision('Account')),
-        'starting_id': fields.many2one('account.bank.statement', ondelete='cascade'),
-        'ending_id': fields.many2one('account.bank.statement', ondelete='cascade'),
+        'starting_id': fields.many2one('account.bank.statement', ondelete='cascade', select=1),
+        'ending_id': fields.many2one('account.bank.statement', ondelete='cascade', select=1),
+        'register_lines': fields.function(_get_register_lines, fnct_inv=_set_register_lines, type='text', string="Register Lines used by sync", method=True),
     }
 
     def _check_cashbox_closing_duplicates(self, cr, uid, ids):

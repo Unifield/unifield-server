@@ -567,6 +567,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'document_date': ml.document_date,
                 'journal_id': journal_id,
                 'period_id': period_id_dec_hq_entry or period_id,
+                'analytic_distribution_id': False,
             }
             # Copy the line
             context.update({'omit_analytic_distribution': False})
@@ -590,6 +591,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'reference': ml.move_id and ml.move_id.name or '',
                 'ref': ml.move_id and ml.move_id.name or '',
             })
+            if ml.analytic_distribution_id:
+                vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             self.write(cr, uid, [rev_line_id], vals, context=context, check=False, update_check=False)
             # Do the correction line
             name = self.join_without_redundancy(ml.name, 'COR')

@@ -401,7 +401,15 @@ class stock_picking(osv.osv):
         pack_info_created = {}
 
         if in_id:
-            in_name = self.read(cr, uid, in_id, ['name'], context=context)['name']
+            in_data = self.read(cr, uid, in_id, ['name', 'sde_updated', 'origin'], context=context)
+            in_name = in_data['name']
+            # Do not update the IN if it has been updated by the SDE import
+            if in_data['sde_updated']:
+                message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) has already been updated by SDE" % (
+                    in_data['name'], in_data['origin'],
+                )
+                raise RunWithoutException(message)
+
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
             self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
             partial_datas = {}
@@ -638,6 +646,14 @@ class stock_picking(osv.osv):
                 message = "The IN linked to " + po_name + " is not found in the system!"
                 self._logger.info(message)
                 raise Exception(message)
+
+            # Do not update the IN if it has been updated by the SDE import
+            in_data = self.read(cr, uid, in_id, ['name', 'sde_updated', 'origin'], context=context)
+            if in_data['sde_updated']:
+                message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) has already been updated by SDE" % (
+                    in_data['name'], in_data['origin'],
+                )
+                raise RunWithoutException(message)
 
             #UFTP-332: Check if shipment/out is given
             if shipment_ref:

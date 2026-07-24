@@ -85,7 +85,7 @@ class account_report_general_ledger(osv.osv_memory):
         'amount_currency': True,
         'sortby': 'sort_date',
         'initial_balance': False,
-        'export_format': 'pdf',
+        'export_format': 'xls',
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
         'account_type': 'all',
         'reconciled': 'empty',
@@ -167,17 +167,36 @@ class account_report_general_ledger(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
+        data = self.read(cr, uid, ids[0], ['export_format'], context=context)
+        if data.get('export_format') == 'xls':
+            report_name = 'account.general.ledger_xlsx'
+        else:
+            report_name = 'account.general.ledger_landscape'
+
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'report_name': report_name,
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 3
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': {'ids': ids, 'keep_open': True, 'context': context, 'wiz_model': 'account.report.general.ledger'},
+            'context': context,
+        }
+
+    def _init_data(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        data = {'form': self.read(cr, uid, ids[0], [], context=context)}
+        data['model'] = context.get('active_model')
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form']['report_mode'] = 'gl'  # general ledger mode
 
-        form_fields = [ 'initial_balance', 'amount_currency', 'sortby',
-                        'output_currency', 'instance_ids', 'export_format',
-                        'account_type', 'reconciled', 'reconcile_date',
-                        'account_ids', 'open_items', ]
-        data['form'].update(self.read(cr, uid, ids, form_fields)[0])
-
         # US-822: safe initial balance check box
-        rec = self.browse(cr, uid, ids[0], context=context)
+        rec = self.browse(cr, uid, ids[0], fields_to_fetch=['filter', 'fiscalyear_id', 'date_from', 'date_to', 'period_from', 'period_to'], context=context)
         ofd_res = self.onchange_filter_date(cr, uid, [ids[0]],
                                             rec.filter, rec.fiscalyear_id.id,
                                             rec.date_from, rec.date_to,
@@ -196,19 +215,20 @@ class account_report_general_ledger(osv.osv_memory):
             if default_journals:
                 if set(default_journals) == set(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
+                    data['form']['journal_ids'] = []
+        used_context = self._build_contexts(cr, uid, ids, data, context=context)
+        data['form']['periods'] = used_context.get('periods', False) and used_context['periods'] or []
+        data['form']['used_context'] = used_context
+        return data
 
-        if data['form']['export_format'] \
-           and data['form']['export_format'] == 'xls':
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'account.general.ledger_xls',
-                'datas': data,
-            }
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'account.general.ledger_landscape',
-            'datas': data,
-        }
+    def check_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        data = {}
+        data['keep_open'] = 1
+        data['ids'] = context.get('active_ids', [])
+        data['model'] = context.get('active_model', 'ir.ui.menu')
+        return self._print_report(cr, uid, ids, data, context=context)
 
 account_report_general_ledger()
 
