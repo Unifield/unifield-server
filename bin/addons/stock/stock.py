@@ -115,6 +115,7 @@ stock_journal()
 #----------------------------------------------------------
 class stock_location(osv.osv):
     _name = "stock.location"
+    _trace = True
     _description = "Location"
     _parent_name = "location_id"
     _parent_store = True
@@ -416,7 +417,9 @@ class stock_location(osv.osv):
         'search_color': fields.selection([('dimgray', 'Dim Gray'), ('darkorchid', 'Dark Orchid'), ('lightpink', 'Light Pink'), ('royalblue', 'Royal Blue'), ('yellowgreen', 'Yellow Green'), ('darkorange', 'Dark Orange'), ('sandybrown', 'Sandy Brown'), ], string="Color for Search views"),
         'intermediate_parent': fields.function(_is_intermediate_parent, method=True, type='boolean', string="Is the Parent Intermediate Stocks ?", fnct_search=_search_intermediate_parent),
         'moved_location': fields.boolean('Eprep location moved from Intermediate Stock', internal=1, readonly=1),
-
+        'external_system_managed_stock': fields.selection([('yes', 'Yes'), ('no', 'No')], string='External System Managed Stock',
+            help="This ECU represents a location where stock is managed in an external information system", add_empty=1
+        ),
     }
     _defaults = {
         'active': True,
