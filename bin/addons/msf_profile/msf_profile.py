@@ -135,7 +135,7 @@ class patch_scripts(osv.osv):
         fees_to_del = ['freight_return', 'freight_load', 'freight_unload', 'indirect', 'handling', 'bonded_wh',
                        'bonded_ex_wh', 'loading', 'unloading']
         fees_to_del_ids = fees_obj.search(cr, uid, [('code', 'in', fees_to_del)])
-        if fees_ids:
+        if fees_to_del_ids:
             cr.execute("""DELETE FROM transport_order_transport_fees WHERE name IN %s""", (tuple(fees_to_del_ids),))
             self.log_info(cr, uid, "US-15901: %s Transport Fees lines were deleted" % (cr.rowcount,))
             cr.execute("""DELETE FROM transport_order_customs_fees WHERE name IN %s""", (tuple(fees_to_del_ids),))
