@@ -25,6 +25,7 @@ import time
 from osv import osv, fields
 import tools
 from tools.translate import _
+from lxml import etree
 
 # warning messages
 SHORT_SHELF_LIFE_MESS = 'Product with Short Shelf Life, check the accuracy of the order quantity, frequency and mode of transport.'
@@ -361,7 +362,15 @@ class stock_location(osv.osv):
             if view:
                 view_id = view[1]
 
-        return super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+        if view_type == 'search' and context.get('display_active_filter'):
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//group[@name="display_active_filter"]'):
+                field.set('invisible', '0')
+                res['arch'] = etree.tostring(root, encoding='unicode')
+
+        return res
 
     _columns = {'stock_real_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Real Stock', multi="get_vals_specific_rules"),
                 'stock_virtual_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Virtual Stock', multi="get_vals_specific_rules"),

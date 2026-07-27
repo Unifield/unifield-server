@@ -44,8 +44,8 @@
                     <separator colspan="4" string="Request parameters" />
                     <field name="date_from" />
                     <field name="date_to" />
-                    <field name="location_id" domain="[('usage', '=', 'internal')]" />
-                    <field name="location_dest_id" domain="[('usage', '!=', 'view'), '|', ('quarantine_location', '=', True), ('destruction_location', '=', True)]" />
+                    <field name="location_id" domain="[('usage', '=', 'internal')]" context="{'display_active_filter': 1}"/>
+                    <field name="location_dest_id" domain="[('usage', '!=', 'view'), '|', ('quarantine_location', '=', True), ('destruction_location', '=', True)]" context="{'display_active_filter': 1}"/>
                     <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"/>
                     <separator colspan="4" string="Reason Type" />
                     <group colspan="4" col="8">

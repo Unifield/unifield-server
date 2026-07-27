@@ -14,8 +14,8 @@
                     <field name="end_date" />
                     <field name="partner_id" context="{'show_button_show_inactive': True}" />
                     <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection" />
-                    <field name="location_id" domain="[('usage', '=', 'internal')]" />
-                    <field name="location_dest_id" domain="[('usage', '!=', 'view')]"/>
+                    <field name="location_id" domain="[('usage', '=', 'internal')]" context="{'display_active_filter': 1}"/>
+                    <field name="location_dest_id" domain="[('usage', '!=', 'view')]" context="{'display_active_filter': 1}"/>
                     <separator colspan="4" string="Actions" />
                     <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
                 </form>
