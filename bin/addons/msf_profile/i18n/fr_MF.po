@@ -126474,8 +126474,8 @@ msgstr "Cargaison Entrante Avant Arrivée"
 
 #. module: transport_mgmt
 #: view:board.board:0
-msgid "Inbound Cargo Under Pre-Arrival"
-msgstr "Cargaison Entrante Avant Arrivée"
+msgid "Inbound Cargo Under Pre-Arrival Processing"
+msgstr "Cargaison Entrante en Traitement Avant Arrivée"
 
 #. module: transport_mgmt
 #: model:ir.actions.act_window,name:transport_mgmt.transport_order_in_action
