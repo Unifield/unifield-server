@@ -1522,6 +1522,7 @@ class users(osv.osv):
             'password': new_passwd,
             'reset_password_token': False,
             'reset_password_date': False,
+            'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S'),
         }
         if user.force_password_change:
             vals['force_password_change'] = False
