@@ -66,13 +66,82 @@ class patch_scripts(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         fees_obj = self.pool.get('transport.order.fees.type')
         customs_fees_obj = self.pool.get('transport.order.customs.fees')
-        transport_fees_obj = self.pool.get('transport.order.transport.fees')
 
+        # TRANSPORT FEES
         # fees_freight_negotiable: Change code, name
-        fees_freight_negotiable_id = data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'fees_freight_negotiable')[1]
-        if fees_freight_negotiable_id:
+        fees_freight_negotiable_ids = fees_obj.search(cr, uid, [('code', '=', 'freight_negotiable')])
+        if fees_freight_negotiable_ids:
             fees_vals = {'code': 'negotiated_transport', 'name': 'Negotiated transport cost'}
-            fees_obj.write(cr, uid, fees_freight_negotiable_id, fees_vals)
+            fees_obj.write(cr, uid, fees_freight_negotiable_ids, fees_vals)
+
+        # fees_freight_fixed: Change code, name
+        fees_freight_fixed_ids = fees_obj.search(cr, uid, [('code', '=', 'freight_fixed')])
+        if fees_freight_fixed_ids:
+            fees_vals = {'code': 'transport_charges', 'name': '3rd party transport charges'}
+            fees_obj.write(cr, uid, fees_freight_fixed_ids, fees_vals)
+
+        # fees_insurance: Change name
+        fees_insurance_ids = fees_obj.search(cr, uid, [('code', '=', 'insurance')])
+        if fees_insurance_ids:
+            fees_obj.write(cr, uid, fees_insurance_ids, {'name': 'Insurance Service fees (MSF)'})
+
+        # fees_freight_storage: Change name
+        fees_freight_storage_ids = fees_obj.search(cr, uid, [('code', '=', 'freight_storage')])
+        if fees_freight_storage_ids:
+            fees_obj.write(cr, uid, fees_freight_storage_ids, {'name': 'Storage fees'})
+
+        # fees_direct: Change code, name, customs_fee
+        fees_direct_ids = fees_obj.search(cr, uid,[('code', '=', 'direct')])
+        if fees_direct_ids:
+            fees_vals = {'code': 'taxes_duties_transport', 'name': 'Taxes / Duties (Transport)', 'customs_fee': False}
+            fees_obj.write(cr, uid, fees_direct_ids, fees_vals)
+            # Fix existing customs fees with this fee
+            customs_fees_ids = customs_fees_obj.search(cr, uid, [('name', 'in', fees_direct_ids)])
+            if customs_fees_ids:
+                fees_taxes_duties_customs_id = data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'fees_taxes_duties_customs')[1]
+                customs_fees_obj.write(cr, uid, customs_fees_ids, {'name': fees_taxes_duties_customs_id})
+                self.log_info(cr, uid, "US-15901: %s Customs Fees lines had their Fee updated to 'Taxes / Duties (Customs)'" % (len(customs_fees_ids),))
+
+        # fees_other_transport: Change name
+        fees_other_transport_ids = fees_obj.search(cr, uid, [('code', '=', 'other_transport')])
+        if fees_other_transport_ids:
+            fees_obj.write(cr, uid, fees_other_transport_ids, {'name': 'Other Transport fees'})
+
+        # CUSTOMS FEES
+        # fees_prearrival: Change name
+        fees_prearrival_ids = fees_obj.search(cr, uid, [('code', '=', 'prearrival')])
+        if fees_prearrival_ids:
+            fees_obj.write(cr, uid, fees_prearrival_ids, {'name': '3rd party pre-arrival charges'})
+
+        # fees_prearrival_srv: Change name
+        fees_prearrival_srv_ids = fees_obj.search(cr, uid, [('code', '=', 'prearrival_srv')])
+        if fees_prearrival_srv_ids:
+            fees_obj.write(cr, uid, fees_prearrival_srv_ids, {'name': 'Negotiated pre-arrival services fees'})
+
+        # fees_customs_clearance: Change code, name
+        fees_customs_clearance_ids = fees_obj.search(cr, uid, [('code', '=', 'customs_clearance')])
+        if fees_customs_clearance_ids:
+            fees_vals = {'code': 'customs_charges', 'name': '3rd party customs charges'}
+            fees_obj.write(cr, uid, fees_customs_clearance_ids, fees_vals)
+
+        # fees_customs_clearance_srv: Change name
+        fees_customs_clearance_srv_ids = fees_obj.search(cr, uid, [('code', '=', 'customs_clearance_srv')])
+        if fees_customs_clearance_srv_ids:
+            fees_obj.write(cr, uid, fees_customs_clearance_srv_ids, {'name': 'Negotiated customs clearance services fees'})
+
+        # For fees_freight_return, fees_freight_load, fees_freight_unload, fees_indirect, fees_handling, fees_bonded_wh,
+        # fees_bonded_ex_wh, fees_loading, fees_unloading
+        # Delete all ITO/OTO Transport/Customs Fees using the Fees to delete, then delete those fees
+        fees_to_del = ['freight_return', 'freight_load', 'freight_unload', 'indirect', 'handling', 'bonded_wh',
+                       'bonded_ex_wh', 'loading', 'unloading']
+        fees_to_del_ids = fees_obj.search(cr, uid, [('code', 'in', fees_to_del)])
+        if fees_ids:
+            cr.execute("""DELETE FROM transport_order_transport_fees WHERE name IN %s""", (tuple(fees_to_del_ids),))
+            self.log_info(cr, uid, "US-15901: %s Transport Fees lines were deleted" % (cr.rowcount,))
+            cr.execute("""DELETE FROM transport_order_customs_fees WHERE name IN %s""", (tuple(fees_to_del_ids),))
+            self.log_info(cr, uid, "US-15901: %s Customs Fees lines were deleted" % (cr.rowcount,))
+            cr.execute("""DELETE FROM transport_order_fees_type WHERE id IN %s""", (tuple(fees_to_del_ids),))
+            self.log_info(cr, uid, "US-15901: %s Fees were deleted" % (cr.rowcount,))
 
         return True
 
