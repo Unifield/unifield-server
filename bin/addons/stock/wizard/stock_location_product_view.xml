@@ -29,6 +29,7 @@
 		    view_mode="form"
 		    target="new"        
             key2="client_action_multi"    
-		    id="action_view_stock_location_product"/>			
+		    id="action_view_stock_location_product"
+			view_ids="stock.view_location_tree_simple,stock.view_location_form"/>
     </data>
 </openerp>

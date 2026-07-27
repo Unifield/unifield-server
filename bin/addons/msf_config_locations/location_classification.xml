@@ -59,7 +59,7 @@
             <field name="view_id" ref="view_location_classification_tree"/>
             <field name="search_view_id" ref="view_location_classification_search"/>
             <field name="domain">[('usage','=','customer'), ('location_category','=','consumption_unit')]</field>
-            <field name="context">{'search_default_filter_active': 1, 'hide_location_reports': True}</field>
+            <field name="context">{'search_default_filter_active': 1}</field>
         </record>
 
         <record id="action_stock_location_classification_view_tree" model="ir.actions.act_window.view">
