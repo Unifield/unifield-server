@@ -71,24 +71,24 @@ class patch_scripts(osv.osv):
         # fees_freight_negotiable: Change code, name
         fees_freight_negotiable_ids = fees_obj.search(cr, uid, [('code', '=', 'freight_negotiable')])
         if fees_freight_negotiable_ids:
-            fees_vals = {'code': 'negotiated_transport', 'name': 'Negotiated transport cost'}
+            fees_vals = {'code': 'negotiated_transport', 'name': 'Negotiated Transport Cost'}
             fees_obj.write(cr, uid, fees_freight_negotiable_ids, fees_vals)
 
         # fees_freight_fixed: Change code, name
         fees_freight_fixed_ids = fees_obj.search(cr, uid, [('code', '=', 'freight_fixed')])
         if fees_freight_fixed_ids:
-            fees_vals = {'code': 'transport_charges', 'name': '3rd party transport charges'}
+            fees_vals = {'code': 'transport_charges', 'name': '3rd Party Transport Charges'}
             fees_obj.write(cr, uid, fees_freight_fixed_ids, fees_vals)
 
         # fees_insurance: Change name
         fees_insurance_ids = fees_obj.search(cr, uid, [('code', '=', 'insurance')])
         if fees_insurance_ids:
-            fees_obj.write(cr, uid, fees_insurance_ids, {'name': 'Insurance Service fees [MSF]'})
+            fees_obj.write(cr, uid, fees_insurance_ids, {'name': 'Insurance Service Fees [MSF]'})
 
         # fees_freight_storage: Change name
         fees_freight_storage_ids = fees_obj.search(cr, uid, [('code', '=', 'freight_storage')])
         if fees_freight_storage_ids:
-            fees_obj.write(cr, uid, fees_freight_storage_ids, {'name': 'Storage fees'})
+            fees_obj.write(cr, uid, fees_freight_storage_ids, {'name': 'Storage Fees'})
 
         # fees_direct: Change code, name, customs_fee
         fees_direct_ids = fees_obj.search(cr, uid,[('code', '=', 'direct')])
@@ -105,29 +105,59 @@ class patch_scripts(osv.osv):
         # fees_other_transport: Change name
         fees_other_transport_ids = fees_obj.search(cr, uid, [('code', '=', 'other_transport')])
         if fees_other_transport_ids:
-            fees_obj.write(cr, uid, fees_other_transport_ids, {'name': 'Other Transport fees'})
+            fees_obj.write(cr, uid, fees_other_transport_ids, {'name': 'Other Transport Fees'})
+
+        # fees_truck: Change name
+        fees_truck_ids = fees_obj.search(cr, uid, [('code', '=', 'fees_truck')])
+        if fees_truck_ids:
+            fees_obj.write(cr, uid, fees_truck_ids, {'name': 'Truck Detention Fees'})
+
+        # fees_demurrage: Change name
+        fees_demurrage_ids = fees_obj.search(cr, uid, [('code', '=', 'fees_demurrage')])
+        if fees_demurrage_ids:
+            fees_obj.write(cr, uid, fees_demurrage_ids, {'name': 'Demurrage Fees'})
+
+        # fees_container: Change name
+        fees_container_ids = fees_obj.search(cr, uid, [('code', '=', 'fees_container')])
+        if fees_container_ids:
+            fees_obj.write(cr, uid, fees_container, {'name': 'Container Deposit Fees'})
 
         # CUSTOMS FEES
         # fees_prearrival: Change name
         fees_prearrival_ids = fees_obj.search(cr, uid, [('code', '=', 'prearrival')])
         if fees_prearrival_ids:
-            fees_obj.write(cr, uid, fees_prearrival_ids, {'name': '3rd party pre-arrival charges'})
+            fees_obj.write(cr, uid, fees_prearrival_ids, {'name': '3rd Party Pre-Arrival Charges'})
 
         # fees_prearrival_srv: Change name
         fees_prearrival_srv_ids = fees_obj.search(cr, uid, [('code', '=', 'prearrival_srv')])
         if fees_prearrival_srv_ids:
-            fees_obj.write(cr, uid, fees_prearrival_srv_ids, {'name': 'Negotiated pre-arrival services fees'})
+            fees_obj.write(cr, uid, fees_prearrival_srv_ids, {'name': 'Negotiated Pre-Arrival Services Fees'})
 
         # fees_customs_clearance: Change code, name
         fees_customs_clearance_ids = fees_obj.search(cr, uid, [('code', '=', 'customs_clearance')])
         if fees_customs_clearance_ids:
-            fees_vals = {'code': 'customs_charges', 'name': '3rd party customs charges'}
+            fees_vals = {'code': 'customs_charges', 'name': '3rd Party Customs Charges'}
             fees_obj.write(cr, uid, fees_customs_clearance_ids, fees_vals)
 
         # fees_customs_clearance_srv: Change name
         fees_customs_clearance_srv_ids = fees_obj.search(cr, uid, [('code', '=', 'customs_clearance_srv')])
         if fees_customs_clearance_srv_ids:
-            fees_obj.write(cr, uid, fees_customs_clearance_srv_ids, {'name': 'Negotiated customs clearance services fees'})
+            fees_obj.write(cr, uid, fees_customs_clearance_srv_ids, {'name': 'Negotiated Customs Clearance Services Fees'})
+
+        # fees_storage: Change name
+        fees_storage_ids = fees_obj.search(cr, uid, [('code', '=', 'fees_storage')])
+        if fees_storage_ids:
+            fees_obj.write(cr, uid, fees_storage_ids, {'name': 'Customs Storage Fees'})
+
+        # fees_penalty: Change name
+        fees_penalty_ids = fees_obj.search(cr, uid, [('code', '=', 'fees_penalty')])
+        if fees_penalty_ids:
+            fees_obj.write(cr, uid, fees_penalty_ids, {'name': 'Customs Penalty Fees'})
+
+        # fees_other_customs: Change name
+        fees_other_customs_ids = fees_obj.search(cr, uid, [('code', '=', 'fees_other_customs')])
+        if fees_other_customs_ids:
+            fees_obj.write(cr, uid, fees_other_customs_ids, {'name': 'Other Customs Fees'})
 
         # For fees_freight_return, fees_freight_load, fees_freight_unload, fees_indirect, fees_handling, fees_bonded_wh,
         # fees_bonded_ex_wh, fees_loading, fees_unloading

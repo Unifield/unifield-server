@@ -126301,31 +126301,43 @@ msgstr "Frais"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_customs_clearance
-msgid "3rd party customs charges"
-msgstr "Frais de douane facturés par un tiers"
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "3rd Party Customs Charges"
+msgstr "Frais de Douane Facturés par un Tiers"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_customs_clearance_srv
-msgid "Negotiated customs clearance services fees"
-msgstr "Frais négociés pour les services de dédouanement"
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Negotiated Customs Clearance Services Fees"
+msgstr "Frais Négociés pour les Services de Dédouanement"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_prearrival
-msgid "3rd party pre-arrival charges"
-msgstr "Frais de tiers avant arrivée"
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "3rd Party Pre-Arrival Charges"
+msgstr "Frais de Tiers Avant Arrivée"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_prearrival_srv
-msgid "Negotiated pre-arrival services fees"
-msgstr "Frais négociés pour les services d'avant arrivée"
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Negotiated Pre-Arrival Services Fees"
+msgstr "Frais Négociés pour les Services d'Avant Arrivée"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_direct
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
 msgid "Taxes / Duties (Transport)"
 msgstr "Taxes / Droits (Transport)"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_taxes_duties_customs
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
 msgid "Taxes / Duties (Customs)"
 msgstr "Taxes / Droits (Douane)"
 
@@ -126336,13 +126348,17 @@ msgstr "Frais en entrepôt sous douane (stockage)"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_storage
-msgid "Customs Storage fees"
-msgstr "Frais de stockage douanier"
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Customs Storage Fees"
+msgstr "Frais de Stockage Douanier"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_other_customs
-msgid "Other Customs fees"
-msgstr "Autres frais douaniers"
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Other Customs Fees"
+msgstr "Autres Frais Douaniers"
 
 #. module: transport_mgmt
 #: field:transport.order.customs.fees,purchase_id:0
@@ -127066,7 +127082,9 @@ msgstr "Passer la Douane"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_container
-msgid "Container Deposit fees"
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Container Deposit Fees"
 msgstr "Frais de Dépôt du Conteneur"
 
 #. module: transport_mgmt
@@ -127112,8 +127130,10 @@ msgstr "Frais de Douane"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_penalty
-msgid "Customs Penalty fees"
-msgstr "Frais de pénalité douanière"
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Customs Penalty Fees"
+msgstr "Frais de Pénalité Douanière"
 
 #. module: transport_mgmt
 #: field:transport.order,customs_regime:0
@@ -127139,7 +127159,9 @@ msgstr "Livraison à l'Entrepôt"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_demurrage
-msgid "Demurrage fees"
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Demurrage Fees"
 msgstr "Frais de Surestarie"
 
 #. module: transport_mgmt
@@ -127181,17 +127203,23 @@ msgstr "Lien vers le Manifeste de Fret"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_freight_fixed
-msgid "3rd party transport charges"
-msgstr "Frais de transport de tiers"
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "3rd Party Transport Charges"
+msgstr "Frais de Transport de Tiers"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_freight_negotiable
-msgid "Negotiated transport cost"
-msgstr "Coût de transport négotié"
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Negotiated Transport Cost"
+msgstr "Coût de Transport Négocié"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_freight_storage
-msgid "Storage fees"
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Storage Fees"
 msgstr "Frais de Stockage"
 
 #. module: transport_mgmt
@@ -127248,7 +127276,9 @@ msgstr "Incoterms"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_insurance
-msgid "Insurance Service fees [MSF]"
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Insurance Service Fees [MSF]"
 msgstr "Frais de Servide d'Assurance [MSF]"
 
 #. module: transport_mgmt
@@ -127397,8 +127427,10 @@ msgstr "Poids\\nd'Origine"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_other_transport
-msgid "Other Transport fees"
-msgstr "Autres frais de Transport"
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Other Transport Fees"
+msgstr "Autres Frais de Transport"
 
 #. module: transport_mgmt
 #: view:transport.order.out.line:0
@@ -127646,8 +127678,10 @@ msgstr "BdC de Transport"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_truck
-msgid "Truck Detention fees"
-msgstr "Frais de Détention de camion"
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Truck Detention Fees"
+msgstr "Frais de Détention de Camion"
 
 #. module: transport_mgmt
 #: field:transport.order,truck_payload:0
@@ -130842,3 +130876,261 @@ msgstr "Quoi:\n"
 "\n"
 "Comment:\n"
 "Veuillez vous assurer d'ajouter une remarque expliquant pourquoi ce frais est \"Autre\"."
+
+#. module: transport_mgmt
+#: view:transport.order.in:0
+#: view:transport.order.out:0
+msgid "Customs Fees"
+msgstr "Frais de Douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Customs Fees (WHAT/HOW)"
+msgstr "Frais de Douane (QUOI/COMMENT)"
+
+#. module: transport_mgmt
+#: model:ir.actions.report.xml,name:transport_mgmt.transport_order_ito_customs_fees_pdf
+#: model:ir.actions.report.xml,name:transport_mgmt.transport_order_oto_customs_fees_pdf
+msgid "Customs Fees (What/How)"
+msgstr "Frais de Douane (Quoi/Comment)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Customs Generic fees"
+msgstr "Frais Génériques de Douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Freight/Transport Fees (WHAT/HOW)"
+msgstr "Frais de Frêt/Transport (QUOI/COMMENT)"
+
+#. module: transport_mgmt
+#: model:ir.actions.report.xml,name:transport_mgmt.transport_order_ito_transport_fees_pdf
+#: model:ir.actions.report.xml,name:transport_mgmt.transport_order_oto_transport_fees_pdf
+msgid "Transport Fees (What/How)"
+msgstr "Frais de Transport (Quoi/Comment)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Freight/Transport Generic fees"
+msgstr "Frais Génériques de Frêt/Transport"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "WHAT"
+msgstr "QUOI"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "HOW"
+msgstr "COMMENT"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Include all the fees linked to clearance services provided by contracted service providers when fees are negotiated and not fixed by authorities."
+msgstr "Inclut les frais liés aux services de dédouanement fournis par des prestataires de services lorsque ces frais sont négociés et non fixés par les autorités."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes MSF owned fees linked to mandatory insurance requirements and cargo insurance during transport."
+msgstr "Inclut les frais à la charge de MSF liés aux exigences d'assurance obligatoires et à l'assurance des marchandises pendant le transport."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes all fees linked to the transport rates negotiated in the MSF contract or agreed quotation with transporters."
+msgstr "Inclut tous les frais liés aux tarifs de transport négociés dans le cadre du contrat MSF ou du devis convenu avec les transporteurs."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Includes all the non-negotiable/fixed customs-related service fees such as terminal handling charges, port inspection fees, loading/unloading charges, escorts, bonded warehousing and other official port or airport charges."
+msgstr "Inclut tous les frais de service liés aux douanes qui sont fixes ou non négociables, tels que les frais de manutention au terminal, les frais d'inspection portuaire, les frais de chargement et de déchargement, les frais d'escorte, les frais de stockage sous douane et autres frais officiels portuaires ou aéroportuaires."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes costs linked to any transport-related charges that do not fall within the defined categories above."
+msgstr "Inclut les coûts liés à toute charge de transport ne relevant pas des catégories définies ci-dessus."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Includes costs linked to customs-related fees that do not fit within the above defined categories."
+msgstr "Inclut les coûts liés aux frais de douane ne relevant pas des catégories définies ci-dessus."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Includes costs linked to non-negotiable/fixed fees during pre-clearance process. These fees usually official/statutory and will have official receipts."
+msgstr "Inclut les coûts liés aux frais fixes ou non négociables durant la procédure de pré-dédouanement. Ces frais sont généralement de nature officielle/réglementaire et donnent lieu à la délivrance de reçus officiels."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes fees advanced to the shipping line by MSF or its appointed agent and is only reimbursed after MSF has officially returned back the container to the shipping line and obtained proof of container reception by the shipping line or its agent."
+msgstr "Inclut les frais avancés à la compagnie maritime par MSF ou son mandataire. Le remboursement n'intervient qu'une fois que MSF a officiellement restitué le conteneur à la compagnie maritime et obtenu la preuve de sa réception par celle-ci ou par son mandataire."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes fees linked to delays in offloading and releasing cargo/truck according to agreed detention free days that lead to daily penalty fees from the transporter."
+msgstr "Inclut les frais liés aux retards de déchargement et de libération de la cargaison ou du camion au-delà des jours d'immobilisation gratuits convenus, entraînant l'application de pénalités journalières par le transporteur."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes fees linked to delays in returning empty containers to the shipping line or agent at the port of entry according to demurrage free days negotiated by supplier center (eg: ESC/RSC) on behalf of the MSF country of importation."
+msgstr "Inclut les frais liés aux retards de restitution des conteneurs vides à la compagnie maritime ou à l'agent au port d'entrée, conformément aux jours de surestaries gratuits négociés par le centre fournisseur (ex: ESC/RSC) pour le compte de la mission MSF du pays d'importation."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes fees linked to non-negotiable/fixed operational charges such as loading, unloading, terminal handling, forklift use and any other mandatory 3rd party fees (with official receipts)."
+msgstr "Inclut les frais liés aux charges opérationnelles fixes/non négociables telles que le chargement, le déchargement, la manutention au terminal, l'utilisation de chariots élévateurs et tout autre frais obligatoire facturé par des tiers (sur présentation de justificatifs officiels)."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Includes fees linked to pre-arrival clearance services provided by contracted service providers or 3rd party provider when fees are negotiated and not fixed by authorities."
+msgstr "Inclut les frais liés aux services de dédouanement d'avant arrivée fournis par des prestataires de services ou des tiers, lorsque ces frais sont négociés et non fixés par les autorités."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Includes fees linked to storing cargo in customs-controlled terminals when customs clearance is delayed or processing exceeds the free storage period."
+msgstr "Inclut les frais liés au stockage des marchandises dans des terminaux sous contrôle douanier lorsque le dédouanement est retardé ou que le traitement excède la période de stockage gratuit."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes fees linked to storing cargo in transporter terminal or 3rd party storage facilities when it exceeds the free storage period."
+msgstr "Inclut les frais liés au stockage des marchandises dans le terminal du transporteur ou dans des installations de stockage tierces lorsque la période de stockage gratuite est dépassée."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Includes fees linked to transport-related taxes & duties such as weighbridge fees, official levies, environmental taxes and VAT when applicable."
+msgstr "Inclut les frais liés aux taxes et droits relatifs au transport, tels que les frais de pont-bascule, les redevances officielles, les taxes environnementales et la TVA le cas échéant."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Includes fees/penalties/fines imposed by customs authorities due to mistakes in the customs declaration process or any other non-compliance deemed to be caused by MSF or the appointed clearing agent."
+msgstr "Inclut les frais/pénalités/amendes imposés par les autorités douanières en raison d'erreurs dans le processus de déclaration en douane ou de tout autre cas de non-conformité imputable à MSF ou au transitaire désigné."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Includes statutory fees linked to customs-related taxes such as import duties, excise duties, withholding taxes, environmental taxes and VAT or sales tax paid directly for MSF cargo."
+msgstr "Inclut les frais réglementaires liés aux taxes douanières, telles que les droits d'importation, les droits d'accise, les retenues à la source, les taxes environnementales ainsi que la TVA ou la taxe sur les ventes, qui sont acquittés directement pour les cargaisons de MSF."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Identify all customs clearance expenses MSF can not negotiate or control because they are mandated by authorities, port/airport operators or shipping/airline handlers."
+msgstr "Identifier tous les frais de dédouanement que MSF ne peut ni négocier ni contrôler, car ils sont imposés par les autorités, les exploitants portuaires/aéroportuaires, ou les manutentionnaires maritimes/aériens."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Identify all customs clearance expenses MSF pays to service providers when these services are outsourced and negotiated - usually in a MIFAT contract or via agreed quotation."
+msgstr "Identifier tous les frais de dédouanement que MSF règle aux prestataires de services lorsque ces services sont externalisés et négociés - habituellement dans le cadre d'un contrat MIFAT ou sur la base d'un devis convenu."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Identify all direct or indirect taxes that MSF is not exempted from under the law or the MSF MOU/Host Country Agreement (HCA)."
+msgstr "Identifier tous les impôts directs/indirects dont MSF n'est pas exonéré en vertu de la loi ou du MOU/de l'Accord avec le pays Hôte (HCA) MSF."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Identify all pre-arrival expenses MSF pays to service providers when these services are outsourced and negotiated - usually in a MIFAT contract or via agreed quotation."
+msgstr "Identifier toutes les dépenses engagées par MSF auprès de prestataires de services avant l'arrivée, lorsque ces services sont externalisés et négociés - habituellement dans le cadre d'un contrat MIFAT ou sur la base d'un devis convenu."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Identify all pre-arrival fees that MSF can not negotiate or control because they are fixed by authorities or infrastructure operators."
+msgstr "Identifier tous les frais d'avant arrivée que MSF ne peut ni négocier ni contrôler, car ils sont fixés par les autorités ou les opérateurs d'infrastructures."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Identify all transport related expenses/taxes that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA)."
+msgstr "Identifier toutes les dépenses/taxes liées au transport dont MSF n'est pas exonéré, que ce soit en vertu de la loi ou par MOU Négocié par MSF/Accord avec le pays Hôte (HCA)."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Identify fees that neither MSF nor the transporter controls. They are imposed by authorities, non-negotiable, and operational adds-on."
+msgstr "Identifier les frais qui ne sont contrôlés ni par MSF ni par le transporteur. Il s'agit de frais imposés par les autorités, non négociables et qui s'ajoutent aux coûts opérationnels."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Identify if mandatory insurance obligations are being fulfilled by MSF by insuring its own cargo during transportation or by Service providers."
+msgstr "Identifier si les obligations d'assurance obligatoires sont respectées par MSF, soit en assurant ses propres cargaisons durant le transport, soit par le biais de prestataires de services."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Identify inefficiencies or delays in the importation process that may cause unnecessary storage costs. It will be an indicator of point of improvement."
+msgstr "Identifier les inefficacités ou les retards dans le processus d'importation susceptibles d'entraîner des frais de stockage inutiles. Ce sera un indicateur de point d'amélioration."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+msgid "Identify non-compliance aspects either by MSF or by MSF appointed service providers during the customs clearance process. It will be an indicator of point of improvement."
+msgstr "Identifier les aspects de non-conformité, que ce soit de la part de MSF ou des prestataires de services désignés par MSF, au cours du processus de dédouanement. Ce sera un indicateur de point d'amélioration."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Identify that the transportation management process may not be efficient especially if MSF pays huge detention expenses. It will be an indicator of point of improvement to be re-negotiated with transporter to be shared with ESCs & RSCs."
+msgstr "Identifier que le processus de gestion du transport pourrait manquer d'efficacité, en particulier si MSF règle des frais d'immobilisation élevés. Cela constitue un axe d'amélioration à renégocier avec le transporteur et à partager avec les ESCs & RSCs."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Identify that the transportation management process may not be efficient especially if MSF pays huge storage expenses. It will be an indicator of point of improvement."
+msgstr "Identifier que le processus de gestion du transport pourrait manquer d'efficacité, en particulier si MSF règle des frais de stockage élevés. Ce sera un indicateur de point d'amélioration."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Identify that the transportation management process or the appointed transporter may not be efficient. It will be an indicator of point of improvement."
+msgstr "Identifier que le processus de gestion du transport ou le transporteur désigné pourrait manquer d'efficacité. Ce sera un indicateur de point d'amélioration."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Identify that there is inefficiency in container handling or coordination process may not be efficient especially if MSF pays huge demurrage expenses. It will be an indicator of point of improvement to be shared with ESCs & RSCs."
+msgstr "Identifier qu'il y a des inefficacités dans la manutention des conteneurs ou qu'il y a des processus de coordination peu performants, en particulier si MSF règle des frais de surestaries élevés. Ce sera un indicateur de point d'amélioration à partager avec les ESCs & RSCs"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Identify the fees that MSF has under its control and useful for negotiation for future market assessments."
+msgstr "Identifier les frais dont MSF a le contrôle et qui sont utiles à la négociation pour les futures évaluations du marché."
+
+#. module: transport_mgmt
+#: report:transport.order.ito.customs.fees.pdf:0
+#: report:transport.order.ito.transport.fees.pdf:0
+#: report:transport.order.oto.customs.fees.pdf:0
+#: report:transport.order.oto.transport.fees.pdf:0
+msgid "Make sure you add a remark to explain why this fee is \"Other\"."
+msgstr "Veuillez vous assurer d'ajouter une remarque expliquant pourquoi ce frais est \"Autre\"."

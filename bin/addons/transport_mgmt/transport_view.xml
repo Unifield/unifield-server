@@ -917,6 +917,46 @@ action = self.open_ito_from_po(cr, uid, ids, context=context)
             <field name="sequence" eval="200"/>
         </record>
 
+        <!-- REPORTS -->
+        <report id="transport_order_ito_customs_fees_pdf"
+            string="Customs Fees (What/How)"
+            target_filename="Customs Fees (What/How)"
+            model="transport.order.in"
+            name="transport.order.ito.customs.fees.pdf"
+            rml="transport_mgmt/report/transport_order_customs_fees_report.rml"
+            header="False"
+            auto="False"
+            menu="True"/>
+
+        <report id="transport_order_oto_customs_fees_pdf"
+            string="Customs Fees (What/How)"
+            target_filename="Customs Fees (What/How)"
+            model="transport.order.out"
+            name="transport.order.oto.customs.fees.pdf"
+            rml="transport_mgmt/report/transport_order_customs_fees_report.rml"
+            header="False"
+            auto="False"
+            menu="True"/>
+
+        <report id="transport_order_ito_transport_fees_pdf"
+            string="Transport Fees (What/How)"
+            target_filename="Transport Fees (What/How)"
+            model="transport.order.in"
+            name="transport.order.ito.transport.fees.pdf"
+            rml="transport_mgmt/report/transport_order_transport_fees_report.rml"
+            header="False"
+            auto="False"
+            menu="True"/>
+
+        <report id="transport_order_oto_transport_fees_pdf"
+            string="Transport Fees (What/How)"
+            target_filename="Transport Fees (What/How)"
+            model="transport.order.out"
+            name="transport.order.oto.transport.fees.pdf"
+            rml="transport_mgmt/report/transport_order_transport_fees_report.rml"
+            header="False"
+            auto="False"
+            menu="True"/>
 
     </data>
 </openerp>

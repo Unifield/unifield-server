@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<document filename="transport_order_customs_fees_report.pdf">
+    <template pageSize="(842.0,595.0)" title="transport_order_customs_fees_report" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="42.0" y1="62.0" width="756" height="500" />
+      <pageGraphics>
+        <fill color="blue"/>
+        <setFont name="Helvetica" size="9"/>
+        <fill color="black"/>
+        <drawString x="20.0" y="10.0">Page : <pageNumber /> / </drawString>
+        <drawString x="60.0" y="10.0"><pageCount /> </drawString>
+
+      </pageGraphics>
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="table_title">
+            <blockBackground colorName="silver" start="0,0" stop="-1,0"/>
+            <lineStyle kind="GRID" colorName="grey"/>
+            <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+            <blockValign value="MIDDLE" start="0,0" stop="-1,0" />
+            <blockValign value="MIDDLE" start="0,1" stop="1,-1" />
+            <blockValign value="TOP" start="1,1" stop="-1,-1" />
+        </blockTableStyle>
+
+        <paraStyle name="topTitle" fontName="Helvetica-Bold" fontSize="17" alignment="CENTER" />
+        <paraStyle name="title" fontName="Helvetica-Bold" fontSize="9"/>
+        <paraStyle name="line" fontName="Helvetica" fontSize="9" alignment="LEFT"/>
+        <paraStyle name="whitespace" fontName="Helvetica" fontSize="9" alignment="LEFT" spaceAfter="20"/>
+    </stylesheet>
+
+    <story>
+        <blockTable colWidths="782.0">
+            <tr>
+                <td><para style="topTitle">Customs Fees (WHAT/HOW)</para></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="182.0,300.0,300.0">
+            <tr>
+                <td><para style="title">Customs Generic fees</para></td>
+                <td><para style="title">WHAT</para></td>
+                <td><para style="title">HOW</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">3rd Party Pre-Arrival Charges</para></td>
+                <td><para style="line">Includes costs linked to non-negotiable/fixed fees during pre-clearance process. These fees usually official/statutory and will have official receipts.</para></td>
+                <td><para style="line">Identify all pre-arrival fees that MSF can not negotiate or control because they are fixed by authorities or infrastructure operators.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Negotiated Pre-Arrival Services Fees</para></td>
+                <td><para style="line">Includes fees linked to pre-arrival clearance services provided by contracted service providers or 3rd party provider when fees are negotiated and not fixed by authorities.</para></td>
+                <td><para style="line">Identify all pre-arrival expenses MSF pays to service providers when these services are outsourced and negotiated - usually in a MIFAT contract or via agreed quotation.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">3rd Party Customs Charges</para></td>
+                <td><para style="line">Includes all the non-negotiable/fixed customs-related service fees such as terminal handling charges, port inspection fees, loading/unloading charges, escorts, bonded warehousing and other official port or airport charges.</para></td>
+                <td><para style="line">Identify all customs clearance expenses MSF can not negotiate or control because they are mandated by authorities, port/airport operators or shipping/airline handlers.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Negotiated Customs Clearance Services Fees</para></td>
+                <td><para style="line">Include all the fees linked to clearance services provided by contracted service providers when fees are negotiated and not fixed by authorities.</para></td>
+                <td><para style="line">Identify all customs clearance expenses MSF pays to service providers when these services are outsourced and negotiated - usually in a MIFAT contract or via agreed quotation.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Taxes / Duties (Customs)</para></td>
+                <td><para style="line">Includes statutory fees linked to customs-related taxes such as import duties, excise duties, withholding taxes, environmental taxes and VAT or sales tax paid directly for MSF cargo.</para></td>
+                <td><para style="line">Identify all direct or indirect taxes that MSF is not exempted from under the law or the MSF MOU/Host Country Agreement (HCA).</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Customs Storage Fees</para></td>
+                <td><para style="line">Includes fees linked to storing cargo in customs-controlled terminals when customs clearance is delayed or processing exceeds the free storage period.</para></td>
+                <td><para style="line">Identify inefficiencies or delays in the importation process that may cause unnecessary storage costs. It will be an indicator of point of improvement.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Customs Penalty Fees</para></td>
+                <td><para style="line">Includes fees/penalties/fines imposed by customs authorities due to mistakes in the customs declaration process or any other non-compliance deemed to be caused by MSF or the appointed clearing agent.</para></td>
+                <td><para style="line">Identify non-compliance aspects either by MSF or by MSF appointed service providers during the customs clearance process. It will be an indicator of point of improvement.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Other Customs Fees</para></td>
+                <td><para style="line">Includes costs linked to customs-related fees that do not fit within the above defined categories.</para></td>
+                <td><para style="line">Make sure you add a remark to explain why this fee is "Other".</para></td>
+            </tr>
+        </blockTable>
+
+    </story>
+</document>

@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<document filename="transport_order_transport_fees_report.pdf">
+    <template pageSize="(842.0,595.0)" title="transport_order_transport_fees_report" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="42.0" y1="62.0" width="756" height="500" />
+      <pageGraphics>
+        <fill color="blue"/>
+        <setFont name="Helvetica" size="9"/>
+        <fill color="black"/>
+        <drawString x="20.0" y="10.0">Page : <pageNumber /> / </drawString>
+        <drawString x="60.0" y="10.0"><pageCount /> </drawString>
+
+      </pageGraphics>
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="table_title">
+            <blockBackground colorName="silver" start="0,0" stop="-1,0"/>
+            <lineStyle kind="GRID" colorName="grey"/>
+            <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+            <blockValign value="MIDDLE" start="0,0" stop="-1,0" />
+            <blockValign value="MIDDLE" start="0,1" stop="1,-1" />
+            <blockValign value="TOP" start="1,1" stop="-1,-1" />
+        </blockTableStyle>
+
+        <paraStyle name="topTitle" fontName="Helvetica-Bold" fontSize="17" alignment="CENTER" />
+        <paraStyle name="title" fontName="Helvetica-Bold" fontSize="9"/>
+        <paraStyle name="line" fontName="Helvetica" fontSize="9" alignment="LEFT"/>
+        <paraStyle name="whitespace" fontName="Helvetica" fontSize="9" alignment="LEFT" spaceAfter="20"/>
+    </stylesheet>
+
+    <story>
+        <blockTable colWidths="782.0">
+            <tr>
+                <td><para style="topTitle">Freight/Transport Fees (WHAT/HOW)</para></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="182.0,300.0,300.0">
+            <tr>
+                <td><para style="title">Freight/Transport Generic fees</para></td>
+                <td><para style="title">WHAT</para></td>
+                <td><para style="title">HOW</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">3rd Party Transport Charges</para></td>
+                <td><para style="line">Includes fees linked to non-negotiable/fixed operational charges such as loading, unloading, terminal handling, forklift use and any other mandatory 3rd party fees (with official receipts).</para></td>
+                <td><para style="line">Identify fees that neither MSF nor the transporter controls. They are imposed by authorities, non-negotiable, and operational adds-on.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Negotiated Transport Cost</para></td>
+                <td><para style="line">Includes all fees linked to the transport rates negotiated in the MSF contract or agreed quotation with transporters.</para></td>
+                <td><para style="line">Identify the fees that MSF has under its control and useful for negotiation for future market assessments.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Insurance Service Fees [MSF]</para></td>
+                <td><para style="line">Includes MSF owned fees linked to mandatory insurance requirements and cargo insurance during transport.</para></td>
+                <td><para style="line">Identify if mandatory insurance obligations are being fulfilled by MSF by insuring its own cargo during transportation or by Service providers.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Truck Detention Fees</para></td>
+                <td><para style="line">Includes fees linked to delays in offloading and releasing cargo/truck according to agreed detention free days that lead to daily penalty fees from the transporter.</para></td>
+                <td><para style="line">Identify that the transportation management process may not be efficient especially if MSF pays huge detention expenses. It will be an indicator of point of improvement to be re-negotiated with transporter to be shared with ESCs &amp; RSCs.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Demurrage Fees</para></td>
+                <td><para style="line">Includes fees linked to delays in returning empty containers to the shipping line or agent at the port of entry according to demurrage free days negotiated by supplier center (eg: ESC/RSC) on behalf of the MSF country of importation.</para></td>
+                <td><para style="line">Identify that there is inefficiency in container handling or coordination process may not be efficient especially if MSF pays huge demurrage expenses. It will be an indicator of point of improvement to be shared with ESCs &amp; RSCs.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Storage Fees</para></td>
+                <td><para style="line">Includes fees linked to storing cargo in transporter terminal or 3rd party storage facilities when it exceeds the free storage period.</para></td>
+                <td><para style="line">Identify that the transportation management process may not be efficient especially if MSF pays huge storage expenses. It will be an indicator of point of improvement.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Container Deposit Fees</para></td>
+                <td><para style="line">Includes fees advanced to the shipping line by MSF or its appointed agent and is only reimbursed after MSF has officially returned back the container to the shipping line and obtained proof of container reception by the shipping line or its agent.</para></td>
+                <td><para style="line">Identify that the transportation management process or the appointed transporter may not be efficient. It will be an indicator of point of improvement.</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Taxes / Duties (Transport)</para></td>
+                <td><para style="line">Includes fees linked to transport-related taxes &amp; duties such as weighbridge fees, official levies, environmental taxes and VAT when applicable.</para></td>
+                <td><para style="line">Identify all transport related expenses/taxes that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).</para></td>
+            </tr>
+            <tr>
+                <td><para style="line">Other Transport Fees</para></td>
+                <td><para style="line">Includes costs linked to any transport-related charges that do not fall within the defined categories above.</para></td>
+                <td><para style="line">Make sure you add a remark to explain why this fee is "Other".</para></td>
+            </tr>
+        </blockTable>
+
+    </story>
+</document>
