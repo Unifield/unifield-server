@@ -215,6 +215,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             try:
                 cnopts = pysftp.CnOpts()
                 cnopts.hostkeys = None
+                cnopts.compression = True
                 port = 22
                 if obj.ftp_port:
                     port = int(obj.ftp_port)
