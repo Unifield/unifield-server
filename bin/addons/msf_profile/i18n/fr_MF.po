@@ -126597,10 +126597,9 @@ msgid "International Transport & Transit process"
 msgstr "Transport International & processus de Transit"
 
 #. module: transport_mgmt
-#: view:transport.step:0
-#: field:transport.step,macroprocess_ids:0
-msgid "Linked Macroprocesses"
-msgstr "Macroprocessus liés"
+#: field:transport.step,macroprocess_id:0
+msgid "Linked Macroprocess"
+msgstr "Macroprocessus lié"
 
 #. module: transport_mgmt
 #: view:transport.macroprocess:0

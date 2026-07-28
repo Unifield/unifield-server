@@ -59,6 +59,62 @@ class patch_scripts(osv.osv):
     }
 
     # UF42.0
+    def us_15910_15922_16054_fix_steps(self, cr, uid, *a, **b):
+        '''
+        Set the step_id of transport_order_step lines to the correct id depending on the new steps
+        '''
+        data_obj = self.pool.get('ir.model.data')
+
+        old_steps = [
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_export_cargo_req')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_reexport_cargo_req')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_req_dispose_msf_fleet')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_domestic_transport_req')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_notif')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_notif_conf_rts')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_prearrival_proc')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_preship_preclear')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_predispatch_proc')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_greenlight_shipper')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_greenlight_shipper_coor')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_greenlight_consignee')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_proc_deregistration_bond_cancel')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_ship_conf')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transit_ship_conf')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_reexport_ship_conf')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_ship_conf_bond_invoice')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_ship_dispatch_customs_exit')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_arrival')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transit_cargo_arrival')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_customs_bonded')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_customs')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_customs_temp')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_imp_cargo_req')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_customs_bonded_ex_wh')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_freight_req')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_bonded_wh_invoice')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_reception')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_transit_reception')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_onward_transit_proc')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_onward_transit_greenlight')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_customs_invoice')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_domestic_transport_invoice')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_goods_reception_claims')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_goods_reception_claims_customs')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_reception_dest')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_transit_invoice')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_doc_archiving')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_perf_indicator')[1],
+            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_goods_reception_claims_destination')[1],
+        ]
+
+        # if old_steps:
+        #     for macroprocess_id in self.pool.get('transport.macroprocess').search(cr, uid, []):
+        #         for step_id in old_steps:
+
+
+        return True
+
     def us_11997_financing_contract_sync(self, cr, uid, *a, **b):
         # on HQ trigger updates on financing object linked to mission-private rule
         # this will unlock existing NR

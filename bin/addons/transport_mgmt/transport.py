@@ -232,7 +232,7 @@ class transport_macroprocess(osv.osv):
         'name': fields.char('Name', size=128, select=1, required=1, translate=1),
         'active': fields.boolean('Active', readonly=1),
         'transport_management': fields.selection([('in', 'Inbound'), ('out', 'Outbound'), ('both', 'Inbound and Outbound')], 'Active', required=1),
-        'step_ids': fields.many2many('transport.step', 'macroprocess_step_rel', 'macroprocess_ids', 'step_ids', 'Linked Steps'),
+        'step_ids': fields.one2many('transport.step', 'macroprocess_id', 'Linked Steps'),
         # step_ids many2many added in the inherit
     }
 
@@ -269,11 +269,12 @@ transport_macroprocess()
 class transport_step(osv.osv):
     _name = 'transport.step'
     _description = 'Steps'
-    _order = 'id'
+    _order = 'macroprocess_id,step_number'
     _columns = {
         'name': fields.char('Name', size=256, select=1, required=1, translate=1),
+        'step_number': fields.integer('Step', required=1, readonly=1),
         'is_active': fields.boolean('Active'),
-        'macroprocess_ids': fields.many2many('transport.macroprocess', 'macroprocess_step_rel', 'step_ids', 'macroprocess_ids', 'Linked Macroprocesses'),
+        'macroprocess_id': fields.many2one('transport.macroprocess', 'Linked Macroprocess'),
     }
 
     def onchange_is_active(self, cr, uid, ids, is_active, context=None):
@@ -504,7 +505,7 @@ class transport_order_step(osv.osv):
                 if parent:
                     macroprocess_id = parent['macroprocess_id'] and parent['macroprocess_id'][0] or False
         if macroprocess_id:
-            dom.append(('macroprocess_ids', '=', macroprocess_id))
+            dom.append(('macroprocess_id', '=', macroprocess_id))
 
         return self.pool.get('transport.step')._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
 
