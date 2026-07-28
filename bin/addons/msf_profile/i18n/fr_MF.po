@@ -127248,8 +127248,8 @@ msgstr "Incoterms"
 
 #. module: transport_mgmt
 #: model:transport.order.fees.type,name:transport_mgmt.fees_insurance
-msgid "Insurance Service fees (MSF)"
-msgstr "Frais de Servide d'Assurance (MSF)"
+msgid "Insurance Service fees [MSF]"
+msgstr "Frais de Servide d'Assurance [MSF]"
 
 #. module: transport_mgmt
 #: field:transport.order,invoice_link:0
@@ -130650,7 +130650,7 @@ msgstr "Quoi:\n"
 #. module: transport_mgmt
 #: code:addons/transport_mgmt/__init__.py:41
 #, python-format
-msgid "Quoi:\n"
+msgid "What:\n"
 "Includes fees linked to delays in offloading and releasing cargo/truck according to agreed detention free days that lead to daily penalty fees from the transporter.\n"
 "\n"
 "How:\n"

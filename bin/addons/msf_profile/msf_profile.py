@@ -83,7 +83,7 @@ class patch_scripts(osv.osv):
         # fees_insurance: Change name
         fees_insurance_ids = fees_obj.search(cr, uid, [('code', '=', 'insurance')])
         if fees_insurance_ids:
-            fees_obj.write(cr, uid, fees_insurance_ids, {'name': 'Insurance Service fees (MSF)'})
+            fees_obj.write(cr, uid, fees_insurance_ids, {'name': 'Insurance Service fees [MSF]'})
 
         # fees_freight_storage: Change name
         fees_freight_storage_ids = fees_obj.search(cr, uid, [('code', '=', 'freight_storage')])

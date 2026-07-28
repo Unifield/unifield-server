@@ -46,7 +46,7 @@
 
         <record id="fees_insurance" model="transport.order.fees.type">
             <field name="code">insurance</field>
-            <field name="name">Insurance Service fees (MSF)</field>
+            <field name="name">Insurance Service fees [MSF]</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
