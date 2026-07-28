@@ -8,11 +8,14 @@
             <field name="type">tree</field>
             <field name="priority" eval="30"/>
             <field name="arch" type="xml">
-                <tree string="Location Classification" hide_new_button="1">
+                <tree string="Location Classification" hide_new_button="1" colors="dimgray:search_color=='dimgray';darkorchid:search_color=='darkorchid';lightpink:search_color=='lightpink';royalblue:search_color=='royalblue' or (usage=='internal' and location_category=='consumption_unit') or intermediate_parent==True;yellowgreen:usage=='customer' and location_category=='consumption_unit';darkorange:search_color=='darkorange';sandybrown:search_color=='sandybrown'">
                     <field name="name" string="Location Name"/>
                     <field name="location_category" string="Location Category"/>
-                    <field name="external_system_managed_stock" string="External System Managed Stock"/>
+                    <field name="external_system_managed_stock"/>
                     <field name="active"/>
+                    <field name="usage" invisible="1" />
+                    <field name="search_color" invisible="1" />
+                    <field name="intermediate_parent" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -23,11 +26,11 @@
             <field name="type">form</field>
             <field name="priority" eval="40"/>
             <field name="arch" type="xml">
-                 <form string="Location Classification" hide_new_button="1" hide_duplicate_button="1">
+                 <form string="Location Classification" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     <field name="name" string="Location Name" readonly="1"/>
                     <field name="location_category" string="Location Category" readonly="1"/>
                     <field name="active" readonly="1"/>
-                    <field name="external_system_managed_stock" string="External System Managed Stock"
+                    <field name="external_system_managed_stock"
                            attrs="{'readonly': [('active','=',False)]}"
                            required="1"/>
                     <newline/>
@@ -46,7 +49,7 @@
                     <filter string="Active" name="filter_active" domain="[('active','=',True)]" icon="terp-check" />
                     <filter string="Inactive" name="filter_inactive" domain="[('active','=',False)]" icon="gtk-dialog-error"/>
                     <field name="name" string="Location Name"/>
-                    <field name="external_system_managed_stock" string="External System Managed Stock"/>
+                    <field name="external_system_managed_stock"/>
                 </search>
             </field>
         </record>
@@ -59,7 +62,7 @@
             <field name="view_id" ref="view_location_classification_tree"/>
             <field name="search_view_id" ref="view_location_classification_search"/>
             <field name="domain">[('usage','=','customer'), ('location_category','=','consumption_unit')]</field>
-            <field name="context">{'search_default_filter_active': 1}</field>
+            <field name="context">{'search_default_filter_active': 1, 'sort_by_name': True}</field>
         </record>
 
         <record id="action_stock_location_classification_view_tree" model="ir.actions.act_window.view">
