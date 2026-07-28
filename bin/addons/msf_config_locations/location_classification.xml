@@ -8,7 +8,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="30"/>
             <field name="arch" type="xml">
-                <tree string="Location Classification">
+                <tree string="Location Classification" hide_new_button="1">
                     <field name="name" string="Location Name"/>
                     <field name="location_category" string="Location Category"/>
                     <field name="external_system_managed_stock" string="External System Managed Stock"/>
