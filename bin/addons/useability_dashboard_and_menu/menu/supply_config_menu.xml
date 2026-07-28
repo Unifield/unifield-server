@@ -130,7 +130,7 @@
                     action="msf_config_locations.action_stock_location_classification"
                     parent="menu_reg_wh_mngt"
                     sequence="16"
-                    groups="sd.Sup_Supply_Config"/>
+                    groups="sd.res_groups_Sup_Supply_Config"/>
 
                 <menuitem id="msf_outgoing.menu_action_pack_type_tree" 
                 action="msf_outgoing.action_pack_type_tree" 
