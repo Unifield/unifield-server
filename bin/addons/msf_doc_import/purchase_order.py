@@ -36,7 +36,7 @@ from msf_doc_import import GENERIC_MESSAGE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 from service.web_services import report_spool
-
+import posixpath
 
 class purchase_order_manual_export(osv.osv_memory):
     _name = 'purchase.order.manual.export'
@@ -476,6 +476,25 @@ class purchase_order(osv.osv):
                         sftp.put(tmpname, filename, preserve_mtime=True)
                 except:
                     raise osv.except_osv(_('Error'), _('Unable to write on SFTP server at location %s') % export_wiz.dest_path)
+
+                # now we can remove tmp file
+                os.remove(tmpname)
+            elif export_wiz.ftp_ok and export_wiz.ftp_dest_ok and export_wiz.ftp_protocol == 'onedrive':
+                webdav = None
+                context.update({'no_raise_if_ok': True})
+                webdav = self.pool.get('automated.export').ftp_test_connection(cr, uid, export_wiz.id, context=context)
+                context.pop('no_raise_if_ok')
+
+                # create tmp file
+                tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+                tmp_file.write(str(base64.b64decode(file_res['result']), 'utf8'))
+                tmpname = tmp_file.name
+                tmp_file.close()
+
+                try:
+                    webdav.push(tmpname, posixpath.join(export_wiz.dest_path, filename), mode='rb')
+                except:
+                    raise osv.except_osv(_('Error'), _('Unable to write on OneDrive server at location %s') % export_wiz.dest_path)
 
                 # now we can remove tmp file
                 os.remove(tmpname)

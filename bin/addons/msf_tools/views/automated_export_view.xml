@@ -55,7 +55,7 @@
                     <newline />
                     <field name="pause" attrs="{'invisible': [('disable_cron', '=', False)]}"/>
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
-                    <button name="sent_to_remote" string="Manually send to FTP" colspan="2" type="object" icon="cloud.png" attrs="{'invisible': ['|', ('disable_cron', '=', False), ('ftp_ok', '=', False)]}" />
+                    <button name="sent_to_remote" string="Manually send to remote" colspan="2" type="object" icon="cloud.png" attrs="{'invisible': ['|', ('disable_cron', '=', False), ('ftp_ok', '=', False)]}" />
 
                     <field name="disable_cron" invisible="1" />
                     <field name="multiple" invisible="1" />
@@ -65,9 +65,12 @@
                         <field name="ftp_ok" on_change="onchange_ftp_ok(ftp_ok)" attrs="{'readonly': [('active', '=', True)]}"/>
                         <field name="ftp_protocol" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
                         <field name="ftp_url" attrs="{'required': [('ftp_ok', '!=', False)], 'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
-                        <field name="ftp_login" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
-                        <field name="ftp_port" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
-                        <field name="ftp_password" password="True" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
+                        <field name="ftp_login" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '=', 'onedrive')]}"/>
+                        <field name="ftp_port" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '=', 'onedrive')]}"/>
+                        <field name="ftp_password" password="True" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '=', 'onedrive')]}"/>
+                        <field name="sharepoint_tenant_id" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '!=', 'onedrive')]}" />
+                        <field name="sharepoint_app_id" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '!=', 'onedrive')]}" />
+                        <field name="sharepoint_cert" colspan="4" attrs="{'readonly': [('ftp_ok', '=', False)], 'invisible': [('ftp_protocol', '!=', 'onedrive')]}" />
                         <button name="ftp_test_connection" string="Test connection" colspan="2" type="object" icon="terp-stock_zoom" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
                     </group>
                     <separator colspan="4" string="Paths configuration" />

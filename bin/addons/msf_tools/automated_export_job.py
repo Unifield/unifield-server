@@ -31,6 +31,7 @@ from osv import fields
 from tools.translate import _
 import logging
 
+import posixpath
 
 class automated_export_job(osv.osv):
     _name = 'automated.export.job'
@@ -139,12 +140,16 @@ class automated_export_job(osv.osv):
 
             ftp_connec = None
             sftp = None
+            webdav = None
             try:
                 context.update({'no_raise_if_ok': True})
                 if job.export_id.ftp_ok and job.export_id.ftp_protocol == 'ftp':
                     ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, job.export_id.id, context=context)
                 elif job.export_id.ftp_ok and job.export_id.ftp_protocol == 'sftp':
                     sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, job.export_id.id, context=context)
+                elif job.export_id.ftp_ok and job.export_id.ftp_protocol == 'onedrive':
+                    webdav = self.pool.get('automated.export').ftp_test_connection(cr, uid, job.export_id.id, context=context)
+
                 context.pop('no_raise_if_ok')
                 # Process export
                 error_message, filenames = [], []
@@ -161,10 +166,10 @@ class automated_export_job(osv.osv):
                         error_message.append(_('No PO to export !'))
 
                     if processed:
-                        nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
+                        nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp, webdav=webdav)
 
                     if rejected:
-                        nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
+                        nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp, webdav=webdav)
                         state = 'error'
                         for resjected_line in rejected:
                             line_message = _('Line %s: ') % resjected_line[0]
@@ -174,7 +179,7 @@ class automated_export_job(osv.osv):
                     nb_processed, nb_rejected, error_message = getattr(
                         self.pool.get(job.export_id.function_id.model_id.model),
                         job.export_id.function_id.method_to_call
-                    )(cr, uid, job.export_id, remote_con=ftp_connec or sftp, disable_generation=job.disable_generation, context=context)
+                    )(cr, uid, job.export_id, remote_con=ftp_connec or sftp or webdav, disable_generation=job.disable_generation, context=context)
                     if nb_rejected:
                         state = 'error'
 
@@ -210,7 +215,7 @@ class automated_export_job(osv.osv):
         }
 
 
-    def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False, ftp_connec=None, sftp=None):
+    def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False, ftp_connec=None, sftp=None, webdav=None):
         """
         Create a csv file that contains the processed lines and put this csv file
         on the report_path directory and attach it to the automated.export.job.
@@ -233,7 +238,7 @@ class automated_export_job(osv.osv):
         delimiter = ','
         quotechar = '"'
         on_ftp = job_brw.export_id.ftp_report_ok
-        assert not on_ftp or (on_ftp and ftp_connec) or (on_ftp and sftp), _('FTP connection issue')
+        assert not on_ftp or (on_ftp and ftp_connec) or (on_ftp and sftp) or (on_ftp and webdav), _('FTP connection issue')
 
         csvfile = tempfile.NamedTemporaryFile(mode='w', delete=False, newline='') if on_ftp else open(pth_filename, 'w', newline='')
         if on_ftp:
@@ -261,6 +266,8 @@ class automated_export_job(osv.osv):
                     sftp.put(temp_path, filename, preserve_mtime=True)
             except:
                 raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
+        elif on_ftp and job_brw.export_id.ftp_protocol == 'onedrive':
+            webdav.push(temp_path, posixpath.join(job_brw.export_id.report_path, filename))
 
         csvfile = open(on_ftp and temp_path or pth_filename, 'rb')
         att_obj.create(cr, uid, {
@@ -278,6 +285,8 @@ class automated_export_job(osv.osv):
         if export_obj.ftp_protocol == 'sftp':
             with remote_con.cd(destination_path):
                 remote_con.put(filename)
+        elif export_obj.ftp_protocol == 'onedrive':
+            remote_con.push(filename, posixpath.join(destination_path, os.path.basename(filename)), mode='rb')
         else:
             with open(filename, 'rb') as temp_file:
                 rep = remote_con.storbinary('STOR %s' % os.path.join(destination_path, os.path.basename(filename)), temp_file)
