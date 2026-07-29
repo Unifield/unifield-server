@@ -120,7 +120,7 @@ class patch_scripts(osv.osv):
         # fees_container: Change name
         fees_container_ids = fees_obj.search(cr, uid, [('code', '=', 'fees_container')])
         if fees_container_ids:
-            fees_obj.write(cr, uid, fees_container, {'name': 'Container Deposit Fees'})
+            fees_obj.write(cr, uid, fees_container_ids, {'name': 'Container Deposit Fees'})
 
         # CUSTOMS FEES
         # fees_prearrival: Change name
