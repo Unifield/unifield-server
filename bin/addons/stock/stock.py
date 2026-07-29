@@ -123,7 +123,7 @@ class stock_location(osv.osv):
     _order = 'parent_left'
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        if context and context.get('sort_by_name'):
+        if not order and context and context.get('sort_by_name'):
             order = 'name'
         return super(stock_location, self).search(
             cr, uid, args, offset=offset, limit=limit,
