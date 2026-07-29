@@ -30,6 +30,17 @@
         menu="True"
         header="False"/>
 
+        <report id="balance_reconciliation"
+        string="Balance Reconciliation"
+        view_ids="account.view_other_statement_tree,account.view_other_statement_form"
+        target_filename="${_('Balance Reconciliation')}_${name}_%(year)s%(month)s%(day)s"
+        model="account.bank.statement"
+        name="balance.reconciliation"
+        rml="register_accounting/report/bank_reconciliation.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+
         <report
         id="cheque_inventory_2"
         string="Cheque Inventory"
@@ -61,7 +72,7 @@
         <report
         id="open_advances_2"
         string="Open Advances"
-        view_ids="account.view_bank_statement_tree,account.view_bank_statement_form,register_accounting.view_cash_statement_tree,account.view_bank_statement_form2"
+        view_ids="account.view_bank_statement_tree,account.view_bank_statement_form,register_accounting.view_cash_statement_tree,account.view_bank_statement_form2,account.view_other_statement_tree,account.view_other_statement_form"
         target_filename="${_('Open Advances')}_${instance_id.code}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="open.advances.2"

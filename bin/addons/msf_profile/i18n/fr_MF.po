@@ -505,6 +505,7 @@ msgstr "US/Arizona"
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:203
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Register name:"
 msgstr "Nom du Registre:"
 
@@ -6004,6 +6005,7 @@ msgstr "Cette ligne est liée à une facture directe inconnue."
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Cheque journal code(s):"
 msgstr "Code(s) des Journaux de Chèques :"
 
@@ -7513,6 +7515,7 @@ msgstr "Taxe de Remplacement"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Register closing date:"
 msgstr "Date de clôture du registre:"
 
@@ -10431,6 +10434,7 @@ msgstr "Clôture Annuelle"
 #: selection:purchase.order.line.allocation.report,line_state:0
 #: selection:transport.order.customs.fees,purchase_state:0
 #: selection:transport.order.transport.fees,purchase_state:0
+#: report:balance.reconciliation:0
 #: field:waca.fin.sync,confirmed:0
 #, python-format
 msgid "Confirmed"
@@ -10439,6 +10443,7 @@ msgstr "Confirmé"
 #. module: register_accounting
 #: report:cash.inventory:0
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Not confirmed"
 msgstr "Non confirmé"
 
@@ -11323,7 +11328,7 @@ msgstr "Lignes analytiques"
 msgid "Line %s. You cannot only add partner or employee or journal."
 msgstr "Line %s. You cannot only add partner or employee or journal."
 
-#. modules: purchase, account, base, useability_dashboard_and_menu, msf_partner, stock
+#. modules: purchase, account, base, useability_dashboard_and_menu, msf_partner, stock, register_accounting
 #: model:ir.ui.menu,name:account.menu_account_customer
 #: model:ir.ui.menu,name:account.menu_finance_receivables
 #: model:ir.actions.act_window,name:base.action_partner_customer_form
@@ -11335,6 +11340,7 @@ msgstr "Line %s. You cannot only add partner or employee or journal."
 #: field:purchase.order,dest_partner_names:0
 #: model:ir.ui.menu,name:useability_dashboard_and_menu.menu_customer
 #: field:stock.picking,customers:0
+#: field:wizard.account.invoice,customers:0
 msgid "Customers"
 msgstr "Clients"
 
@@ -12005,6 +12011,7 @@ msgstr "Annulation d'Appel d'Offre"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Starting Balance:"
 msgstr "Solde Initial :"
 
@@ -13789,11 +13796,12 @@ msgstr "kit.selection.sale.line"
 msgid "Private Phone"
 msgstr "Téléphone Privé"
 
-#. modules: account_mcdb, analytic_distribution
+#. modules: account_mcdb, analytic_distribution, register_accounting
 #: view:account.mcdb:0
 #: view:account.account:0
 #: field:account.account,destination_ids:0
 #: view:account.analytic.account:0
+#: field:wizard.account.invoice.line,destinations:0
 msgid "Destinations"
 msgstr "Destinations"
 
@@ -15816,6 +15824,7 @@ msgstr "Référence du document à l'origine de cette facture."
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Register opening date:"
 msgstr "Date d'ouverture du registre:"
 
@@ -22523,6 +22532,7 @@ msgstr "Filtrer par"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "End of month balance state:"
 msgstr "Statut du solde de fin de mois :"
 
@@ -27197,6 +27207,7 @@ msgstr "Réf Origin:"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Register state:"
 msgstr "État du Registre:"
 
@@ -36134,6 +36145,7 @@ msgstr "_Ok"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Calculated Balance - Pending cheque:"
 msgstr "Solde calculé - Chèques en attente :"
 
@@ -38222,6 +38234,11 @@ msgstr "Fax :"
 #: report:bank.reconciliation:0
 msgid "Bank journal code:"
 msgstr "Code du Journal de Banque :"
+
+#. module: register_accounting
+#: report:balance.reconciliation:0
+msgid "Balance journal code:"
+msgstr "Code du Journal de Solde :"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:270
@@ -54257,6 +54274,7 @@ msgstr "Kit '%s' - Module '%s' - Item '%s' not found in file, item removed"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Journal name:"
 msgstr "Nom du Journal:"
 
@@ -58956,6 +58974,7 @@ msgstr "Lot atteignant probablement expiration"
 #: report:msf.pdf.engagement:0
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 #: code:addons/account/report/account_general_ledger.py:650
 msgid "Page"
 msgstr "Page"
@@ -66934,7 +66953,7 @@ msgstr "Boîte"
 msgid "Please note that users can be added to the white list only if:"
 msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la liste blanche que si:"
 
-#. modules: msf_budget, account_mcdb, financing_contract, msf_instance, analytic_override, analytic_distribution, account
+#. modules: msf_budget, account_mcdb, financing_contract, msf_instance, analytic_override, analytic_distribution, account, register_accounting
 #: view:account.mcdb:0
 #: view:account.analytic.account:0
 #: field:account.analytic.account,cost_center_ids:0
@@ -66947,6 +66966,7 @@ msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la list
 #: field:account.analytic.account,dest_cc_link_ids:0
 #: view:multiple.cc.selection.wizard:0
 #: field:multiple.cc.selection.wizard,cc_ids:0
+#: field:wizard.account.invoice.line,cost_centers:0
 msgid "Cost Centers"
 msgstr "Centres de Coût"
 
@@ -68172,6 +68192,7 @@ msgstr "Sequence issue"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Gap:"
 msgstr "Écart :"
 
@@ -70298,6 +70319,7 @@ msgstr "Account code - Destination code"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Responsible:"
 msgstr "Responsable:"
 
@@ -71229,6 +71251,7 @@ msgstr "Numéro de Taxe sur la Valeur Ajoutée. Cochez cette case si le partenai
 #: report:addons/financing_contract/report/project_expenses_xls.mako:363
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:299
 #: report:liquidity.position.pdf:0
+#: report:balance.reconciliation:0
 #, python-format
 msgid "Report date:"
 msgstr "Date du rapport :"
@@ -75114,6 +75137,7 @@ msgstr "Tiers- Employé"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Total amount of pending cheque:"
 msgstr "Montant total des chèques en attente :"
 
@@ -75258,6 +75282,11 @@ msgstr "valid - (res.currency.table)"
 #: selection:wizard.register.creation.lines,register_type:0
 msgid "Bank Statement"
 msgstr "Registre de Banque"
+
+#. module: register_accounting
+#: selection:wizard.register.creation.lines,register_type:0
+msgid "Other Register"
+msgstr "Autre Registre"
 
 #. module: register_accounting
 #: field:account.bank.statement.line,cash_register_op_advance_po_id:0
@@ -75764,6 +75793,7 @@ msgstr "Taxes à l'achat"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 #: report:account.invoice2:0
+#: report:balance.reconciliation:0
 msgid "Comments:"
 msgstr "Commentaires:"
 
@@ -77036,6 +77066,7 @@ msgstr "Stock - Inventaire "
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Calculated Balance:"
 msgstr "Solde calculé:"
 
@@ -78050,6 +78081,7 @@ msgstr "L'écriture \"%s\" n'est pas valide !"
 #: report:cash.inventory:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:484
 #: code:addons/product_asset/asset_register_report.py:74
+#: report:balance.reconciliation:0
 msgid "Period:"
 msgstr "Période:"
 
@@ -99887,6 +99919,7 @@ msgstr "Commande En Attente de Sourcing"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 #: report:account.invoice2:0
+#: report:balance.reconciliation:0
 msgid "(Name, Function)"
 msgstr "(Nom, Fonction)"
 
@@ -100734,6 +100767,11 @@ msgstr "RAPPORT COMPLET DU REGISTRE DE CAISSE"
 #: report:addons/register_accounting/report/fully_report_xls.mako:453
 msgid "BANK REGISTER FULL REPORT"
 msgstr "RAPPORT COMPLET DU REGISTRE DE BANQUE"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:453
+msgid "MOBILE REGISTER FULL REPORT"
+msgstr "RAPPORT COMPLET DU REGISTRE MOBILE"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:453
@@ -113407,11 +113445,12 @@ msgstr " Demande Interne"
 msgid " Field Order"
 msgstr " Commande de Terrain"
 
-#. module: msf_supply_doc_export, transport_mgmt, account
+#. module: msf_supply_doc_export, transport_mgmt, account, register_accounting
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1064
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:237
 #: field:transport.order.customs.fees,purchase_details:0
 #: field:transport.order.transport.fees,purchase_details:0
+#: field:wizard.account.invoice,po_details:0
 #: field:account.invoice,po_details:0
 #, python-format
 msgid "PO Details"
@@ -116946,6 +116985,12 @@ msgstr "Toujours Applicable"
 #: code:addons/useability_dashboard_and_menu/report/signature_follow_up_search_report.py:35
 msgid "Bank Register"
 msgstr "Registre de Banque"
+
+#. module: useability_dashboard_and_menu
+#: selection:signature.follow_up,doc_type:0
+#: code:addons/useability_dashboard_and_menu/report/signature_follow_up_search_report.py:35
+msgid "Other Register"
+msgstr "Autre Registre"
 
 #. module: base
 #: selection:signature.set_user,position:0
@@ -124152,8 +124197,9 @@ msgstr "Ligne %s %s: le compte %s ne peut pas être utilisé pour une immobilisa
 msgid "List of owners (accurate at Coo)"
 msgstr "Liste des propriétaires (valable en coordo)"
 
-#. module: account
+#. module: account, register_accounting
 #: field:account.invoice,is_partner_active:0
+#: field:wizard.account.invoice,is_partner_active:0
 msgid "Partner Active"
 msgstr "Partenaire Actif"
 
@@ -129145,6 +129191,71 @@ msgstr "Date d'Exp. obligatoire"
 #, python-format
 msgid "An email address cannot be set for the admin user."
 msgstr "Une adresse email ne peut pas être mise sur le compte admin."
+
+#. module: account, register_accounting
+#: model:ir.ui.menu,name:account.menu_other_statement_tree
+#: model:ir.actions.server,name:register_accounting.action_view_other_statement_search
+#, python-format
+msgid "Other Financial Registers"
+msgstr "Autres registres financiers"
+
+#. module: account
+#: selection:account.invoice,journal_type:0
+#: selection:account.journal,type:0
+msgid "Other financial institutions"
+msgstr "Autres établissements financiers"
+
+#. module: account, finance,account_override,msf_instance,register_accounting
+#: selection:account.invoice,journal_type:0
+#: selection:account.journal,type:0
+#: selection:account.move,journal_type:0
+#: selection:account.move.line,journal_type:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
+#: selection:account.journal.fake,type:0
+#: selection:wizard.account.invoice,journal_type:0
+msgid "Other fin institutions/mobile money"
+msgstr "Autres établissements financiers/services de paiement mobile"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:680
+#, python-format
+msgid "Other Registers"
+msgstr "Autre Registres"
+
+#. module: register_accounting
+#: view:account.bank.statement:0
+msgid "Statement balance"
+msgstr "Solde du Relévé"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:508
+msgid "Statement balance:"
+msgstr "Solde du Relévé :"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
+#: code:ir.actions.report.xml:name:bank.reconciliation
+#: model:ir.actions.report.xml,name:register_accounting.balance_reconciliation
+#, python-format
+msgid "Balance Reconciliation"
+msgstr "Reconciliation des soldes"
+
+#. module: register_accounting
+#: view:account.bank.statement:0
+msgid "Account number"
+msgstr "Numéro de Compte"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
+msgid "Account number:"
+msgstr "Numéro de Compte :"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_cash_statement.py:159

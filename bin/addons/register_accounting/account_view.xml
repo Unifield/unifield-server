@@ -985,5 +985,52 @@
             </field>
         </record>
 
+    <!-- Other Financial Registers Menu -->
+
+        <record id="action_view_other_statement_search" model="ir.actions.server">
+          <field name="name">Other Financial Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='other_reg', context=context)</field>
+        </record>
+
+        <record id="account.menu_other_statement_tree" model="ir.ui.menu">
+          <field name="name">Other Financial Registers</field>
+          <field name="sequence" eval="7"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_other_statement_search"/>
+        </record>
+
+        <record id="view_other_statement_search" model="ir.ui.view">
+            <field name="name">account.other.statement.search</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">search</field>
+            <field name="priority" eval="36"/>
+            <field name="arch" type="xml">
+                <search string="Search Other Statements">
+                    <group col="8" colspan="4">
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new" name="draft"/>
+                        <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
+                        <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
+                        <separator orientation="vertical"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
+                        <field name="name"/>
+                        <newline/>
+                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
+                        <field name="journal_id" domain="[('type', '=', 'other_reg')]" context="{'search_default_filter_is_active': 1}"/>
+                    </group>
+                    <newline/>
+                    <group expand="1" string="Group By...">
+                        <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
+                        <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
     </data>
 </openerp>

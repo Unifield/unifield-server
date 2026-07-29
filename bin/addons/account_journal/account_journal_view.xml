@@ -27,26 +27,26 @@
                         <group col="2" colspan="2">
                                <separator string="Accounts" colspan="4"/>
                                <field name="default_debit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]"
-                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))], 'readonly': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj')), ('has_non_draft_register', '=', True)]}"/>
+                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj', 'other_reg'))], 'readonly': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj', 'other_reg')), ('has_non_draft_register', '=', True)]}"/>
                                <field name="default_credit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]"
-                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))], 'readonly': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj')), ('has_non_draft_register', '=', True)]}"/>
+                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj', 'other_reg'))], 'readonly': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj', 'other_reg')), ('has_non_draft_register', '=', True)]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Company" colspan="4"/>
                             <field name="currency"
-                                   attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))],
+                                   attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'other_reg'))],
                                            'readonly': [('has_entries', '=', True)]}"/>
                             <field name="analytic_journal_id" domain="[('is_current_instance','=',True)]"
                                    attrs="{'required': [('type', 'not in', ('situation', 'stock'))],
                                            'readonly': [('has_entries', '=', True)]}"/>
                             <field name="bank_account_name"
-                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                                   attrs="{'invisible': ['&amp;', ('type', '!=', 'bank'), ('type', '!=', 'other_reg')]}"/>
                             <field name="bank_account_number"
-                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                                   attrs="{'invisible': ['&amp;', ('type', '!=', 'bank'), ('type', '!=', 'other_reg')]}"/>
                             <field name="bank_swift_code"
-                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                                   attrs="{'invisible': ['&amp;', ('type', '!=', 'bank'), ('type', '!=', 'other_reg')]}"/>
                             <field name="bank_address"
-                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                                   attrs="{'invisible': ['&amp;', ('type', '!=', 'bank'), ('type', '!=', 'other_reg')]}"/>
                             <field name="bank_journal_id"
                                    attrs="{'invisible': [('type', '!=', 'cheque')],
                                            'required': [('type', '=', 'cheque')],
@@ -54,7 +54,7 @@
                         </group>
                         <group colspan="4" col="4">
                             <label string="" colspan="2"/>
-                            <button name="button_delete_journal" attrs="{'invisible': [('type', 'not in', ['cash', 'bank', 'cheque'])]}" string="Delete this journal and all attached registers" type="object" icon="gtk-undelete" confirm="This will first DELETE all registers linked to this journal then DELETE this journal. Are you sure?" colspan="2"/>
+                            <button name="button_delete_journal" attrs="{'invisible': [('type', 'not in', ['cash', 'bank', 'cheque', 'other_reg'])]}" string="Delete this journal and all attached registers" type="object" icon="gtk-undelete" confirm="This will first DELETE all registers linked to this journal then DELETE this journal. Are you sure?" colspan="2"/>
                         </group>
                     </form>
                 </form>
