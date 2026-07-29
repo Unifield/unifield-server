@@ -126708,13 +126708,13 @@ msgstr "Traitement du Fret Douanier en entrepôt sous Douane"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_cargo_customs
-msgid "Cargo Customs release and onward preparation"
-msgstr "Dédouanement du Fret et préparations ultérieures"
+msgid "Cargo Customs release and dispatch date"
+msgstr "Dédouanement du Fret et date d'expédition"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_cargo_customs_temp
-msgid "Cargo Customs temporary release and onward preparation"
-msgstr "Dédouanement du Fret temporaire et préparations ultérieures"
+msgid "Cargo Customs temporary release and dispatch date"
+msgstr "Dédouanement du Fret temporaire et date d'expédition"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_cargo_notif
@@ -126730,18 +126730,13 @@ msgstr "Type de Cargaison"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_cargo_arrival
-msgid "Cargo arrival processing (ATA destination port)"
-msgstr "Processus d'arrivée de la Cargaison (port de destination ATA)"
+msgid "Cargo arrival and customs processing (ATA destination port)"
+msgstr "Processus d'arrivée de la Cargaison et de traitement de la douane (port de destination ATA)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_customs_bonded_ex_wh
 msgid "Customs Bonded Ex-Warehousing processing"
 msgstr "Traitement du Fret Douanier en sortie d'entrepôt sous Douane"
-
-#. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_doc_archiving
-msgid "Documentation Archiving"
-msgstr "Archivage de Documentation"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_domestic_transport_invoice
@@ -126759,21 +126754,6 @@ msgid "Export Cargo request"
 msgstr "Requête d'export de Cargaison"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_goods_reception_claims
-msgid "Goods reception & Claims"
-msgstr "Réception des marchandises & Réclamations"
-
-#. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_goods_reception_claims_customs
-msgid "Goods reception & Claims (at customs bonded warehouse)"
-msgstr "Réception des marchandises & Réclamations (à l'entrepôt sous douane)"
-
-#. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_goods_reception_claims_destination
-msgid "Goods reception & Claims (destination)"
-msgstr "Réception des marchandises & Réclamations (destination)"
-
-#. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_greenlight_consignee
 msgid "Greenlight from Consignee (Receiving Country)"
 msgstr "Feu vert du Destinataire (Pays de Réception)"
@@ -126784,19 +126764,9 @@ msgid "Greenlight to Shipper"
 msgstr "Feu vert à l'Expéditeur"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_greenlight_shipper_coor
-msgid "Greenlight to Shipper (Coordination)"
-msgstr "Feu vert à l'Expéditeur (Coordination)"
-
-#. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_imp_cargo_req
 msgid "Import Cargo request"
 msgstr "Requête d'Import de Cargaison"
-
-#. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_perf_indicator
-msgid "Key Performance Indicators (Incident monitoring and control)"
-msgstr "Indicateurs Clé de Performance (surveillance et contrôle des incidents)"
 
 #. module: transport_mgmt
 #: model:ir.actions.server,name:transport_mgmt.action_ito_from_po
@@ -126814,19 +126784,19 @@ msgid "Pre-Arrival processing (Preclearance)"
 msgstr "Traitement avant l'arrivée (Pré-autorisation)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_predispatch_proc
-msgid "Pre-Dispatch processing (Greenlight & Confirmation of shipment)"
-msgstr "Traitement pré-Expédition (Feu vert & Confirmation d'Expédition)"
-
-#. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_preship_preclear
-msgid "Pre-shipment / Preclearance (Receiving Country)"
-msgstr "Pré-Expédition / Pré-autorisation (Pays de Réception)"
+msgid "Pre-shipment / Pre-departure processing (Receiving Country)"
+msgstr "Traitement Pré-Expédition / Avant départ (Pays de Réception)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_proc_deregistration_bond_cancel
-msgid "Processing De-Registration & Bond Cancellation"
-msgstr "Traitement de la Désinscription et l'Annulation de la Caution"
+msgid "Processing De-Registration"
+msgstr "Traitement de la Désinscription"
+
+#. module: transport_mgmt
+#: model:transport.step,name:transport_mgmt.step_proc_deregistration_bond_cancel
+msgid "Processing Bond Cancellation"
+msgstr "Traitement de l'Annulation de la Caution"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_reexport_cargo_req
@@ -126835,8 +126805,8 @@ msgstr "Requête de Réexporation de la Cargaison"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_reexport_ship_conf
-msgid "Re-Export Shipment confirmation & Dispatch (Booking LT (in days), ETD origin port, ETA destination port, ATD origin port)"
-msgstr "Confirmation & Expédition de la Réexportation (Réservation LT (en jours), Heure de Départ Estimée du port d'origine, Heure d'Arrivée Estimée du port de destination, Heure de Départ Réelle du port d'origine)"
+msgid "Re-Export Shipment dispatch confirmation (departure, initial ETA, updated ETA)"
+msgstr "Confirmation & Expédition de la Réexportation (départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_req_dispose_msf_fleet
@@ -126845,28 +126815,23 @@ msgstr "Requête de Cession de la Flotte MSF (Réexportation)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_ship_dispatch_customs_exit
-msgid "Shipment Dispatch & Customs Exit Point Processing"
-msgstr "Expédition & Traitement du Point de Sortie des Douanes"
+msgid "Customs Exit Point Processing"
+msgstr "Traitement du Point de Sortie des Douanes"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_ship_conf
-msgid "Shipment confirmation"
-msgstr "Confirmation d'Expédition"
-
-#. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_ship_conf_bond_invoice
-msgid "Shipment confirmation & Bond Invoice Processing (Booking LT (in days), ETD origin port, ETA destination port, ATD origin port)"
-msgstr "Confirmation d'Expédition & Traitement des Factures de Caution (Réservation LT (en jours), Heure de Départ Estimée du port d'origine, Heure d'Arrivée Estimée du port de destination, Heure de Départ Réelle du port d'origine)"
+msgid "Shipment dispatch confirmation (departure, initial ETA, updated ETA)"
+msgstr "Confirmation d'Expédition (départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_transit_cargo_arrival
-msgid "Transit Cargo arrival processing (ATA transit port)"
-msgstr "Traitement de l'arrivée de la Cargaison en Transit (port de transit ATA)"
+msgid "Transit Cargo arrival and customs processing (ATA transit port)"
+msgstr "Traitement de l'arrivée de la Cargaison en Transit et de la douane (port de transit ATA)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_transit_ship_conf
-msgid "Transit Shipment confirmation"
-msgstr "Confirmation de l'Expédition en Transit"
+msgid "Transit Shipment dispatch confirmation (departure, initial ETA, updated ETA)"
+msgstr "Confirmation de l'Expédition en Transit (départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_transport_customs_invoice
@@ -126895,18 +126860,18 @@ msgstr "Traitement des Factures du Transport en Transit"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_transport_reception
-msgid "Transport reception & Claims"
-msgstr "Réception du Transport & Réclamations"
+msgid "Transport"
+msgstr "Transport"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_transport_reception_dest
-msgid "Transport reception & Claims (Destination)"
-msgstr "Réception du Transport & Réclamations (Destination)"
+msgid "Transport (Destination)"
+msgstr "Transport (Destination)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_transport_transit_reception
-msgid "Transport transit reception & Claims (transit country)"
-msgstr "Réception du Transport en Transit & Réclamations (pays de transit)"
+msgid "Transport (transit country)"
+msgstr "Transport (pays de transit)"
 
 #. module: transport_mgmt
 #: field:transport.order,transit_address_id:0

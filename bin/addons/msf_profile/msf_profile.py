@@ -61,57 +61,112 @@ class patch_scripts(osv.osv):
     # UF42.0
     def us_15910_15922_16054_fix_steps(self, cr, uid, *a, **b):
         '''
-        Set the step_id of transport_order_step lines to the correct id depending on the new steps
+        Set the step_id of transport_order_step lines to the correct id depending on the new steps. Each new step in the
+        XML file has the same id as the old one plus a macroprocess-specific suffix
         '''
         data_obj = self.pool.get('ir.model.data')
 
         old_steps = [
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_export_cargo_req')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_reexport_cargo_req')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_req_dispose_msf_fleet')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_domestic_transport_req')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_notif')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_notif_conf_rts')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_prearrival_proc')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_preship_preclear')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_predispatch_proc')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_greenlight_shipper')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_greenlight_shipper_coor')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_greenlight_consignee')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_proc_deregistration_bond_cancel')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_ship_conf')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transit_ship_conf')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_reexport_ship_conf')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_ship_conf_bond_invoice')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_ship_dispatch_customs_exit')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_arrival')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transit_cargo_arrival')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_customs_bonded')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_customs')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_cargo_customs_temp')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_imp_cargo_req')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_customs_bonded_ex_wh')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_freight_req')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_bonded_wh_invoice')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_reception')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_transit_reception')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_onward_transit_proc')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_onward_transit_greenlight')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_customs_invoice')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_domestic_transport_invoice')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_goods_reception_claims')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_goods_reception_claims_customs')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_reception_dest')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_transport_transit_invoice')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_doc_archiving')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_perf_indicator')[1],
-            data_obj.get_object_reference(cr, uid, 'transpot_mgmt', 'step_goods_reception_claims_destination')[1],
+            ('step_export_cargo_req', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_export_cargo_req')[1]),
+            ('step_reexport_cargo_req', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_reexport_cargo_req')[1]),
+            ('step_req_dispose_msf_fleet', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_req_dispose_msf_fleet')[1]),
+            ('step_domestic_transport_req', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_domestic_transport_req')[1]),
+            ('step_cargo_notif', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_cargo_notif')[1]),
+            ('step_notif_conf_rts', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_notif_conf_rts')[1]),
+            ('step_prearrival_proc', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_prearrival_proc')[1]),
+            ('step_preship_preclear', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_preship_preclear')[1]),
+            ('step_predispatch_proc', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_predispatch_proc')[1]),
+            ('step_greenlight_shipper', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_greenlight_shipper')[1]),
+            ('step_greenlight_shipper_coor', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_greenlight_shipper_coor')[1]),
+            ('step_greenlight_consignee', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_greenlight_consignee')[1]),
+            ('step_proc_deregistration_bond_cancel', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_proc_deregistration_bond_cancel')[1]),
+            ('step_ship_conf', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_ship_conf')[1]),
+            ('step_transit_ship_conf', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transit_ship_conf')[1]),
+            ('step_reexport_ship_conf', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_reexport_ship_conf')[1]),
+            ('step_ship_conf_bond_invoice', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_ship_conf_bond_invoice')[1]),
+            ('step_ship_dispatch_customs_exit', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_ship_dispatch_customs_exit')[1]),
+            ('step_cargo_arrival', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_cargo_arrival')[1]),
+            ('step_transit_cargo_arrival', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transit_cargo_arrival')[1]),
+            ('step_cargo_customs_bonded', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_cargo_customs_bonded')[1]),
+            ('step_cargo_customs', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_cargo_customs')[1]),
+            ('step_cargo_customs_temp', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_cargo_customs_temp')[1]),
+            ('step_imp_cargo_req', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_imp_cargo_req')[1]),
+            ('step_customs_bonded_ex_wh', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_customs_bonded_ex_wh')[1]),
+            ('step_transport_freight_req', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transport_freight_req')[1]),
+            ('step_bonded_wh_invoice', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_bonded_wh_invoice')[1]),
+            ('step_transport_reception', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transport_reception')[1]),
+            ('step_transport_transit_reception', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transport_transit_reception')[1]),
+            ('step_transport_onward_transit_proc', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transport_onward_transit_proc')[1]),
+            ('step_transport_onward_transit_greenlight', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transport_onward_transit_greenlight')[1]),
+            ('step_transport_customs_invoice', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transport_customs_invoice')[1]),
+            ('step_domestic_transport_invoice', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_domestic_transport_invoice')[1]),
+            ('step_goods_reception_claims', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_goods_reception_claims')[1]),
+            ('step_goods_reception_claims_customs', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_goods_reception_claims_customs')[1]),
+            ('step_transport_reception_dest', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transport_reception_dest')[1]),
+            ('step_transport_transit_invoice', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_transport_transit_invoice')[1]),
+            ('step_doc_archiving', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_doc_archiving')[1]),
+            ('step_perf_indicator', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_perf_indicator')[1]),
+            ('step_goods_reception_claims_destination', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_goods_reception_claims_destination')[1]),
         ]
 
-        # if old_steps:
-        #     for macroprocess_id in self.pool.get('transport.macroprocess').search(cr, uid, []):
-        #         for step_id in old_steps:
+        old_step_ids = [step[0] for step in old_steps if step[0]]
+        if old_step_ids:
+            macroprocesses = [
+                ('macroprocess_international_transport_import', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_international_transport_import')[1]),
+                ('macroprocess_international_transport_transit', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_international_transport_transit')[1]),
+                ('macroprocess_international_transport_temp', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_international_transport_temp')[1]),
+                ('macroprocess_international_transport_bonded', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_international_transport_bonded')[1]),
+                ('macroprocess_bonded_domestic', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_bonded_domestic')[1]),
+                ('macroprocess_bonded_international', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_bonded_international')[1]),
+                ('macroprocess_reexport_international', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_reexport_international')[1]),
+                ('macroprocess_export_international', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_export_international')[1]),
+                ('macroprocess_motor_vehicle', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_motor_vehicle')[1]),
+                ('macroprocess_domestic', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_domestic')[1]),
+            ]
+            for mp in macroprocesses:
+                suffix = ''
+                if mp[1]:
+                    if mp[0] == 'macroprocess_international_transport_import':
+                        suffix = '_miti'
+                    elif mp[0] == 'macroprocess_international_transport_transit':
+                        suffix = '_mitt'
+                    elif mp[0] == 'macroprocess_international_transport_temp':
+                        suffix = '_mittm'
+                    elif mp[0] == 'macroprocess_international_transport_bonded':
+                        suffix = '_mitb'
+                    elif mp[0] == 'macroprocess_bonded_domestic':
+                        suffix = '_mbd'
+                    elif mp[0] == 'macroprocess_bonded_international':
+                        suffix = '_mbi'
+                    elif mp[0] == 'macroprocess_reexport_international':
+                        suffix = '_mri'
+                    elif mp[0] == 'macroprocess_export_international':
+                        suffix = '_mei'
+                    elif mp[0] == 'macroprocess_motor_vehicle':
+                        suffix = '_mmv'
+                    elif mp[0] == 'macroprocess_domestic':
+                        suffix = '_md'
 
+                if suffix:
+                    for step in old_steps:
+                        if not step[1]:
+                            continue
+                        new_step_id = data_obj.get_object_reference(cr, uid, 'transport_mgmt', step[0] + suffix)[1]
+                        if not new_step_id:
+                            continue
+                        cr.execute("""
+                            UPDATE transport_order_step SET step_id = %
+                            WHERE step_id = %s AND ((transport_out_id IS NULL AND transport_in_id IN (SELECT id FROM transport_order_in WHERE macroprocess_id = %s))
+                                OR (transport_in_id IS NULL AND transport_out_id IN (SELECT id FROM transport_order_out WHERE macroprocess_id = %s)))
+                        """, (new_step_id, step[1], mp[1], mp[1]))
+                        self.log_info(cr, uid, "US-15910-15922-16054: %d %s step lines were set to %s"
+                                      % (cr.rowcount, step[0], step[0] + suffix))
+
+            # TODO: Delete any step line still using one of the old steps
+
+            # Delete the old steps
+            cr.execute("""DELETE FROM transport_order_step WHERE id IN %s""", (tuple(old_step_ids),))
+            self.log_info(cr, uid, "US-15910-15922-16054: %d steps were deleted" % (cr.rowcount,))
 
         return True
 

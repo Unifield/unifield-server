@@ -239,244 +239,540 @@
         </record>
 
         <!-- Steps -->
-        <record id="step_export_cargo_req" model="transport.step">
-            <field name="name">Export Cargo request</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_export_international')])]"/>
-        </record>
-
-        <record id="step_reexport_cargo_req" model="transport.step">
-            <field name="name">Re-Export Cargo request</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international')])]"/>
-        </record>
-
-        <record id="step_req_dispose_msf_fleet" model="transport.step">
-            <field name="name">Request to Dispose of MSF Fleet (Re-Export)</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_motor_vehicle')])]"/>
-        </record>
-
-        <record id="step_domestic_transport_req" model="transport.step">
-            <field name="name">Domestic Transport request</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_domestic')])]"/>
-        </record>
-
-        <record id="step_cargo_notif" model="transport.step">
+        <!-- macroprocess_international_transport_import steps -->
+        <record id="step_cargo_notif_miti" model="transport.step">
             <field name="name">Cargo Notification (Ready to Ship)</field>
+            <field name="step_number">1</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_transit'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded'), ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
         </record>
-
-        <record id="step_notif_conf_rts" model="transport.step">
-            <field name="name">Notification Confirmation of RTS (Ready to Ship)</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_motor_vehicle')])]"/>
-        </record>
-
-        <record id="step_prearrival_proc" model="transport.step">
+        <record id="step_prearrival_proc_miti" model="transport.step">
             <field name="name">Pre-Arrival processing (Preclearance)</field>
+            <field name="step_number">2</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_transit'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
         </record>
-
-        <record id="step_preship_preclear" model="transport.step">
-            <field name="name">Pre-shipment / Preclearance (Receiving Country)</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international')])]"/>
-        </record>
-
-        <record id="step_predispatch_proc" model="transport.step">
-            <field name="name">Pre-Dispatch processing (Greenlight &amp; Confirmation of shipment)</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_domestic')])]"/>
-        </record>
-
-        <record id="step_greenlight_shipper" model="transport.step">
+        <record id="step_greenlight_shipper_miti" model="transport.step">
             <field name="name">Greenlight to Shipper</field>
+            <field name="step_number">3</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_transit'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
+        </record>
+        <record id="step_ship_conf_miti" model="transport.step">
+            <field name="name">Shipment dispatch confirmation (departure, initial ETA, updated ETA)</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
+        </record>
+        <record id="step_cargo_arrival_miti" model="transport.step">
+            <field name="name">Cargo arrival and customs processing (ATA destination port)</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
+        </record>
+        <record id="step_cargo_customs_miti" model="transport.step">
+            <field name="name">Cargo Customs release and dispatch date</field>
+            <field name="step_number">6</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
+        </record>
+        <record id="step_transport_reception_miti" model="transport.step">
+            <field name="name">Transport</field>
+            <field name="step_number">7</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
+        </record>
+        <record id="step_reception_claims_miti" model="transport.step">
+            <field name="name">Reception &amp; Claims</field>
+            <field name="step_number">8</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
+        </record>
+        <record id="step_transport_customs_invoice_miti" model="transport.step">
+            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="step_number">9</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
         </record>
 
-        <record id="step_greenlight_shipper_coor" model="transport.step">
-            <field name="name">Greenlight to Shipper (Coordination)</field>
+        <!-- macroprocess_international_transport_transit steps -->
+        <record id="step_cargo_notif_mitt" model="transport.step">
+            <field name="name">Cargo Notification (Ready to Ship)</field>
+            <field name="step_number">1</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_domestic')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
-
-        <record id="step_greenlight_consignee" model="transport.step">
-            <field name="name">Greenlight from Consignee (Receiving Country)</field>
+        <record id="step_prearrival_proc_mitt" model="transport.step">
+            <field name="name">Pre-Arrival processing (Preclearance)</field>
+            <field name="step_number">2</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international'), ref('macroprocess_motor_vehicle')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
-
-        <record id="step_proc_deregistration_bond_cancel" model="transport.step">
-            <field name="name">Processing De-Registration &amp; Bond Cancellation</field>
+        <record id="step_greenlight_shipper_mitt" model="transport.step">
+            <field name="name">Greenlight to Shipper</field>
+            <field name="step_number">3</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_motor_vehicle')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
-
-        <record id="step_ship_conf" model="transport.step">
-            <field name="name">Shipment confirmation</field>
+        <record id="step_transit_ship_conf_mitt" model="transport.step">
+            <field name="name">Transit Shipment dispatch confirmation (departure, initial ETA, updated ETA)</field>
+            <field name="step_number">4</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
-
-        <record id="step_transit_ship_conf" model="transport.step">
-            <field name="name">Transit Shipment confirmation</field>
+        <record id="step_transit_cargo_arrival_mitt" model="transport.step">
+            <field name="name">Transit Cargo arrival and customs processing (ATA transit port)</field>
+            <field name="step_number">5</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_transit')])]"/>
+            <field name="macroprocess_ids" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
-
-        <record id="step_reexport_ship_conf" model="transport.step">
-            <field name="name">Re-Export Shipment confirmation &amp; Dispatch (Booking LT (in days), ETD origin port, ETA destination port, ATD origin port)</field>
+        <record id="step_transport_transit_reception_mitt" model="transport.step">
+            <field name="name">Transport (transit country)</field>
+            <field name="step_number">6</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
-
-        <record id="step_ship_conf_bond_invoice" model="transport.step">
-            <field name="name">Shipment confirmation &amp; Bond Invoice Processing (Booking LT (in days), ETD origin port, ETA destination port, ATD origin port)</field>
+        <record id="step_transport_reception_claims_mitt" model="transport.step">
+            <field name="name">Transit Reception &amp; Claims (transit country)</field>
+            <field name="step_number">7</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_motor_vehicle')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
-
-        <record id="step_ship_dispatch_customs_exit" model="transport.step">
-            <field name="name">Shipment Dispatch &amp; Customs Exit Point Processing</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_motor_vehicle')])]"/>
-        </record>
-
-        <record id="step_cargo_arrival" model="transport.step">
-            <field name="name">Cargo arrival processing (ATA destination port)</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded')])]"/>
-        </record>
-
-        <record id="step_transit_cargo_arrival" model="transport.step">
-            <field name="name">Transit Cargo arrival processing (ATA transit port)</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_transit')])]"/>
-        </record>
-
-        <record id="step_cargo_customs_bonded" model="transport.step">
-            <field name="name">Cargo Customs Bonded warehouse processing</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_bonded')])]"/>
-        </record>
-
-        <record id="step_cargo_customs" model="transport.step">
-            <field name="name">Cargo Customs release and onward preparation</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import')])]"/>
-        </record>
-
-        <record id="step_cargo_customs_temp" model="transport.step">
-            <field name="name">Cargo Customs temporary release and onward preparation</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_temp')])]"/>
-        </record>
-
-        <record id="step_imp_cargo_req" model="transport.step">
-            <field name="name">Import Cargo request</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_domestic')])]"/>
-        </record>
-
-        <record id="step_customs_bonded_ex_wh" model="transport.step">
-            <field name="name">Customs Bonded Ex-Warehousing processing</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_domestic')])]"/>
-        </record>
-
-        <record id="step_transport_freight_req" model="transport.step">
-            <field name="name">Transport / Freight request</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_domestic')])]"/>
-        </record>
-
-        <record id="step_bonded_wh_invoice" model="transport.step">
-            <field name="name">Bonded Warehouse Invoice Processing</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_domestic'), ref('macroprocess_bonded_international')])]"/>
-        </record>
-
-        <record id="step_transport_reception" model="transport.step">
-            <field name="name">Transport reception &amp; Claims</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded'), ref('macroprocess_bonded_domestic'), ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international'), ref('macroprocess_motor_vehicle'), ref('macroprocess_domestic')])]"/>
-        </record>
-
-        <record id="step_transport_transit_reception" model="transport.step">
-            <field name="name">Transport transit reception &amp; Claims (transit country)</field>
-            <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_transit')])]"/>
-        </record>
-
-        <record id="step_transport_onward_transit_proc" model="transport.step">
+        <record id="step_transport_onward_transit_proc_mitt" model="transport.step">
             <field name="name">Transport Onward transit processing (onward Transport preparation to Destination country)</field>
+            <field name="step_number">8</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_transit')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
-
-        <record id="step_transport_onward_transit_greenlight" model="transport.step">
+        <record id="step_transport_onward_transit_greenlight_mitt" model="transport.step">
             <field name="name">Transport Onward transit greenlight (Cargo ETA Confirmation)</field>
+            <field name="step_number">9</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_transit')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
+        </record>
+        <record id="step_transport_reception_dest_mitt" model="transport.step">
+            <field name="name">Transport (Destination)</field>
+            <field name="step_number">10</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
+        </record>
+        <record id="step_reception_claims_dest_mitt" model="transport.step">
+            <field name="name">Reception &amp; Claims (destination)</field>
+            <field name="step_number">11</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
+        </record>
+        <record id="step_transport_transit_invoice_mitt" model="transport.step">
+            <field name="name">Transport Transit Invoice processing</field>
+            <field name="step_number">12</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
 
+        <!-- macroprocess_international_transport_temp steps -->
+        <record id="step_cargo_notif_mittm" model="transport.step">
+            <field name="name">Cargo Notification (Ready to Ship)</field>
+            <field name="step_number">1</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+        <record id="step_prearrival_proc_mittm" model="transport.step">
+            <field name="name">Pre-Arrival processing (Preclearance)</field>
+            <field name="step_number">2</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+        <record id="step_greenlight_shipper_mittm" model="transport.step">
+            <field name="name">Greenlight to Shipper</field>
+            <field name="step_number">3</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+        <record id="step_ship_conf_mittm" model="transport.step">
+            <field name="name">Shipment dispatch confirmation (departure, initial ETA, updated ETA)</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+        <record id="step_cargo_arrival_mittm" model="transport.step">
+            <field name="name">Cargo arrival and customs processing (ATA destination port)</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+        <record id="step_cargo_customs_temp_mittm" model="transport.step">
+            <field name="name">Cargo Customs temporary release and dispatch date</field>
+            <field name="step_number">6</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+        <record id="step_transport_reception_mittm" model="transport.step">
+            <field name="name">Transport</field>
+            <field name="step_number">7</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+        <record id="step_reception_claims_mittm" model="transport.step">
+            <field name="name">Reception &amp; Claims</field>
+            <field name="step_number">8</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+        <record id="step_transport_customs_invoice_mittm" model="transport.step">
+            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="step_number">9</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
+        </record>
+
+        <!-- macroprocess_international_transport_bonded steps -->
+        <record id="step_cargo_notif_mitb" model="transport.step">
+            <field name="name">Cargo Notification (Ready to Ship)</field>
+            <field name="step_number">1</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
+        </record>
+        <record id="step_prearrival_proc_mitb" model="transport.step">
+            <field name="name">Pre-Arrival processing (Preclearance)</field>
+            <field name="step_number">2</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
+        </record>
+        <record id="step_greenlight_shipper_mitb" model="transport.step">
+            <field name="name">Greenlight to Shipper</field>
+            <field name="step_number">3</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
+        </record>
+        <record id="step_ship_conf_mitb" model="transport.step">
+            <field name="name">Shipment dispatch confirmation (departure, initial ETA, updated ETA)</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
+        </record>
+        <record id="step_cargo_arrival_mitb" model="transport.step">
+            <field name="name">Cargo arrival and customs processing (ATA destination port)</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
+        </record>
+        <record id="step_cargo_customs_bonded_mitb" model="transport.step">
+            <field name="name">Cargo Customs Bonded warehouse processing</field>
+            <field name="step_number">6</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
+        </record>
+        <record id="step_transport_reception_mitb" model="transport.step">
+            <field name="name">Transport</field>
+            <field name="step_number">7</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
+        </record>
+        <record id="step_reception_claims_mitb" model="transport.step">
+            <field name="name">Reception &amp; Claims</field>
+            <field name="step_number">8</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
+        </record>
         <record id="step_transport_customs_invoice" model="transport.step">
             <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="step_number">9</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded'), ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international'), ref('macroprocess_motor_vehicle')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
         </record>
 
-        <record id="step_domestic_transport_invoice" model="transport.step">
+        <!-- macroprocess_bonded_domestic steps -->
+        <record id="step_imp_cargo_req_mbd" model="transport.step">
+            <field name="name">Import Cargo request</field>
+            <field name="step_number">1</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
+        </record>
+        <record id="step_customs_bonded_ex_wh_mbd" model="transport.step">
+            <field name="name">Customs Bonded Ex-Warehousing processing</field>
+            <field name="step_number">2</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
+        </record>
+        <record id="step_transport_freight_req_mbd" model="transport.step">
+            <field name="name">Transport / Freight request</field>
+            <field name="step_number">3</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
+        </record>
+        <record id="step_bonded_wh_invoice_mbd" model="transport.step">
+            <field name="name">Bonded Warehouse Invoice Processing</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
+        </record>
+        <record id="step_transport_reception_mbd" model="transport.step">
+            <field name="name">Transport</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
+        </record>
+        <record id="step_reception_claims_mbd" model="transport.step">
+            <field name="name">Reception &amp; Claims</field>
+            <field name="step_number">6</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
+        </record>
+        <record id="step_domestic_transport_invoice_mbd" model="transport.step">
             <field name="name">Domestic Transport Invoice processing</field>
+            <field name="step_number">7</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_bonded_domestic'), ref('macroprocess_domestic')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
         </record>
 
-        <record id="step_goods_reception_claims" model="transport.step">
-            <field name="name">Goods reception &amp; Claims</field>
+        <!-- macroprocess_bonded_international steps -->
+        <record id="step_reexport_cargo_req_mbi" model="transport.step">
+            <field name="name">Re-Export Cargo request</field>
+            <field name="step_number">1</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_temp'), ref('macroprocess_bonded_domestic'), ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international'), ref('macroprocess_motor_vehicle'), ref('macroprocess_domestic')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
+        </record>
+        <record id="step_cargo_notif_mbi" model="transport.step">
+            <field name="name">Cargo Notification (Ready to Ship)</field>
+            <field name="step_number">2</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
+        </record>
+        <record id="step_preship_preclear_mbi" model="transport.step">
+            <field name="name">Pre-shipment / Pre-departure processing (Receiving Country)</field>
+            <field name="step_number">3</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
+        </record>
+        <record id="step_greenlight_consignee_mbi" model="transport.step">
+            <field name="name">Greenlight from Consignee (Receiving Country)</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
+        </record>
+        <record id="step_customs_reexport_mbi" model="transport.step">
+            <field name="name">Customs Re-Export processing</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
+        </record>
+        <record id="step_reexport_ship_conf_mbi" model="transport.step">
+            <field name="name">Re-Export Shipment dispatch confirmation (departure, initial ETA, updated ETA)</field>
+            <field name="step_number">6</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
+        </record>
+        <record id="step_bonded_wh_invoice_mbi" model="transport.step">
+            <field name="name">Bonded Warehouse Invoice Processing</field>
+            <field name="step_number">7</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
+        </record>
+        <record id="step_transport_reception_mbi" model="transport.step">
+            <field name="name">Transport</field>
+            <field name="step_number">8</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
+        </record>
+        <record id="step_transport_customs_invoice_mbi" model="transport.step">
+            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="step_number">9</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
         </record>
 
-        <record id="step_goods_reception_claims_customs" model="transport.step">
-            <field name="name">Goods reception &amp; Claims (at customs bonded warehouse)</field>
+        <!-- macroprocess_reexport_international -->
+        <record id="step_reexport_cargo_req_mri" model="transport.step">
+            <field name="name">Re-Export Cargo request</field>
+            <field name="step_number">1</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_bonded')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
+        </record>
+        <record id="step_cargo_notif_mri" model="transport.step">
+            <field name="name">Cargo Notification (Ready to Ship)</field>
+            <field name="step_number">2</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
+        </record>
+        <record id="step_preship_preclear_mri" model="transport.step">
+            <field name="name">Pre-shipment / Pre-departure processing (Receiving Country)</field>
+            <field name="step_number">3</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
+        </record>
+        <record id="step_greenlight_consignee_mri" model="transport.step">
+            <field name="name">Greenlight from Consignee (Receiving Country)</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
+        </record>
+        <record id="step_customs_reexport_mri" model="transport.step">
+            <field name="name">Customs Re-Export processing</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
+        </record>
+        <record id="step_reexport_ship_conf_mri" model="transport.step">
+            <field name="name">Re-Export Shipment dispatch confirmation (departure, initial ETA, updated ETA)</field>
+            <field name="step_number">6</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
+        </record>
+        <record id="step_transport_reception_mri" model="transport.step">
+            <field name="name">Transport</field>
+            <field name="step_number">7</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
+        </record>
+        <record id="step_transport_customs_invoice_mri" model="transport.step">
+            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="step_number">8</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
         </record>
 
-        <record id="step_transport_reception_dest" model="transport.step">
-            <field name="name">Transport reception &amp; Claims (Destination)</field>
+        <!-- macroprocess_export_international -->
+        <record id="step_export_cargo_req_mei" model="transport.step">
+            <field name="name">Export Cargo request</field>
+            <field name="step_number">1</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_transit')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
+        </record>
+        <record id="step_cargo_notif_mei" model="transport.step">
+            <field name="name">Cargo Notification (Ready to Ship)</field>
+            <field name="step_number">2</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
+        </record>
+        <record id="step_preship_preclear_mei" model="transport.step">
+            <field name="name">Pre-shipment / Pre-departure processing (Receiving Country)</field>
+            <field name="step_number">3</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
+        </record>
+        <record id="step_greenlight_consignee_mei" model="transport.step">
+            <field name="name">Greenlight from Consignee (Receiving Country)</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
+        </record>
+        <record id="step_customs_export_mei" model="transport.step">
+            <field name="name">Customs Export processing</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
+        </record>
+        <record id="step_reexport_ship_conf_mei" model="transport.step">
+            <field name="name">Re-Export Shipment dispatch confirmation (departure, initial ETA, updated ETA)</field>
+            <field name="step_number">6</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
+        </record>
+        <record id="step_transport_reception_mei" model="transport.step">
+            <field name="name">Transport</field>
+            <field name="step_number">7</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
+        </record>
+        <record id="step_transport_customs_invoice_mei" model="transport.step">
+            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="step_number">8</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
         </record>
 
-        <record id="step_transport_transit_invoice" model="transport.step">
-            <field name="name">Transport Transit Invoice processing</field>
+        <!-- macroprocess_motor_vehicle steps -->
+        <record id="step_req_dispose_msf_fleet_mmv" model="transport.step">
+            <field name="name">Request to Dispose of MSF Fleet (Re-Export)</field>
+            <field name="step_number">1</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_transit')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_notif_conf_rts_mmv" model="transport.step">
+            <field name="name">Notification Confirmation of RTS (Ready to Ship)</field>
+            <field name="step_number">2</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_ids" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_preship_preclear_mmv" model="transport.step">
+            <field name="name">Pre-shipment / Pre-departure processing (Receiving Country)</field>
+            <field name="step_number">3</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_greenlight_consignee_mmv" model="transport.step">
+            <field name="name">Greenlight from Consignee (Receiving Country)</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_proc_deregistration_bond_cancel_mmv" model="transport.step">
+            <field name="name">Processing De-Registration</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_proc_bond_cancel_mmv" model="transport.step">
+            <field name="name">Processing Bond Cancellation</field>
+            <field name="step_number">6</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_customs_reexport_mmv" model="transport.step">
+            <field name="name">Customs Re-Export processing</field>
+            <field name="step_number">7</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_ship_conf_bond_invoice_mmv" model="transport.step">
+            <field name="name">Shipment dispatch confirmation (departure, initial ETA, updated ETA)</field>
+            <field name="step_number">8</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_ship_dispatch_customs_exit_mmv" model="transport.step">
+            <field name="name">Customs Exit Point Processing</field>
+            <field name="step_number">9</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
+        </record>
+        <record id="step_transport_customs_invoice_mmv" model="transport.step">
+            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="step_number">10</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
         </record>
 
-        <record id="step_doc_archiving" model="transport.step">
-            <field name="name">Documentation Archiving</field>
+        <!-- macroprocess_domestic steps -->
+        <record id="step_domestic_transport_req_md" model="transport.step">
+            <field name="name">Domestic Transport request</field>
+            <field name="step_number">1</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_transit'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded'), ref('macroprocess_bonded_domestic'), ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international'), ref('macroprocess_motor_vehicle'), ref('macroprocess_domestic')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_domestic')"/>
         </record>
-
-        <record id="step_perf_indicator" model="transport.step">
-            <field name="name">Key Performance Indicators (Incident monitoring and control)</field>
+        <record id="step_greenlight_shipper_coor_md" model="transport.step">
+            <field name="name">Greenlight to Shipper</field>
+            <field name="step_number">2</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_import'), ref('macroprocess_international_transport_transit'), ref('macroprocess_international_transport_temp'), ref('macroprocess_international_transport_bonded'), ref('macroprocess_bonded_domestic'), ref('macroprocess_bonded_international'), ref('macroprocess_reexport_international'), ref('macroprocess_export_international'), ref('macroprocess_motor_vehicle'), ref('macroprocess_domestic')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_domestic')"/>
         </record>
-
-        <record id="step_goods_reception_claims_destination" model="transport.step">
-            <field name="name">Goods reception &amp; Claims (destination)</field>
+        <record id="step_transport_reception_md" model="transport.step">
+            <field name="name">Transport</field>
+            <field name="step_number">3</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="[(6, 0, [ref('macroprocess_international_transport_transit')])]"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_domestic')"/>
+        </record>
+        <record id="step_reception_claims_md" model="transport.step">
+            <field name="name">Reception &amp; Claims</field>
+            <field name="step_number">4</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_domestic')"/>
+        </record>
+        <record id="step_domestic_transport_invoice_md" model="transport.step">
+            <field name="name">Domestic Transport Invoice processing</field>
+            <field name="step_number">5</field>
+            <field name="is_active">True</field>
+            <field name="macroprocess_id" eval="ref('macroprocess_domestic')"/>
         </record>
     </data>
 
