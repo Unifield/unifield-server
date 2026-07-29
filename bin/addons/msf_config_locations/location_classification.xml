@@ -26,7 +26,7 @@
             <field name="type">form</field>
             <field name="priority" eval="40"/>
             <field name="arch" type="xml">
-                 <form string="Location Classification" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                 <form string="Location Classification" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" col="4">
                     <field name="name" string="Location Name" readonly="1"/>
                     <field name="location_category" string="Location Category" readonly="1"/>
                     <field name="active" readonly="1"/>
@@ -34,9 +34,10 @@
                            attrs="{'readonly': [('active','=',False)]}"
                            required="1"/>
                     <newline/>
-                    <label string="" colspan="2"/>
-                    <label string="This ECU represents a location where stock is managed in an external information system" colspan="2"/>
-                </form>
+                    <label string="" colspan="3"/>
+                    <label string="This ECU represents a location where stock is managed in an external information system"
+                           colspan="1" align="0.0"/>
+                 </form>
             </field>
         </record>
 
