@@ -124,8 +124,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
             for key in sorted(list(bn_and_eds.keys()), key=lambda x: x[1]):
                 product_id = key[0]
                 bn_and_eds_for_this_product = bn_and_eds[key]
-                # If no bn / ed related to this product, create a single inventory
-                # line
+                # If no bn / ed related to this product, create a single inventory line
                 if bn_and_eds_for_this_product == (False, False, False):
                     if wiz_data['only_with_stock_level'] and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, False, False, context=context):
                         continue
@@ -150,8 +149,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                         }
                         inventory_counting_lines_to_create.append(values)
                 else:
-                    # Otherwise, create an inventory line for this product ~and~ for
-                    # each BN/ED
+                    # Otherwise, create an inventory line for this product ~and~ for each BN/ED
                     for bn_and_ed in sorted(bn_and_eds_for_this_product, key=lambda x: x[1] or x[0]):
                         if (wiz_data['only_with_stock_level'] and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, bn_and_ed[2], False, context=context)) or\
                                 (wiz_data['only_with_pos_move'] and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, bn_and_ed[2], months, context=context)):
@@ -183,10 +181,20 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         # Do the actual write
         # TODO : Test if Draft state here
-        write("physical.inventory", inventory_id, {'counting_line_ids': todo,
-                                                   'state': 'counting'})
+        pi_vals = {
+            'counting_line_ids': todo,
+            'state': 'counting',
+            'cs_generated_prefill_bn': wiz_data.get('prefill_bn', False),
+            'cs_generated_prefill_ed': wiz_data.get('prefill_ed', False),
+            'cs_generated_stock': wiz_data.get('only_with_stock_level', False),
+            'cs_generated_stock_and_moves': wiz_data.get('only_with_pos_move', False),
+        }
+        write("physical.inventory", inventory_id, pi_vals)
 
-        return {'type': 'ir.actions.act_window_close'}
+        if context.get('sde_reset'):
+            return True
+        else:
+            return {'type': 'ir.actions.act_window_close'}
 
     def get_BN_and_ED_for_products_at_location(self, cr, uid, location_id, product_ids, context=None):
         if context is None:
@@ -252,7 +260,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         max_date = False
         if months:
-            max_date =  (datetime.today() + relativedelta(months=-months)).strftime('%Y-%m-%d 00:00:00')
+            max_date = (datetime.today() + relativedelta(months=-months)).strftime('%Y-%m-%d 00:00:00')
 
         move_ids = move_obj.search(cr, uid, domain, context=context)
 

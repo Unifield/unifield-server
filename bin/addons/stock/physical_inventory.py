@@ -7,6 +7,7 @@ import math
 import tools
 
 import decimal_precision as dp
+from datetime import datetime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 from osv import fields, osv
@@ -33,6 +34,7 @@ class PhysicalInventory(osv.osv):
     _name = 'physical.inventory'
     _description = 'Physical Inventory'
     _order = "id desc, date desc"
+    _trace = True
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -169,6 +171,14 @@ class PhysicalInventory(osv.osv):
         'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection'),
         'multiple_filter_months': fields.boolean('Multiple Selection'),
         'products_added': fields.function(_get_products_added, method=True, type='boolean', string='Has products'),
+        'cs_generated_prefill_bn': fields.boolean('Prefilled Batch Numbers', help='During Counting Sheet generation, the "Prefill Batch Numbers" checkbox was ticked'),
+        'cs_generated_prefill_ed': fields.boolean('Prefilled Expiry Dates', help='During Counting Sheet generation, the "Prefill Expiry checkbox" was ticked'),
+        'cs_generated_stock': fields.boolean('Only lines with stock', help='During Counting Sheet generation, the "Only count lines with stock different than 0" was ticked'),
+        'cs_generated_stock_and_moves': fields.boolean('Only lines with stock & moves', help='During Counting Sheet generation, the "Only count lines with stock & moves different than 0" was ticked'),
+        'pi_before_sde': fields.boolean('The Physical Inventory was created before the SDE tools for it were added', help='Used to change the behavior of the method "reset_sde_updated_flag" of the Physical Inventory', readonly=True),
+        'sde_updated': fields.boolean('Updated by SDE'),
+        'sde_reset_date': fields.datetime('Reset action applied'),
+        'sde_update_msg': fields.text('Message to be displayed when SDE is updating a document'),
     }
 
     _defaults = {
@@ -182,6 +192,14 @@ class PhysicalInventory(osv.osv):
         'max_filter_months': -1,
         'multiple_filter_months': False,
         'products_added': False,
+        'cs_generated_prefill_bn': False,
+        'cs_generated_prefill_ed': False,
+        'cs_generated_stock': False,
+        'cs_generated_stock_and_moves': False,
+        'pi_before_sde': False,
+        'sde_updated': False,
+        'sde_reset_date': False,
+        'sde_update_msg': False,
     }
 
     def create(self, cr, uid, values, context):
@@ -231,19 +249,12 @@ class PhysicalInventory(osv.osv):
         default['state'] = 'draft'
         default['date'] = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         default['type'] = 'partial'
-        fields_to_empty = ["ref",
-                           "full_inventory",
-                           "date_done",
-                           "bad_stock_msg",
-                           "has_bad_stock",
-                           "file_to_import",
-                           "file_to_import2",
-                           "counting_line_ids",
-                           "discrepancy_line_ids",
-                           "discrepancies_generated",
-                           "move_ids",
-                           "multiple_filter_months",
-                           "max_filter_months"]
+        default['max_filter_months'] = -1
+        fields_to_empty = ["ref", "full_inventory", "date_done", "bad_stock_msg", "has_bad_stock", "file_to_import",
+                           "file_to_import2", "counting_line_ids", "discrepancy_line_ids", "discrepancies_generated",
+                           "move_ids", "multiple_filter_months", "cs_generated_prefill_bn",  "cs_generated_prefill_ed",
+                           "cs_generated_stock", "cs_generated_stock_and_moves", "pi_before_sde", "sde_updated",
+                           "sde_reset_date", "sde_update_msg"]
 
         for field in fields_to_empty:
             default[field] = False
@@ -537,7 +548,9 @@ class PhysicalInventory(osv.osv):
         create_discrepancy_lines = [ (0,0,discrepancy) for discrepancy in new_discrepancies ]
 
         # Do the actual write
-        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': False, 'has_bad_stock': False}, context=context)
+        pi_vals = {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': False,
+                   'has_bad_stock': False, 'sde_update_msg': False}
+        physical_inventory_obj.write(cr, uid, inventory_id, pi_vals, context=context)
 
         return self.resolve_discrepancies_anomalies(cr, uid, inventory_id, context=context)
 
@@ -727,17 +740,7 @@ class PhysicalInventory(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
         counting_sheet_file = SpreadsheetXML(xmlstring=base64.b64decode(inventory_rec.file_to_import))
 
-        product_obj = self.pool.get('product.product')
-        product_uom_obj = self.pool.get('product.uom')
-        counting_obj = self.pool.get('physical.inventory.counting')
         wizard_obj = self.pool.get('physical.inventory.import.wizard')
-
-        line_items = []
-
-        all_uom = {}
-        uom_ids = product_uom_obj.search(cr, uid, [], context=context)
-        for uom in product_uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
-            all_uom[uom['name'].lower()] = uom['id']
 
         context['import_in_progress'] = True
         result = False
@@ -745,6 +748,7 @@ class PhysicalInventory(osv.osv):
             # Reset the qty of each CS line
             cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id = %s""", (inventory_rec.id,))
 
+            lines_data = []
             for row_index, row in enumerate(counting_sheet_file.getRows()):
                 # === Process header ===
 
@@ -784,128 +788,26 @@ class PhysicalInventory(osv.osv):
     Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date, Specification, BN Management, ED Management"""), row_index)
                     break
 
-                # Check product_code and type
-                product_code = row.cells[1].data
-                product_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
-                product_id = False
-                if len(product_ids) == 1:
-                    product_id = product_ids[0]
-                    # Check if product is non-stockable
-                    if product_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
-                        add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 1)
-                else:
-                    add_error(_("""Product %s not found""") % product_code, row_index, 1)
-
-                # Check UoM
-                product_uom_id = False
-                if row.cells[3].data:
-                    product_uom = row.cells[3].data
-                    try:
-                        product_uom = tools.ustr(product_uom).lower()
-                        if product_uom not in all_uom:
-                            add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
-                        else:
-                            product_uom_id = all_uom[product_uom]
-                    except ValueError:
-                        add_error(_("""UoM %s is not valid""") % product_uom, row_index, 3)
-                else:
-                    add_error(_("""UoM is mandatory"""), row_index, 3)
-
-                # Check quantity
-                quantity = row.cells[4].data
-                if quantity is not None:
-                    if isinstance(quantity, int) and quantity == 0:
-                        quantity = '0'
-                    try:
-                        quantity = counting_obj.quantity_validate(cr, uid, quantity, product_uom_id)
-                    except NegativeValueError:
-                        add_error(_('Quantity %s is negative') % quantity, row_index, 4)
-                        quantity = 0.0
-                    except ValueError:
-                        quantity = 0.0
-                        add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
-
-                if product_id and product_uom_id:
-                    product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
-
-                    if product_info['uom_id'] and product_info['uom_id'][0] != product_uom_id:
-                        add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
-
-                    # Check batch number
-                    batch_name = row.cells[5].data
-                    if not batch_name and product_info['batch_management'] and quantity is not None:
-                        add_error(_('Batch number is required'), row_index, 5)
-
-                    if batch_name and not product_info['batch_management']:
-                        add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
-                        batch_name = False
-
-                    # Check expiry date
-                    expiry_date = row.cells[6].data
-                    if expiry_date and not product_info['perishable']:
-                        add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
-                        expiry_date = False
-                    elif expiry_date:
-                        expiry_date_type = row.cells[6].type
-                        year = False
-                        try:
-                            if expiry_date_type == 'datetime':
-                                expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                                year = row.cells[6].data.year
-                            elif expiry_date_type == 'str':
-                                expiry_date_dt = parse(expiry_date)
-                                year = expiry_date_dt.year
-                                expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                            else:
-                                raise ValueError()
-                        except Exception as e:
-                            err_type = type(e).__name__
-                            if not year or year >= 1900 or err_type == 'ParserError':
-                                add_error(_("""Expiry date '%s' is not valid""") % expiry_date, row_index, 6)
-                                if err_type == 'ParserError':
-                                    expiry_date = False
-
-                        if year and year < 1900:
-                            add_error(_('Expiry date: year must be after 1899'), row_index, 6)
-
-                    if not expiry_date and product_info['perishable'] and quantity is not None:
-                        add_error(_('Expiry date is required'), row_index, 6)
-
-                    # Check duplicate line (Same product_id, batch_number, expirty_date)
-                    item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-                    if item in line_items:
-                        add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
-                    elif quantity is not None:
-                        line_items.append(item)
-
-                    data = {
-                        'product_id': product_id,
-                        'batch_number': batch_name,
-                        'expiry_date': expiry_date,
-                        'quantity': False,
-                        'product_uom_id': product_uom_id,
-                    }
-
-                    if quantity is not None:
-                        data['quantity'] = quantity
-                    # Check if line exist
-                    line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
-                                                             ('product_id', '=', product_id),
-                                                             ('batch_number', '=', batch_name),
-                                                             ('expiry_date', '=', expiry_date)], context=context)
-                    if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
-                        line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
-                                                                 ('product_id', '=', product_id),
-                                                                 ('batch_number', '=', False),
-                                                                 ('expiry_date', '=', False)], context=context)
-
-                    if line_ids:
-                        counting_obj.write(cr, uid, line_ids[0], data, context=context)
-                    else:
-                        data['inventory_id'] = inventory_rec.id
-                        counting_obj.create(cr, uid, data, context=context)
+                lines_data.append({
+                    'line_number': row_index,
+                    'product_code': row.cells[1].data or False,
+                    'product_qty': row.cells[4].data,
+                    'uom': row.cells[3].data or False,
+                    'prodlot_id': row.cells[5].data or False,
+                    'expired_date': row.cells[6].data,
+                    'cell_expired_date_type': row.cells[6].data and row.cells[6].type or False,
+                    'cell_expired_date_year': row.cells[6].data and row.cells[6].type == 'datetime' and
+                    row.cells[6].data.year or False,
+                })
 
             # endfor
+
+            # Check for additional errors and update/create the counting lines
+            line_errors, line_warnings = self.import_counting_sheet_manage_lines(cr, uid, inventory_rec.id, lines_data, context=context)
+            for error in line_errors:
+                add_error(error[0], error[1], error[2])
+            for warning in line_warnings:
+                add_error(warning[0], warning[1], warning[2], is_warning=True)
 
             if counting_sheet_errors:
                 cr.rollback()
@@ -931,6 +833,209 @@ class PhysicalInventory(osv.osv):
         finally:
             context['import_in_progress'] = False
             return result
+
+    def import_counting_sheet_manage_lines(self, cr, uid, pi_id, lines_data, context=None):
+        if context is None:
+            context = {}
+
+        product_obj = self.pool.get('product.product')
+        product_uom_obj = self.pool.get('product.uom')
+        counting_obj = self.pool.get('physical.inventory.counting')
+
+        all_uom = {}
+        uom_ids = product_uom_obj.search(cr, uid, [], context=context)
+        for uom in product_uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
+            all_uom[uom['name'].lower()] = uom['id']
+
+        line_items = []
+        if context.get('sde_flow'):
+            errors, warnings = {}, {}
+        else:
+            errors, warnings = [], []
+        for line in lines_data:
+            line_number = line.get('line_number', 0)
+            if context.get('sde_flow'):
+                if line_number not in errors:
+                    errors[line_number] = []
+                if line_number not in warnings:
+                    warnings[line_number] = []
+
+            # Check product_code and type
+            product_code = line.get('product_code')
+            product_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
+            product_id = False
+            if len(product_ids) == 1:
+                product_id = product_ids[0]
+                # Check if product is non-stockable
+                if product_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
+                    if context.get('sde_flow'):
+                        errors[line_number].append(_('Impossible to import non-stockable product %s') % (product_code,))
+                    else:
+                        errors.append(("""Impossible to import non-stockable product %s""" % (product_code,), line_number, 1))
+            else:
+                if context.get('sde_flow'):
+                    errors[line_number].append(_('Product %s not found') % (product_code,))
+                else:
+                    errors.append((_("""Product %s not found""") % (product_code,), line_number, 1))
+
+            # Check UoM
+            product_uom_id, product_uom = False, False
+            if line.get('uom'):
+                product_uom = line['uom']
+                try:
+                    product_uom = tools.ustr(product_uom).lower()
+                    if product_uom not in all_uom:
+                        if context.get('sde_flow'):
+                            errors[line_number].append(_('UoM %s unknown') % (product_uom,))
+                        else:
+                            errors.append((_("""UoM %s unknown""") % (product_uom,), line_number, 3))
+                    else:
+                        product_uom_id = all_uom[product_uom]
+                except ValueError:
+                    if context.get('sde_flow'):
+                        errors[line_number].append(_('UoM %s is not valid') % (product_uom,))
+                    else:
+                        errors.append((_("""UoM %s is not valid""") % (product_uom,), line_number, 3))
+            else:
+                if context.get('sde_flow'):
+                    errors[line_number].append(_('UoM is mandatory'))
+                else:
+                    errors.append((_("""UoM is mandatory"""), line_number, 3))
+
+            # Check quantity
+            quantity = None
+            if 'product_qty' in line:
+                quantity = line['product_qty']
+            if quantity is not None and quantity is not False:
+                if isinstance(quantity, int) and quantity == 0:
+                    quantity = '0'
+                try:
+                    quantity = counting_obj.quantity_validate(cr, uid, quantity, product_uom_id)
+                except NegativeValueError:
+                    if context.get('sde_flow'):
+                        errors[line_number].append(_('Quantity %s is negative') % (quantity,))
+                    else:
+                        errors.append((_('Quantity %s is negative') % (quantity,), line_number, 4))
+                    quantity = 0.0
+                except ValueError:
+                    quantity = 0.0
+                    if context.get('sde_flow'):
+                        errors[line_number].append(_('Quantity %s is not valid') % (quantity,))
+                    else:
+                        errors.append((_('Quantity %s is not valid') % (quantity,), line_number, 4))
+
+            if product_id and product_uom_id:
+                product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'], context=context)
+                if product_info['uom_id'] and product_info['uom_id'][0] != product_uom_id:
+                    if context.get('sde_flow'):
+                        errors[line_number].append(_('Product %s, UoM %s does not conform to that of product in stock')
+                                                   % (product_info['default_code'], product_uom))
+                    else:
+                        errors.append((_("""Product %s, UoM %s does not conform to that of product in stock""")
+                                       % (product_info['default_code'], product_uom), line_number, 3))
+
+                # Check batch number
+                batch_name = line.get('prodlot_id') or False
+                if not batch_name and product_info['batch_management'] and quantity is not None:
+                    if context.get('sde_flow'):
+                        errors[line_number].append(_('Batch number is required'))
+                    else:
+                        errors.append((_('Batch number is required'), line_number, 5))
+
+                if batch_name and not product_info['batch_management']:
+                    if context.get('sde_flow'):
+                        warnings[line_number].append(_('Product %s is not BN managed, BN ignored') % (product_info['default_code'],))
+                    else:
+                        warnings.append((_("Product %s is not BN managed, BN ignored") % (product_info['default_code'],), line_number, 5))
+                    batch_name = False
+
+                # Check expiry date
+                expiry_date = line.get('expired_date') or False
+                if expiry_date and not product_info['perishable']:
+                    if context.get('sde_flow'):
+                        warnings[line_number].append(_('Product %s is not ED managed, ED ignored') % (product_info['default_code'],))
+                    else:
+                        warnings.append((_("Product %s is not ED managed, ED ignored") % (product_info['default_code'],), line_number, 6))
+                    expiry_date = False
+                elif expiry_date:
+                    expiry_date_type = line.get('cell_expired_date_type')
+                    year = False
+                    try:
+                        if context.get('sde_flow'):
+                            expiry_date_date = datetime.strptime(expiry_date, '%Y-%m-%d')
+                            year = expiry_date_date.year
+                        else:
+                            if expiry_date_type == 'datetime':
+                                expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                                year = line.get('cell_expired_date_year')
+                            elif expiry_date_type == 'str':
+                                expiry_date_dt = parse(expiry_date)
+                                year = expiry_date_dt.year
+                                expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                            else:
+                                raise ValueError()
+                    except Exception as e:
+                        err_type = type(e).__name__
+                        if not year or year >= 1900 or err_type == 'ParserError':
+                            if context.get('sde_flow'):
+                                errors[line_number].append(_("Expiry date '%s' is not valid") % (expiry_date,))
+                            else:
+                                errors.append((_("""Expiry date '%s' is not valid""") % expiry_date, line_number, 6))
+                            if err_type == 'ParserError':
+                                expiry_date = False
+
+                    if year and year < 1900:
+                        if context.get('sde_flow'):
+                            errors[line_number].append(_('Expiry date: year must be after 1899'))
+                        else:
+                            errors.append((_('Expiry date: year must be after 1899'), line_number, 6))
+
+                if not expiry_date and product_info['perishable'] and quantity is not None:
+                    if context.get('sde_flow'):
+                        errors[line_number].append(_('Expiry date is required'))
+                    else:
+                        errors.append((_('Expiry date is required'), line_number, 6))
+
+                # Check duplicate line (Same product_id, batch_number, expiry_date)
+                item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
+                if item in line_items:
+                    if context.get('sde_flow'):
+                        errors[line_number].append(_('Product %s, Duplicate line (same product, batch number and expiry date)')
+                                                   % (product_info['default_code'],))
+                    else:
+                        errors.append((_("""Product %s, Duplicate line (same product, batch number and expiry date)""")
+                                       % (product_info['default_code'],), line_number, None))
+                elif quantity is not None:
+                    line_items.append(item)
+
+                data = {
+                    'product_id': product_id,
+                    'batch_number': batch_name,
+                    'expiry_date': expiry_date,
+                    'quantity': False,
+                    'product_uom_id': product_uom_id,
+                }
+
+                if quantity is not None:
+                    data['quantity'] = quantity
+                # Check if line exist
+                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', pi_id),
+                                                         ('product_id', '=', product_id),
+                                                         ('batch_number', '=', batch_name),
+                                                         ('expiry_date', '=', expiry_date)], context=context)
+                if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
+                    line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', pi_id),
+                                                             ('product_id', '=', product_id),
+                                                             ('batch_number', '=', False),
+                                                             ('expiry_date', '=', False)], context=context)
+
+                if line_ids:
+                    counting_obj.write(cr, uid, line_ids[0], data, context=context)
+                else:
+                    data['inventory_id'] = pi_id
+                    counting_obj.create(cr, uid, data, context=context)
+
+        return errors, warnings
 
     def import_xls_discrepancy_report(self, cr, uid, ids, context=None):
         """Import an exported discrepancy report"""
@@ -1210,7 +1315,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
         for inv in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
             message = _('Physical Inventory') + " '" + inv.name + "' " + _("is validated.")
             self.log(cr, uid, inv.id, message)
-        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated', 'sde_update_msg': False}, context=context)
         return {}
 
     def action_confirm(self, cr, uid, ids, context=None):
@@ -1396,32 +1501,6 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
 
         return True
 
-    def action_cancel_draft(self, cr, uid, ids, context=None):
-        """ Cancels the stock move and change inventory state to draft."""
-        if context is None:
-            context = {}
-
-        for inv in self.read(cr, uid, ids, ['move_ids', 'location_id'], context=context):
-            states = ['confirmed', 'closed', 'cancel']
-            pi_loc_error_msg = self.get_non_finished_pi_for_loc_msg(cr, uid, [inv['id']], inv['location_id'][0], states, context=context)
-            if pi_loc_error_msg:
-                raise osv.except_osv(_('Error'), pi_loc_error_msg)
-
-            self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
-
-        for inv in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
-            if not inv.location_id.active:
-                raise osv.except_osv(_('Warning'), _("Location %s is inactive") % (inv.location_id.name,))
-
-        # Unsign the signed lines
-        context['pi_cancel_reset'] = True
-        self._unsign_all(cr, uid, ids, context=context)
-        if 'pi_cancel_reset' in context:
-            context.pop('pi_cancel_reset')
-
-        self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False}, context=context)
-        return {}
-
     def action_cancel_inventary(self, cr, uid, ids, context=None):
         """ Cancels both stock move and inventory"""
         move_obj = self.pool.get('stock.move')
@@ -1437,7 +1516,7 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
                             raise osv.except_osv(_('UserError'),
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
-            self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
+            self.write(cr, uid, [inv.id], {'state': 'cancel', 'sde_update_msg': False}, context=context)
             self.infolog(cr, uid, _("The Physical inventory id:%s (%s) has been cancelled") % (inv.id, inv.name))
         return {}
 
@@ -1463,6 +1542,68 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             return _('Only one Physical Inventory can be open per location at the same time. Please finalize or cancel Physical Inventory [%s] before creating a new one for this location') % (', '.join(pi_refs),)
 
         return False
+
+    def reset_sde_updated_flag_warn(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No Physical Inventory selected'))
+
+        context['popup_reset'] = True
+        msg = self.pool.get('message.action').create(cr, uid, {
+            'title': _('Warning'),
+            'message': '<h3>%s<ul><li>%s</li><li>%s</li></ul>%s</h3>'
+                       % (_('This action will reset the counting sheet to its initial state:'),
+                          _('All entered data (counted quantities, etc...) will be permanently removed.'),
+                          _('If SmartScan is being used, these SmartScan tasks will be reset.'),
+                          _('Do you want to proceed ?')),
+            'yes_action': lambda cr, uid, context: self.reset_sde_updated_flag(cr, uid, ids, context=context),
+            'yes_label': _('Yes'),
+            'no_label': _('No'),
+        }, context=context)
+
+        return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
+
+    def reset_sde_updated_flag(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No Physical Inventory selected'))
+
+        ftf = ['cs_generated_prefill_bn', 'cs_generated_prefill_ed', 'cs_generated_stock', 'cs_generated_stock_and_moves',
+               'pi_before_sde']
+        for pi in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            if pi.pi_before_sde:
+                # Reset the quantity of the counting sheets
+                cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id = %s""", (pi.id,))
+            else:
+                # Regenerate the Counting Sheet
+                pi_cs_gen_obj = self.pool.get('physical.inventory.generate.counting.sheet')
+                wiz_vals = {
+                    'inventory_id': pi.id,
+                    'prefill_bn': pi.cs_generated_prefill_bn,
+                    'prefill_ed': pi.cs_generated_prefill_ed,
+                    'only_with_stock_level': pi.cs_generated_stock,
+                    'only_with_pos_move': pi.cs_generated_stock_and_moves,
+                }
+                wiz_id = pi_cs_gen_obj.create(cr, uid, wiz_vals, context=context)
+
+                context['sde_reset'] = True
+                pi_cs_gen_obj.generate_counting_sheet(cr, uid, [wiz_id], context=context)
+                if 'sde_reset' in context:
+                    context.pop('sde_reset')
+
+        self.write(cr, uid, ids, {'sde_updated': False, 'sde_update_msg': False, 'sde_reset_date': datetime.now()}, context=context)
+
+        if context.get('popup_reset'):
+            context.pop('popup_reset')
+            return {'type': 'ir.actions.act_window_close'}
+        else:
+            return True
 
 PhysicalInventory()
 

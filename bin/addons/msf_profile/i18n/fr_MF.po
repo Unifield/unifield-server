@@ -3707,10 +3707,14 @@ msgstr "Picking - disponible"
 #: code:addons/account_mcdb/account_mcdb.py:1063
 #: code:addons/account_mcdb/account_mcdb.py:1072
 #: code:addons/msf_audittrail/audittrail.py:1089
-#: code:addons/msf_outgoing/sde_import.py:843
-#: code:addons/msf_outgoing/sde_import.py:1365
-#: code:addons/msf_outgoing/sde_import.py:1639
-#: code:addons/msf_outgoing/sde_import.py:1691
+#: code:addons/msf_outgoing/sde_import.py:906
+#: code:addons/msf_outgoing/sde_import.py:1464
+#: code:addons/msf_outgoing/sde_import.py:2033
+#: code:addons/msf_outgoing/sde_import.py:2337
+#: code:addons/msf_outgoing/sde_import.py:2389
+#: code:addons/msf_outgoing/sde_import.py:2454
+#: code:addons/msf_outgoing/sde_import.py:3149
+#: code:addons/msf_outgoing/sde_import.py:3312
 #, python-format
 msgid "True"
 msgstr "Vrai"
@@ -12997,13 +13001,15 @@ msgid "Dest. Loc"
 msgstr "Zone de Destination"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:796
+#: code:addons/stock/physical_inventory.py:968
+#: code:addons/stock/physical_inventory.py:970
 #, python-format
 msgid "Expiry date '%s' is not valid"
 msgstr "La date d'expiration '%s' n'est pas valide"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:790
+#: code:addons/stock/physical_inventory.py:976
+#: code:addons/stock/physical_inventory.py:978
 #, python-format
 msgid "Expiry date: year must be after 1899"
 msgstr "Date d'Expiration: l'année doit être après 1899"
@@ -14380,6 +14386,7 @@ msgstr "Europe/Kaliningrad"
 #: selection:sde.update.log,doc_type:0
 #: selection:sde.export.pagination,doc_type:0
 #: code:addons/msf_outgoing/sde_import.py:1134
+#: view:sde.import:0
 #, python-format
 msgid "Picking Ticket"
 msgstr "Bon de Picking"
@@ -16834,6 +16841,7 @@ msgstr "%s update%s"
 #: view:signature.remove_signature.wizard:0
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:24
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:101
+#: code:addons/stock/physical_inventory.py:1563
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -17523,8 +17531,16 @@ msgstr "object.query.wizard.values"
 #: selection:stock.move,picking_subtype:0
 #: code:addons/msf_outgoing/report/picking_ticket.py:79
 #: code:addons/stock/stock.py:2362
+#: code:addons/msf_outgoing/sde_import.py:1843
 msgid "PPL"
 msgstr "LPC"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2138
+#: code:addons/msf_outgoing/sde_import.py:2498
+#, python-format
+msgid "PPLs"
+msgstr "LPCs"
 
 #. modules: consumption_calculation, sale
 #: code:addons/consumption_calculation/consumption_calculation.py:280
@@ -18574,7 +18590,8 @@ msgid "Total Tax Included"
 msgstr "Total Toutes Taxes Comprises"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:803
+#: code:addons/stock/physical_inventory.py:992
+#: code:addons/stock/physical_inventory.py:994
 #, python-format
 msgid "Product %s, Duplicate line (same product, batch number and expiry date)"
 msgstr "Produit %s, Ligne dupliquée (même produit, numéro de lot et date d'expiration)"
@@ -19235,7 +19252,8 @@ msgid "process.to.consume.line"
 msgstr "process.to.consume.line"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:757
+#: code:addons/stock/physical_inventory.py:903
+#: code:addons/stock/physical_inventory.py:905
 #, python-format
 msgid "Quantity %s is negative"
 msgstr "Quantité %s est négative"
@@ -21005,7 +21023,7 @@ msgstr "Etc/GMT-11"
 #: selection:wizard.update.po.line.import,state:0
 #: selection:import.asset.reference,state:0
 #: view:unidata.auto_merge:0
-#: code:addons/msf_outgoing/sde_import.py:66
+#: code:addons/msf_outgoing/sde_import.py:68
 msgid "Done"
 msgstr "Clôturé"
 
@@ -25184,6 +25202,7 @@ msgstr "Europe/Bucharest"
 #: view:signature.remove_signature.wizard:0
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:24
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:101
+#: code:addons/stock/physical_inventory.py:1562
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -31000,7 +31019,7 @@ msgstr "Scinder la commande"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:292
 #, python-format
-msgid "Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s"
+msgid "Line %s in the Excel file was added to the file of the lines with error, an error has occurred. Details : %s"
 msgstr "La ligne %s du fichier Excel a été ajouté au fichier des erreurs, suite à l'apparition d'une erreur. Détails : %s"
 
 #. module: base
@@ -40325,6 +40344,7 @@ msgstr "Montant réel alloué (valeur) "
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:155
 #: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:183
 #: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:190
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:215
 #, python-format
 msgid "Line %s in the Excel file: %s\n"
 ""
@@ -48689,12 +48709,13 @@ msgstr "Line %s in the Excel file was added to the file of the lines with errors
 msgid "Picking (incoming, internal, outgoing, picking ticket, packing...) to process"
 msgstr "Picking (incoming, internal, outgoing, picking ticket, packing...) to process"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: code:addons/stock/physical_inventory.py:1021
 #: code:addons/stock/physical_inventory.py:1183
 #: model:ir.model,name:stock.model_physical_inventory
 #: view:physical.inventory:0
 #: view:stock.inventory:0
+#: view:sde.import:0
 #, python-format
 msgid "Physical Inventory"
 msgstr "Inventaire Physique"
@@ -55673,8 +55694,9 @@ msgstr "Info du traitement de Picking"
 msgid "Shipper:"
 msgstr "Expéditeur:"
 
-#. module: stock
-#: code:addons/stock/physical_inventory.py:695
+#. modules: msf_outgoing, stock
+#: code:addons/msf_outgoing/sde_import.py:2852
+#: code:addons/stock/physical_inventory.py:763
 #, python-format
 msgid "Location is different to inventory location"
 msgstr "La zone est différente de la zone de l'inventaire"
@@ -57526,10 +57548,14 @@ msgstr "No journal code found."
 #: selection:wizard.account.invoice,real_doc_type:0
 #: selection:wizard.account.invoice.line,line_doc_type:0
 #: code:addons/account_override/invoice.py:234
-#: code:addons/msf_outgoing/sde_import.py:843
-#: code:addons/msf_outgoing/sde_import.py:1365
-#: code:addons/msf_outgoing/sde_import.py:1639
-#: code:addons/msf_outgoing/sde_import.py:1691
+#: code:addons/msf_outgoing/sde_import.py:906
+#: code:addons/msf_outgoing/sde_import.py:1464
+#: code:addons/msf_outgoing/sde_import.py:2033
+#: code:addons/msf_outgoing/sde_import.py:2337
+#: code:addons/msf_outgoing/sde_import.py:2389
+#: code:addons/msf_outgoing/sde_import.py:2454
+#: code:addons/msf_outgoing/sde_import.py:3149
+#: code:addons/msf_outgoing/sde_import.py:3312
 msgid "Unknown"
 msgstr "Inconnu"
 
@@ -58039,13 +58065,14 @@ msgstr "Are you sure you want to reopen this FY ?"
 msgid "Import Intl Commitments"
 msgstr "Import des Engagements"
 
-#. module: msf_supply_doc_export, register_accounting, stock_override, account_hq_entries, transport_mgmt, msf_doc_import
+#. module: msf_supply_doc_export, register_accounting, stock_override, account_hq_entries, transport_mgmt, msf_doc_import, msf_outgoing
 #: report:po.follow.up_rml:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:566
 #: report:addons/stock_override/report/report_stock_move_xls.mako:140
 #: field:finance_price.track_changes,stock_picking_id:0
 #: field:transport.order.in,select_incoming:0
 #: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:362
+#: view:sde.import:0
 msgid "IN"
 msgstr "ENTRANT"
 
@@ -58832,6 +58859,7 @@ msgstr "Déplacer id."
 #: code:addons/stock/stock.py:1438
 #: code:addons/stock/wizard/stock_inventory_merge.py:43
 #: code:addons/stock/wizard/stock_inventory_merge.py:63
+#: code:addons/stock/physical_inventory.py:1555
 #: code:addons/stock_override/stock.py:399
 #: code:addons/stock_override/stock.py:877
 #: code:addons/stock_schedule/schedule.py:582
@@ -62982,6 +63010,11 @@ msgstr "Impossible de supprimer des factures marquées comme \"Synchronisées\" 
 msgid "Counting sheet"
 msgstr "Feuille de comptage"
 
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3030
+msgid " Counting sheet"
+msgstr " de Feuille de comptage"
+
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:62
 msgid "Product Cost"
@@ -64006,6 +64039,8 @@ msgstr "Niveau Prévision de Stock"
 #: model:process.process,name:msf_outgoing.process_process_ppl0
 #: view:stock.picking:0
 #: code:addons/stock/stock.py:1776
+#: selection:sde.export.pagination,doc_type:0
+#: selection:sde.update.log,doc_type:0
 #, python-format
 msgid "Pre-Packing List"
 msgstr "Liste de pré-colisage"
@@ -64125,7 +64160,8 @@ msgid "Iraq"
 msgstr "Irak"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:798
+#: code:addons/stock/physical_inventory.py:982
+#: code:addons/stock/physical_inventory.py:984
 #, python-format
 msgid "Expiry date is required"
 msgstr "La date d'expiration est obligatoire"
@@ -69013,7 +69049,8 @@ msgid "Cannot reconcile entries : Cross check between transfer currencies fails.
 msgstr "Ne peut lettrer les écritures: la vérification entre les devises de transfert a échoué."
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:902
+#: code:addons/stock/physical_inventory.py:859
+#: code:addons/stock/physical_inventory.py:1085
 #, python-format
 msgid "Impossible to import non-stockable product %s"
 msgstr "Impossible d'importer le produit non stockable %s"
@@ -74299,10 +74336,14 @@ msgstr "Vous permet d'installer différents outils destinés à simplifier et à
 #: code:addons/account_mcdb/account_mcdb.py:1066
 #: code:addons/account_mcdb/account_mcdb.py:1069
 #: code:addons/msf_audittrail/audittrail.py:1091
-#: code:addons/msf_outgoing/sde_import.py:843
-#: code:addons/msf_outgoing/sde_import.py:1365
-#: code:addons/msf_outgoing/sde_import.py:1639
-#: code:addons/msf_outgoing/sde_import.py:1691
+#: code:addons/msf_outgoing/sde_import.py:906
+#: code:addons/msf_outgoing/sde_import.py:1464
+#: code:addons/msf_outgoing/sde_import.py:2033
+#: code:addons/msf_outgoing/sde_import.py:2337
+#: code:addons/msf_outgoing/sde_import.py:2389
+#: code:addons/msf_outgoing/sde_import.py:2454
+#: code:addons/msf_outgoing/sde_import.py:3149
+#: code:addons/msf_outgoing/sde_import.py:3312
 #, python-format
 msgid "False"
 msgstr "Faux"
@@ -81986,7 +82027,8 @@ msgid "Product Qty cannot be < 0. It has been reset to 0."
 msgstr "La Qté Produit ne peux pas être < 0. Elle a été réinitialisée à 0."
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:769
+#: code:addons/stock/physical_inventory.py:918
+#: code:addons/stock/physical_inventory.py:921
 #, python-format
 msgid "Product %s, UoM %s does not conform to that of product in stock"
 msgstr "Produit %s, UdM %s n'est pas conforme avec les produits en stock"
@@ -83661,8 +83703,14 @@ msgstr "Sélectionner un fournisseur"
 #: selection:ir.product.list.import.wizard,state:0
 #: selection:wizard.update.po.line.import,state:0
 #: selection:wizard.rfq.sent.import,state:0
-#: code:addons/msf_outgoing/sde_import.py:509
-#: code:addons/msf_outgoing/sde_import.py:607
+#: code:addons/msf_outgoing/sde_import.py:590
+#: code:addons/msf_outgoing/sde_import.py:688
+#: code:addons/msf_outgoing/sde_import.py:1073
+#: code:addons/msf_outgoing/sde_import.py:1184
+#: code:addons/msf_outgoing/sde_import.py:1663
+#: code:addons/msf_outgoing/sde_import.py:1765
+#: code:addons/msf_outgoing/sde_import.py:2756
+#: code:addons/msf_outgoing/sde_import.py:2987
 #: selection:sde.import.pagination,state:0
 #: view:sde.import.pagination:0
 #, python-format
@@ -84884,13 +84932,22 @@ msgid "Error, no partner !"
 msgstr "Erreur, pas de partenaire !"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:745
+#: code:addons/stock/physical_inventory.py:883
+#: code:addons/stock/physical_inventory.py:885
+#, python-format
+msgid "UoM %s is not valid"
+msgstr "L'UdM %s n'est pas valide"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:876
+#: code:addons/stock/physical_inventory.py:878
 #, python-format
 msgid "UoM %s unknown"
 msgstr "UdM %s inconnue"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:785
+#: code:addons/stock/physical_inventory.py:888
+#: code:addons/stock/physical_inventory.py:890
 #, python-format
 msgid "UoM is mandatory"
 msgstr "L'UdM est obligatoire"
@@ -85504,7 +85561,8 @@ msgid "Service Products must have Service Location as Destination Location."
 msgstr "Les Produits de Service doivent avoir une Localisation Service comme Destination de Localisation."
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:761
+#: code:addons/stock/physical_inventory.py:910
+#: code:addons/stock/physical_inventory.py:912
 #, python-format
 msgid "Quantity %s is not valid"
 msgstr "Quantité %s n'est pas valide"
@@ -85678,7 +85736,8 @@ msgid "Please close previous register before closing this one!"
 msgstr "Veuillez clôturer le Registre précédent avant de clôturer celui-ci !"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:784
+#: code:addons/stock/physical_inventory.py:943
+#: code:addons/stock/physical_inventory.py:945
 #, python-format
 msgid "Product %s is not ED managed, ED ignored"
 msgstr "Produit %s n'a pas de gestion des EXP, date ignorée"
@@ -88575,12 +88634,6 @@ msgstr "Description Produit"
 msgid "Kyrgyz Republic (Kyrgyzstan)"
 msgstr "République Kirghize (Kirghizistan)"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:304
-#, python-format
-msgid "An error is occurred. Details : %s"
-msgstr "An error is occurred. Details : %s"
-
 #. module: purchase
 #: help:purchase.order,state:0
 msgid "The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception."
@@ -89210,7 +89263,8 @@ msgid "America/Kentucky/Louisville"
 msgstr "America/Kentucky/Louisville"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:778
+#: code:addons/stock/physical_inventory.py:934
+#: code:addons/stock/physical_inventory.py:936
 #, python-format
 msgid "Product %s is not BN managed, BN ignored"
 msgstr "Produit %s n'a pas de gestion des lots, Lot ignoré"
@@ -90958,7 +91012,8 @@ msgid "Commitment vouchers are validated. "
 msgstr "Bons d'Engagement - Validés. "
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:775
+#: code:addons/stock/physical_inventory.py:928
+#: code:addons/stock/physical_inventory.py:930
 #, python-format
 msgid "Batch number is required"
 msgstr "Le numéro de lot est obligatoire"
@@ -92279,7 +92334,6 @@ msgid "CHINESE YUAN"
 msgstr "YUAN CHINOIS"
 
 #. modules: stock, purchase,account,specific_rules
-#: view:physical.inventory:0
 #: view:account.invoice:0
 #: view:account.period:0
 #: view:purchase.order:0
@@ -93943,10 +93997,13 @@ msgstr "Piece of information"
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:1033
 #: report:physical_inventory_discrepancies_report_pdf:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:304
-#: code:addons/msf_outgoing/sde_import.py:798
-#: code:addons/msf_outgoing/sde_import.py:1317
-#: code:addons/msf_outgoing/sde_import.py:1591
-#: code:addons/msf_outgoing/sde_import.py:1646
+#: code:addons/msf_outgoing/sde_import.py:848
+#: code:addons/msf_outgoing/sde_import.py:1407
+#: code:addons/msf_outgoing/sde_import.py:1759
+#: code:addons/msf_outgoing/sde_import.py:2024
+#: code:addons/msf_outgoing/sde_import.py:2083
+#: code:addons/msf_outgoing/sde_import.py:2140
+#: code:addons/msf_outgoing/sde_import.py:2304
 msgid "Supply Responsible"
 msgstr "Responsable Approvisionnement"
 
@@ -102192,8 +102249,8 @@ msgstr "Date Prévue\\nde Picking"
 
 #. module: msf_outgoing
 #: field:stock.move,ppl_returned_ok:0
-msgid "Has been returned ?"
-msgstr "A été retrourné ?"
+msgid "Has been returned"
+msgstr "A été retrourné"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/msf_import_export.py:455
@@ -103063,12 +103120,6 @@ msgstr "La Zone est des DI ouverte"
 msgid "Location is inactive"
 msgstr "Zone inactive"
 
-#. module: stock
-#: code:addons/stock/physical_inventory.py:1207
-#, python-format
-msgid "Location %s is inactive"
-msgstr "Zone %s inactive"
-
 #. module: msf_config_locations
 #: view:stock.remove.location.wizard:0
 msgid "Open documents"
@@ -103653,13 +103704,13 @@ msgstr " Du colis et Vers colis doivent être des entiers."
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:415
 #, python-format
-msgid " Weight per pack has to be an float."
+msgid " Weight per pack has to be a float."
 msgstr " Le Poids par colis doit être un nombre."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:429
 #, python-format
-msgid " This Pack Type doesn't exists."
+msgid " This Pack Type doesn't exist."
 msgstr " Ce Type de Colis n'existe pas."
 
 #. module: msf_doc_import
@@ -103813,6 +103864,12 @@ msgid "From pack - To pack sequences errors : \n"
 msgstr "Erreurs des séquences Du colis - Vers colis : \n"
 ""
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:494
+#, python-format
+msgid "From pack - To pack sequences errors : "
+msgstr "Erreurs des séquences Du colis - Vers colis : "
+
 #. modules: msf_doc_import, msf_outgoing
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:72
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:207
@@ -103834,13 +103891,6 @@ msgstr "\n"
 #, python-format
 msgid "Requester Ref"
 msgstr "Réf du Demandeur"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:292
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:304
-#, python-format
-msgid "Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s"
-msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes en erreur, une erreur est survenue. Details : %s"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:83
@@ -104026,10 +104076,10 @@ msgid "Expiry Date #"
 msgstr "Date d'Expiration"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:304
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:314
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:311
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:475
 #, python-format
-msgid "An error is occurred. Details : %s"
+msgid "An error has occurred. Details : %s"
 msgstr "Une erreur est survenue. Détails : %s"
 
 #. module: msf_doc_import
@@ -104462,12 +104512,24 @@ msgstr "Erreurs sur les quantités : \n"
 ""
 
 #. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:513
+#, python-format
+msgid "Quantities errors : "
+msgstr "Erreurs sur les quantités : "
+
+#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:442
 #, python-format
 msgid "Line number %s: The imported Quantities for %s don't match with the PPL (%s instead of %s).\n"
 ""
 msgstr "Ligne numéro %s: Les Quantités importées pour %s ne correspondent pas aux données de la Liste de Pré-Colisage (%s à la place de %s).\n"
 ""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:506
+#, python-format
+msgid "Line number %s: The imported Quantities for %s don't match with the PPL (%s instead of %s). "
+msgstr "Ligne numéro %s: Les Quantités importées pour %s ne correspondent pas aux données de la Liste de Pré-Colisage (%s à la place de %s). "
 
 #. module: stock
 #: model:ir.actions.act_window,name:stock.action_stock_reception_wizard
@@ -116752,18 +116814,21 @@ msgstr "Une erreur est survenue: %s"
 msgid "There is not enough stock in Cross Docking which can be allocated to process the product %s with a quantity of %s. Please check if there is some other (forced) availability of this product."
 msgstr "Il n'y a pas assez de stock attribuable en Transbordement pour traiter le produit %s avec une quantité de %s. Veuillez vérifier si il y a d'autres disponibilités (forcées) pour ce produit."
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: selection:physical.inventory,type:0
+#: code:addons/msf_outgoing/sde_import.py:74
 msgid "Full Inventory count (planned)"
 msgstr "Comptage complet de l'Inventaire (planifié)"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: selection:physical.inventory,type:0
+#: code:addons/msf_outgoing/sde_import.py:75
 msgid "Partial Inventory count (planned)"
 msgstr "Comptage partiel de l'Inventaire (planifié)"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: selection:physical.inventory,type:0
+#: code:addons/msf_outgoing/sde_import.py:75
 msgid "Stock correction (unplanned)"
 msgstr "Correction du Stock (non planifiée)"
 
@@ -125640,9 +125705,15 @@ msgstr "Ligne misupdated by SDEe à jour par SDE"
 msgid "No available shipped IN found for the given PO %s and the given Ship Reference %s"
 msgstr "Aucun IN disponible expédié n'a été trouvé pour le BdC %s et la Référence Expédition %s"
 
-#. modules: stock, msf_outgoing
+#. modules: stock, msf_outgoing, msf_profile
 #: field:stock.incoming.processor,sde_updated:0
 #: field:stock.picking,sde_updated:0
+#: field:internal.picking.processor,sde_updated:0
+#: field:outgoing.delivery.processor,sde_updated:0
+#: field:ppl.processor,sde_updated:0
+#: field:return.ppl.processor,sde_updated:0
+#: field:stock.picking.processor,sde_updated:0
+#: field:physical.inventory,sde_updated:0
 msgid "Updated by SDE"
 msgstr "Mis à jour par SDE"
 
@@ -125652,11 +125723,6 @@ msgstr "Mis à jour par SDE"
 #: view:sde.import:0
 msgid "SDE Tools"
 msgstr "Outils SDE"
-
-#. module: msf_outgoing
-#: view:sde.import:0
-msgid "Import IN Tools"
-msgstr "Outils d'Import IN"
 
 #. module: msf_outgoing
 #: view:sde.import:0
@@ -129302,6 +129368,8 @@ msgstr "La donnée de move_lines '%s' ne doit pas être vide%s"
 #: field:wizard.import.in.simulation.screen,json_text:0
 #: field:sde.import,json_text:0
 #: field:wizard.pick.import,json_text:0
+#: field:wizard.import.ppl.to.create.ship,json_text:0
+#: field:wizard.out.import,json_text:0
 msgid "JSON as text"
 msgstr "Données JSON"
 
@@ -129335,57 +129403,71 @@ msgid "The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_type
 msgstr "Les 3 clés sde_pagination_id, sde_pagination_page et sde_pagination_type sont obligatoires pour pouvoir utiliser la pagination dans l'import SDE de l'IN"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:155
-#: code:addons/msf_outgoing/sde_import.py:574
-#: code:addons/msf_outgoing/sde_import.py:1015
+#: code:addons/msf_outgoing/sde_import.py:177
+#: code:addons/msf_outgoing/sde_import.py:608
+#: code:addons/msf_outgoing/sde_import.py:1092
+#: code:addons/msf_outgoing/sde_import.py:1681
+#: code:addons/msf_outgoing/sde_import.py:2774
 #, python-format
 msgid " and finished"
 msgstr " et terminé"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:160
-#: code:addons/msf_outgoing/sde_import.py:579
-#: code:addons/msf_outgoing/sde_import.py:1020
+#: code:addons/msf_outgoing/sde_import.py:182
+#: code:addons/msf_outgoing/sde_import.py:613
+#: code:addons/msf_outgoing/sde_import.py:1097
+#: code:addons/msf_outgoing/sde_import.py:1686
+#: code:addons/msf_outgoing/sde_import.py:2779
 #, python-format
 msgid "The page number must be an integer"
 msgstr "Le numéro de page doit être un entier"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:168
-#: code:addons/msf_outgoing/sde_import.py:587
-#: code:addons/msf_outgoing/sde_import.py:1028
+#: code:addons/msf_outgoing/sde_import.py:190
+#: code:addons/msf_outgoing/sde_import.py:621
+#: code:addons/msf_outgoing/sde_import.py:1105
+#: code:addons/msf_outgoing/sde_import.py:1694
+#: code:addons/msf_outgoing/sde_import.py:2787
 #, python-format
 msgid "The page number must be in sequential order without gaps: last page imported %s, imported page %s"
 msgstr "Le numéro de page doit être dans un ordre séquentiel et sans écart: dernière page importée %s, page importée %s"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:166
-#: code:addons/msf_outgoing/sde_import.py:585
-#: code:addons/msf_outgoing/sde_import.py:1026
+#: code:addons/msf_outgoing/sde_import.py:188
+#: code:addons/msf_outgoing/sde_import.py:619
+#: code:addons/msf_outgoing/sde_import.py:1103
+#: code:addons/msf_outgoing/sde_import.py:1692
+#: code:addons/msf_outgoing/sde_import.py:2785
 #, python-format
 msgid "This SDE import ID is already finished, please use a new SDE import ID"
 msgstr "Cet ID d'import SDE est déjà terminé, veuillez utiliser un nouvel ID d'import SDE"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:240
-#: code:addons/msf_outgoing/sde_import.py:620
-#: code:addons/msf_outgoing/sde_import.py:1062
+#: code:addons/msf_outgoing/sde_import.py:262
+#: code:addons/msf_outgoing/sde_import.py:654
+#: code:addons/msf_outgoing/sde_import.py:1139
+#: code:addons/msf_outgoing/sde_import.py:1727
+#: code:addons/msf_outgoing/sde_import.py:2820
 #, python-format
 msgid "SDE pagination for %s created%s"
 msgstr "Pagination SDE pour %s créée%s"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:213
-#: code:addons/msf_outgoing/sde_import.py:606
-#: code:addons/msf_outgoing/sde_import.py:1047
+#: code:addons/msf_outgoing/sde_import.py:235
+#: code:addons/msf_outgoing/sde_import.py:640
+#: code:addons/msf_outgoing/sde_import.py:1124
+#: code:addons/msf_outgoing/sde_import.py:1713
+#: code:addons/msf_outgoing/sde_import.py:2806
 #, python-format
 msgid "SDE pagination for %s updated%s with page %s"
 msgstr "Pagination SDE pour %s mise à jour%s avec la page %s"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:243
-#: code:addons/msf_outgoing/sde_import.py:623
-#: code:addons/msf_outgoing/sde_import.py:1065
+#: code:addons/msf_outgoing/sde_import.py:265
+#: code:addons/msf_outgoing/sde_import.py:657
+#: code:addons/msf_outgoing/sde_import.py:1142
+#: code:addons/msf_outgoing/sde_import.py:1730
+#: code:addons/msf_outgoing/sde_import.py:2823
 #, python-format
 msgid "An error occurred during the management of the paginated SDE import \"%s\": %s"
 msgstr "Une erreur s'est produite pendant la gestion de l'import SDE paginé \"%s\": %s"
@@ -129473,9 +129555,11 @@ msgid "PO was not found with the given references"
 msgstr "Aucun BdC n'a été trouvé avec les références données"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:217
-#: code:addons/msf_outgoing/sde_import.py:609
-#: code:addons/msf_outgoing/sde_import.py:1051
+#: code:addons/msf_outgoing/sde_import.py:239
+#: code:addons/msf_outgoing/sde_import.py:643
+#: code:addons/msf_outgoing/sde_import.py:1128
+#: code:addons/msf_outgoing/sde_import.py:1716
+#: code:addons/msf_outgoing/sde_import.py:2809
 #, python-format
 msgid "The first page of a paginated SDE import must be 1"
 msgstr "La première page de l'import SDE paginé doit être 1"
@@ -129492,8 +129576,9 @@ msgstr "\"parcel_no\" (%s) et \"parcel_id\" (%s) sont tous les deux obligatoires
 msgid "Unifield was unable to identify the correct IN since multiple documents match the PO reference %s received from SDE. Please check the data sent and add more references"
 msgstr "Unifield n'a pas pu identifier le bon IN étant donné que plusieurs documents correspondent à la référence PO %s donnée par SDE. Veuillez vérifier les données envoyées et rajouter les références nécessaire"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, stock
 #: view:stock.picking:0
+#: view:physical.inventory:0
 msgid "Reset SDE update"
 msgstr "Réinitialiser la mise à jour par SDE"
 
@@ -129504,25 +129589,33 @@ msgid "The Picking Ticket %s has already been updated by SDE. Please process the
 msgstr "Le Bon de Picking %s a déjà été mis à jour par SDE. Veuillez traiter les données importées dans UniField ou y réinitialiser la mise à jour SDE"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:565
-#: code:addons/msf_outgoing/sde_import.py:1005
-#: code:addons/msf_outgoing/sde_import.py:1154
-#: code:addons/msf_outgoing/sde_import.py:1441
-#: code:addons/msf_outgoing/sde_import.py:1499
+#: code:addons/msf_outgoing/sde_import.py:599
+#: code:addons/msf_outgoing/sde_import.py:1082
+#: code:addons/msf_outgoing/sde_import.py:1247
+#: code:addons/msf_outgoing/sde_import.py:1672
+#: code:addons/msf_outgoing/sde_import.py:1844
+#: code:addons/msf_outgoing/sde_import.py:2126
+#: code:addons/msf_outgoing/sde_import.py:2191
+#: code:addons/msf_outgoing/sde_import.py:2704
+#: code:addons/msf_outgoing/sde_import.py:2765
+#: code:addons/msf_outgoing/sde_import.py:3040
 #, python-format
 msgid "The main key \"database\" is mandatory and should not be empty"
 msgstr "La clé principale \"database\" est obligatoire et ne devrait pas être vide"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:642
-#: code:addons/msf_outgoing/sde_import.py:1084
+#: code:addons/msf_outgoing/sde_import.py:669
+#: code:addons/msf_outgoing/sde_import.py:1154
+#: code:addons/msf_outgoing/sde_import.py:1730
 #, python-format
 msgid "The main key \"move_lines\" is mandatory and should not be empty"
 msgstr "La clé principale \"move_lines\" est obligatoire et ne devrait pas être vide"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:633
-#: code:addons/msf_outgoing/sde_import.py:1075
+#: code:addons/msf_outgoing/sde_import.py:667
+#: code:addons/msf_outgoing/sde_import.py:1152
+#: code:addons/msf_outgoing/sde_import.py:1740
+#: code:addons/msf_outgoing/sde_import.py:2833
 #, python-format
 msgid "The main key \"name\" is mandatory and should not be empty"
 msgstr "La clé principale \"name\" est obligatoire et ne devrait pas être vide"
@@ -129534,11 +129627,16 @@ msgid "The main key \"pick_list\" is mandatory and should be a non-empty list of
 msgstr "La clé principale \"pick_list\" est obligatoire et devrait être une liste de %s non vide"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:567
-#: code:addons/msf_outgoing/sde_import.py:1007
-#: code:addons/msf_outgoing/sde_import.py:1156
-#: code:addons/msf_outgoing/sde_import.py:1443
-#: code:addons/msf_outgoing/sde_import.py:1501
+#: code:addons/msf_outgoing/sde_import.py:601
+#: code:addons/msf_outgoing/sde_import.py:1084
+#: code:addons/msf_outgoing/sde_import.py:1249
+#: code:addons/msf_outgoing/sde_import.py:1674
+#: code:addons/msf_outgoing/sde_import.py:1846
+#: code:addons/msf_outgoing/sde_import.py:2128
+#: code:addons/msf_outgoing/sde_import.py:2193
+#: code:addons/msf_outgoing/sde_import.py:2706
+#: code:addons/msf_outgoing/sde_import.py:2767
+#: code:addons/msf_outgoing/sde_import.py:3042
 #, python-format
 msgid "The database name in the given JSON (%s) does not correspond to the current instance (%s)"
 msgstr "Le nom de base de données dans le JSON donné (%s) ne correspond pas à l'instance actuelle (%s)"
@@ -129557,7 +129655,7 @@ msgid ". The lines number %s were ignored during the import"
 msgstr ". Les numéros de ligne %s ont été ignorées pendant l'import"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:1455
+#: code:addons/msf_outgoing/sde_import.py:2113
 #, python-format
 msgid "This %s is currently being updated via SDE since %s, please avoid making any direct change in UniField"
 msgstr "Ce %s est en train d'être mis à jour via SDE depuis %s, veuillez éviter de faire des modifications directement dans UniField"
@@ -129637,11 +129735,6 @@ msgstr "Données pour les imports/outils"
 
 #. module: msf_outgoing
 #: view:sde.import:0
-msgid "Picking Ticket Tools"
-msgstr "Outils pour le Bon de Picking"
-
-#. module: msf_outgoing
-#: view:sde.import:0
 msgid "Import Picking Ticket"
 msgstr "Importer Bon de Picking"
 
@@ -129651,31 +129744,36 @@ msgid "Set banner on Picking Tickets"
 msgstr "Ajouter une bannière à des Bons de Picking"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:1575
+#: code:addons/msf_outgoing/sde_import.py:2271
+#: code:addons/msf_outgoing/sde_import.py:3099
 #, python-format
 msgid "The main key \"lines_per_page\" must be above 0"
 msgstr "La clé principale \"lines_per_page\" doit être au supérieure à 0"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:1573
+#: code:addons/msf_outgoing/sde_import.py:2269
+#: code:addons/msf_outgoing/sde_import.py:3097
 #, python-format
 msgid "The main key \"lines_per_page\" must be an integer"
 msgstr "La clé principale \"lines_per_page\" doit être un entier"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:1524
+#: code:addons/msf_outgoing/sde_import.py:2216
+#: code:addons/msf_outgoing/sde_import.py:3048
 #, python-format
 msgid "The main key \"sde_pagination_page\" is mandatory and should not be empty when using \"sde_pagination_id\""
 msgstr "La clé principale \"sde_pagination_page\" est obligatoire et ne devrait pas être vide quand la clé \"sde_pagination_id\" est utilisée"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:1530
+#: code:addons/msf_outgoing/sde_import.py:2222
+#: code:addons/msf_outgoing/sde_import.py:3054
 #, python-format
 msgid "The main key \"sde_pagination_page\" must be above 0"
 msgstr "La clé principale \"sde_pagination_page\" doit être au supérieure à 0"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:1528
+#: code:addons/msf_outgoing/sde_import.py:2220
+#: code:addons/msf_outgoing/sde_import.py:3052
 #, python-format
 msgid "The main key \"sde_pagination_page\" must be an integer"
 msgstr "La clé principale \"sde_pagination_page\" doit être un entier"
@@ -129694,7 +129792,8 @@ msgid "One or more of the %s names in the key \"pick_list\" are not usable. Plea
 msgstr "Un ou plusieurs noms de %s dans la clé \"pick_list\" sont inutilisables. Veuillez vous assurer que chaque nom dans cette liste est une chaîne de caractères ou peut être convertie en une"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:859
+#: code:addons/msf_outgoing/sde_import.py:2470
+#: code:addons/msf_outgoing/sde_import.py:3166
 #, python-format
 msgid ". The export have been paginated into %s pages. If you want to retrieve the other pages, please use the \"sde_pagination_id\" data given"
 msgstr ". L'export a été paginé en %s pages. Si vous voulez récupérer les données des autre pages, veuillez utiliser les données de \"sde_pagination_id\""
@@ -129737,11 +129836,6 @@ msgstr "OUTs"
 
 #. module: msf_outgoing
 #: view:sde.import:0
-msgid "OUT Tools"
-msgstr "Outils pour le OUT"
-
-#. module: msf_outgoing
-#: view:sde.import:0
 msgid "Set banner on OUTs"
 msgstr "Ajouter une bannière à des OUTs"
 
@@ -129761,9 +129855,11 @@ msgid "Export OUTs with lines"
 msgstr "Exporter OUTs avec lignes"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:94
-#: code:addons/msf_outgoing/sde_import.py:525
-#: code:addons/msf_outgoing/sde_import.py:962
+#: code:addons/msf_outgoing/sde_import.py:116
+#: code:addons/msf_outgoing/sde_import.py:557
+#: code:addons/msf_outgoing/sde_import.py:1037
+#: code:addons/msf_outgoing/sde_import.py:1628
+#: code:addons/msf_outgoing/sde_import.py:2640
 #, python-format
 msgid "No JSON data to use"
 msgstr "Aucune donnée JSON à utiliser"
@@ -129886,13 +129982,15 @@ msgid "Line %s: Key \"uom\" is mandatory"
 msgstr "Ligne %s: La clé \"uom\" est obligatoire"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:1510
+#: code:addons/msf_outgoing/sde_import.py:2148
+#: code:addons/msf_outgoing/sde_import.py:2726
 #, python-format
 msgid "put"
 msgstr "mise"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/sde_import.py:1510
+#: code:addons/msf_outgoing/sde_import.py:2148
+#: code:addons/msf_outgoing/sde_import.py:2726
 #, python-format
 msgid "removed"
 msgstr "supprimée"
@@ -131454,3 +131552,347 @@ msgstr "Prêt pour l'exportation"
 msgid "Reset Export"
 msgstr "Réinitialiser l'exportation"
 
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Import PPL"
+msgstr "Importer LPC"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Export PPLs"
+msgstr "Exporter LPCs"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Export PPLs with lines"
+msgstr "Exporter LPCs avec lignes"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Set banner on PPLs"
+msgstr "Ajouter une bannière à des LPCs"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Remove banner on PPLs"
+msgstr "Supprimer une bannière à des LPCs"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:1660
+#, python-format
+msgid "The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_end are mandatory to use the pagination in the SDE PPL import"
+msgstr "Les 3 clés sde_pagination_id, sde_pagination_page et sde_pagination_end sont obligatoires pour pouvoir utiliser la pagination dans l'import SDE du LPC"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:1726
+#, python-format
+msgid "The PPL %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE update there"
+msgstr "Le LPC %s a déjà été mis à jour par SDE. Veuillez traiter les données importées dans UniField ou y réinitialiser la mise à jour SDE"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:1826
+#, python-format
+msgid "One or more of the names in the key \"pack_types\" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one"
+msgstr "Un ou plusieurs noms de Type de Colis dans la clé \"pack_types\" sont inutilisables. Veuillez vous assurer que chaque nom dans cette liste est une chaîne de caractères ou peut être convertie en une"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:1837
+#, python-format
+msgid " with the names %s"
+msgstr " avec les noms %s"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:1838
+#, python-format
+msgid "There is no Pack Type%s to export"
+msgstr "Il n'y a pas de Type de Colis%s à exporter"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:1842
+#, python-format
+msgid "The data of %s Pack Types have been exported"
+msgstr "Les données de %s Types de Colis ont été exportées"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Export Pack Types"
+msgstr "Exporter Type de Colis"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:430
+#, python-format
+msgid " Width has to be an float."
+msgstr " La Largeur doit être un nombre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:434
+#, python-format
+msgid " Length has to be a float."
+msgstr " La Longueur doit être un nombre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:438
+#, python-format
+msgid " Height has to be a float."
+msgstr " La Hauteur doit être un nombre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:452
+#, python-format
+msgid " The Pack Type with the name %s, the width %s, the length %s and the height %s doesn't exist."
+msgstr " Le Type de Colis de nom %s, de largeur %s, de longueur %s et de hauteur %s n'existe pas."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:552
+#, python-format
+msgid "Reported errors : The line(s) %s are missing from the SDE import. Please ensure that all lines of the PPL are in the SDE import or it will be rejected."
+msgstr "Erreurs reportées : Les lignes %s sont absentes de l'import SDE. Veuillez vous assurer que toutes les lignes du PPL sont présentes dans l'import SDE ou il sera rejeté."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:1762
+#: code:addons/msf_outgoing/sde_import.py:2982
+#, python-format
+msgid "Some errors occurred during the import: %s"
+msgstr "Des erreurs sont survenues lors de l'import: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:485
+#, python-format
+msgid "Line number %s:"
+msgstr "Ligne numéro %s:"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2711
+#, python-format
+msgid "The main key \"pi_list\" is mandatory and should be a non-empty list of Physical Inventory names"
+msgstr "La clé principale \"pi_list\" est obligatoire et devrait être une liste de noms d'Inventaires Physiques non vide"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2715
+#: code:addons/msf_outgoing/sde_import.py:3078
+#, python-format
+msgid "One or more of the Physical Inventory names in the key \"pi_list\" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one"
+msgstr "Un ou plusieurs noms d'Inventaires Physiques dans la clé \"pi_list\" sont inutilisables. Veuillez vous assurer que chaque nom dans cette liste est une chaîne de caractères ou peut être convertie en une"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2721
+#, python-format
+msgid "This Physical Inventory is currently being updated via SDE since %s, please avoid making any direct change in UniField"
+msgstr "Cet Inventaire Physique est en train d'être mis à jour via SDE depuis %s, veuillez éviter de faire des modifications directement dans UniField"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3089
+#, python-format
+msgid "There is no Physical Inventory%s to export"
+msgstr "Il n'y a pas d'Inventaire Physique%s à exporter"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2725
+#, python-format
+msgid "The \"updated via SDE\" banner message has been %s on the Physical Inventories %s"
+msgstr "La bannière \"mis à jour via SDE\" a été %s sur l'Inventaire Physique %s"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3221
+#, python-format
+msgid "The %sPhysical Inventories %s%s could not be found"
+msgstr "Les Inventaires Physiques%s %s%s n'ont pas pu être trouvés"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2772
+#, python-format
+msgid "The 3 keys sde_pagination_id, sde_pagination_page and sde_pagination_end are mandatory to use the pagination in the SDE Physical Inventory Counting sheet import"
+msgstr "Les 3 clés sde_pagination_id, sde_pagination_page et sde_pagination_end sont obligatoires pour pouvoir utiliser la pagination dans l'import SDE de la Feuille de comptage de l'Inventaire Physique"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2841
+#, python-format
+msgid "The main key \"location\" is mandatory and should not be empty"
+msgstr "La clé principale \"location\" est obligatoire et ne devrait pas être vide"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2838
+#, python-format
+msgid "The Physical Inventory %s has already been updated by SDE. Please process the imported data in UniField or reset the SDE update there"
+msgstr "L'Inventaire Physique %s a déjà été mis à jour par SDE. Veuillez traiter les données importées dans UniField ou y réinitialiser la mise à jour SDE"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2976
+#: code:addons/msf_outgoing/sde_import.py:2979
+#, python-format
+msgid "Line number %s: %s"
+msgstr "Ligne numéro %s: %s"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2976
+#: code:addons/msf_outgoing/sde_import.py:2979
+#, python-format
+msgid "empty"
+msgstr "vide"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2984
+#: code:addons/msf_outgoing/sde_import.py:2989
+#, python-format
+msgid ". Warning: %s"
+msgstr ". Attention: %s"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3064
+#, python-format
+msgid "The Physical Inventory%s data from the page %s of %s have been exported"
+msgstr "Les données%s de l'Inventaire Physique de la page %s de %s ont été exportées"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3180
+#, python-format
+msgid "The Physical Inventory%s data of %s have been exported%s"
+msgstr "Les données%s de l'Inventaire Physique de %s ont été exportées%s"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3069
+#, python-format
+msgid "No Physical Inventory%s export data was found with the \"sde_pagination_id\" %s and the \"sde_pagination_page\" %s"
+msgstr "Aucun export de données de%s d'Inventaire Physique n'a été trouvé pour le \"sde_pagination_id\" %s et la \"sde_pagination_page\" %s"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3177
+#, python-format
+msgid "%s Physical Inventories"
+msgstr "%s Inventaires Physiques"
+
+#. module: msf_outgoing
+#: selection:sde.export.pagination,doc_type:0
+#: selection:sde.update.log,doc_type:0
+msgid "Physical Inventory Counting Sheet"
+msgstr "Feuille de Comptage d'Inventaire Physique"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "PACK ONLY"
+msgstr "SEULEMENT PACK"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Set banner on Physical Inventories"
+msgstr "Ajouter une bannière à des Inventaires Physiques"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Remove banner on Physical Inventories"
+msgstr "Supprimer une bannière à des Inventaires Physiques"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Import Physical Inventory Counting Sheet"
+msgstr "Importer une Feuille de Comptage d'Inventaire Physique"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Export Physical Inventory Counting Sheets"
+msgstr "Exporter des Feuilles de Comptage d'Inventaires Physiques"
+
+#. modules: msf_profile, stock
+#: field:physical.inventory,sde_reset_date:0
+#: field:stock.picking,sde_reset_date:0
+msgid "Reset action applied"
+msgstr "Action de réinitialisation appliquée"
+
+#. modules: msf_profile, stock
+#: field:physical.inventory,sde_update_msg:0
+#: field:stock.picking,sde_update_msg:0
+msgid "Message to be displayed when SDE is updating a document"
+msgstr "Message à afficher quand SDE est en train de mettre à jour un document"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3201
+#, python-format
+msgid "with a Counting sheet "
+msgstr "avec une Feuille de Comptage "
+
+#. module: stock
+#: field:physical.inventory,cs_generated_prefill_bn:0
+msgid "Prefilled Batch Numbers"
+msgstr "Numéros de Lot Pré-remplis"
+
+#. module: stock
+#: field:physical.inventory,cs_generated_prefill_ed:0
+msgid "Prefilled Expiry Dates"
+msgstr "Dates d'Expiration Pré-remplies"
+
+#. module: stock
+#: field:physical.inventory,cs_generated_stock:0
+msgid "Only lines with stock"
+msgstr "Uniquement les produits avec un niveau de stock différent de 0"
+
+#. module: stock
+#: field:physical.inventory,cs_generated_stock_and_moves:0
+msgid "Only lines with stock & moves"
+msgstr "Uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0"
+
+#. module: stock
+#: help:physical.inventory,cs_generated_stock_and_moves:0
+msgid "During Counting Sheet generation, the \"Only count lines with stock & moves different than 0\" was ticked"
+msgstr "Pendant la génération de la Feuille de Comptage, \"Compter uniquement les produits avec un niveau de stock et un nombre de mouvements différents de 0\" a été coché"
+
+#. module: stock
+#: help:physical.inventory,cs_generated_stock:0
+msgid "During Counting Sheet generation, the \"Only count lines with stock different than 0\" was ticked"
+msgstr "Pendant la génération de la Feuille de Comptage, \"Compter uniquement les produits avec un niveau de stock différent de 0\" a été coché"
+
+#. module: stock
+#: help:physical.inventory,cs_generated_prefill_bn:0
+msgid "During Counting Sheet generation, the \"Prefill Batch Numbers\" checkbox was ticked"
+msgstr "Pendant la génération de la Feuille de Comptage, \"Pré-remplir les Numéros de Lot\" a été coché"
+
+#. module: stock
+#: help:physical.inventory,cs_generated_prefill_ed:0
+msgid "During Counting Sheet generation, the \"Prefill Expiry checkbox\" was ticked"
+msgstr "Pendant la génération de la Feuille de Comptage, \"Pré-remplir les Dates d'Expiration\" a été coché"
+
+#. module: msf_outgoing
+#: view:sde.import:0
+msgid "Export Physical Inventories"
+msgstr "Exporter des Inventaires Physiques"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1557
+#, python-format
+msgid "This action will reset the counting sheet to its initial state:"
+msgstr "Cette action réinitialisera la feuille de comptage dans son état originel:"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1558
+#, python-format
+msgid "All entered data (counted quantities, etc...) will be permanently removed."
+msgstr "Toutes les données saisies (quantités comptées, etc...) seront supprimées de manière permanente."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1559
+#, python-format
+msgid "If SmartScan is being used, these SmartScan tasks will be reset."
+msgstr "Si SmartScan a été utilisé, ces tâches SmartScan seront réinitialisées."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1560
+#, python-format
+msgid "Do you want to proceed ?"
+msgstr "Voulez-vous continuer ?"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2992
+#, python-format
+msgid "One or more of the states in the key \"pi_states\" are not usable. Please ensure that all the entries in this list are a character string or can be converted to one"
+msgstr "Un ou plusieurs états dans la clé \"pi_states\" sont inutilisables. Veuillez vous assurer que chaque nom dans cette liste est une chaîne de caractères ou peut être convertie en une"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:2996
+#, python-format
+msgid "The states %s in the key \"pi_states\" are not authorized. Please use \"counting\", \"counted\", \"validated\", \"confirmed\", \"closed\" and/or \"cancel\""
+msgstr "Les états %s dans la clé \"pi_states\" ne sont pas autorisés. Veuillez utiliser \"counting\", \"counted\", \"validated\", \"confirmed\", \"closed\" et/out \"cancel\""
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/sde_import.py:3000
+#, python-format
+msgid "The key \"pi_states\" should be a non-empty list of states if it is used"
+msgstr "Si elle est utilisée, a clé \"pi_states\" devrait être une liste d'états non vide"

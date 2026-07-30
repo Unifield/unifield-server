@@ -1364,5 +1364,9 @@
         <record id="us_15901_change_customs_transport_fees" model="patch.scripts">
             <field name="method">us_15901_change_customs_transport_fees</field>
         </record>
+
+        <record id="us_15880_15972_sde_pi" model="patch.scripts">
+            <field name="method">us_15880_15972_sde_pi</field>
+        </record>
     </data>
 </openerp>

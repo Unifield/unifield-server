@@ -172,6 +172,14 @@ class patch_scripts(osv.osv):
             self.log_info(cr, uid, "US-15901: %s Customs Fees lines were deleted" % (cr.rowcount,))
             cr.execute("""DELETE FROM transport_order_fees_type WHERE id IN %s""", (tuple(fees_to_del_ids),))
             self.log_info(cr, uid, "US-15901: %s Fees were deleted" % (cr.rowcount,))
+        return True
+
+    def us_15880_15972_sde_pi(self, cr, uid, *a, **b):
+        '''
+        Set a flag on older Physical Inventories to change how the "reset_sde_updated_flag" behaves
+        '''
+        cr.execute("""UPDATE physical_inventory SET pi_before_sde = 't'""")
+        self.log_info(cr, uid, 'US-15880-15972: A flag was set on %s Physical Inventories' % (cr.rowcount,))
 
         return True
 

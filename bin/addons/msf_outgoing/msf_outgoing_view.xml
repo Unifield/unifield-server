@@ -691,6 +691,7 @@
                     <field name="packing_list" />
                     <field name="order_category" string="Order\nCategory"/>
 					<field name="reason_type_id" />
+					<field name="sde_updated"/>
 					<field name="date"/>
 					<field name="min_date" string="Expected\nPack Date" />
 					<field name="state"/>
@@ -709,6 +710,21 @@
             <field name="priority">19</field>
             <field name="arch" type="xml">
                 <form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List" force_string="1">
+                    <group>
+                        <field name="sde_update_msg" invisible="1"/>
+
+                        <html colspan="6">
+                            <p id="sde_update_banner_msg" style="display:none; position:fixed; min-width:100%%; z-index:1000; left:0; top:0; text-align:center; padding: 10px 1px; background: red none repeat scroll 0 0; color:white; font-weight:bold; font-size:1.6em" />
+                            <script language="javascript">
+                                var sde_update_msg = $('#sde_update_msg').val() || $('#sde_update_msg').text();
+                                if (sde_update_msg) {
+                                    $('#sde_update_banner_msg').html(sde_update_msg);
+                                    $('#sde_update_banner_msg').show();
+                                }
+                            </script>
+                        </html>
+                    </group>
+
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
@@ -843,6 +859,10 @@
                             <field name="type" invisible="1"/>
                             <field name="from_ir" invisible="1"/>
                             <field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
+                            <group colspan="4" attrs="{'invisible': [('sde_updated', '=', False)]}">
+                                <field name="sde_updated" readonly="1"/>
+                                <button name="reset_sde_updated_flag" states="assigned" string="Reset SDE update" type="object" icon="gtk-refresh" />
+                            </group>
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
