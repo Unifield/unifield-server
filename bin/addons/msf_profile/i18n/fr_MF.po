@@ -67865,9 +67865,10 @@ msgstr "Enreg.Débit"
 msgid "Asia/Ashgabat"
 msgstr "Asie/Ashgabat"
 
-#. module: specific_locations, stock
+#. module: specific_locations, stock, msf_config_locations
 #: field:stock.location,location_category:0
 #: field:stock.location.instance,location_category:0
+#: view:stock.location:0
 msgid "Location Category"
 msgstr "Catégorie Zone"
 
@@ -72245,7 +72246,7 @@ msgstr "Ligne num."
 msgid "Navajo"
 msgstr "Navajo"
 
-#. modules: product_nomenclature, process, financing_contract, mission_stock, procurement_cycle, sync_client, supplier_catalogue, analytic_distribution, product, finance, hr, msf_instance, kit, base, msf_tools, res_currency_functional, procurement_report, threshold_value, purchase, account, resource, msf_partner, procurement_auto, msf_field_access_rights, sale, procurement, msf_button_access_rights, stock, product_attributes, account_period_closing_level, account_mcdb, msf_profile, product_asset, transport_mgmt
+#. modules: product_nomenclature, process, financing_contract, mission_stock, procurement_cycle, sync_client, supplier_catalogue, analytic_distribution, product, finance, hr, msf_instance, kit, base, msf_tools, res_currency_functional, procurement_report, threshold_value, purchase, account, resource, msf_partner, procurement_auto, msf_field_access_rights, sale, procurement, msf_button_access_rights, stock, product_attributes, account_period_closing_level, account_mcdb, msf_profile, product_asset, transport_mgmt, msf_config_locations
 #: field:account.account,active:0
 #: field:account.analytic.journal,active:0
 #: field:account.journal.period,active:0
@@ -72372,6 +72373,7 @@ msgstr "Navajo"
 #: field:transport.step,is_active:0
 #: field:email.signature.notification,active:0
 #: field:email.signature.notification.doc.applicability,active:0
+#: view:stock.location:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -84040,11 +84042,12 @@ msgstr "Le système n'a pas trouvé d'\"id_staff\" pour le travailleur %s !"
 msgid "The line must have either the line number or the external ref. set"
 msgstr "La ligne doit au minimum avoir le numéro de ligne ou la ref. externe"
 
-#. modules: stock, mission_stock, procurement_cycle
+#. modules: stock, mission_stock, procurement_cycle, msf_config_locations
 #: field:stock.mission.report.line.location,location_name:0
 #: field:stock.location,complete_name:0
 #: field:stock.location,name:0
 #: view:replenishment.location.config:0
+#: view:stock.location:0
 msgid "Location Name"
 msgstr "Zone - Nom"
 
@@ -131419,3 +131422,22 @@ msgstr "Identifier les frais dont MSF a le contrôle et qui sont utiles à la n�
 #: report:transport.order.oto.transport.fees.pdf:0
 msgid "Make sure you add a remark to explain why this fee is \"Other\"."
 msgstr "Veuillez vous assurer d'ajouter une remarque expliquant pourquoi ce frais est \"Autre\"."
+
+#. module: msf_config_locations
+#: model:ir.actions.act_window,name:msf_config_locations.action_stock_location_classification
+#: model:ir.ui.menu,name:msf_config_locations.menu_stock_location_classification
+#: view:stock.location:0
+msgid "Location Classification"
+msgstr "Classification des zones"
+
+#. modules: msf_config_locations, stock
+#: view:stock.location:0
+#: field:stock.location,external_system_managed_stock:0
+msgid "External System Managed Stock"
+msgstr "Stocks gérés par un système externe"
+
+#. modules: msf_config_locations, stock
+#: view:stock.location:0
+#: help:stock.location,external_system_managed_stock:0
+msgid "This ECU represents a location where stock is managed in an external information system"
+msgstr "Cette unité de consommation externe correspond à un emplacement où les stocks sont gérés dans un système d'information externe."

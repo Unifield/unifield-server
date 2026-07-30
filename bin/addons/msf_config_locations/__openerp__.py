@@ -35,13 +35,16 @@
         'msf_outgoing',
         'stock_override',
         'msf_cross_docking',
+        'msf_audittrail',
     ],
     "init_xml" : [
     ],
-    "update_xml" : [
+    "update_xml": [
         'stock_configuration_view.xml',
         'msf_location_data.xml',
         'installer/configurable_location_view.xml',
+        'location_classification.xml',
+        'audittrail_rule.xml',
     ],
     "demo_xml" : [
     ],

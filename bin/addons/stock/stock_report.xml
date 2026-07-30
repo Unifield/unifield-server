@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <report auto="False"  id="report_location_overview" model="stock.location" name="lot.stock.overview" string="Location Inventory Overview" rml="stock/report/lot_overview.rml" groups="base.group_extended"/>
-        <report id="report_location_overview_all" model="stock.location" name="lot.stock.overview_all" string="Location Content" rml="stock/report/lot_overview_all.rml"/>
+        <report auto="False"  id="report_location_overview" model="stock.location" name="lot.stock.overview" string="Location Inventory Overview" rml="stock/report/lot_overview.rml" groups="base.group_extended" view_ids="stock.view_location_tree_simple,stock.view_location_form"/>
+        <report id="report_location_overview_all" model="stock.location" name="lot.stock.overview_all" string="Location Content" rml="stock/report/lot_overview_all.rml" view_ids="stock.view_location_tree_simple,stock.view_location_form"/>
         <report id="report_stock_inventory_move" model="stock.inventory" name="stock.inventory.move" string="Stock Inventory" rml="stock/report/stock_inventory_move.rml"/>
     </data>
 </openerp>

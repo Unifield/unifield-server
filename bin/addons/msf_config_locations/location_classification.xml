@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_location_classification_tree" model="ir.ui.view">
+            <field name="name">location.classification.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="30"/>
+            <field name="arch" type="xml">
+                <tree string="Location Classification" hide_new_button="1" colors="dimgray:search_color=='dimgray';darkorchid:search_color=='darkorchid';lightpink:search_color=='lightpink';royalblue:search_color=='royalblue' or (usage=='internal' and location_category=='consumption_unit') or intermediate_parent==True;yellowgreen:usage=='customer' and location_category=='consumption_unit';darkorange:search_color=='darkorange';sandybrown:search_color=='sandybrown'">
+                    <field name="name" string="Location Name"/>
+                    <field name="location_category" string="Location Category"/>
+                    <field name="external_system_managed_stock"/>
+                    <field name="active"/>
+                    <field name="usage" invisible="1" />
+                    <field name="search_color" invisible="1" />
+                    <field name="intermediate_parent" invisible="1" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_location_classification_form" model="ir.ui.view">
+            <field name="name">location.classification.form</field>
+            <field name="model">stock.location</field>
+            <field name="type">form</field>
+            <field name="priority" eval="40"/>
+            <field name="arch" type="xml">
+                 <form string="Location Classification" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" col="4">
+                    <field name="name" string="Location Name" readonly="1"/>
+                    <field name="location_category" string="Location Category" readonly="1"/>
+                    <field name="active" readonly="1"/>
+                    <field name="external_system_managed_stock"
+                           attrs="{'readonly': [('active','=',False)]}"
+                           required="1"/>
+                    <newline/>
+                    <label string="" colspan="3"/>
+                    <label string="This ECU represents a location where stock is managed in an external information system"
+                           colspan="1" align="0.0"/>
+                 </form>
+            </field>
+        </record>
+
+        <record id="view_location_classification_search" model="ir.ui.view">
+            <field name="name">location.classification.search</field>
+            <field name="model">stock.location</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Location Classification">
+                    <filter string="Active" name="filter_active" domain="[('active','=',True)]" icon="terp-check" />
+                    <filter string="Inactive" name="filter_inactive" domain="[('active','=',False)]" icon="gtk-dialog-error"/>
+                    <field name="name" string="Location Name"/>
+                    <field name="external_system_managed_stock"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_stock_location_classification" model="ir.actions.act_window">
+            <field name="name">Location Classification</field>
+            <field name="res_model">stock.location</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_location_classification_tree"/>
+            <field name="search_view_id" ref="view_location_classification_search"/>
+            <field name="domain">[('usage','=','customer'), ('location_category','=','consumption_unit')]</field>
+            <field name="context">{'search_default_filter_active': 1, 'sort_by_name': True}</field>
+        </record>
+
+        <record id="action_stock_location_classification_view_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_location_classification_tree"/>
+            <field name="act_window_id" ref="action_stock_location_classification"/>
+        </record>
+
+        <record id="action_stock_location_classification_view_form" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_location_classification_form"/>
+            <field name="act_window_id" ref="action_stock_location_classification"/>
+        </record>
+
+    </data>
+</openerp>

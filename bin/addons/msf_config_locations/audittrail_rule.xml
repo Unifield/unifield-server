@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="audittrail_rule_location_classification" model="audittrail.rule">
+            <field name="name">Location Classification</field>
+            <field name="object_id" ref="msf_config_locations.model_stock_location"/>
+            <field name="log_read" eval="0"/>
+            <field name="log_write" eval="1"/>
+            <field name="log_create" eval="0"/>
+            <field name="log_unlink" eval="0"/>
+            <field name="field_ids" eval="[(6,0,[ref('stock.field_stock_location_external_system_managed_stock')])]"/>
+            <field name="state">draft</field>
+        </record>
+
+        <function model="audittrail.rule" name="subscribe" eval="[[ref('audittrail_rule_location_classification')]]"/>
+
+    </data>
+</openerp>
