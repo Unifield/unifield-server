@@ -36,6 +36,9 @@ import tempfile
 from tools.misc import Path
 import os
 
+from tools.rpc_decorators import jsonrpc_orm_exposed
+import re
+
 class ocp_employee_mapping(osv.osv):
     _name = 'ocp.employee.mapping'
     _columns = {
@@ -283,7 +286,7 @@ account_balances_per_currency_sql = """
     """
 
 account_balances_per_currency_with_euro_sql = """
-    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, c.name AS currency, req.opening, req.calculated, req.closing, req.opening_eur, req.calculated_eur, req.closing_eur
+    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, c.name AS currency, req.opening, req.calculated, req.closing, req.opening_eur, req.calculated_eur, req.closing_eur, i.id as instance_id, %(period_id)s as period_id
     FROM
     (
         SELECT instance_id, account_id, currency_id, SUM(col1) AS opening,
@@ -679,6 +682,257 @@ class hq_report_ocp(report_sxw.report_sxw):
 hq_report_ocp('report.hq.ocp', 'account.move.line', False, parser=False)
 
 
+def round_aji_ji(cr, instance_ids, period_id, date_start, date_stop, excluded_journal_types):
+    cr.execute('delete from hq_report_no_decimal where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+    cr.execute('delete from hq_report_func_adj where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+    # round AJI to match JI funct amount (not EUR)
+    cr.execute("""
+        select
+            aml.id, round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2)), array_agg(al.id)
+        from
+            account_analytic_line AS al,
+            res_currency AS c,
+            account_analytic_journal AS j,
+            account_journal AS aj,
+            account_period p,
+            account_move_line aml,
+            account_move am
+        where
+                c.id = al.currency_id
+                AND j.id = al.journal_id
+                AND aml.id = al.move_id
+                AND am.id = aml.move_id
+                AND p.id = am.period_id
+                AND p.number not in (0, 16)
+                AND (
+                    al.real_period_id = %(period_id)s
+                    or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                )
+                AND aml.period_id = %(period_id)s
+                AND am.name = al.entry_sequence
+                AND am.state = 'posted'
+                AND aml.journal_id = aj.id
+                AND j.type not in %(j_type)s
+                AND al.instance_id in %(instance_ids)s
+                AND aml.is_addendum_line = 'f'
+                AND c.name != 'EUR'
+        group by
+            aml.id
+        having
+            abs(round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2))) >= 0.01 and
+            abs(round(aml.credit_currency, 2) - round(aml.debit_currency, 2) - sum(round(al.amount_currency, 2))) < 0.001
+        """, {
+        'instance_ids': tuple(instance_ids),
+        'period_id': period_id,
+        'min_date': date_start,
+        'max_date':  date_stop,
+        'j_type': tuple(excluded_journal_types),
+    })
+    for bal in cr.fetchall():
+        cr.execute('''
+            insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
+                select
+                    id,
+                    round(round(amount, 2) + %s, 2),
+                    real_period_id,
+                    instance_id
+                from
+                    account_analytic_line
+                where
+                    move_id = %s and
+                    real_period_id = %s and
+                    id in %s
+                order by abs(amount) desc, id limit 1
+        ''', (bal[1], bal[0], period_id, tuple(bal[2])))
+
+    # round AJI to match JI funct amount (EUR)
+    aj_type = excluded_journal_types + ['cur_adj']
+    cr.execute("""
+        select
+            al.id, al.amount_currency, al.instance_id
+        from
+            account_analytic_line AS al,
+            res_currency AS c,
+            account_analytic_journal AS j
+        where
+                c.id = al.currency_id
+                AND j.id = al.journal_id
+                AND (
+                    al.real_period_id = %(period_id)s
+                    or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                )
+                AND j.type not in %(j_type)s
+                AND al.instance_id in %(instance_ids)s
+                AND c.name = 'EUR'
+                AND abs(al.amount_currency - al.amount) >= 0.01
+        """, {
+        'instance_ids': tuple(instance_ids),
+        'period_id': period_id,
+        'min_date': date_start,
+        'max_date':  date_stop,
+        'j_type': tuple(aj_type),
+    })
+    for bal in cr.fetchall():
+        cr.execute('''
+            insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
+                values (%s, round(%s, 2), %s, %s)
+        ''', (bal[0], bal[1], period_id, bal[2]))
+
+    # pure AD
+    cr.execute("""
+        select
+            al.move_id, sum(round(al.amount, 2)), array_agg(al.id)
+        from
+            account_analytic_line AS al
+            inner join res_currency AS c on c.id = al.currency_id
+            inner join account_analytic_journal AS j on j.id = al.journal_id
+            inner join account_period p on p.id = al.real_period_id
+            left join account_move_line aml on aml.id = al.move_id and aml.period_id = %(period_id)s
+            left join account_move am on am.id = aml.move_id and am.name = al.entry_sequence
+        where
+                p.id = al.real_period_id
+                AND p.number not in (0, 16)
+                AND al.real_period_id = %(period_id)s
+                AND j.type not in %(j_type)s
+                AND al.instance_id in %(instance_ids)s
+                AND am.id is null
+                AND aml.id is null
+        group by
+            al.move_id
+        having
+            abs(sum(round(al.amount, 2))) >= 0.01 and
+            abs(sum(al.amount_currency)) < 0.001
+        """, {
+        'instance_ids': tuple(instance_ids),
+        'period_id': period_id,
+        'min_date': date_start,
+        'max_date':  date_stop,
+        'j_type': tuple(excluded_journal_types),
+    })
+    for bal in cr.fetchall():
+        cr.execute('''
+            insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
+                select
+                    id,
+                    round(round(amount, 2) - %s, 2),
+                    real_period_id,
+                    instance_id
+                from
+                    account_analytic_line
+                where
+                    move_id = %s and
+                    real_period_id = %s and
+                    id in %s
+                order by abs(amount) desc, id offset 1 limit 1
+        ''', (bal[1], bal[0], period_id, tuple(bal[2])))
+
+    # fix rounded booking value JE
+    cr.execute("""insert into hq_report_no_decimal (account_move_id, account_analytic_line_id, original_amount, rounded_amount, period_id, instance_id)
+        select
+            aml.move_id,
+            al.id,
+            -1*al.amount_currency,
+            CASE WHEN al.amount_currency=0 or abs(al.amount_currency)>=1
+                THEN -1*round(al.amount_currency)
+                WHEN al.amount_currency < 0 THEN 1
+                ELSE -1 END,
+            %(period_id)s,
+            al.instance_id
+        from
+            account_analytic_line AS al,
+            res_currency AS c,
+            account_analytic_journal AS j,
+            account_move_line aml,
+            account_move am,
+            account_journal AS aj,
+            account_period p
+        where
+                c.ocp_workday_decimal = 0
+                and c.id = al.currency_id
+                AND j.id = al.journal_id
+                AND aml.id = al.move_id
+                AND am.id = aml.move_id
+                AND p.id = am.period_id
+                AND p.number not in (0, 16)
+                AND (
+                    al.real_period_id = %(period_id)s
+                    or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                )
+                AND am.state = 'posted'
+                AND aml.journal_id = aj.id
+                AND j.type not in %(j_type)s
+                AND al.instance_id in %(instance_ids)s
+                AND aml.is_addendum_line = 'f'
+        """, {
+        'instance_ids': tuple(instance_ids),
+        'period_id': period_id,
+        'min_date': date_start,
+        'max_date':  date_stop,
+        'j_type': tuple(excluded_journal_types),
+    })
+
+    cr.execute("""insert into hq_report_no_decimal (account_move_id, account_move_line_id, original_amount, rounded_amount, period_id, instance_id)
+        select
+            m.id,
+            aml.id,
+            aml.debit_currency - aml.credit_currency,
+            CASE WHEN aml.debit_currency - aml.credit_currency=0 OR abs(aml.debit_currency - aml.credit_currency) >= 1
+                THEN round(aml.debit_currency - aml.credit_currency)
+                WHEN aml.debit_currency - aml.credit_currency > 0 THEN 1
+                ELSE -1 END,
+            %(period_id)s,
+            aml.instance_id
+        from
+            account_move_line aml
+            INNER JOIN account_move AS m ON aml.move_id = m.id
+            INNER JOIN account_account AS a ON aml.account_id = a.id
+            INNER JOIN res_currency AS c ON aml.currency_id = c.id
+            INNER JOIN account_journal AS j ON aml.journal_id = j.id
+            LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+        where
+            c.ocp_workday_decimal = 0
+            AND aal.id IS NULL
+            AND aml.period_id = %(period_id)s
+            AND j.type NOT IN %(j_type)s
+            AND aml.instance_id IN %(instance_ids)s
+            AND m.state = 'posted'
+            AND aml.is_addendum_line = 'f'
+        """, {
+        'instance_ids': tuple(instance_ids),
+        'period_id': period_id,
+        'j_type': tuple(excluded_journal_types),
+    })
+    cr.execute('''
+        select
+            account_move_id, sum(rounded_amount)
+        from
+            hq_report_no_decimal d
+        where
+            period_id = %s and instance_id in %s
+        group by account_move_id
+        having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.01)
+    ''', (period_id, tuple(instance_ids)))
+    for x in cr.fetchall():
+        # add gap on the biggest B/S line
+        move_id, gap = x
+        cr.execute("""
+            update
+                hq_report_no_decimal d1 set rounded_amount = rounded_amount - %s 
+            where
+                d1.id in (
+                    select id
+                    from hq_report_no_decimal d2
+                    where
+                        d2.account_move_id=%s and period_id = %s
+                    order by
+                        account_analytic_line_id is not null,
+                        abs(rounded_amount) desc
+                    limit 1
+            )
+        """, (gap, move_id, period_id))
+
+
+
 class hq_report_ocp_workday(hq_report_ocp):
 
     def update_percent(self, cr, uid, percent):
@@ -756,225 +1010,7 @@ class hq_report_ocp_workday(hq_report_ocp):
         for x in cr.fetchall():
             fx_budget_rate[x[0]] = x[1]
 
-        cr.execute('delete from hq_report_no_decimal where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
-        cr.execute('delete from hq_report_func_adj where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
-        # round AJI to match JI funct amount (not EUR)
-        cr.execute("""
-            select
-                aml.id, round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2)), array_agg(al.id)
-            from
-                account_analytic_line AS al,
-                res_currency AS c,
-                account_analytic_journal AS j,
-                account_journal AS aj,
-                account_period p,
-                account_move_line aml,
-                account_move am
-            where
-                    c.id = al.currency_id
-                    AND j.id = al.journal_id
-                    AND aml.id = al.move_id
-                    AND am.id = aml.move_id
-                    AND p.id = am.period_id
-                    AND p.number not in (0, 16)
-                    AND (
-                        al.real_period_id = %(period_id)s
-                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
-                    )
-                    AND aml.period_id = %(period_id)s
-                    AND am.name = al.entry_sequence
-                    AND am.state = 'posted'
-                    AND aml.journal_id = aj.id
-                    AND j.type not in %(j_type)s
-                    AND al.instance_id in %(instance_ids)s
-                    AND aml.is_addendum_line = 'f'
-                    AND c.name != 'EUR'
-            group by
-                aml.id
-            having
-                abs(round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2))) >= 0.01 and
-                abs(round(aml.credit_currency, 2) - round(aml.debit_currency, 2) - sum(round(al.amount_currency, 2))) < 0.001
-            """, {
-            'instance_ids': tuple(instance_ids),
-            'period_id': period_id,
-            'min_date': period.date_start,
-            'max_date':  period.date_stop,
-            'j_type': tuple(excluded_journal_types),
-        })
-        for bal in cr.fetchall():
-            cr.execute('''
-                insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
-                    select
-                        id,
-                        round(round(amount, 2) + %s, 2),
-                        real_period_id,
-                        instance_id
-                    from
-                        account_analytic_line
-                    where
-                        move_id = %s and
-                        real_period_id = %s and
-                        id in %s
-                    order by abs(amount) desc, id limit 1
-            ''', (bal[1], bal[0], period_id, tuple(bal[2])))
-
-        # round AJI to match JI funct amount (EUR)
-        aj_type = excluded_journal_types + ['cur_adj']
-        cr.execute("""
-            select
-                al.id, al.amount_currency, al.instance_id
-            from
-                account_analytic_line AS al,
-                res_currency AS c,
-                account_analytic_journal AS j
-            where
-                    c.id = al.currency_id
-                    AND j.id = al.journal_id
-                    AND (
-                        al.real_period_id = %(period_id)s
-                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
-                    )
-                    AND j.type not in %(j_type)s
-                    AND al.instance_id in %(instance_ids)s
-                    AND c.name = 'EUR'
-                    AND abs(al.amount_currency - al.amount) >= 0.01
-            """, {
-            'instance_ids': tuple(instance_ids),
-            'period_id': period_id,
-            'min_date': period.date_start,
-            'max_date':  period.date_stop,
-            'j_type': tuple(aj_type),
-        })
-        for bal in cr.fetchall():
-            cr.execute('''
-                insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
-                    values (%s, round(%s, 2), %s, %s)
-            ''', (bal[0], bal[1], period_id, bal[2]))
-
-        # pure AD
-        cr.execute("""
-            select
-                al.move_id, sum(round(al.amount, 2)), array_agg(al.id)
-            from
-                account_analytic_line AS al
-                inner join res_currency AS c on c.id = al.currency_id
-                inner join account_analytic_journal AS j on j.id = al.journal_id
-                inner join account_period p on p.id = al.real_period_id
-                left join account_move_line aml on aml.id = al.move_id and aml.period_id = %(period_id)s
-                left join account_move am on am.id = aml.move_id and am.name = al.entry_sequence
-            where
-                    p.id = al.real_period_id
-                    AND p.number not in (0, 16)
-                    AND al.real_period_id = %(period_id)s
-                    AND j.type not in %(j_type)s
-                    AND al.instance_id in %(instance_ids)s
-                    AND am.id is null
-                    AND aml.id is null
-            group by
-                al.move_id
-            having
-                abs(sum(round(al.amount, 2))) >= 0.01 and
-                abs(sum(al.amount_currency)) < 0.001
-            """, {
-            'instance_ids': tuple(instance_ids),
-            'period_id': period_id,
-            'min_date': period.date_start,
-            'max_date':  period.date_stop,
-            'j_type': tuple(excluded_journal_types),
-        })
-        for bal in cr.fetchall():
-            cr.execute('''
-                insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
-                    select
-                        id,
-                        round(round(amount, 2) - %s, 2),
-                        real_period_id,
-                        instance_id
-                    from
-                        account_analytic_line
-                    where
-                        move_id = %s and
-                        real_period_id = %s and
-                        id in %s
-                    order by abs(amount) desc, id offset 1 limit 1
-            ''', (bal[1], bal[0], period_id, tuple(bal[2])))
-
-        # fix rounded booking value JE
-        cr.execute("""insert into hq_report_no_decimal (account_move_id, account_analytic_line_id, original_amount, rounded_amount, period_id, instance_id)
-            select
-                aml.move_id,
-                al.id,
-                -1*al.amount_currency,
-                CASE WHEN al.amount_currency=0 or abs(al.amount_currency)>=1
-                    THEN -1*round(al.amount_currency)
-                    WHEN al.amount_currency < 0 THEN 1
-                    ELSE -1 END,
-                %(period_id)s,
-                al.instance_id
-            from
-                account_analytic_line AS al,
-                res_currency AS c,
-                account_analytic_journal AS j,
-                account_move_line aml,
-                account_move am,
-                account_journal AS aj,
-                account_period p
-            where
-                    c.ocp_workday_decimal = 0
-                    and c.id = al.currency_id
-                    AND j.id = al.journal_id
-                    AND aml.id = al.move_id
-                    AND am.id = aml.move_id
-                    AND p.id = am.period_id
-                    AND p.number not in (0, 16)
-                    AND (
-                        al.real_period_id = %(period_id)s
-                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
-                    )
-                    AND am.state = 'posted'
-                    AND aml.journal_id = aj.id
-                    AND j.type not in %(j_type)s
-                    AND al.instance_id in %(instance_ids)s
-                    AND aml.is_addendum_line = 'f'
-            """, {
-            'instance_ids': tuple(instance_ids),
-            'period_id': period_id,
-            'min_date': period.date_start,
-            'max_date':  period.date_stop,
-            'j_type': tuple(excluded_journal_types),
-        })
-
-        cr.execute("""insert into hq_report_no_decimal (account_move_id, account_move_line_id, original_amount, rounded_amount, period_id, instance_id)
-            select
-                m.id,
-                aml.id,
-                aml.debit_currency - aml.credit_currency,
-                CASE WHEN aml.debit_currency - aml.credit_currency=0 OR abs(aml.debit_currency - aml.credit_currency) >= 1
-                    THEN round(aml.debit_currency - aml.credit_currency)
-                    WHEN aml.debit_currency - aml.credit_currency > 0 THEN 1
-                    ELSE -1 END,
-                %(period_id)s,
-                aml.instance_id
-            from
-                account_move_line aml
-                INNER JOIN account_move AS m ON aml.move_id = m.id
-                INNER JOIN account_account AS a ON aml.account_id = a.id
-                INNER JOIN res_currency AS c ON aml.currency_id = c.id
-                INNER JOIN account_journal AS j ON aml.journal_id = j.id
-                LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
-            where
-                c.ocp_workday_decimal = 0
-                AND aal.id IS NULL
-                AND aml.period_id = %(period_id)s
-                AND j.type NOT IN %(j_type)s
-                AND aml.instance_id IN %(instance_ids)s
-                AND m.state = 'posted'
-                AND aml.is_addendum_line = 'f'
-            """, {
-            'instance_ids': tuple(instance_ids),
-            'period_id': period_id,
-            'j_type': tuple(excluded_journal_types),
-        })
+        round_aji_ji(cr, instance_ids, period_id, period.date_start, period.date_stop, excluded_journal_types)
 
         sql_params = {
             'instance_ids': tuple(instance_ids),
@@ -990,37 +1026,6 @@ class hq_report_ocp_workday(hq_report_ocp):
             'fiscalyear_id': period.fiscalyear_id.id,
         }
 
-
-        cr.execute('''
-            select
-                account_move_id, sum(rounded_amount)
-            from
-                hq_report_no_decimal d
-            where
-                period_id = %s and instance_id in %s
-            group by account_move_id
-            having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.01)
-        ''', (period_id, tuple(instance_ids)))
-        for x in cr.fetchall():
-            # add gap on the biggest B/S line
-            move_id, gap = x
-            cr.execute("""
-                update
-                    hq_report_no_decimal d1 set rounded_amount = rounded_amount - %s 
-                where
-                    d1.id in (
-                        select id
-                        from hq_report_no_decimal d2
-                        where
-                            d2.account_move_id=%s and period_id = %s
-                        order by
-                            account_analytic_line_id is not null,
-                            abs(rounded_amount) desc
-                        limit 1
-                )
-            """, (gap, move_id, period_id))
-
-        # end balance rounded amounts
 
         self.update_percent(cr, uid, 0.10)
         # analytic lines raw_data
@@ -1423,7 +1428,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             if not rows:
                 break
             for row in rows:
-                writer.writerow(row)
+                writer.writerow(row[0:-2]) # remove instance_id and period_id
         balances_file.close()
         self.update_percent(cr, uid, 0.75)
 
@@ -1468,3 +1473,662 @@ class hq_report_ocp_workday(hq_report_ocp):
 
 
 hq_report_ocp_workday('report.hq.ocp.workday', 'account.move.line', False, parser=False)
+
+class waca_matching_report(osv.osv):
+    _name = 'waca.matching.report'
+    _log_access = False
+
+    _columns = {
+        'db_id': fields.char('DBID', size=64, select=1),
+        'instance_id': fields.integer('Instance Id', select=1),
+        'period_id': fields.integer('Period Id', select=1),
+        'account_move_line_id': fields.integer('JI id', select=1),
+        'rec_name': fields.char('Rec name', size=512, select=1),
+        'unrec_name': fields.char('UnRec name', size=512, select=1),
+        'unrec_rec_date': fields.date('Rec/Unrec Date'),
+        'post_date': fields.date('post date'),
+        'sequence': fields.char('seq', size=256),
+    }
+
+waca_matching_report()
+
+class waca_export_balances(osv.osv):
+    _name = 'waca.export.balances'
+    _log_access = False
+    logger = logging.getLogger('WaCA balances export')
+    _columns = {
+        'instance': fields.char('Instance', size=128, select=1),
+        'account_code': fields.char('Acount code', size=64, select=1),
+        'account_name': fields.char('Acount code', size=512),
+        'period': fields.char('Period', size=64),
+        'booking_currency': fields.char('Book Curr', size=128),
+        'starting_balance': fields.float('Starting Balance', digits=(16, 2)),
+        'calculated_balance': fields.float('Calculated Balance', digits=(16, 2)),
+        'closing_balance': fields.float('Closing Balance', digits=(16, 2)),
+        'starting_balance_eur': fields.float('Starting Balance EUR', digits=(16, 2)),
+        'calculated_balance_eur': fields.float('Calculated Balance EUR', digits=(16, 2)),
+        'closing_balance_eur': fields.float('Closing Balance EUR', digits=(16, 2)),
+        'instance_id': fields.integer('Instance Id', select=1),
+        'period_id': fields.integer('Period Id', select=1),
+    }
+
+    @jsonrpc_orm_exposed('waca.export.balances', 'export')
+    def export(self, cr, uid, period_code, instance_code, page=1, force=False, context=None):
+        # add condition
+        limit = 200
+        ret = {
+            'page': page,
+            'limit': limit,
+            'success': True,
+            'records': [],
+        }
+        try:
+            period_id, instance_ids = self.pool.get('waca.export.accounting.lines')._pre_query(cr, uid, period_code, instance_code, force=force, context=context)
+            if not isinstance(page, int) or not page > 0:
+                raise osv.except_osv('Error', 'Page attribute must be a positive integer and not zero')
+
+            offset = (page - 1) * limit
+            cr.execute('''
+                select
+                        *
+                from
+                    waca_export_balances
+                where
+                    instance_id in %(instance_id)s and
+                    period_id = %(period_id)s
+                order by
+                    instance, account_code, id
+                offset %(offset)s limit %(limit)s
+            ''', {'instance_id': tuple(instance_ids), 'period_id': period_id, 'offset': offset, 'limit': limit+1})
+            nb = cr.rowcount
+            ret['has_next_page'] = nb > limit
+            for row in cr.dictfetchall():
+                del(row['id'])
+                del(row['instance_id'])
+                del(row['period_id'])
+                ret['records'].append(row)
+
+            if ret['has_next_page']:
+                ret['records'].pop(-1)
+        except Exception as e:
+            self.logger.exception(e)
+            cr.rollback()
+            ret['success'] = False
+            ret['error'] = '%s'%e
+
+        return ret
+
+waca_export_balances()
+
+class waca_export_accounting_lines(osv.osv):
+    _name = 'waca.export.accounting.lines'
+    _log_access = False
+    logger = logging.getLogger('WaCA lines export')
+
+    _columns = {
+        'db_id': fields.char('DBID', size=64, select=1),
+        'object': fields.char('Object', size=128),  # 1
+        'object_id': fields.integer('Object ID', size=128), # 2
+        'instance': fields.char('Instance', size=128), # 3
+        'journal_code': fields.char('Journal Code', size=64), # 4
+        'entry_sequence': fields.char('Entry Sequence', size=128, select=1), # 5
+        'document_date': fields.date('Document Date'), # 6
+        'posting_date': fields.date('Posting Date'), # 7
+        'account_code': fields.char('Acount code', size=64), # 8
+        'partner_id': fields.integer('Partner ID'), # 9
+        'partner_txt': fields.text('Partner TXT'), # 10
+        'emplid': fields.integer('Employee ID', size=64), # 11
+        'description': fields.char('Description', size=512), # 12
+        'ref': fields.char('Description', size=128), # 13
+        'booking_currency': fields.char('Book Curr', size=128), # 14
+        'book_debit': fields.float('Book Debit', digits=(16, 2)), # 15
+        'book_credit': fields.float('Book Credit', digits=(16, 2)), # 16
+        'func_debit': fields.float('Func Debit', digits=(16, 2)), # 17
+        'func_credit': fields.float('Func Credit', digits=(16, 2)), # 18
+        'cost_center':  fields.char('Cost Center', size=128), # 20
+        'destination_code': fields.char('Destination Code', size=128), # 21
+        'fp_code': fields.char('FP Code', size=128), # 22
+        'period_id': fields.integer('Period ID'), # 24
+        'instance_id': fields.integer('Instance ID', select=1), #25
+        'journal_id': fields.integer('Journal ID'), #26
+        'ana_journal_type': fields.char('Analytic Journal Type', size=64, select=1),
+    }
+
+    def _auto_init(self, cr, context=None):
+        super(waca_export_accounting_lines, self)._auto_init(cr, context=context)
+        if not cr.index_exists('waca_export_accounting_lines', 'waca_export_accounting_lines_period_id_instance_id_idx'):
+            cr.execute("""CREATE INDEX
+                waca_export_accounting_lines_period_id_instance_id_idx
+                ON waca_export_accounting_lines
+                (period_id, instance_id)
+            """)
+
+    @jsonrpc_orm_exposed('waca.export.accounting.lines', 'already_exported')
+    def already_exported(self, cr, uid, year, context=None):
+        ret = {
+            'page': -1,
+            'limit': -1,
+            'success': True,
+            'records': [],
+            'has_next_page': False,
+        }
+        try:
+            cr.execute('''
+                select
+                    i.code, p.date_start, p.number
+                from
+                    msf_instance i, account_period p, account_period_state st
+                where
+                    i.id = st.instance_id and
+                    st.period_id = p.id and
+                    st.already_exported = 't' and
+                    i.level = 'coordo' and
+                    EXTRACT(YEAR from p.date_start) = %s
+                order by p.number, i.code
+            ''', (year, ))
+            for x in cr.fetchall():
+                ret['records'].append({
+                    'instance': x[0],
+                    'period': 'P%02d-%d' % (x[2], year)
+                })
+
+        except Exception as e:
+            self.logger.exception(e)
+            cr.rollback()
+            ret['success'] = False
+            ret['error'] = '%s'%e
+
+        return ret
+
+    @jsonrpc_orm_exposed('waca.export.accounting.lines', 'ready_to_export')
+    def ready_to_export(self, cr, uid, context=None):
+        ret = {
+            'page': -1,
+            'limit': -1,
+            'success': True,
+            'records': [],
+            'has_next_page': False,
+        }
+        try:
+            cr.execute('''
+                select
+                    i.code, p.number, p.date_start
+                from
+                    msf_instance i
+                    inner join account_period_state st on st.instance_id = i.id
+                    inner join account_period p on p.id = st.period_id
+                    left join msf_instance project on project.parent_id = i.id and project.state = 'active'
+                    left join account_period_state st_project on st_project.period_id = st.period_id and st_project.instance_id = project.id and st_project.state in ('field-closed', 'mission-closed', 'done')
+                where
+                    coalesce(st.already_exported, 'f') = 'f' and
+                    i.level = 'coordo' and
+                    st.state in ('mission-closed', 'done') and
+                    project.state = 'active'
+                group by i.code, p.number, p.date_start
+                having
+                    count(project.id) = count(st_project.id)
+                order by p.number, i.code
+            ''')
+            for x in cr.fetchall():
+                ret['records'].append({
+                    'instance': x[0],
+                    'period': 'P%02d-%s' % (x[1], x[2].split('-')[0])
+                })
+
+        except Exception as e:
+            self.logger.exception(e)
+            cr.rollback()
+            ret['success'] = False
+            ret['error'] = '%s'%e
+
+        return ret
+
+
+    @jsonrpc_orm_exposed('waca.export.accounting.lines', 'matching_report')
+    def matching_report(self, cr, uid, period_code, instance_code, page=1, context=None):
+        limit = 200
+        ret = {
+            'page': page,
+            'limit': limit,
+            'success': True,
+            'records': [],
+            'has_next_page': False,
+        }
+        try:
+            period_id, instance_ids = self._pre_query(cr, uid, period_code, instance_code, force=False, context=context)
+            if not isinstance(page, int) or not page > 0:
+                raise osv.except_osv('Error', 'Page attribute must be a positive integer and not zero')
+            offset = (page - 1) * limit
+            cr.execute('''
+                select
+                        *
+                from
+                    waca_matching_report
+                where
+                    instance_id in %(instance_id)s and
+                    period_id = %(period_id)s
+                order by
+                    unrec_name NULLS last, rec_name, id
+                offset %(offset)s limit %(limit)s
+            ''', {'instance_id': tuple(instance_ids), 'period_id': period_id, 'offset': offset, 'limit': limit+1})
+
+            nb = cr.rowcount
+            ret['has_next_page'] = nb > limit
+            for row in cr.dictfetchall():
+                ret['records'].append({
+                    'db_id': row['db_id'],
+                    'Reconcile': row['rec_name'],
+                    'Reconcile date': row['rec_name'] and row['unrec_rec_date'] or '',
+                    'Unreconcile number': row['unrec_name'] or '',
+                    'Unreconcile date': row['unrec_name'] and row['unrec_rec_date'] or '',
+                    'line_id': row['account_move_line_id'],
+                    'posting_date': row['post_date'],
+                    'sequence': row['sequence']
+                })
+
+            if ret['has_next_page']:
+                ret['records'].pop(-1)
+        except Exception as e:
+            self.logger.exception(e)
+            cr.rollback()
+            ret['success'] = False
+            ret['error'] = '%s'%e
+
+        return ret
+
+    @jsonrpc_orm_exposed('waca.export.accounting.lines', 'export')
+    def export(self, cr, uid, period_code, instance_code, page=1, force=False, context=None):
+        # add condition
+        limit = 200
+        ret = {
+            'page': page,
+            'limit': limit,
+            'success': True,
+            'records': [],
+            'has_next_page': False,
+        }
+        try:
+            period_id, instance_ids = self._pre_query(cr, uid, period_code, instance_code, force=force, context=context)
+            if not isinstance(page, int) or not page > 0:
+                raise osv.except_osv('Error', 'Page attribute must be a positive integer and not zero')
+
+            period_name = self.pool.get('account.period').read(cr, uid, period_id, ['name'])['name']
+            offset = (page - 1) * limit
+            cr.execute('''
+                select
+                        *
+                from
+                    waca_export_accounting_lines
+                where
+                    instance_id in %(instance_id)s and
+                    period_id = %(period_id)s
+                order by
+                    entry_sequence, id
+                offset %(offset)s limit %(limit)s
+            ''', {'instance_id': tuple(instance_ids), 'period_id': period_id, 'offset': offset, 'limit': limit+1})
+            nb = cr.rowcount
+            ret['has_next_page'] = nb > limit
+            for row in cr.dictfetchall():
+                ret['records'].append({
+                    'db_id': row['db_id'],
+                    'instance': row['instance'],
+                    'journal_code': row['journal_code'],
+                    'journal_id': row['journal_id'],
+                    'entry_sequence': row['entry_sequence'],
+                    'period_name': period_name,
+                    'document_date': row['document_date'],
+                    'posting_date': row['posting_date'],
+                    'account_code': row['account_code'],
+                    'partner_id': row['partner_id'] or '',
+                    'partner_txt': row['partner_txt'] or '',
+                    'emplid': row['emplid'] or '',
+                    'description': row['description'] or '',
+                    'reference': row['ref'] or '',
+                    'booking_currency': row['booking_currency'],
+                    'booking_debit': row['book_debit'],
+                    'booking_credit': row['book_credit'],
+                    'func_currency': 'EUR',
+                    'func_debit': row['func_debit'],
+                    'func_credit': row['func_credit'],
+                    'cost_center': row['cost_center'] or '',
+                    'destination_code': row['destination_code'] or '',
+                    'funding_pool': row['fp_code'] or ''
+                })
+
+            if ret['has_next_page']:
+                ret['records'].pop(-1)
+        except Exception as e:
+            self.logger.exception(e)
+            cr.rollback()
+            ret['success'] = False
+            ret['error'] = '%s'%e
+
+        return ret
+
+    def _pre_query(self, cr, uid, period_code, instance_code, force=False, context=None):
+
+        m = re.match('P([0-9]{2})-([0-9]{4})', '%s'%period_code)
+        if not m:
+            raise osv.except_osv(_('Error'), _('Period format %s is incorrect, expected PNN-YYYY, for example P07-2026 for July 2026') % (period_code, ))
+
+        p_number = m.group(1)
+        p_year = m.group(2)
+        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '>=', f'{p_year}-01-01'), ('number', '=', p_number)])
+        if not period_ids:
+            raise osv.except_osv(_('Error'), _('Period %s not found, format expected PNN-YYYY, for example P07-2026 for July 2026') % (period_code, ))
+
+        period_id = period_ids[0]
+
+        coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=', instance_code), ('level', '=', 'coordo')])
+        if not coordo_ids:
+            raise osv.except_osv(_('Error'), _('Coordo instance %s not found') % (instance_code, ))
+
+        cr.execute('select id, state, already_exported from account_period_state where period_id = %s and instance_id = %s', (period_id, coordo_ids[0]))
+        p_state = cr.fetchone()
+        if not p_state:
+            raise osv.except_osv(_('Error'), _('Period State %s / %s not found') % (period_code, instance_code))
+
+        state_id, state, already_exported = p_state
+        if state not in ('mission-closed', 'done'):
+            raise osv.except_osv(_('Error'), _('Period %s is not closed on %s') % (period_code, instance_code))
+
+        project_ids = self.pool.get('msf.instance').search(cr, uid, [('parent_id', '=', coordo_ids[0])])
+        instance_ids = project_ids+[coordo_ids[0]]
+
+        # check user rights
+        self.pool.get('ir.model.access').check(cr, uid, 'account.move.line', 'write')
+
+        if already_exported and not force:
+            return period_id, instance_ids
+
+        cr.execute('''
+            select coalesce(i.instance, i.code)
+                from msf_instance i
+                left join account_period_state st on st.instance_id = i.id and st.period_id = %(period)s
+            where
+                i.parent_id = %(instance)s and
+                i.state = 'active' and
+                (st.id is null or st.state not in ('field-closed', 'mission-closed', 'done'))
+        ''', {'period': period_id, 'instance': coordo_ids[0]})
+        wrong_proj = [x[0] for x in cr.fetchall()]
+        if wrong_proj:
+            raise osv.except_osv('Error', _('Period %s is not closed on project: %s') % (period_code, ', '.join(wrong_proj),))
+
+        period_obj = self.pool.get('account.period')
+        period = period_obj.browse(cr, uid, period_id, context=context,
+                                   fields_to_fetch=['date_start', 'date_stop', 'number', 'fiscalyear_id'])
+
+        if period.date_stop >= datetime.now().strftime('%Y-%m-%d'):
+            raise osv.except_osv('Error', _('You cannot extract a period before the end of the period: %s') % (period.date_stop, ))
+
+        cr.execute("update account_period_state set already_exported='t' where id=%s", (state_id,))
+        cr.execute("delete from waca_export_accounting_lines where period_id=%s and instance_id in %s", (period_id, tuple(instance_ids)))
+        cr.execute('delete from waca_export_balances where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+        cr.execute('delete from waca_matching_report where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+
+        excluded_journal_types = ['hq', 'engagement']  # journal types that should not be used to take lines
+
+        first_day_of_period = period.date_start
+        tm = strptime(first_day_of_period, '%Y-%m-%d')
+        year_num = tm.tm_year
+        period_yyyymm = '%d%02d' % (year_num, tm.tm_mon)
+        include_period_opening = [0]
+        exclude_period_closing = [0]
+        if period.number in (13, 14, 15):
+            include_period_opening = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('number', 'in', [12, 13, 14]), ('number', '<', period.number)], context=context)
+            if not include_period_opening:
+                include_period_opening = [0]
+
+        if period.number in (12, 13, 14):
+            exclude_period_closing = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('special', '=', 't'), ('number', '>', period.number)], context=context)
+            if not exclude_period_closing:
+                exclude_period_closing = [0]
+
+        cr.execute(''' insert into waca_matching_report
+            (instance_id, period_id, account_move_line_id, unrec_name, unrec_rec_date, db_id, post_date, sequence)
+            select
+                aml.instance_id, %(period_id)s, aml.id, aml.unreconcile_txt, aml.unreconcile_date, MD5(current_database()||',account.move.line,['||aml.id||']'), aml.date, m.name
+            from
+                account_move_line aml, account_journal j, account_period p, account_move m
+            where
+                aml.journal_id = j.id and
+                p.id = aml.period_id and
+                aml.date <= %(date_stop)s and
+                p.number not in (0, 16) and
+                m.id = aml.move_id and
+                j.type not in %(j_type)s and
+                aml.reconcile_id is NULL and
+                COALESCE(aml.unreconcile_txt, '') != '' and
+                aml.unreconcile_date >= %(date_start)s and
+                aml.instance_id in %(instance_ids)s
+        ''', {
+            'date_stop': period.date_stop,
+            'date_start': period.date_start,
+            'j_type': tuple(excluded_journal_types),
+            'instance_ids': tuple(instance_ids),
+            'period_id': period.id,
+
+        })
+
+        # get reconcile done in the past with a current period lines
+        cr.execute('''select
+                distinct(reconcile_id)
+            from
+                account_move_line
+            where
+                date >=%(date_start)s and
+                date <= %(date_stop)s and
+                reconcile_id is not null and
+                reconcile_date < %(date_start)s and
+                instance_id in %(instance_ids)s
+        ''', {
+            'date_stop': period.date_stop,
+            'date_start': period.date_start,
+            'instance_ids': tuple(instance_ids),
+        })
+
+        rec_ids = [x[0] for x in cr.fetchall()]
+        if not rec_ids:
+            rec_ids = [0]
+
+        cr.execute(''' insert into waca_matching_report
+            (instance_id, period_id, account_move_line_id, rec_name, unrec_rec_date, db_id, post_date, sequence)
+            select
+                aml.instance_id, %(period_id)s, aml.id, rec.name, aml.reconcile_date, MD5(current_database()||',account.move.line,['||aml.id||']'), aml.date, m.name
+            from
+                account_move_line aml, account_journal j, account_period p, account_move_reconcile rec, account_move m
+            where
+                aml.journal_id = j.id and
+                p.id = aml.period_id and
+                aml.date <= %(date_stop)s and
+                p.number not in (0, 16) and
+                m.id = aml.move_id and
+                j.type not in %(j_type)s and
+                aml.instance_id in %(instance_ids)s and
+                aml.reconcile_id = rec.id and
+                not exists(select id from account_move_line where reconcile_id = rec.id and date > %(date_stop)s) and
+                (
+                    aml.reconcile_date >= %(date_start)s
+                    or aml.reconcile_id in %(rec_ids)s
+               )
+        ''', {
+            'date_stop': period.date_stop,
+            'date_start': period.date_start,
+            'j_type': tuple(excluded_journal_types),
+            'instance_ids': tuple(instance_ids),
+            'rec_ids': tuple(rec_ids),
+            'period_id': period.id,
+        })
+
+
+
+        round_aji_ji(cr, instance_ids, period_id, period.date_start, period.date_stop, excluded_journal_types)
+
+        sql_params = {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(excluded_journal_types),
+            'period_yyymm': period_yyyymm,
+            'first_day_of_period': period.date_start,
+            'last_day_of_period': period.date_stop,
+            'include_period_opening': tuple(include_period_opening),
+            'exclude_period_closing': tuple(exclude_period_closing),
+            'fiscalyear_id': period.fiscalyear_id.id,
+        }
+
+
+        # analytic lines raw_data
+        analytic_query = """
+                SELECT
+                    'account.analytic.line' as object, -- 1
+                    al.id as object_id, -- 2
+                    i.instance as instance, -- 3
+                    aj.code, -- 4
+                    al.entry_sequence, -- 5
+                    al.document_date, -- 6
+                    al.date as posting_date, -- 7
+                    a.code as account_code, -- 8
+                    aml.partner_id, -- 9
+                    al.partner_txt as partner_txt, -- 10
+                    hr.id as emplid, -- 11
+                    al.name as description, -- 12
+                    al.ref, -- 13
+                    CASE WHEN aml.is_addendum_line = 'f' THEN c.name ELSE move_c.name END AS booking_currency, -- 14
+                    CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 15
+                    CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 16
+                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) < 0 THEN ABS(ROUND(coalesce(func_rounded.rounded_func_amount,al.amount), 2)) ELSE 0.0 END AS func_debit, -- 17
+                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) > 0 THEN ROUND(coalesce(func_rounded.rounded_func_amount, al.amount), 2) ELSE 0.0 END AS func_credit, -- 18
+                    cost_center.code AS cost_center, -- 20
+                    dest.code as destination_code, -- 21
+                    fp.code as funding_pool, -- 22
+                    i.id as instance_id, -- 23
+                    %(period_id)s as period_id, -- 24
+                    MD5(current_database()||',account.analytic.line,['||al.id||']'),
+                    aj.id,
+                    j.type
+                FROM
+                    account_analytic_line AS al
+                        left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id
+                        left join hq_report_func_adj func_rounded on func_rounded.account_analytic_line_id = al.id,
+                    account_account AS a,
+                    account_analytic_account AS dest,
+                    account_analytic_account AS cost_center,
+                    account_analytic_account AS fp,
+                    res_currency AS c,
+                    res_currency AS move_c,
+                    account_analytic_journal AS j,
+                    account_move_line aml
+                        left outer join hr_employee hr on hr.id = aml.employee_id,
+                    account_move am,
+                    account_journal AS aj,
+                    account_period p,
+                    msf_instance AS i
+                WHERE
+                    dest.id = al.destination_id
+                    AND cost_center.id = al.cost_center_id
+                    AND fp.id = al.account_id
+                    AND a.id = al.general_account_id
+                    AND c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND aml.id = al.move_id
+                    AND am.id = aml.move_id
+                    AND move_c.id = aml.currency_id
+                    AND p.id = am.period_id
+                    AND p.number not in (0, 16)
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND am.state = 'posted'
+                    AND al.instance_id = i.id
+                    AND aml.journal_id = aj.id
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+        """
+
+        move_line_query = """
+                SELECT
+                    'account.move.line' as object, -- 1
+                    aml.id as object_id, -- 2
+                    i.instance as instance,  -- 3
+                    j.code, -- 4
+                    m.name as entry_sequence, -- 5
+                    aml.document_date,  -- 6
+                    aml.date as posting_date,  -- 7
+                    a.code as account_code,  -- 8
+                    aml.partner_id,  -- 9
+                    aml.partner_txt as partner_txt, -- 10
+                    hr.id as emplid, -- 11
+                    aml.name as description, -- 12
+                    aml.ref,  -- 13
+                    c.name AS booking_currency,  -- 14
+                    aml.debit_currency as book_debit,  -- 15
+                    aml.credit_currency as book_credit,  -- 16
+                    ROUND(aml.debit, 2) as func_debit, -- 17
+                    ROUND(aml.credit, 2) as func_credit,  -- 18
+                    NULL, -- 20
+                    NULL, -- 21
+                    NULL, -- 22
+                    i.id as instance_id, -- 23
+                    aml.period_id as period_id, -- 24
+                    MD5(current_database()||',account.move.line,['||aml.id||']'),
+                    j.id,
+                    NULL
+                FROM
+                    account_move_line aml
+                    INNER JOIN account_move AS m ON aml.move_id = m.id
+                    LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
+                    INNER JOIN account_account AS a ON aml.account_id = a.id
+                    INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                    INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                    INNER JOIN msf_instance AS i ON aml.instance_id = i.id
+                    LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+                    LEFT JOIN hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
+                WHERE
+                    aal.id IS NULL
+                    AND aml.period_id = %(period_id)s
+                    AND j.type NOT IN %(j_type)s
+                    AND aml.instance_id IN %(instance_ids)s
+                    AND m.state = 'posted'
+        """
+
+        for sql, obj in [
+                (analytic_query, 'account.analytic.line'),
+                (move_line_query, 'account.move.line')]:
+            cr.execute("""INSERT INTO waca_export_accounting_lines (
+                object, object_id, instance, journal_code,
+                entry_sequence, document_date, posting_date,
+                account_code, partner_id, partner_txt,
+                emplid, description, ref,
+                booking_currency, book_debit, book_credit,
+                func_debit, func_credit,
+                cost_center, destination_code, fp_code,
+                instance_id, period_id, db_id, journal_id, ana_journal_type
+            )
+            """ + sql, sql_params) # not_a_user_entry
+
+        # OD / ODHQ journal to be replaced by account.journal ID
+        cr.execute('''update waca_export_accounting_lines e set (journal_id, journal_code)=(
+                select j.id, j.code from account_journal j where instance_id = e.instance_id and j.type = ana_journal_type limit 1
+            )
+            where
+                ana_journal_type in ('correction', 'correction_hq') and
+                instance_id IN %(instance_ids)s and
+                period_id = %(period_id)s
+        ''', {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+        })
+
+        cr.execute("""INSERT INTO waca_export_balances
+            (instance, account_code, account_name, period, booking_currency,
+            starting_balance, calculated_balance, closing_balance,
+            starting_balance_eur, calculated_balance_eur, closing_balance_eur,
+            instance_id, period_id) """ + account_balances_per_currency_with_euro_sql, sql_params) # not_a_user_entry
+
+        return period_id, instance_ids
+
+
+waca_export_accounting_lines()
