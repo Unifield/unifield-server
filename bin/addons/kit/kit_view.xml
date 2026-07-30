@@ -186,10 +186,12 @@
                     </group>
                     <group col="7" colspan="2">
                     	<button name="action_cancel" string="Cancel" type="object" icon="gtk-cancel" attrs="{'invisible': [('state', 'not in', ['draft'])]}" />
-                    	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
-                    	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('state', '!=', 'completed')]}" />
+						<button name="add_items" type="object" string="Add Items" icon="gtk-add" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', 'not in', ['draft', 'completed'])]}" />
+						<button name="remove_items" type="object" string="Remove Items" icon="gtk-remove" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', 'not in', ['draft', 'completed'])]}" />
+						<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('state', '!=', 'completed')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': [('state', '!=', 'completed')]}" />
-                        <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': [('state', '!=', 'completed')]}" />
+                        <button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
+						<button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': [('state', '!=', 'completed')]}" />
                     	<button name="reactivate_kit" string="Re-activate" type="object" icon="gtk-undo" attrs="{'invisible': [('state', '!=', 'done')]}" />
 					</group>
             	</form>
@@ -204,8 +206,8 @@
             <field name="arch" type="xml">
             	<tree string="Kit Composition">
             		<field name="composition_type" invisible="True" />
-            		<field name="composition_product_id" />
-            		<field name="composition_version" />
+            		<field name="composition_product_id" string="Kit/Product Code" />
+            		<field name="composition_version" string="Kit/Version" />
             		<field name="composition_creation_date" />
             		<field name="composition_reference" invisible="True" />
             		<field name="composition_lot_id" invisible="True" />
@@ -222,8 +224,8 @@
             <field name="arch" type="xml">
             	<tree string="Kit Composition" hide_delete_button="True">
             		<field name="composition_type" invisible="True" />
-            		<field name="composition_product_id" />
-            		<field name="composition_version" />
+            		<field name="composition_product_id" string="Kit/Product Code" />
+            		<field name="composition_version" string="Kit/Version" />
             		<field name="composition_creation_date" />
             		<field name="composition_reference" invisible="True" />
             		<field name="composition_combined_ref_lot" />
@@ -377,7 +379,7 @@
             		<field name="item_kit_name" />
             		<field name="item_kit_id" />
             		<field name="item_module" readonly="True" />
-            		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" />
+            		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" string="Component/Product Code" />
             		<field name="comment" />
 					<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
@@ -400,10 +402,11 @@
 			<field name="priority">17</field>
             <field name="arch" type="xml">
             	<tree string="Kit Item" noteditable="1" hide_new_button="True" hide_delete_button="True">
-            		<field name="item_kit_id" string="Kit/Product" />
-            		<field name="item_kit_batch" />
+            		<field name="item_kit_name" />
+            		<field name="item_kit_id" string="Kit Ref/BN" />
+            		<field name="item_kit_version" string="Kit/Version" />
             		<field name="item_module" readonly="True" />
-            		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" string="Component/Product" />
+            		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" string="Component/Product Code" />
             		<field name="comment" />
 					<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />

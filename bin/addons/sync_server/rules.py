@@ -213,7 +213,7 @@ class sync_rule(osv.osv):
                     if group_id in children_group:
                         rules_to_send.add(rule.id)
                 elif rule.direction == 'hqdown':
-                    if not entity.parent_id and group_id in children_group:
+                    if not entity.parent_id:
                         rules_to_send.add(rule.id)
                 else:
                     rules_to_send.add(rule.id)

@@ -234,6 +234,22 @@ class report_out_export_parser(XlsxReportParser):
             new_cell.number_format = number_format
         self.rows.append(new_cell)
 
+    def get_qty_available(self, cr, uid, product_id, location_id, prodlot_id, context=None):
+        """
+        Get the available quantity for a move, with the product id and the info put in the context
+        """
+        if context is None:
+            context = {}
+        copy_context = context.copy()
+
+        if location_id:
+            copy_context.update({'location': location_id, 'location_id': location_id, 'prodlot_id': prodlot_id})
+
+        prod = self.pool.get('product.product').read(cr, uid, product_id, ['qty_available'], context=copy_context)
+        qty_available = prod and prod['qty_available'] or 0.00
+
+        return qty_available
+
     def generate(self, context=None):
         if context is None:
             context = {}
@@ -249,10 +265,10 @@ class report_out_export_parser(XlsxReportParser):
         sheet.column_dimensions['B'].width = 45.0
         sheet.column_dimensions['C'].width = 75.0
         sheet.column_dimensions['D'].width = 55.0
-        sheet.column_dimensions['E'].width = 22.0
-        sheet.column_dimensions['F'].width = 15.0
+        sheet.column_dimensions['E'].width = 15.0
+        sheet.column_dimensions['F'].width = 25.0
         sheet.column_dimensions['G'].width = 25.0
-        sheet.column_dimensions['H'].width = 25.0
+        sheet.column_dimensions['H'].width = 15.0
         sheet.column_dimensions['I'].width = 15.0
         sheet.column_dimensions['J'].width = 15.0
         sheet.column_dimensions['K'].width = 7.0
@@ -361,10 +377,10 @@ class report_out_export_parser(XlsxReportParser):
             (_('Code')),
             (_('Description')),
             (_('Comment')),
-            (_('Asset')),
             (_('Kit')),
             (_('Src. Location')),
             (_('Dest. Location')),
+            (_('Qty in Stock')),
             (_('Ordered Qty')),
             (_('Qty to Process')),
             (_('UoM')),
@@ -400,11 +416,14 @@ class report_out_export_parser(XlsxReportParser):
                         self.add_cell(move.product_id and move.product_id.default_code or '', line_style)
                         self.add_cell(move.product_id and move.product_id.name or '', line_style)
                         self.add_cell(move.comment or '', line_style)
-                        self.add_cell(proc_move.asset_id and proc_move.asset_id.name or '', line_style)
                         self.add_cell(proc_move.composition_list_id and proc_move.composition_list_id.composition_reference
                                       or '', line_style)
                         self.add_cell(move.location_id and move.location_id.name or '', line_style)
                         self.add_cell(move.location_dest_id and move.location_dest_id.name or '', line_style)
+                        self.add_cell(self.get_qty_available(self.cr, self.uid, move.product_id and move.product_id.id or False,
+                                                             move.location_id and move.location_id.id or False,
+                                                             proc_move.prodlot_id and proc_move.prodlot_id.id or False, context=context)
+                                      , float_style)
                         self.add_cell(proc_move.ordered_quantity, float_style)
                         self.add_cell(proc_move.quantity or 0.00, float_style)
                         self.add_cell(proc_move.uom_id and proc_move.uom_id.name or '', line_style)
@@ -423,10 +442,13 @@ class report_out_export_parser(XlsxReportParser):
                     self.add_cell(move.product_id and move.product_id.default_code or '', line_style)
                     self.add_cell(move.product_id and move.product_id.name or '', line_style)
                     self.add_cell(move.comment or '', line_style)
-                    self.add_cell(move.asset_id and move.asset_id.name or '', line_style)
                     self.add_cell(move.composition_list_id and move.composition_list_id.composition_reference or '', line_style)
                     self.add_cell(move.location_id and move.location_id.name or '', line_style)
                     self.add_cell(move.location_dest_id and move.location_dest_id.name or '', line_style)
+                    self.add_cell(self.get_qty_available(self.cr, self.uid, move.product_id and move.product_id.id or False,
+                                                         move.location_id and move.location_id.id or False,
+                                                         move.prodlot_id and move.prodlot_id.id or False, context=context)
+                                  , float_style)
                     self.add_cell(move.product_qty, float_style)
                     self.add_cell(0.00, float_style)
                     self.add_cell(move.product_uom and move.product_uom.name or '', line_style)
@@ -865,7 +887,8 @@ class po_follow_up_mixin(object):
             self.cr.execute("""
                 SELECT pl.id, pl.state, pl.line_number, adl.id, ppr.id, ppr.default_code, COALESCE(tr.value, pt.name), 
                     uom.id, uom.name, pl.confirmed_delivery_date, pl.date_planned, pl.product_qty, pl.price_unit, 
-                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd, so.date_order, p.order_type
+                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd, so.date_order, p.order_type,
+                    pl.comment
                 FROM purchase_order_line pl
                     LEFT JOIN purchase_order p ON pl.order_id = p.id
                     LEFT JOIN analytic_distribution adl ON pl.analytic_distribution_id = adl.id
@@ -1053,6 +1076,7 @@ class po_follow_up_mixin(object):
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
+                    'comment': line[20] or '',
                     'qty_ordered': line[11] or '',
                     'uom': line[8] or '',
                     'qty_received': line[1] == 'done' and line[19] == 'direct' and line[11] or '0.00',
@@ -1103,6 +1127,7 @@ class po_follow_up_mixin(object):
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
+                    'comment': line[20] or '',
                     'qty_ordered': first_line and line[11] or '',
                     'uom': line[8] or '',
                     'qty_received': spsul.get('state') == 'done' and spsul.get('product_qty', '') or '0.00',
@@ -1163,6 +1188,7 @@ class po_follow_up_mixin(object):
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
+                    'comment': line[20] or '',
                     'qty_ordered': first_line and line[11] or '',
                     'uom': uom_obj.read(self.cr, self.uid, spl.get('product_uom'), ['name'])['name'],
                     'qty_received': spl.get('state') == 'done' and spl.get('product_qty', '') or '0.00',
@@ -1224,6 +1250,7 @@ class po_follow_up_mixin(object):
                     'item': line[2] or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',
+                    'comment': line[20] or '',
                     'qty_ordered': '',
                     'uom': uom_obj.read(self.cr, self.uid, ol.get('product_uom'), ['name'])['name'],
                     'qty_received': ol.get('state') == 'done' and ol.get('product_qty', '') or '0.00',
@@ -1325,6 +1352,7 @@ class po_follow_up_mixin(object):
             _('Line'),
             _('Product Code'),
             _('Product Description'),
+            _('Comment'),
             _('Qty ordered'),
             _('UoM'),
             _('Qty received'),
@@ -1459,7 +1487,9 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         invoices = {}
 
         self.cr.execute('''
-            select i.picking_id as pick_id, l.order_line_id as pol_id, i.number as inv_number, i.currency_id as curr_id, sum(l.price_unit*l.quantity) as price_total, sum(l.quantity) as qty,  i.date_invoice as date, i.document_date as document_date
+            select i.picking_id as pick_id, l.order_line_id as pol_id, i.number as inv_number, i.currency_id as curr_id,
+                sum(l.price_unit*l.quantity) as price_total, sum(l.quantity) as qty,  i.date_invoice as date,
+                i.document_date as document_date, l.discount as discount
             from
                 account_invoice i, account_invoice_line l
             where
@@ -1467,7 +1497,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 l.invoice_id = i.id and
                 l.order_line_id in %s and
                 i.state != 'cancel'
-            group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice, i.document_date
+            group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice, i.document_date, l.discount
         ''', (tuple(wizard.pol_ids),)
         )
         for inv in self.cr.dictfetchall():
@@ -1567,7 +1597,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 in_unit_price = line[20] or 0.00
                 func_in_unit_price = round(curr_obj.compute(self.cr, self.uid, line[24], wizard.company_currency_id.id,
                                                             in_unit_price, round=False, context=self.localcontext), 2)
-            si_unit_price, func_si_unit_price = '-', '-'
+            si_unit_price, func_si_unit_price, si_discount_price, func_si_discount_price = '-', '-', '-', '-'
             si_ref = ''
             key = (line[26], line[0])
             if key in invoices and invoices[key]['qty']:
@@ -1579,19 +1609,27 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                                                      context={'currency_date': curr_date or time.strftime('%Y-%m-%d')})
                 func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], wizard.company_currency_id.id,
                                                             si_unit_price, round=False, context=self.localcontext), 2)
+                si_discount = invoices[key]['discount'] or 0
+                si_discount_price = si_discount and si_unit_price - si_unit_price * (si_discount/100) or si_unit_price
+                func_si_discount_price = si_discount and func_si_unit_price - func_si_unit_price * (si_discount/100) or func_si_unit_price
+
             func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, line[17], wizard.company_currency_id.id,
                                                          line[4], round=False, context=self.localcontext), 2)
 
             # Discrepancies
-            discrep_in_po, discrep_si_po, func_discrep_in_po, func_discrep_si_po = '-', '-', '-', '-'
+            discrep_in_po, discrep_si_po = '-', '-'
+            func_discrep_in_po, func_discrep_si_po = '-', '-'
+            discrep_si_discount, func_discrep_si_discount = 0, 0
             if in_unit_price != '-':
                 discrep_in_po = round(in_unit_price - line[4], 4)
             if si_unit_price != '-':
                 discrep_si_po = round(si_unit_price - line[4], 4)
+                discrep_si_discount = round(si_discount_price - si_unit_price, 4)
             if func_in_unit_price != '-':
                 func_discrep_in_po = round(func_in_unit_price - func_pol_unit_price, 4)
             if func_si_unit_price != '-':
                 func_discrep_si_po = round(func_si_unit_price - func_pol_unit_price, 4)
+                func_discrep_si_discount = round(func_si_discount_price - func_si_unit_price, 4)
 
             # Dates comparison and Actual Supplier Lead Time
             days_cdd_receipt, days_rdd_receipt, days_crea_receipt, act_sup_lt, discrep_lt_act_theo = '-', '-', '-', '-', '-'
@@ -1621,14 +1659,18 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 'po_unit_price': line[4],
                 'in_unit_price': in_unit_price,
                 'si_unit_price': si_unit_price,
+                'si_discount_price': si_discount_price,
                 'discrep_in_po': discrep_in_po,
                 'discrep_si_po': discrep_si_po,
+                'discrep_si_discount': discrep_si_discount,
                 'func_cat_unit_price': func_cat_unit_price,
                 'func_po_unit_price': func_pol_unit_price,
                 'func_in_unit_price': func_in_unit_price,
                 'func_si_unit_price': func_si_unit_price,
+                'func_si_discount_price': func_si_discount_price,
                 'func_discrep_in_po': func_discrep_in_po,
                 'func_discrep_si_po': func_discrep_si_po,
+                'func_discrep_si_discount': func_discrep_si_discount,
                 'po_crea_date': line[6],
                 'po_vali_date': line[7],
                 'po_conf_date': line[8],
@@ -1696,7 +1738,7 @@ class ir_values(osv.osv):
                     if v[2].get('report_name', False) == 'kit.report':
                         v[2]['name'] = _('Theoretical Kit')
                     new_act.append(v)
-                elif context.get('composition_type')=='real' and v[2].get('report_name', False) in ('real.composition.kit.xls', 'kit.report'):
+                elif context.get('composition_type')=='real' and v[2].get('report_name', False) in ('real.composition.kit.xls', 'kit.report', 'report_tkc_kcl_comparison'):
                     if v[2].get('report_name', False) == 'kit.report':
                         v[2]['name'] = _('Kit Composition')
                     new_act.append(v)

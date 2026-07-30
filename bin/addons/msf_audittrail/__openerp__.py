@@ -71,6 +71,7 @@
         'data/audittrail_data_auto_import_export.yml',
         'data/audittrail_data_supplier_catalogue.yml',
         'data/transport_order.yml',
+        'data/funding_pool_distribution_line.yml',
     ],
     'demo_xml': [],
     'installable': True,

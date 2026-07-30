@@ -31,6 +31,7 @@
             rml="addons/stock_override/report/delivery_order.rml"
             string="Delivery Order"
             view_ids="stock.view_picking_out_tree,stock.view_picking_out_form"
+            target_filename='${eval(_get_stock_picking_report_name)}'
             />
 
         <report id="action_menu_donation_certificate"

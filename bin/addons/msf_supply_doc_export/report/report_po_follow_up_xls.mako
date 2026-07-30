@@ -140,6 +140,8 @@
     <Column ss:AutoFitWidth="1" ss:Width="100" />
     # Product Description
     <Column ss:AutoFitWidth="1" ss:Width="200" />
+    # Comment
+    <Column ss:AutoFitWidth="1" ss:Width="200" />
     # Qty ordered
     <Column ss:AutoFitWidth="1" ss:Width="57" />
     # UoM
@@ -246,6 +248,7 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['comment'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>

@@ -2634,3 +2634,7 @@ nom_2633,0,3,YINS - Zinc Sulfate,Mandatory,DORA - Oral Drugs,MED-D-DORA-YINS
 nom_2634,0,3,YLIM - Lime,Mandatory,CWAT - Water And Sanitation,LOG-C-CWAT-YLIM
 nom_2635,0,3,YODI - Zodiac,Mandatory,TBOA - Boats,LOG-T-TBOA-YODI
 nom_2636,0,3,YYCO - Couplings and others,Mandatory,CWAT - Water And Sanitation,LOG-C-CWAT-YYCO
+nom_2637,0,1,Y - Spare parts,Mandatory,LOG,LOG-Y
+nom_2638,0,1,N - Nutrition,Mandatory,LOG,LOG-N
+nom_2639,0,1,R - Research products,Mandatory,MED,MED-R
+nom_2640,0,1,I - Lib Inventory lists / checklists,Mandatory,LIB,LIB-I

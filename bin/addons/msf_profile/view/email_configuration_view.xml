@@ -62,11 +62,10 @@ action = {
         <field name="name">Open Email Configuration</field>
     </record>
 
-
     <record id="ir_ui_menu_emailconfig" model="ir.ui.menu">
         <field name="name">Email Configuration</field>
-        <field name="parent_id" ref="base.menu_config"/>
-        <field name="sequence">10025</field>
+        <field name="parent_id" ref="msf_tools.email_main_menu"/>
+        <field name="sequence">10</field>
     </record>
 
     <record id="ir_values_menuitem_emailconfig" model="ir.values">

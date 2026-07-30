@@ -19,7 +19,9 @@
                 name="internal.move"
                 header="True"
                 rml="addons/stock_override/report/internal_move.rml"
-                string="Internal Move" />
+                string="Internal Move"
+                target_filename='${eval(_get_stock_picking_report_name)}'
+                />
 
     </data>
 </openerp>

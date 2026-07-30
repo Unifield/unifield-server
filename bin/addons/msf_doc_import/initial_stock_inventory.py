@@ -93,6 +93,8 @@ class stock_inventory(osv.osv):
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        if obj.state != 'draft':
+            raise osv.except_osv(_('Error'), _('You can only import on a Draft Previous Physical Inventory; import file is ignored'))
 
         product_cache = {}
 
@@ -641,6 +643,8 @@ class initial_stock_inventory(osv.osv):
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        if obj.state != 'draft':
+            raise osv.except_osv(_('Error'), _('You can only import on a Draft Initial Stock Inventory; import file is ignored'))
 
         product_cache = {}
         product_non_stockable_cache = {}

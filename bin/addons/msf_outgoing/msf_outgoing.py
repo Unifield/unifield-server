@@ -31,8 +31,11 @@ from msf_partner import PARTNER_TYPE
 from dateutil.relativedelta import relativedelta
 import tools
 import time
+import base64
 from lxml import etree
 from tools.sql import drop_view_if_exists
+from service.web_services import report_spool
+from tools.rpc_decorators import jsonrpc_orm_exposed
 
 
 class stock_warehouse(osv.osv):
@@ -1937,6 +1940,60 @@ class shipment(osv.osv):
             ''', (tuple(context.get('button_selected_ids')), ))
         return True
 
+    def _get_freight_manifest_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name'], context=context)
+
+        return _('FM_%s_%s') % (obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
+
+    def _get_packing_list_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name'], context=context)
+
+        return _('PL_%s_%s') % (obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
+
+    @jsonrpc_orm_exposed('shipment', 'generate_dispatched_packing_list_report')
+    def generate_dispatched_packing_list_report(self, cr, uid, context=None):
+        '''
+        Method used by the SDE script to export the file
+        Generate a Dispatched Packing List report for Dispatched sub-Ships, having an Internal, Intermission,
+        Inter-section or External Customer
+        '''
+        if context is None:
+            context = {}
+
+        ship_domain = [('parent_id', '!=', False), ('state', '=', 'done'), ('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])]
+        ship_ids = self.search(cr, uid, ship_domain, context=context)
+        if not ship_ids:
+            raise osv.except_osv(_('Error'), _('There is no Dispatched Shipment having an Internal, Intermission, Inter-section or External Customer'))
+        datas = {'ids': ship_ids}
+        if not context.get('from_sde_wizard'):
+            rp_spool = report_spool()
+            result = rp_spool.exp_report(cr.dbname, uid, 'dispatched.packing.list.xls', ship_ids, datas, context=context)
+            file_res = {'state': False}
+            while not file_res.get('state'):
+                file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+                time.sleep(0.5)
+
+            return file_res.get('result') and base64.b64decode(file_res['result']).decode('utf-8') or False
+        else:
+            # When the report is generated with a button
+            datas['target_filename'] = 'dispatched_packing_list_%s' % (time.strftime('%Y_%m_%d_%H_%M'),)
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'dispatched.packing.list.xls',
+                'datas': datas,
+                'context': context,
+            }
+
 
 shipment()
 
@@ -1980,48 +2037,6 @@ class shipment2(osv.osv):
     add pack_family_ids
     '''
     _inherit = 'shipment'
-
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
-        '''
-        Change the delivery address when the partner change.
-        '''
-        v = {}
-        d = {}
-
-        if not partner_id:
-            v.update({'address_id': False})
-            address_id = False
-        elif address_id:
-            d.update({'address_id': [('partner_id', '=', partner_id)]})
-
-        addr = False
-        if address_id:
-            addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
-
-        if partner_id and (not address_id or (addr and addr.partner_id.id != partner_id)):
-            addr = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
-            if not addr.get('delivery'):
-                addr = addr.get('default')
-            else:
-                addr = addr.get('delivery')
-
-            address_id = addr
-
-            v.update({'address_id': addr})
-
-        if address_id:
-            error = self.on_change_address_id(cr, uid, ids, address_id, context=context)
-            if error:
-                error['value'] = {'address_id': False}
-                error['domain'] = d
-                return error
-
-        warning = {
-            'title': _('Warning'),
-            'message': _('The field you are modifying may impact the shipment mechanism, please check the correct process.'),
-        }
-
-        return {'value': v, 'domain': d, 'warning': warning}
 
     def on_change_shipper_name(self, cr, uid, ids, shipper_name):
         return {
@@ -3312,16 +3327,20 @@ class stock_picking(osv.osv):
             elif '-surplus' in out.name:
                 new_name += '-surplus'
 
-            # change subtype and name
-            default_vals = {'name': new_name,
-                            'subtype': 'picking',
-                            'converted_to_standard': False,
-                            'state': 'draft',
-                            'sequence_id': self.create_sequence(cr, uid, {'name': new_name,
-                                                                          'code': new_name,
-                                                                          'prefix': '',
-                                                                          'padding': 2}, context=context)
-                            }
+            # change subtype, name and remove the SDE flag
+            default_vals = {
+                'name': new_name,
+                'subtype': 'picking',
+                'converted_to_standard': False,
+                'state': 'draft',
+                'sequence_id': self.create_sequence(cr, uid, {'name': new_name, 'code': new_name, 'prefix': '',
+                                                              'padding': 2}, context=context),
+                'sde_updated': False
+            }
+
+            if out.sale_id and out.sale_id.location_requestor_id and out.sale_id.location_requestor_id.usage == 'customer' \
+                    and out.sale_id.location_requestor_id.location_category == 'consumption_unit':
+                default_vals['ext_cu'] = out.sale_id.location_requestor_id.id
 
             self.write(cr, uid, [out.id], default_vals, context=context)
             wf_service = netsvc.LocalService("workflow")
@@ -3529,6 +3548,8 @@ class stock_picking(osv.osv):
                     'claim': picking.claim,
                     'claim_name': picking.claim_name
                 }
+                if proc_model == 'outgoing.delivery.processor':
+                    cp_vals['sde_updated'] = picking.sde_updated
                 context['allow_copy'] = True
 
                 new_picking_id = picking_obj.copy(cr, uid, picking.id, cp_vals, context=context)
@@ -3539,7 +3560,7 @@ class stock_picking(osv.osv):
             # At first we confirm the new picking (if necessary)
             pick_to_check = False
             if new_picking_id:
-                self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id}, context=context)
+                self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id, 'sde_update_msg': False, 'sde_updated': False}, context=context)
 
                 rw_name = context.get('rw_backorder_name', False)
                 update_vals = {}
@@ -3599,7 +3620,7 @@ class stock_picking(osv.osv):
                 else:
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-                    update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}
+                    update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S'), 'sde_update_msg': False}
                     pick_to_check = picking.id
                     self.write(cr, uid, picking.id, update_vals)
 
@@ -4195,7 +4216,7 @@ class stock_picking(osv.osv):
             wizard_id = existing[0]
             for wiz in ppl_processor.browse(cr, uid, existing):
                 for fam in wiz.family_ids:
-                    key='f%st%s' % (fam.from_pack, fam.to_pack)
+                    key='f%st%spar%s' % (fam.from_pack, fam.to_pack, fam.parcel_ids or '')
                     existing_data[key] = {'pack_type': fam.pack_type and fam.pack_type.id or False, 'length': fam.length, 'width': fam.width, 'height': fam.height, 'weight': fam.weight, 'id': fam.id}
                     if fam.parcel_ids:
                         existing_data[key]['parcel_ids_array'] = fam.parcel_ids.split(',')
@@ -4207,7 +4228,7 @@ class stock_picking(osv.osv):
         for line in picking.move_lines:
             if line.state == 'done':
                 continue
-            key = 'f%st%s' % (line.from_pack, line.to_pack)
+            key = 'f%st%spar%s' % (line.from_pack, line.to_pack, line.pack_info_id and line.pack_info_id.parcel_ids or '')
             if key not in families_data:
                 families_data[key] =  {
                     'wizard_id': wizard_id,
@@ -4407,6 +4428,7 @@ class stock_picking(osv.osv):
                                                                                   'shipment_id': shipment_id,
                                                                                   'state': 'assigned',
                                                                                   'packing_list': picking.packing_list,
+                                                                                  'description_ppl': picking.details,
                                                                                   'parcel_comment': picking.description_ppl,
                                                                               }, context=context)
                     pack_move_data['shipment_line_id'] = ship_line_id
@@ -4757,6 +4779,21 @@ class stock_picking(osv.osv):
             'height': '190px',
             'width': '220px',
         }
+
+    def reset_sde_updated_flag(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No PICK selected'))
+
+        # Reset all lines and merge the splits
+        self.pool.get('sde.import').reset_pick_lines(cr, uid, ids, [], context=context)
+
+        self.write(cr, uid, ids, {'sde_updated': False, 'sde_reset_date': datetime.now()}, context=context)
+
+        return True
 
 
 stock_picking()

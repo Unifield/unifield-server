@@ -9,7 +9,7 @@
             header="False"
             model="product.likely.expire.report"
             name="product.likely.expire.report_xls"
-            string="Products likely to expire"
+            string="Products Likely to Expire"
             file="consumption_calculation/report/product_likely_expire_xls.mako"
             report_type="webkit"
         />
@@ -21,7 +21,7 @@
             model="product.likely.expire.report"
             name="product.likely.expire.report_pdf"
             rml="consumption_calculation/report/product_likely_expire.rml"
-            string="Products likely to expire"
+            string="Products Likely to Expire"
             />
 
         <report

@@ -25,7 +25,9 @@ from osv import fields
 from tools.translate import _
 from tools.misc import _get_std_mml_status
 from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
 from msf_partner import PARTNER_TYPE
+from lxml import etree
 
 import decimal_precision as dp
 
@@ -84,11 +86,11 @@ class supplier_catalogue(osv.osv):
     def open_new_catalogue_form(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        context['partner_id'] = ids[0]
+        context.update({'partner_id': ids[0], 'from_flow': True})
         partner_obj = self.pool.get('res.partner')
         if partner_obj.search(cr, uid, [('id', '=', ids[0]), ('partner_type', '=', 'esc')], context=context) and \
                 self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
-            raise osv.except_osv(_('Error'), 'For an ESC Supplier you must create the catalogue on a HQ instance.')
+            raise osv.except_osv(_('Error'), _('For an ESC Supplier you must create the catalogue on a HQ instance.'))
 
         return {
             'res_model': 'supplier.catalogue',
@@ -98,6 +100,25 @@ class supplier_catalogue(osv.osv):
             'context': context,
             'domain': [('partner_id', '=', ids[0])],
         }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Make the "partner_id" field readonly if the partner is not from scratch
+        """
+        if not context:
+            context = {}
+
+        view = super(supplier_catalogue, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+        if view_type == 'form' and context.get('from_flow'):
+            tree = etree.fromstring(view['arch'])
+            fields = tree.xpath('//field[@name="partner_id"]')
+            for field in fields:
+                field.set('readonly', "1")
+                field.set('attrs', "")
+            view['arch'] = etree.tostring(tree, encoding='unicode')
+
+        return view
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -112,9 +133,49 @@ class supplier_catalogue(osv.osv):
         res = super(supplier_catalogue, self).create(cr, uid, vals, context=context)
 
         # UTP-746: now check if the partner is inactive, then set this catalogue also to become inactive
-        catalogue = self.browse(cr, uid, [res], fields_to_fetch=['partner_id'], context=context)[0]
-        if not catalogue.partner_id.active:
-            self.write(cr, uid, [res], {'active': False}, context=context)
+        ftf = ['period_from', 'period_to', 'partner_id', 'currency_id']
+        cat = self.browse(cr, uid, [res], fields_to_fetch=ftf, context=context)[0]
+        to_write = {}
+        if not cat.partner_id.active:
+            to_write['active'] = False
+        # US-14372: During auto-import, set the period_to of other non-sync ESC catalogues to the period_from - 1 day
+        # in case there is an overlap
+        if context.get('auto_import_ok') and cat.partner_id.partner_type == 'esc':
+            period_from = cat.period_from
+            # To prevent using a new catalogue with no period_from and put a bad date on overlapping catalogues
+            no_period_from = False
+            if not period_from:
+                period_from = datetime.now().strftime('%Y-%m-%d')
+                no_period_from = True
+            period_to = cat.period_to or '2999-12-31'
+
+            entity_identifier_like = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier + '%'
+            cr.execute("""
+                SELECT c.id, c.period_from
+                FROM supplier_catalogue oc, supplier_catalogue c
+                    LEFT JOIN ir_model_data d ON d.res_id = c.id AND d.model = 'supplier.catalogue' AND d.module = 'sd'
+                WHERE oc.id = %s AND oc.id != c.id AND c.state = 'confirmed' AND c.partner_id = %s AND c.active = 't'
+                    AND c.currency_id = %s and d.name LIKE %s
+                    AND (COALESCE(c.period_from, '1970-01-01'), COALESCE(c.period_to, '2999-12-31'))
+                        OVERLAPS (TO_DATE(%s, 'YYYY-MM-DD'), TO_DATE(%s, 'YYYY-MM-DD'))
+                ORDER BY c.period_from, c.id
+            """, (cat.id, cat.partner_id.id, cat.currency_id.id, entity_identifier_like, period_from, period_to))
+            overlap_data = cr.fetchall()
+            nb_overlap = len(overlap_data)
+            for x in overlap_data:
+                # In case there is more than 1 overlap, do not put the same dates on several catalogues
+                new_period_to = (datetime.strptime(period_from, '%Y-%m-%d') + relativedelta(days=-nb_overlap)).strftime('%Y-%m-%d')
+                overlap_write = {'period_to': new_period_to}
+                # Prevent having period_from > period_to
+                if x[1] > new_period_to:
+                    overlap_write['period_from'] = new_period_to
+                self.write(cr, uid, [x[0]], overlap_write, context=context)
+                nb_overlap -= 1
+            if overlap_data and not no_period_from:
+                to_write['period_from'] = period_from
+
+        if to_write:
+            self.write(cr, uid, [res], to_write, context=context)
 
         return res
 
@@ -626,6 +687,27 @@ class supplier_catalogue(osv.osv):
 
     _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
 
+
+    def onchange_partner_id(self, cr, uid, ids, partner_id, context=None):
+        '''
+        Prevent manually choosing some Partners
+        '''
+        if context is None:
+            context = {}
+
+        res = {}
+        if partner_id and self.pool.get('res.company')._get_instance_level(cr, uid) != 'section' and\
+                self.pool.get('res.partner').read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type'] == 'esc':
+            res = {
+                'value': {'partner_id': False},
+                'warning': {
+                    'title': _('Error'),
+                    'message': _('For an ESC Supplier you must create the catalogue on a HQ instance.')
+                }
+            }
+
+        return res
+
     def open_lines(self, cr, uid, ids, context=None):
         '''
         Opens all lines of this catalogue
@@ -986,7 +1068,7 @@ class supplier_catalogue(osv.osv):
                                         user.company_id.instance_id.level ==  'coordo':
                                     raise osv.except_osv(
                                         _('Error'),
-                                        'For an ESC Supplier you must create the catalogue on a HQ instance.'
+                                        _('For an ESC Supplier you must create the catalogue on a HQ instance.')
                                     )
 
                 # ESC supplier catalogue: no period date

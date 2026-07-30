@@ -69,6 +69,7 @@
         'msf_outgoing_report.xml',
         'msf_outgoing_workflow.xml',
         'data/audittrail_data_picking.yml',
+        'sde_import_view.xml',
     ],
     "demo_xml": ['data/msf_outgoing_data.xml',
                  ],

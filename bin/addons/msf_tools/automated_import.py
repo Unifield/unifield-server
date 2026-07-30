@@ -683,6 +683,12 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_report_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
         'is_admin': fields.function(_get_isadmin, method=True, type='boolean', string='Is Admin'),
         'partner_id': fields.many2one('res.partner', 'Partner', domain=[('partner_type', '=', 'esc')]),
+        'email_notification_ok': fields.boolean(string='Enable Email Notifications', help='If activated, any import job report ending in a specific state (Notification Type) will send a notification email with the error(s) (3 attempts max)'),
+        'email_notification_type': fields.selection([('error', 'Error'), ('partial', 'Partial'), ('error_partial', 'Both')], string='Notification Type'),
+        'email': fields.char('Email', size=128, help='First Email to send the notification to'),
+        'email2': fields.char('Email 2', size=128, help='Second Email to send the notification to'),
+        'email3': fields.char('Email 3', size=128, help='Third Email to send the notification to'),
+        'allow_email_notification': fields.related('function_id', 'email_notification', string='Email Notifications allowed', type='boolean', write_relate=False),
     }
 
     _defaults = {
@@ -734,6 +740,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             multiple = fct_data.multiple
             if not multiple:
                 value['partner_id'] = False
+            value['allow_email_notification'] = fct_data.email_notification
         value['multiple'] = multiple
         return {'value': value}
 
@@ -1001,6 +1008,12 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
                     'ftp_dest_fail_ok': False,
                     'ftp_report_ok': False,
                 })
+
+        # Reset email notification data in case the email notifications are not allowed by the function
+        if vals.get('function_id'):
+            fct = self.pool.get('automated.import.function').read(cr, uid, vals['function_id'], context=context)
+            if not fct['email_notification']:
+                vals.update({'email_notification_ok': False, 'email_notification_type': False, 'email': '', 'email2': '', 'email3': ''})
 
         res = super(automated_import, self).write(cr, uid, ids, vals, context=context)
 

@@ -49,6 +49,7 @@ class freight_manifest(report_sxw.rml_parse):
             'get_total': self.get_total,
             'get_group_lines': self.get_group_lines,
             'get_sum_additionnal': self.get_sum_additionnal,
+            'getDestLoc': self.getDestLoc,
         })
 
     def getFonCur(self):
@@ -65,6 +66,18 @@ class freight_manifest(report_sxw.rml_parse):
 
     def getTotKg(self):
         return self.kgtot and round(self.kgtot, 2) or 0.0
+
+    def getDestLoc(self, shipment_id):
+        self.cr.execute("""
+            SELECT DISTINCT(l.name) FROM pack_family_memory pf
+                LEFT JOIN stock_picking ppl ON pf.ppl_id=ppl.id
+                LEFT JOIN stock_location l ON ppl.ext_cu=l.id
+            WHERE pf.shipment_id = %s""", (shipment_id,))
+        loc_names = []
+        for x in self.cr.fetchall():
+            if x[0]:
+                loc_names.append(x[0])
+        return '; '.join(loc_names)
 
     # BKLG_84
     def get_group_lines(self, report_data):

@@ -46,11 +46,13 @@ class automated_import_function(osv.osv):
         ),
         'startswith': fields.char('Starts with', size=56),
         'multiple': fields.boolean('Allow multiple jobs'),
+        'email_notification': fields.boolean('Allow email notifications'),
     }
 
     _defaults = {
         'method_to_call': lambda *a: 'import_data_from_csv',
         'multiple': False,
+        'email_notification': False,
     }
 
     _order = 'name'

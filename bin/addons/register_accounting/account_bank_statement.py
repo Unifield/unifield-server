@@ -2275,7 +2275,9 @@ class account_bank_statement_line(osv.osv):
         # it deletes / creates AJI
         # call _update_move_from_st_line only if values have changed
         to_update_ids = []
-        if state == 'temp' and not context.get('sync_update_execution'):
+        if state == 'temp' and context.get('force_update_ad'):
+            to_update_ids = ids
+        elif state == 'temp' and not context.get('sync_update_execution'):
             to_remove= ['from_import_cheque_id', 'down_payment_id', 'imported_invoice_line_ids', 'move_ids']
             keys_to_read = [x for x in list(values.keys()) if x not in to_remove]
             if keys_to_read:
@@ -2459,6 +2461,16 @@ class account_bank_statement_line(osv.osv):
 
         # browse all statement lines for creating move lines
         absls = self.browse(cr, 1, list(set(ids)), context=context)
+        if postype == 'hard':
+            for absl in absls:
+                if (abs(absl.amount_in) < 0.0001 and abs(absl.amount_out) < 0.0001 and
+                    abs(absl.functional_in) < 0.0001 and abs(absl.functional_out) < 0.0001
+                    ):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Entry "%s" has all total debit/credit '
+                          'amounts equal to zero.') % (absl.name)
+                    )
         # check the register state only once as it is the same for all lines
         if absls:
             self._check_register_open(absls[0].statement_id, "post", context)
@@ -3178,6 +3190,8 @@ class account_bank_statement_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.statement_id and line.statement_id.state != 'open':
                 raise osv.except_osv(_('Warning'), _("Register not open, you can't duplicate lines."))
+            if line.from_import_cheque_id:
+                raise osv.except_osv(_('Warning'), _('Line from import cheque cannot be duplicated.'))
             default_vals = ({
                 'name': '(copy) ' + line.name,
                 'cheque_number': None,

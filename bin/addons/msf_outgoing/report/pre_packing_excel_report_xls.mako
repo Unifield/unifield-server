@@ -204,24 +204,28 @@
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.name|x}</Data></Cell>
             <Cell ss:StyleID="line_header" ss:MergeAcross="2"><Data ss:Type="String">${_('Shipper')|x}</Data></Cell>
             <Cell ss:StyleID="line_header" ss:MergeAcross="4"><Data ss:Type="String">${_('Consignee')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="2"><Data ss:Type="String">${_('Destination Location')|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Date')|x}</Data></Cell>
             <Cell ss:StyleID="short_date_center"><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
             <Cell ss:StyleID="line_borders_top" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_name', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_top" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_name', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_top" ss:MergeAcross="2"><Data ss:Type="String">${pt.ext_cu and pt.ext_cu.name or ''|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Requester Ref')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.client_order_ref or ''|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_contact', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_contact', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Our Ref')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.name or ''|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_addr_street', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_addr_street', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('FO Date')|x}</Data></Cell>
@@ -232,6 +236,7 @@
             % endif
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_addr_zip_city', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_addr_zip_city', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Packing Date')|x}</Data></Cell>
@@ -242,6 +247,7 @@
             % endif
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_phone', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_phone', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('RTS Date')|x}</Data></Cell>
@@ -252,12 +258,14 @@
             % endif
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Transport Mode')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.transport_type and getSel(pt.sale_id, 'transport_type') or ''|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_bottom" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="line_borders_bottom" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line_borders_bottom" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
         </Row>
 
         <Row></Row>

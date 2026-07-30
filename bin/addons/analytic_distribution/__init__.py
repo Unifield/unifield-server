@@ -27,7 +27,6 @@ from . import analytic_account
 from . import account_commitment
 from . import analytic_line
 from . import invoice
-from . import account_invoice_refund
 from . import wizard
 from . import report
 

@@ -1607,6 +1607,7 @@ class account_move(osv.osv):
     def button_validate(self, cursor, user, ids, context=None):
         for move in self.browse(cursor, user, ids, context=context):
             top = None
+
             for line in move.line_id:
                 account = line.account_id
                 while account:
@@ -1616,6 +1617,15 @@ class account_move(osv.osv):
                     top = account2.id
                 elif top!=account2.id:
                     raise osv.except_osv(_('Error !'), _('You cannot validate a Journal Entry unless all journal items are in same chart of accounts !'))
+
+                if (abs(line.debit) < 0.0001 and abs(line.credit) < 0.0001 and
+                    abs(line.debit_currency) < 0.0001 and abs(line.credit_currency) < 0.0001
+                    ):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Journal Entry "%s" has all debit/credit amounts equal to zero.')
+                        % (line.name)
+                    )
         return self.post(cursor, user, ids, context=context)
 
     def button_cancel(self, cr, uid, ids, context=None):
@@ -2211,7 +2221,7 @@ class account_tax(osv.osv):
                 return pooler.get_pool(cr.dbname).get('decimal.precision').computation_get(cr, 1, 'Account')
 
             res = pooler.get_pool(cr.dbname).get('decimal.precision').precision_get(cr, 1, 'Account')
-            return (16, res+2)
+            return (16, res+6)
         return change_digit_tax
 
     _name = 'account.tax'

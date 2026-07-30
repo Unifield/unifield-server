@@ -265,12 +265,12 @@
     <Row>
         <Cell ss:StyleID="line_left_sides" ss:MergeAcross="1"><Data ss:Type="String">${_('Date :')|x}</Data></Cell>
         <Cell ss:StyleID="line_left_sides" ss:MergeAcross="2"><Data ss:Type="String">${_('Date :')|x}</Data></Cell>
-        <Cell ss:StyleID="line_left_sides" ss:MergeAcross="5"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line_left_sides" ss:MergeAcross="5"><Data ss:Type="String">${_('Destination Location :')|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="line_left_sides" ss:MergeAcross="1"><Data ss:Type="String">${_('Signature :')|x}</Data></Cell>
         <Cell ss:StyleID="line_left_sides" ss:MergeAcross="2"><Data ss:Type="String">${_('Signature :')|x}</Data></Cell>
-        <Cell ss:StyleID="line_left_sides" ss:MergeAcross="5"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line_left_sides" ss:MergeAcross="5"><Data ss:Type="String">${getDestLoc(o.id) or ''|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="line_left_sides" ss:MergeAcross="1"><Data ss:Type="String"></Data></Cell>

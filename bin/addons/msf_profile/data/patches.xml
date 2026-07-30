@@ -1260,6 +1260,11 @@
             <field name="method">us_14217_set_journal_restriction</field>
         </record>
 
+        <!-- UF39.1 -->
+        <record id="us_15318_remove_transport_step_constraint" model="patch.scripts">
+            <field name="method">us_15318_remove_transport_step_constraint</field>
+        </record>
+
         <!-- UF40.0 -->
         <record id="us_15159_delete_no_catalogue_deactivated_logs" model="patch.scripts">
             <field name="method">us_15159_delete_no_catalogue_deactivated_logs</field>
@@ -1271,6 +1276,81 @@
 
         <record id="us_15170_ocb_unmerge_prod" model="patch.scripts">
             <field name="method">us_15170_ocb_unmerge_prod</field>
+        </record>
+
+        <record id="us_15310_ocp_fxa_journal" model="patch.scripts">
+            <field name="method">us_15310_ocp_fxa_journal</field>
+        </record>
+
+        <record id="us_15152_unsign_non_closed_cancelled_ins" model="patch.scripts">
+            <field name="method">us_15152_unsign_non_closed_cancelled_ins</field>
+        </record>
+
+        <record id="us_14673_populate_merge_to_msfid" model="patch.scripts">
+            <field name="method">us_13980_update_new_code_on_merged</field>
+        </record>
+
+        <record id="us_15079_user_email" model="patch.scripts">
+            <field name="method">us_15079_user_email</field>
+        </record>
+
+        <record id="us_15252_non_service_prod_transport_flag" model="patch.scripts">
+            <field name="method">us_15252_non_service_prod_transport_flag</field>
+        </record>
+
+        <!-- UF40.1 -->
+        <record id="us_15685_populate_apr_reg_responsible" model="patch.scripts">
+            <field name="method">us_15685_populate_apr_reg_responsible</field>
+        </record>
+
+        <!-- UF41.0 -->
+        <record id="us_15433_delete_WACA_2025_fiscal_year" model="patch.scripts">
+            <field name="method">us_15433_delete_WACA_2025_fiscal_year</field>
+        </record>
+
+        <record id="us_12391_cleanup_rate_VEF_2016" model="patch.scripts">
+            <field name="method">us_12391_cleanup_rate_VEF_2016</field>
+        </record>
+
+        <record id="us_15432_fix_currencies_rounding" model="patch.scripts">
+            <field name="method">us_15432_fix_currencies_rounding</field>
+        </record>
+
+        <record id="us_15072_po_detail" model="patch.scripts">
+            <field name="method">us_15072_po_detail</field>
+        </record>
+
+        <record id="us_15639_update_description_ppl" model="patch.scripts">
+            <field name="method">us_15639_update_description_ppl</field>
+        </record>
+
+        <record id="us_14587_15419_15645_sde_changes" model="patch.scripts">
+            <field name="method">us_14587_15419_15645_sde_changes</field>
+        </record>
+
+        <record id="us_15197_replace_product_id_into_counter" model="patch.scripts">
+            <field name="method">us_15197_replace_product_id_into_counter</field>
+        </record>
+
+        <record id="us_14532_email_signature_notification" model="patch.scripts">
+            <field name="method">us_14532_email_signature_notification</field>
+        </record>
+
+        <!-- UF42.0 -->
+        <record id="us_11997_financing_contract_sync" model="patch.scripts">
+            <field name="method">us_11997_financing_contract_sync</field>
+        </record>
+
+        <record id="us_15346_OCBTD101_CHABUSD_no_delete" model="patch.scripts">
+            <field name="method">us_15346_OCBTD101_CHABUSD_no_delete</field>
+        </record>
+
+        <record id="us_15593_15666_fix_local_products" model="patch.scripts">
+            <field name="method">us_15593_15666_fix_local_products</field>
+        </record>
+
+        <record id="us_15663_15664_customs_transport_fees_state" model="patch.scripts">
+            <field name="method">us_15663_15664_customs_transport_fees_state</field>
         </record>
     </data>
 </openerp>

@@ -514,8 +514,6 @@ class po_follow_up(osv.osv_memory):
             report_header_line2 += wiz.po_date_thru
         report_header.append(report_header_line2)
 
-        datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms, 'context': context}
-
         if wiz.po_date_from:
             domain.append(('date_order', '>=', wiz.po_date_from))
 
@@ -525,7 +523,13 @@ class po_follow_up(osv.osv_memory):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
-            'datas': datas,
+            'datas': {
+                'ids': po_ids,
+                'report_header': report_header,
+                'report_parms': report_parms,
+                'context': context,
+                'target_filename': _('PO Follow up_%s_%s') % (wiz.po_id and wiz.po_id.name or '', time.strftime('%Y%m%d_%H_%M'))
+            },
             'nodestroy': True,
             'context': context,
         }

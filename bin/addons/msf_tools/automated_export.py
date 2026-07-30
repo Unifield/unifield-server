@@ -215,7 +215,10 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             try:
                 cnopts = pysftp.CnOpts()
                 cnopts.hostkeys = None
-                sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password, cnopts=cnopts)
+                port = 22
+                if obj.ftp_port:
+                    port = int(obj.ftp_port)
+                sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password, port=port, cnopts=cnopts)
                 sftp._transport.set_keepalive(15)
             except:
                 self.infolog(cr, uid, _('%s :: SFTP connection failed') % obj.name)

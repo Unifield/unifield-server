@@ -83,8 +83,7 @@ class wizard_import_fo_line(osv.osv_memory):
         for wiz_browse in self.browse(cr, uid, ids, context):
             try:
                 fo_browse = wiz_browse.fo_id
-                if not fo_browse.pricelist_id \
-                        or not fo_browse.pricelist_id.currency_id:
+                if not fo_browse.pricelist_id or not fo_browse.pricelist_id.currency_id:
                     raise osv.except_osv(_("Error!"), _("Order currency not found!"))
                 fo_id = fo_browse.id
 
@@ -347,19 +346,21 @@ class wizard_import_fo_line(osv.osv_memory):
         """
         wiz_common_import = self.pool.get('wiz.common.import')
         sale_obj = self.pool.get('sale.order')
-        for wiz_read in self.read(cr, uid, ids, ['fo_id', 'file']):
-            fo_id = wiz_read['fo_id']
-            if not wiz_read['file']:
+        for wiz_read in self.browse(cr, uid, ids, fields_to_fetch=['fo_id', 'file'], context=context):
+            fo = wiz_read.fo_id
+            if not wiz_read.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
+            if fo.state != 'draft':
+                return self.write(cr, uid, ids, {'state': 'done', 'message': _("You can only import on a Draft FO; import file is ignored")}, context=context)
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read.file))
                 # iterator on rows
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'fo_id': fo_id, 'header_index': header_index})
+                context.update({'fo_id': fo.id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_fo_line_import, origin='FO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
@@ -370,8 +371,8 @@ class wizard_import_fo_line(osv.osv_memory):
                 return self.write(cr, uid, ids, {'message': message})
             except StopIteration:
                 return self.write(cr, uid, ids, {'message': _('The file has not row, nothing to import')})
-            # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            sale_obj.write(cr, uid, fo_id, {'import_in_progress': True}, context)
+            # we close the FO only during the import process so that the user can't update the FO in the same time (all fields are readonly)
+            sale_obj.write(cr, uid, fo.id, {'import_in_progress': True}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.

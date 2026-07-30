@@ -10,7 +10,7 @@
                     <separator colspan="4" string="Request parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
-                    <field name="partner_id" on_change="donation_report_onchange(partner_id, move_id, display_bn_ed)" />
+                    <field name="partner_id" on_change="donation_report_onchange(partner_id, move_id, display_bn_ed)" context="{'show_button_show_inactive': True}" />
                     <field name="partner_type" />
                     <field name="product_id" />
                     <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"/>

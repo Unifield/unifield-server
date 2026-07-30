@@ -317,7 +317,7 @@ class account_move_line(osv.osv):
 
 
     _columns = {
-        'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
+        'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation", select=1),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
                                      help="This indicates the state of the Journal Entry.", write_relate=False),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,

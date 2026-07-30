@@ -4,7 +4,7 @@
 
         <menuitem id="menu_warehouse_expiry"
                   name="Expiry"
-                  sequence="-10"
+                  sequence="10"
                   parent="stock.next_id_61" />
 
         <record id="expiry_quantity_report_init_view" model="ir.ui.view">
@@ -66,7 +66,7 @@
         </record>
 
         <record id="action_expired_products" model="ir.actions.act_window">
-            <field name="name">Expiry quantities</field>
+            <field name="name">Expiry Quantities</field>
             <field name="res_model">expiry.quantity.report</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -112,7 +112,7 @@
             <field name="model">product.likely.expire.report</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Products likely to expire">
+                <search string="Products Likely to Expire">
                     <field name="requestor_id" />
                     <filter domain="[('requestor_id', '=', uid)]" icon="terp-personal" help="My requests" />
                     <field name="requestor_date" />
@@ -125,7 +125,7 @@
             <field name="model">product.likely.expire.report</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Products likely to expire" noteditable="1" colors="grey:status=='in_progress';green:status=='ready'">
+                <tree string="Products Likely to Expire" noteditable="1" colors="grey:status=='in_progress';green:status=='ready'">
                     <field name="requestor_date" />
                     <field name="requestor_id" />
                     <field name="date_from" />
@@ -217,7 +217,7 @@
         </record>
 
         <record id="action_products_to_expire" model="ir.actions.act_window">
-            <field name="name">Products likely to expire</field>
+            <field name="name">Products Likely to Expire</field>
             <field name="res_model">product.likely.expire.report</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

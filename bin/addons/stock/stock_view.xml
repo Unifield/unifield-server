@@ -550,12 +550,19 @@
             <field name="priority">17</field>
             <field name="arch" type="xml">
                 <search string="Stock Locations">
-                    <filter icon="terp-go-home" name="in_location"
-                        string="Internal" domain="[('usage', '=', 'internal')]" help="Internal Locations" />
-                    <filter icon="terp-personal" name="customer"
-                        string="Customer" domain="[('usage', '=', 'customer')]" help="Customer Locations" />
-                    <filter icon="terp-personal" name="supplier"
-                        string="Supplier" domain="[('usage', '=', 'supplier')]" help="Supplier Locations" />
+                    <filter icon="terp-go-home" name="in_location" string="Internal" domain="[('usage', '=', 'internal')]" help="Internal Locations" />
+                    <filter icon="terp-personal" name="customer" string="Customer" domain="[('usage', '=', 'customer')]" help="Customer Locations" />
+                    <filter icon="terp-personal" name="supplier" string="Supplier" domain="[('usage', '=', 'supplier')]" help="Supplier Locations" />
+                    <separator orientation="vertical" />
+                    <group name="display_active_filter" invisible="1">
+                        <html>
+                            <script language="javascript">
+                                $('[for="display_active_filter"]').css('width', '1%%');
+                            </script>
+                        </html>
+                        <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
+                        <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
+                    </group>
                     <separator orientation="vertical"/>
                     <field name="name"/>
                 </search>
@@ -812,6 +819,7 @@
                     <field name="details" truncate="15"/>
                     <field name="order_category" />
                     <field name="reason_type_id" />
+                    <field name="sde_updated"/>
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="backorder_id" groups="base.group_extended"/>
@@ -1217,7 +1225,7 @@
             <field name="context">{'search_default_Available':1}</field>
             <field name="help">This menu gives you the full traceability of inventory operations on a specific product. You can filter on the product to see all the past or future movements for the product.</field>
         </record>
-        <menuitem action="action_move_form2" id="menu_action_move_form2" parent="menu_traceability" sequence="3"/>
+        <menuitem action="action_move_form2" id="menu_action_move_form2" parent="menu_traceability" sequence="1"/>
 
         <record id="view_move_tree_sysint" model="ir.ui.view">
             <field name="name">stock.move.tree</field>

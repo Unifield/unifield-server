@@ -817,7 +817,8 @@ class stock_picking(osv.osv):
         return True
 
     def get_min_max_date(self, cr, uid, ids, field_name, arg, context=None):
-        """ Finds minimum and maximum dates for picking.
+        """
+        Finds minimum and maximum dates for picking. If the picking is not cancelled, ignore cancelled lines
         @return: Dictionary of values
         """
         res = {}
@@ -825,16 +826,11 @@ class stock_picking(osv.osv):
             res[id] = {'min_date': False, 'max_date': False}
         if not ids:
             return res
-        cr.execute("""select
-                picking_id,
-                min(date_expected),
-                max(date_expected)
-            from
-                stock_move
-            where
-                picking_id IN %s
-            group by
-                picking_id""",(tuple(ids),))
+        cr.execute("""
+            SELECT p.id, MIN(m.date_expected), MAX(m.date_expected)
+            FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id=p.id
+            WHERE p.id IN %s AND ((p.state != 'cancel' AND m.state != 'cancel') OR p.state = 'cancel') GROUP BY p.id
+        """,(tuple(ids),))
         for pick, dt1, dt2 in cr.fetchall():
             res[pick]['min_date'] = dt1
             res[pick]['max_date'] = dt2
@@ -1119,6 +1115,9 @@ class stock_picking(osv.osv):
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
         'details': fields.char(size=86, string='Details'),
+        'sde_updated': fields.boolean('Updated by SDE'),
+        'sde_reset_date': fields.datetime('Reset action applied'),
+        'sde_update_msg': fields.text('Message to be displayed when SDE is updating a document'),
     }
 
     _defaults = {
@@ -1130,7 +1129,10 @@ class stock_picking(osv.osv):
         'invoice_state': 'none',
         'sync_dpo_in': False,
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c)
+        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c),
+        'sde_updated': False,
+        'sde_reset_date': False,
+        'sde_update_msg': False,
     }
 
     def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -1168,6 +1170,9 @@ class stock_picking(osv.osv):
         to_reset = {
             'claim': False,
             'claim_name': '',
+            'sde_updated': False,
+            'sde_reset_date': False,
+            'sde_update_msg': False,
             'from_manage_expired': False,
             'sync_dpo_in': False,
             'dpo_incoming': False,
@@ -1426,7 +1431,7 @@ class stock_picking(osv.osv):
 
     def action_cancel(self, cr, uid, ids, context=None):
         """ 
-        Changes picking state to cancel.
+        Changes picking state to cancel. Remove the banner SDE message
         @return: True
         """
         if isinstance(ids, int):
@@ -1438,7 +1443,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         for pick in self.read(cr, uid, ids, ['move_lines'], context=context):
             move_obj.action_cancel(cr, uid, pick['move_lines'], context)
-        self.write(cr, uid, ids, {'state': 'cancel', 'invoice_state': 'none'})
+        self.write(cr, uid, ids, {'state': 'cancel', 'invoice_state': 'none', 'sde_update_msg': False})
         self.log_picking(cr, uid, ids, context=context)
 
         return True
@@ -1447,7 +1452,8 @@ class stock_picking(osv.osv):
     # TODO: change and create a move if not parents
     #
     def action_done(self, cr, uid, ids, context=None):
-        """ Changes picking state to done.
+        """
+        Changes picking state to done. Remove the banner SDE message
         @return: True
         """
         if isinstance(ids, int):
@@ -1460,6 +1466,7 @@ class stock_picking(osv.osv):
         self.write(cr, uid, ids, {
             'state': 'done',
             'date_done': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'sde_update_msg': False,
         })
         self.log_picking(cr, uid, ids, context=context)
         return True
@@ -1774,7 +1781,8 @@ class stock_picking(osv.osv):
                 'origin': (invoice.origin or '') + ', ' + (picking.name or '') + (picking.origin and (':' + picking.origin) or ''),
                 'comment': (comment and (invoice.comment and invoice.comment+"\n"+comment or comment)) or (invoice.comment and invoice.comment or ''),
                 'date_invoice':context.get('date_inv',False),
-                'user_id':uid
+                'user_id':uid,
+                'po_details': picking.purchase_id.details
             }
             invoice_obj.write(cr, uid, [invoice_id], invoice_vals, context=context)
         else:
@@ -1794,6 +1802,7 @@ class stock_picking(osv.osv):
                 'user_id':uid,
                 'picking_id': picking.id,
                 'from_supply': True,
+                'po_details': picking.purchase_id.details
             }
             if picking.sale_id:
                 if not partner.property_account_position.id:
@@ -2342,6 +2351,26 @@ class stock_picking(osv.osv):
         self.write(cr, uid, ids, {'state': 'delivered'}, context=context)
 
         return True
+
+    def _get_stock_picking_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        obj = self.read(cr, uid, ids[0], ['name', 'type', 'subtype'], context=context)
+
+        doc_type = _('PT')
+        if obj['type'] == 'in':
+            doc_type = _('Incoming Shipments')
+        elif obj['type'] == 'internal':
+            doc_type = _('INT')
+        elif obj['type'] == 'out' and obj['subtype'] == 'standard':
+            doc_type = _('DO')
+        elif obj['type'] == 'out' and obj['subtype'] == 'ppl':
+            doc_type = _('PPL')
+
+        return _('%s_%s_%s') % (doc_type, obj and obj['name'] or '', time.strftime('%Y%m%d_%H_%M'))
 
 
 stock_picking()

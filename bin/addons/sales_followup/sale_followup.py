@@ -21,7 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
-import datetime
+import time
 
 class sale_order_followup_test(osv.osv_memory):
     _name = 'sale.order.followup.test'
@@ -328,7 +328,7 @@ class sale_order_followup(osv.osv_memory):
 
         return tender_ids
 
-    def export_get_file_name(self, cr, uid, ids, prefix='FO_Follow_Up', context=None):
+    def export_get_file_name(self, cr, uid, ids, prefix='FO Follow up', context=None):
         if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
@@ -337,11 +337,8 @@ class sale_order_followup(osv.osv_memory):
         if not foup or not foup.order_id or not foup.order_id.name:
             return False
         if foup.order_id.procurement_request:
-            prefix = 'IR_Follow_Up'
-        dt_now = datetime.datetime.now()
-        po_name = "%s_%s_%d_%02d_%02d" % (prefix,
-                                          foup.order_id.name.replace('/', '_'),
-                                          dt_now.year, dt_now.month, dt_now.day)
+            prefix = 'IR Follow up'
+        po_name = "%s_%s_%s" % (prefix, foup.order_id.name.replace('/', '_'), time.strftime('%Y%m%d_%H_%M'))
         return po_name
 
     def export_xls(self, cr, uid, ids, context=None):
@@ -733,12 +730,30 @@ class sale_order_line_followup(osv.osv_memory):
 
         return res
 
+    def _get_procure_method(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get the procurement method to display
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for solf in self.browse(cr, uid, ids, fields_to_fetch=['line_id'], context=context):
+            if solf.line_id.state in ['draft', 'validated']:
+                res[solf.id] = 'na'
+            else:
+                res[solf.id] = solf.line_id.type
+
+        return res
+
     _columns = {
         'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True, on_delete='cascade'),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
         'original_order_id': fields.many2one('sale.order', string='Orig. line', readonly=True),
         'first_line': fields.boolean(string='First line'),
-        'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
+        'procure_method': fields.function(_get_procure_method, method=True, type='selection', selection=[('na', 'N/A'), ('make_to_stock', 'From stock'), ('make_to_order', 'On order')], string='Proc. Method', readonly=True),
         'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT'), ('pli', 'PLI')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
         'product_id': fields.related('line_id', 'product_id', string='Product Code', readonly=True,

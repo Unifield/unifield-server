@@ -429,6 +429,7 @@
         <Column ss:AutoFitWidth="0" ss:Width="63"/> <!-- order coverage (multi) -->
    % endif
    <Column ss:AutoFitWidth="0" ss:Width="63"/> <!-- real stock -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75"/> <!-- rr-amc -->
    <Column ss:AutoFitWidth="0" ss:Width="66"/> <!--pipeline -->
    <Column ss:AutoFitWidth="0" ss:Width="82.5" /> <!-- eta -->
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- reserved -->
@@ -444,6 +445,13 @@
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- cost price -->
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- line value -->
    <Column ss:AutoFitWidth="0" ss:Width="300" /> <!-- qty comment -->
+   % for x in range(1, 19):
+   <Column ss:AutoFitWidth="0" ss:Width="50" /> <!-- rr_value_x -->
+   % if x == 1:
+       <Column ss:AutoFitWidth="0" ss:Width="50" /> <!-- rr_value_from_x -->
+   % endif
+   <Column ss:AutoFitWidth="0" ss:Width="50" /> <!-- rr_value_to_x -->
+   % endfor
    <Column ss:AutoFitWidth="0" ss:Width="300" /> <!-- warning -->
    <Row ss:AutoFitHeight="0" ss:Height="31.5">
     <Cell ss:MergeAcross="9" ss:StyleID="s64"><Data ss:Type="String">${get_export_title()|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
@@ -549,6 +557,7 @@
     <Cell ss:StyleID="s90"><Data ss:Type="String">${_('Order Coverage')|x}</Data></Cell>
 % endif
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Real Stock')|x}</Data></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('RR-AMC')|x}</Data></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Pipeline Qty')|x}</Data></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Eta For next Pipeline')|x}</Data></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Reserved Stock Qty')|x}</Data></Cell>
@@ -564,6 +573,13 @@
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Cost Price')|x} ${company.currency_id.name|x}</Data></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Line Value')|x} ${company.currency_id.name|x}</Data></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Order Qty Comment')|x}</Data></Cell>
+% for x in range(1, 19):
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('RR Value %d') % (x,)|x}</Data></Cell>
+    % if x == 1:
+        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('From %d') % (x,)|x}</Data></Cell>
+    % endif
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('To %d') % (x,)|x}</Data></Cell>
+% endfor
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Warning')|x}</Data></Cell>
    </Row>
 
@@ -601,6 +617,7 @@
     <Cell ss:StyleID="s95${color}"><Data ss:Type="Number">${prod.segment_id.order_coverage or 0.0}</Data></Cell>
 % endif
     <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
     <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.pipeline_qty}</Data></Cell>
     <Cell ss:StyleID="s97d${color}">
         % if isDate(prod.eta_for_next_pipeline):
@@ -642,6 +659,25 @@
     <Cell ss:StyleID="s973D${color}"><Data ss:Type="Number">${prod.cost_price}</Data></Cell>
     <Cell ss:StyleID="s972D${color}" ss:Formula="=RC[-2]*RC[-1]"><Data ss:Type="Number">${prod.line_value or 0}</Data></Cell>
     <Cell ss:StyleID="sw97u${color}"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
+    % for x in range(1, 19):
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="String">${getattr(prod, 'rr_value_%d' % (x,)) or ''|x}</Data></Cell>
+    % if x == 1:
+        <Cell ss:StyleID="s97d${color}">
+            % if isDate(getattr(prod, 'rr_value_from_%d' % (x,))):
+                <Data ss:Type="DateTime">${getattr(prod, 'rr_value_from_%d' % (x,))|n}T00:00:00.000</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
+    % endif
+    <Cell ss:StyleID="s97d${color}">
+        % if isDate(getattr(prod, 'rr_value_to_%d' % (x,))):
+            <Data ss:Type="DateTime">${getattr(prod, 'rr_value_to_%d' % (x,))|n}T00:00:00.000</Data>
+        % else:
+            <Data ss:Type="String"></Data>
+        % endif
+    </Cell>
+    % endfor
     <Cell ss:StyleID="sw97${color}"><Data ss:Type="String">${(prod.warning or '')|xn}</Data></Cell>
 
    </Row>

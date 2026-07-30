@@ -22,3 +22,4 @@
 from . import kit_report
 from . import kit_mass_impor_export
 from . import kitting_order_report
+from . import tkc_kcl_comparison_report

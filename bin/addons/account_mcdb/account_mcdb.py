@@ -27,6 +27,7 @@ from tools.translate import _
 from tools import flatten
 from lxml import etree
 from datetime import datetime
+import time
 
 
 class account_mcdb(osv.osv):
@@ -1518,19 +1519,27 @@ class account_mcdb(osv.osv):
         bg_obj = self.pool.get('memory.background.report')
         if format == 'xls':
             report_name = 'combined.journals.report.xls'
+            prop_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.name
+            date_str = time.strftime('%Y%m%d')
+
+            filename = "%s_Combined Journals Report XLS_%s" % (prop_instance, date_str)
         else:
             report_name = 'combined.journals.report.pdf'
+            filename = 'Combined Journals Report PDF'
         selector = self.read(cr, uid, ids[0], ['analytic_axis'], context=context)
         data = {
             'selector_id': ids[0],
-            'analytic_axis': selector.get('analytic_axis', 'fp')
+            'analytic_axis': selector.get('analytic_axis', 'fp'),
         }
-        # make the report run in background
-        background_id = bg_obj.create(cr, uid, {'file_name': 'Combined Journals Report',
-                                                'report_name': report_name}, context=context)
+        data['target_filename'] = filename
+        background_id = bg_obj.create(cr, uid, {
+            'file_name': filename,
+            'report_name': report_name
+        }, context=context)
         context['background_id'] = background_id
         context['background_time'] = 2
         data['context'] = context
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,

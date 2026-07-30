@@ -36,7 +36,6 @@ import traceback
 import json
 
 from msf_field_access_rights.osv_override import _get_instance_level
-import io
 import csv
 import zlib
 import random
@@ -59,7 +58,477 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF42.0
+    def us_11997_financing_contract_sync(self, cr, uid, *a, **b):
+        # on HQ trigger updates on financing object linked to mission-private rule
+        # this will unlock existing NR
+
+        # on sync server changer owner on rules from project to coordo
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''eligibility_from_date'']' where model='financing.contract.format'")
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''code'']' where model='financing.contract.contract'")
+            cr.execute("update ir_model_data set last_modification=now(), touched='[''funded'']' where model='financing.contract.funding.pool.line'")
+            self.log_info(cr, uid, "US-11997 fixed at HQ")
+        elif cr.table_exists('sync_server_user_rights'):
+            cr.execute("""
+                update sync_server_update u
+                    set owner = (select parent_id from sync_server_entity where id=owner)
+                where
+                    rule_id in (select id from sync_server_sync_rule where sequence_number in (450, 455, 456, 457, 458)) and
+                    owner is not null and
+                    owner in (select id from sync_server_entity where instance_level='project') and
+                    u.id in (select min(id) from sync_server_update u2 where u2.session_id=u.session_id and u2.rule_id=u.rule_id and u2.sdref=u.sdref)
+            """)
+            self.log_info(cr, uid, "US-11997 fixed on sync server")
+
+        return True
+
+    def us_15346_OCBTD101_CHABUSD_no_delete(self, cr, uid, *a, **b):
+        """
+            do no sent sync update deletion on account.journal OCBSY101/CHABUSD
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.code == 'OCBTD101':
+            cr.execute('''
+                delete from ir_model_data
+                where name = 'journal_OCBSY101_CHABUSD_ARAB BANK USD' and
+                not exists(select id from account_journal where id=res_id)
+            ''')
+        return True
+
+    def us_15593_15666_fix_local_products(self, cr, uid, *a, **b):
+        """
+        At Coordo:
+            - Set the Standardization Level of Local Products from Standard/Non-Standard Local to Non-Standard.
+            - Try to deactivate all active Local Products with the UniField Status Forbidden or Archived. If one or more
+            products can not be deactivated, set their UniField Status to Phase Out and create a Product Mass Update for them.
+            - Set the UniField Status of inactive Local Products with the UniField Status Forbidden or Archived to Phase Out
+        """
+        if _get_instance_level(self, cr, uid) == 'coordo':
+            # Local Products to Non-Standard
+            cr.execute("""
+                SELECT p.id FROM product_product p LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE pis.code = 'local' AND p.standard_ok IN ('standard', 'non_standard_local')
+            """)
+            prod_st_ok_ids = [x[0] for x in cr.fetchall()]
+            if prod_st_ok_ids:
+                cr.execute("""UPDATE product_product SET standard_ok = 'non_standard' WHERE id IN %s""", (tuple(prod_st_ok_ids),))  # not_a_user_entry
+                self.log_info(cr, uid, "US-15593-15666: %d Local product(s) had their Standardization Level set to Non-standard" % (cr.rowcount,))
+
+            # Try to deactivate Forbidden/Archived Local Products
+            not_deactivated, not_deac_prod_ids = [], []
+            cr.execute("""
+                SELECT p.id FROM product_product p
+                    LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                    LEFT JOIN product_status ps ON pt.state = ps.id
+                    LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE p.active = 't' AND pis.code = 'local' AND ps.code IN ('archived', 'forbidden')
+            """)
+            prod_to_deac_ids = [x[0] for x in cr.fetchall()]
+            for prod_id in prod_to_deac_ids:
+                deactivated = self.pool.get('product.product').deactivate_product(cr, uid, [prod_id])
+                if deactivated != True:  # If it doesn't return True, the product has not been deactivated
+                    not_deactivated.append(deactivated.get('res_id'))
+            self.log_info(cr, uid, "US-15593-15666: %d Local product(s) were deactivated" % (len(prod_to_deac_ids) - len(not_deactivated),))
+
+            # Create the Product Mass Update with the non-deactivated products
+            # Then set the UF State of non-deactivated products and the already Archived/Forbidden inactive products to Phase Out
+            cr.execute("""
+                SELECT p.id FROM product_product p
+                    LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                    LEFT JOIN product_status ps ON pt.state = ps.id
+                    LEFT JOIN product_international_status pis ON p.international_status = pis.id
+                WHERE p.active = 'f' AND pis.code = 'local' AND ps.code IN ('archived', 'forbidden')
+            """)
+            to_phase_out_prod_ids = [x[0] for x in cr.fetchall()]
+
+            for wiz_prod_error in self.pool.get('product.deactivation.error').browse(cr, uid, not_deactivated):
+                not_deac_prod_ids.append(wiz_prod_error.product_id.id)
+            if not_deac_prod_ids:
+                to_phase_out_prod_ids = list(set(to_phase_out_prod_ids + not_deac_prod_ids))
+                p_mass_upd_vals = {
+                    'name': '(US-15593) Local Products UF Status Archived/Forbidden Correction',
+                    'active_product': 'no',
+                    'product_ids': [(6, 0, not_deac_prod_ids)],
+                }
+                self.pool.get('product.mass.update').create(cr, uid, p_mass_upd_vals)
+
+            if to_phase_out_prod_ids:
+                phase_out_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
+                cr.execute("""
+                    UPDATE product_template SET state = %s 
+                    WHERE id IN (SELECT p.product_tmpl_id FROM product_product p WHERE id IN %s)
+                """, (phase_out_id, tuple(to_phase_out_prod_ids)))  # not_a_user_entry
+                self.log_info(cr, uid, "US-15593-15666: %d Local product(s) had their UniField Status set to Phase Out" % (cr.rowcount,))
+
+            # Update the ir_model_data of all products updated by SQL
+            mod_prod_ids = list(set(prod_st_ok_ids + to_phase_out_prod_ids))
+            if mod_prod_ids:
+                cr.execute("""UPDATE ir_model_data SET last_modification = NOW(), touched = '["transport_ok", "state"]'
+                              WHERE model = 'product.product' AND res_id IN %s""", (tuple(mod_prod_ids),))  # not_a_user_entry
+
+        return True
+
+    def us_15663_15664_customs_transport_fees_state(self, cr, uid, *a, **b):
+        """
+        Set the state of Customs/Transport fees to Validated if they have been validated, to Draft otherwise
+        """
+        cr.execute("""UPDATE transport_order_customs_fees SET state = 'draft' WHERE validated = 'f'""")
+        cr.execute("""UPDATE transport_order_customs_fees SET state = 'validated' WHERE validated = 't'""")
+        cr.execute("""UPDATE transport_order_transport_fees SET state = 'draft' WHERE validated = 'f'""")
+        cr.execute("""UPDATE transport_order_transport_fees SET state = 'validated' WHERE validated = 't'""")
+        return True
+
+    # UF41.0
+    def us_14587_15419_15645_sde_changes(self, cr, uid, *a, **b):
+        '''
+        Hide the 4 Single Data Entry menus used for manual actions. Then menus will need be manually activated if
+        someone want to test SDE from Unifield
+        Give the new user "sde_tool" the Groups "Sync / User", "Sup_Warehouse_Manager" and "Sup_Transport_Manager"
+        '''
+        # Hide the menu
+        menu_obj = self.pool.get('ir.ui.menu')
+
+        sde_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_main_menu')[1]
+        sde_tools_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_import_menu')[1]
+        sde_pagi_imp_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_import_menu')[1]
+        sde_pagi_exp_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_paginated_export_menu')[1]
+        sde_avchk_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'sde_availability_check_menu')[1]
+
+        menu_obj.write(cr, uid, sde_menu_id, {'active': False}, context={})
+        menu_ids = [sde_tools_menu_id, sde_pagi_imp_menu_id, sde_pagi_exp_menu_id, sde_avchk_menu_id]
+        menu_obj.write(cr, uid, menu_ids, {'active': False}, context={})
+
+        # SQL request to activate the menus, then restart the server
+        # UPDATE ir_ui_menu SET active = 't' WHERE id IN (SELECT res_id FROM ir_model_data WHERE name IN ('sde_import_menu', 'sde_import_main_menu', 'sde_paginated_import_menu', 'sde_paginated_export_menu', 'sde_availability_check_menu'));
+
+        # Set the needed Groups to "sde_tool" user, exclude sync server
+        if not cr.table_exists('sync_server_user_rights'):
+            user_obj = self.pool.get('res.users')
+            sde_tool_user_id = user_obj._get_sde_tool_user_id(cr)
+            if sde_tool_user_id:
+                group_obj = self.pool.get('res.groups')
+                sync_user_ids = group_obj.search(cr, uid, [('name', '=', 'Sync / User')])
+                group_ids = []
+                if sync_user_ids:
+                    group_ids.append(sync_user_ids[0])
+                sup_wh_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Warehouse_Manager')])
+                if sup_wh_man_group_ids:
+                    group_ids.append(sup_wh_man_group_ids[0])
+                sup_tr_man_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Transport_Manager')])
+                if sup_tr_man_group_ids:
+                    group_ids.append(sup_tr_man_group_ids[0])
+
+                user_obj.write(cr, uid, sde_tool_user_id, {'groups_id': [(6, 0, group_ids)]}, context={})
+        return True
+
+    def us_15197_replace_product_id_into_counter(self, cr, uid, *a, **b):
+        """
+        Count the number of times a product is merged into instead of storing the product info
+        """
+        cr.execute("""UPDATE product_product SET nb_merge_from = 1 WHERE replace_product_id IS NOT NULL""")
+        return True
+
+    def us_14532_email_signature_notification(self, cr, uid, *a, **b):
+        '''
+        Give default access read rights to all users and read+write rights to Sync_Config group for
+            email.signature.notification and email.signature.notification.doc.applicability at HQ level
+        Add the missing rights for manual signature request email
+        Hide the email.signature.notification configuration menu if necessary
+        '''
+        group_obj = self.pool.get('res.groups')
+        if _get_instance_level(self, cr, uid) == 'hq':
+            sc_group_ids = group_obj.search(cr, uid, [('name', '=', 'Sync_Config')])
+            for model in ['email.signature.notification', 'email.signature.notification.doc.applicability']:
+                model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model)])
+                self.pool.get('ir.model.access').create(cr, uid, {
+                    'name': 'common',
+                    'model_id': model_id[0],
+                    'perm_read': True,
+                })
+                if sc_group_ids:
+                    self.pool.get('ir.model.access').create(cr, uid, {
+                        'name': 'Sync_Config',
+                        'model_id': model_id[0],
+                        'groups': [(6, 0, sc_group_ids)],
+                        'perm_read': True,
+                        'perm_write': True,
+                    })
+
+        if not cr.table_exists('sync_server_user_rights'):
+            # exclude sync server
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            for group_name, model, b_names in [
+                ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement', 'physical.inventory'], ['specific_email_signature_notification']),
+                ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order', 'physical.inventory'], ['specific_email_signature_notification'])
+            ]:
+                group_ids = group_obj.search(cr, uid, [('name', '=', group_name)], context=None)
+                if group_ids:
+                    bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
+                    bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+
+        setup_config = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup_config:
+            menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'email_signature_notification_menu')[1]
+            self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': setup_config.signature})
+
+        return True
+
+    def us_15072_po_detail(self, cr, uid, *a, **b):
+        """
+        Add the PO details to the invoice
+        """
+        cr.execute("""
+            UPDATE account_invoice AS ai
+            SET po_details = po.details
+            FROM stock_picking AS sp
+            JOIN purchase_order po ON sp.purchase_id = po.id
+            WHERE sp.id = ai.picking_id
+                AND ai.po_details IS NULL
+        """)
+        return True
+
+    def us_15432_fix_currencies_rounding(self, cr, uid, *a, **b):
+        """
+        Set the currencies rounding to 0.010000
+        """
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            currency_obj = self.pool.get('res.currency')
+
+            currency_ids = currency_obj.search(cr, uid, [
+                ('rounding', '=', 0)
+            ], context=None)
+
+            if currency_ids:
+                currency_obj.write(cr, uid, currency_ids, {
+                    'rounding': 0.01
+                }, context=None)
+
+        cr.execute("""
+            UPDATE res_currency
+            SET rounding = 0.010000
+                WHERE rounding = 0
+        """)
+        return True
+
+    def us_15433_delete_WACA_2025_fiscal_year(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if not entity_obj or entity_obj.get_entity(cr, uid).oc != 'waca':
+            return True
+
+        cr.execute("""
+            DELETE FROM
+                account_fiscalyear
+            WHERE
+                code = 'FY2025' and
+                id in (
+                    select res_id from ir_model_data where model='account.fiscalyear' and name='FY2025'
+                )
+        """)
+        if cr.rowcount:
+            self.log_info(cr, uid, "US-15433: FY 2025 deleted")
+        return True
+
+    def us_12391_cleanup_rate_VEF_2016(self, cr, uid, *a, **b):
+        # align OCB VEF 01/Jan/2016 rate ( 1st VEF entry is on 2016-02-29)
+        cr.execute("select * from ir_model_data d where d.model='res.currency.rate' and d.name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243', '8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
+        nb_rate = cr.rowcount
+        if nb_rate == 1:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
+            if cr.rowcount:
+                self.log_info(cr, uid, 'US-12391: VEF 01/Jan/2016 rate fixed')
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
+        elif nb_rate == 2:
+            cr.execute("delete from res_currency_rate where name='2016-01-01' and id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243')")
+            cr.execute("delete from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
+            self.log_info(cr, uid, 'US-12391: VEF 01/Jan/2016 rate duplicated')
+
+        # align OCBHT VEF 01/Feb/2016 rate ( no VEF entry on HT)
+        cr.execute("select * from ir_model_data d where d.model='res.currency.rate' and d.name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397', '8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
+        nb_rate = cr.rowcount
+        if nb_rate == 1:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
+            if cr.rowcount:
+                self.log_info(cr, uid, 'US-12391: VEF 01/Feb/2016 rate fixed')
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
+        elif nb_rate == 2:
+            cr.execute("delete from res_currency_rate where name='2016-02-01' and id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397')")
+            cr.execute("delete from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
+            self.log_info(cr, uid, 'US-12391: VEF 01/Feb/2016 rate duplicated')
+
+        # align OCB ZWL Jun/2016 rate sdref
+        cr.execute("select res_id from ir_model_data where name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/4586', 'b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094')")
+        nb_rate = cr.rowcount
+        if nb_rate == 1:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/4586' where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
+            if cr.rowcount:
+                self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 sdref name aligned')
+        elif nb_rate == 2:
+            cr.execute("delete from res_currency_rate where name='2016-06-01' and id in (select res_id from ir_model_data where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094')")
+            cr.execute("delete from ir_model_data where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
+            self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 duplicated')
+
+    def us_15639_update_description_ppl(self, cr, uid, *a, **b):
+        '''
+        Update the description_ppl field of Draft/Available pack_family_memory using the linked Pack's (stock_picking) details
+        '''
+        cr.execute("""
+            UPDATE pack_family_memory AS pf
+            SET description_ppl = p.details FROM stock_picking AS p
+            WHERE pf.draft_packing_id = p.id AND pf.state IN ('draft', 'assigned')
+        """)
+        self.log_info(cr, uid, 'US-15639: The Details of %s Pack Families have been updated' % (cr.rowcount,))
+        return True
+
+    # UF40.1
+    def us_15685_populate_apr_reg_responsible(self, cr, uid, *a, **b):
+        cr.execute("""
+            insert into bank_statement_users_rel (statement_id, user_id)
+                select
+                    st_ap.id, rel1.user_id
+                from
+                    account_bank_statement st_ap
+                    left join account_period p_ap on p_ap.id = st_ap.period_id
+                    left join account_bank_statement prev on prev.id = st_ap.prev_reg_id
+                    left join bank_statement_users_rel rel1 on rel1.statement_id = prev.id
+                where
+                    prev.id is not null and
+                    rel1.user_id is not null and
+                    not exists (select * from bank_statement_users_rel rel where rel.statement_id = st_ap.id) and
+                    date_start='2026-04-01'
+            returning statement_id
+        """)
+        st_ids = set([x[0] for x in cr.fetchall()])
+        if st_ids:
+            cr.execute('''
+                select
+                    j.code, count(u.user_id)
+                from
+                    account_bank_statement st_ap, account_journal j, bank_statement_users_rel u
+                where
+                    st_ap.journal_id = j.id and
+                    u.statement_id = st_ap.id and
+                    st_ap.id in %s
+                group by j.code
+            ''', (tuple(st_ids), ))
+            for x in cr.fetchall():
+                self.log_info(cr, uid, "US-15685: Apr register %s, add %s users" % (x[0], x[1]))
+
+        return True
+
     # UF40.0
+    def us_15252_non_service_prod_transport_flag(self, cr, uid, *a, **b):
+        '''
+        At HQ level, change the transport_ok flag to False on non-service UD products having it at True and sync down the change
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            prod_ids_sql = """SELECT p.id FROM product_product p LEFT JOIN product_template t on p.product_tmpl_id=t.id
+                                                                 LEFT JOIN product_international_status i ON p.international_status=i.id
+                              WHERE i.code='unidata' AND t.type!='service_recep' AND p.transport_ok='t'"""
+            cr.execute("""UPDATE ir_model_data SET last_modification = NOW(), touched = '["transport_ok"]'
+                WHERE model = 'product.product' AND res_id IN (""" + prod_ids_sql + """)""") # not_a_user_entry
+            cr.execute("UPDATE product_product SET transport_ok = 'f' WHERE id IN (" + prod_ids_sql + ")") # not_a_user_entry
+            self.log_info(cr, uid, "US-15252: %d product(s) had their Transport flag set to False" % (cr.rowcount,))
+
+        return True
+
+    def us_15152_unsign_non_closed_cancelled_ins(self, cr, uid, *a, **b):
+        '''
+        Remove the signatures of all INs that are not Closed or Cancelled
+        '''
+        cr.execute("""
+            SELECT s.id, p.id FROM signature s LEFT JOIN stock_picking p ON s.signature_res_id=p.id
+            WHERE (s.signature_state IN ('partial', 'signed') OR s.signed_off_line='t') 
+                AND s.signature_res_model = 'stock.picking' AND p.type = 'in' AND p.state NOT IN ('done', 'cancel')
+        """)
+        signature_ids, in_ids = [], []
+        for x in cr.fetchall():
+            signature_ids.append(x[0])
+            in_ids.append(x[1])
+
+        self.pool.get('signature').write(cr, uid, signature_ids, {'signed_off_line': False, 'signature_is_closed': False})
+        to_unsign = []
+        for doc in self.pool.get('stock.picking').browse(cr, uid, in_ids, fields_to_fetch=['signature_line_ids']):
+            for line in doc.signature_line_ids:
+                if line.signed:
+                    to_unsign.append(line.id)
+        if to_unsign:
+            self.pool.get('signature.line')._action_unsign(cr, uid, to_unsign, check_ur=False)
+        self.log_info(cr, uid, "US-15152: The signatures of %s non-closed/cancelled INs were removed" % (len(in_ids),))
+
+        return True
+
+    def us_15079_user_email(self, cr, uid, *a, **b):
+        cmp = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if not cmp.instance_id or not cmp.partner_id:
+            return True
+
+        addr_obj = self.pool.get('res.partner.address')
+        users_obj = self.pool.get('res.users')
+
+        cr.execute('''
+            update
+                res_users u set user_email=a.email
+            from
+                res_partner_address a
+            where
+                u.address_id = a.id and
+                u.id != 1
+        ''')
+
+        cr.execute('''
+            select
+                add.id, u.id, add.partner_id
+            from
+                res_partner_address add, res_users u
+            where
+                u.address_id = add.id and
+                add.partner_id is not null
+        ''')
+
+        wrong_add_user = cr.fetchall()
+
+        add_ids = [x[0] for x in wrong_add_user]
+        if add_ids:
+            addr_obj.write(cr, uid, add_ids, {'email': False})
+
+        user_to_fix = set()
+        for add_id, u_id, partner_id in wrong_add_user:
+            if add_id and u_id:
+                user_to_fix.add(u_id)
+            if cmp.partner_id.id != partner_id:
+                new_add_id = addr_obj.copy(cr, uid, add_id, {'partner_id': False, 'name': False})
+                users_obj.write(cr, uid, [u_id], {'address_id': new_add_id})
+
+        if user_to_fix:
+            cr.execute('''
+                select
+                    distinct on (res_id) res_id, new_value
+                from
+                    audittrail_log_line
+                where
+                    name = 'user_email' and
+                    object_id = (select id from ir_model where model='res.users') and
+                    res_id in %s
+                order by
+                    res_id, id desc
+            ''', (tuple(user_to_fix), ))
+
+            for user_id, email in cr.fetchall():
+                if user_id and user_id != 1:
+                    user_to_fix.remove(user_id)
+                    users_obj.write(cr, uid, [user_id], {'user_email': email or False})
+
+        if user_to_fix:
+            users_obj.write(cr, uid, list(user_to_fix), {'user_email': False})
+
+        return True
+
     def us_15206_remove_new_code_on_ud_prod_not_merged(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':
@@ -147,6 +616,23 @@ class patch_scripts(osv.osv):
                         'log': log,
                     }
                     self.pool.get('audittrail.log.line').create(cr, uid, auditt_vals)
+        return True
+
+    def us_15310_ocp_fxa_journal(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocp':
+            j_id = self.pool.get('account.journal').search(cr, uid,
+                                                           [('code', '=', 'FXA'), ('is_current_instance', '=', True), ('default_credit_account_id.code', '!=', '71110')])
+            if j_id:
+                account_id = self.pool.get('account.account').search(cr, uid, [('code', '=', '71110')])
+                if account_id:
+                    self.pool.get('account.journal').write(cr, uid, j_id, {'default_credit_account_id': account_id[0]})
+        return True
+
+    # UF39.1
+    def us_15318_remove_transport_step_constraint(self, cr, uid, *a, **b):
+        cr.drop_constraint_if_exists('transport_order_step', 'transport_order_step_in_order_step_unique')
+        cr.drop_constraint_if_exists('transport_order_step', 'transport_order_step_out_order_step_unique')
         return True
 
     # UF39.0
@@ -255,6 +741,7 @@ class patch_scripts(osv.osv):
                     'ocg': ['none'],
                     'ocp': ['cur_adj', 'accrual', 'hq', 'correction', 'correction_hq', 'correction_manual', 'revaluation', 'system'],
                     'waca': [],
+                    'ubuntu': [],
                 }
                 oc = entity_obj.get_entity(cr, uid).oc
                 if oc and oc in restrictions:
@@ -1133,9 +1620,11 @@ class patch_scripts(osv.osv):
         entity_obj = self.pool.get('sync.client.entity')
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if entity_obj and instance and instance.level == 'section':
-            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ'):
+            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ', 'HQ_UBUNTU'):
                 ent = entity_obj.get_entity(cr, uid)
                 oc = ent.oc.upper()
+                if oc == 'UBUNTU':
+                    oc = 'OCB'
                 values_mapping = {
                     'Yes': 't',
                     'Kit/Module': 'kit',
@@ -1181,7 +1670,7 @@ class patch_scripts(osv.osv):
                                     """+cond, tuple(params)) # not_a_user_entry
                                 if not cr.rowcount:
                                     self._logger.warn('Line number %s, nomen %s not found' % (line_number, nom))
-                                    return False
+                                    continue
                                 parent_id = [x[0] for x in cr.fetchall()]
                                 level += 1
                         for n_id in parent_id:
@@ -7550,7 +8039,6 @@ class ir_model_data(osv.osv):
             os.rename(fp.name, "%sold" % fp.name)
             logger.warn('Set US-268 as executed')
 
-
 ir_model_data()
 
 class account_installer(osv.osv_memory):
@@ -7625,15 +8113,9 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def _get_default_ctx_lang(self, cr, uid, context=None):
-        config_obj = self.pool.get('unifield.setup.configuration')
-        if config_obj.search_exists(cr, uid, [], context=context):
-            # if not record, get_config create a record
-            # incorrect in case of user creation during install
-            config_lang = config_obj.get_config(cr, uid).lang_id
-            if config_lang:
-                return config_lang
-        if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
-            return 'en_MF'
+        for lang in ['en_MF', 'fr_MF', 'sp_MF']:
+            if self.pool.get('res.lang').search_exists(cr, uid, [('translatable','=',True), ('code', '=', lang)]):
+                return lang
         return 'en_US'
 
     def set_default_partner_lang(self, cr, uid, context=None):
@@ -7981,67 +8463,6 @@ class sync_tigger_something(osv.osv):
                   product_catalog_path=NULL
                 where international_status=%s ''', (unidata_id,))
             _logger.warn('Reset %d UD products' % (cr.rowcount,))
-
-        if vals.get('name') == 'us-5398-product-price':
-            msf_instance_obj = self.pool.get('msf.instance')
-            prod_obj = self.pool.get('product.product')
-
-            instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-            if instance.instance.startswith('OCG') and \
-                '_KE1_' not in instance.instance and \
-                '_UA1_' not in instance.instance and \
-                '_MX1_' not in instance.instance and \
-                    '_LB1_' not in instance.instance:
-
-                setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-                if not setup_br:
-                    percent = 0
-                else:
-                    percent = setup_br.sale_price
-
-
-                data_file = tools.file_open(opj('msf_profile', 'data', 'us-5398-product-price.csv'), 'rb')
-                data = data_file.read()
-
-                hq_id = msf_instance_obj.search(cr, uid, [('code', '=', 'CH')])
-                hq_info =  msf_instance_obj.browse(cr, uid, hq_id[0])
-
-                crypt_o = tools.misc.crypt(hq_info.instance_identifier)
-                clear_data = io.StringIO(crypt_o.decrypt(data))
-                csv_reader = csv.reader(clear_data, delimiter=',')
-                next(csv_reader)
-                xmlid_price = {}
-                xmlid_code = {}
-                prod_id_price = {}
-
-                for line in csv_reader:
-                    xmlid_price[line[1]] = float(line[2])
-                    xmlid_code[line[1]] = line[0]
-
-
-                all_xmlid = list(xmlid_price.keys())
-
-                for sdref, p_id in prod_obj.find_sd_ref(cr, uid, all_xmlid).items():
-                    prod_id_price[p_id] = xmlid_price[sdref]
-                    del xmlid_code[sdref]
-
-                if xmlid_code:
-                    _logger.warn('OCG Prod price update, %d products not found: %s' % (len(xmlid_code), ', '.join(list(xmlid_code.values()))))
-
-                nb_updated= 0
-                nb_ignored = 0
-                for prod in prod_obj.read(cr, uid, list(prod_id_price.keys()), ['standard_price', 'product_tmpl_id']):
-                    if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.000001:
-                        list_price = round(prod_id_price[prod['id']] * (1 + (percent/100.00)), 5)
-                        nb_updated += 1
-                        cr.execute('update product_template set standard_price=%s, list_price=%s where id=%s', (prod_id_price[prod['id']], list_price, prod['product_tmpl_id'][0]))
-                        cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
-                            (1, NOW(), %s, %s, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
-                            """,  (prod['standard_price'], prod_id_price[prod['id']], prod['id']))
-                    else:
-                        nb_ignored += 1
-
-                _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
 
         if vals.get('name') == 'us-7295-delete-not-hq-links' and context.get('sync_update_execution'):
             cr.execute("""

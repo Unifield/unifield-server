@@ -171,7 +171,7 @@ class products_situation_report(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 3
 
-        data = {'ids': ids, 'context': context}
+        data = {'ids': ids, 'context': context, 'target_filename': _('Products Situation Report_%s') % (time.strftime('%Y%m%d_%H_%M'),)}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'products.situation.report_xls',

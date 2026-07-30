@@ -92,7 +92,10 @@ def enable_static_paths():
 
 BASE_CONFIG = {
     # Conversion of input parameters via formencode.variabledecode.NestedVariables
-    'tools.nestedvars.on': True
+    'tools.nestedvars.on': True,
+    'tools.remove_cherrypy_header.on': True,
+    'tools.remove_cherrypy_header_error.on': True,
+    'request.show_tracebacks': False,
 }
 def configure(app_config):
     """ Configures OpenERP Web Client. Takes a configuration dict

@@ -80,24 +80,24 @@ class account_move_line(osv.osv):
                 date_where = ''
                 for ft in from_to_contexts:
                     if context.get(ft[0], False):
-                        date_where += "%s%s %s '%s'" % (
-                            ' AND ' if date_where else '',
+                        date_where += "%s%s.%s %s '%s'" % (
+                            ' AND ' if date_where else '',obj,
                             field, ft[1], context[ft[0]])
                 if date_where:
-                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE " + date_where + ")"
+                    where_move_lines_by_date = " AND " + date_where
         else:
             # default behaviour (except US-926 cross FY reporting)
             if context.get('date_from', False) and context.get('date_to', False):
                 if context.get('date_fromto_docdate', False):
                     if initial_bal:
-                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date < '" +context['date_from']+"')"
+                        where_move_lines_by_date = " AND " +obj+".document_date < '" +context['date_from']+"'"
                     else:
-                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date >= '" +context['date_from']+"' AND document_date <= '"+context['date_to']+"')"
+                        where_move_lines_by_date = " AND " +obj+".document_date >= '" +context['date_from']+"' AND " + obj + ".document_date <= '"+context['date_to']+"'"
                 else:
                     if initial_bal:
-                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date < '" +context['date_from']+"')"
+                        where_move_lines_by_date = " AND " +obj+".date < '" +context['date_from']+"'"
                     else:
-                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date >= '" +context['date_from']+"' AND date <= '"+context['date_to']+"')"
+                        where_move_lines_by_date = " AND " +obj+".date >= '" +context['date_from']+"' AND " + obj+ ".date <= '"+context['date_to']+"'"
 
         if state:
             if state.lower() not in ['all']:
@@ -764,6 +764,10 @@ class account_move_line(osv.osv):
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial,
                                                       type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
         'asset_line_id': fields.many2one('product.asset.line', 'Asset Line', readonly=1, ondelete='restrict'),
+        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15,
+                                                    string='3RD Party Partner TIN', store=False, readonly=True, context={'active_test': False}),
+        'business_registration_number': fields.related('partner_id', 'business_registration_number', type='char',
+                                                       size=15, string='3RD Party Partner RCCM', store=False, readonly=True, context={'active_test': False}),
     }
 
     def _get_currency(self, cr, uid, context=None):

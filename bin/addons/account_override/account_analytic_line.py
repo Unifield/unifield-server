@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 import decimal_precision as dp
 from . import finance_export
+from tools.translate import _
 
 
 class account_analytic_line(osv.osv):
@@ -75,6 +76,37 @@ class account_analytic_line(osv.osv):
         'product_code': fields.related('move_id', 'product_code', type='char', string='Product Code', readonly=True),
         'entry_quantity': fields.related('move_id', 'quantity', type='float', string='Quantity', readonly=True),
     }
+
+
+    def open_ad_tc(self, cr, uid, ids, context=None):
+        """
+        Opens the Track Changes of the currency in a new tab.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        fp_id = set()
+        names = set()
+        for aji in self.browse(cr, uid, ids, fields_to_fetch=['distrib_line_id', 'entry_sequence'], context=context):
+            if aji and aji.distrib_line_id:
+                fp_id.add(aji.distrib_line_id.id)
+                names.add(aji.entry_sequence)
+
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': '%s %s' % (_('Track changes'), ', '.join(names)),
+            'type': 'ir.actions.act_window',
+            'res_model': 'audittrail.log.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': [('res_id', 'in', list(fp_id)), ('object_id.model', '=', 'funding.pool.distribution.line')],
+            'target': 'current',
+        }
+
 
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

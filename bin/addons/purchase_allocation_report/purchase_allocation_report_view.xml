@@ -45,7 +45,7 @@
 					<field name="order_category" />
 					<field name="order_type" />
 					<field name="state" />
-					<field name="supplier" />
+					<field name="supplier" context="{'show_button_show_inactive': True}" />
 					<field name="creation_date" />
 					<newline />
 					<group colspan="4" col="16" expand="0" string="Group By">

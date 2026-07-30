@@ -219,6 +219,21 @@ class wizard_account_invoice(osv.osv):
 
         # Temp post the line
         absl_obj.button_temp_posting(cr, uid, [reg_line_id], context=context)
+        absl = absl_obj.browse(cr, uid, reg_line_id, context=context)
+
+        invoice = inv_obj.browse(cr, uid, inv_id, context=context)
+
+        if invoice.move_id:
+            for aml in invoice.move_id.line_id:
+                if (abs(aml.debit) < 0.0001 and abs(aml.credit) < 0.0001 and
+                    abs(aml.debit_currency) < 0.0001 and abs(aml.credit_currency) < 0.0001
+                    and aml.is_counterpart == False
+                    ):
+                    raise osv.except_osv(
+                        _('Warning'),
+                        _('Entry "%s" has all total debit/credit '
+                          'amounts equal to zero.') % (aml.name)
+                    )
 
         # Link invoice and register_line
         inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
@@ -307,6 +322,24 @@ class wizard_account_invoice(osv.osv):
             'res_id': [wiz_id],
             'context': context,
         }
+
+    def onchange_date_invoice(self, cr, uid, ids,
+                              date_invoice=False):
+        values = {}
+
+        if date_invoice:
+            values['register_posting_date'] = date_invoice
+
+        return {'value': values}
+
+    def onchange_register_posting_date(self, cr, uid, ids,
+                                       register_posting_date=False):
+        values = {}
+
+        if register_posting_date:
+            values['date_invoice'] = register_posting_date
+
+        return {'value': values}
 
 wizard_account_invoice()
 

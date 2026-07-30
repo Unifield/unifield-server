@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import datetime
+import time
 
 from osv import osv
 from osv import fields
@@ -125,6 +125,7 @@ class purchase_order_followup(osv.osv_memory):
                                      'move_state': 'No move',
                                      'line_name': line.line_number,
                                      'line_product_id': line.product_id.id,
+                                     'line_comment': line.comment,
                                      'line_product_qty': float_uom_to_str(line.product_qty, line.product_uom),
                                      'line_uom_id': line.product_uom.id,
                                      'line_confirmed_date': line.confirmed_delivery_date,
@@ -168,6 +169,7 @@ class purchase_order_followup(osv.osv_memory):
                                          'move_state': self._get_move_state(cr, uid, move.state, context=context),
                                          'line_name': line.line_number,
                                          'line_product_id': first_move and line.product_id.id or False,
+                                         'line_comment': first_move and line.comment or '',
                                          'line_product_qty': first_move and float_uom_to_str(line.product_qty, line.product_uom) or False,
                                          'line_uom_id': first_move and line.product_uom.id or False,
                                          'line_confirmed_date': first_move and line.confirmed_delivery_date or False,
@@ -203,7 +205,7 @@ class purchase_order_followup(osv.osv_memory):
 
         return res
 
-    def export_get_file_name(self, cr, uid, ids, prefix='PO_Follow_Up', context=None):
+    def export_get_file_name(self, cr, uid, ids, prefix='PO Follow up', context=None):
         if isinstance(ids, int):
             ids = [ids]
         if len(ids) != 1:
@@ -211,10 +213,7 @@ class purchase_order_followup(osv.osv_memory):
         foup = self.browse(cr, uid, ids[0], context=context)
         if not foup or not foup.order_id or not foup.order_id.name:
             return False
-        dt_now = datetime.datetime.now()
-        po_name = "%s_%s_%d_%02d_%02d" % (prefix,
-                                          foup.order_id.name.replace('/', '_'),
-                                          dt_now.year, dt_now.month, dt_now.day)
+        po_name = "%s_%s_%s" % (prefix, foup.order_id.name.replace('/', '_'), time.strftime('%Y%m%d_%H_%M'))
         return po_name
 
     def export_xls(self, cr, uid, ids, context=None):
@@ -281,6 +280,7 @@ class purchase_order_followup_line(osv.osv_memory):
         'followup_id': fields.many2one('purchase.order.followup', string='Follow-up'),
         'line_name': fields.char(size=64, string='#'),
         'line_product_id': fields.many2one('product.product', string='Product'),
+        'line_comment': fields.char('Comment', size=1024),
         'line_product_qty': fields.char(size=64, string='Qty'),
         'line_uom_id': fields.many2one('product.uom', string='UoM'),
         'line_confirmed_date': fields.date(string='Del. Conf. date'),

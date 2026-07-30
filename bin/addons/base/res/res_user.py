@@ -38,6 +38,9 @@ from lxml import etree
 from tools.misc import fakeUid
 from tools.misc import get_global_instance_level
 from tools.misc import search_global_instance_level
+import random
+import string
+from datetime import datetime, timedelta
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -267,6 +270,7 @@ class users(osv.osv):
     __admin_ids = {}
     __sync_user_ids = {}
     __unidata_pull_ids = {}
+    __sde_tool_ids = {}
     __ignore_ur_ids = {}
     _uid_cache = {}
     _name = "res.users"
@@ -335,32 +339,6 @@ class users(osv.osv):
                                     cr, uid, context=context),
                                 body=self.get_welcome_mail_body(
                                     cr, uid, context=context) % user)
-
-    def _email_get(self, cr, uid, ids, name, arg, context=None):
-        # perform this as superuser because the current user is allowed to read users, and that includes
-        # the email, even without any direct read access on the res_partner_address object.
-        return dict([(user.id, user.address_id.email) for user in self.browse(cr, 1, ids)]) # no context to avoid potential security issues as superuser
-
-    def _search_email(self, cr, uid, obj, name, args, context=None):
-        res = []
-        for arg in args:
-            if len(arg) > 2 and arg[0] == 'user_email':
-                res.append(('address_id.email', arg[1], arg[2]))
-        return res
-
-    def _email_set(self, cr, uid, ids, name, value, arg, context=None):
-        if not isinstance(ids,list):
-            ids = [ids]
-        address_obj = self.pool.get('res.partner.address')
-        for user in self.browse(cr, uid, ids, context=context):
-            # perform this as superuser because the current user is allowed to write to the user, and that includes
-            # the email even without any direct write access on the res_partner_address object.
-            if user.address_id:
-                address_obj.write(cr, 1, user.address_id.id, {'email': value or None}) # no context to avoid potential security issues as superuser
-            else:
-                address_id = address_obj.create(cr, 1, {'name': user.name, 'email': value or None}) # no context to avoid potential security issues as superuser
-                self.write(cr, uid, ids, {'address_id': address_id}, context)
-        return True
 
     def _set_new_password(self, cr, uid, id, name, value, args, context=None):
         login = self.read(cr, uid, id, ['login'])['login']
@@ -576,7 +554,7 @@ class users(osv.osv):
                                        "between the server and the client."),
         'view': fields.selection([('simple','Simplified'),('extended','Extended')],
                                  string='Interface', help="Choose between the simplified interface and the extended one"),
-        'user_email': fields.function(_email_get, method=True, fnct_search=_search_email, fnct_inv=_email_set, string='Email', type="char", size=240),
+        'user_email': fields.char('Email', type="char", size=240, copy=False),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'last_authentication': fields.function(_get_last_authentication, method=1, type='datetime', string='Last Authentication'),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
@@ -597,6 +575,13 @@ class users(osv.osv):
         'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1),  # deprecated
         'reactivation_date': fields.datetime('Reactivation date', readonly=1),
         'signee_user': fields.boolean('Signee Only'),
+        'reset_password_token': fields.char(
+            'Reset Password Token',
+            size=64
+        ),
+        'reset_password_date': fields.datetime(
+            'Reset Password Date'
+        ),
     }
 
     def search_web(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -732,6 +717,11 @@ class users(osv.osv):
         if self.__unidata_pull_ids.get(cr.dbname) is None:
             self.__unidata_pull_ids[cr.dbname] = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_unidata_pull')[1]
         return self.__unidata_pull_ids[cr.dbname]
+
+    def _get_sde_tool_user_id(self, cr):
+        if self.__sde_tool_ids.get(cr.dbname) is None:
+            self.__sde_tool_ids[cr.dbname] = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sde_tool')[1]
+        return self.__sde_tool_ids[cr.dbname]
 
     def _get_ignore_ur_ids(self, cr):
         if self.__ignore_ur_ids.get(cr.dbname) is None:
@@ -936,6 +926,9 @@ class users(osv.osv):
         if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
             raise osv.except_osv(_('Error'), _('Activation of UniData_pull user is not allowed.'))
 
+        if values.get('active') and not values['active'] and self._get_sde_tool_user_id(cr) in ids:
+            raise osv.except_osv(_('Error'), _('Deactivation of SDE Tool user is not allowed.'))
+
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
@@ -974,6 +967,9 @@ class users(osv.osv):
             values['signee_user'] = False
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
+        if 1 in ids and values.get('user_email'):
+            super(users, self).write(cr, uid, [1], {'user_email': False}, context=context)
+
         if values.get('never_expire'):
             self._remove_never_expire(cr, uid, ids, context=context)
         if values.get('signature_enabled') or values.get('groups_id'):
@@ -1289,6 +1285,256 @@ class users(osv.osv):
             return result
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
+    def send_reset_password_email(self, db_name, login, email, context=None):
+        context = context or {}
+
+        cr = pooler.get_db(db_name).cursor()
+
+        if not login or not isinstance(login, str):
+            raise osv.except_osv(
+                _('Error'),
+                _('The login must be a non-empty string')
+            )
+
+        user_ids = self.search(cr, 1, [
+            ('login', '=', login.lower()),
+            ('active', '=', True),
+            ('user_email', '=ilike', email),
+        ], context=context)
+
+        if not user_ids:
+            raise Exception(
+                _('No result found for combination of values entered above, please see with your UniField IT Administrator')
+            )
+
+        user = self.browse(cr, 1, user_ids[0], context=context)
+        if not context.get("lang"):
+            context["lang"] = user.context_lang or "en_MF"
+
+        if user.synchronize and self.pool.get('res.company')._get_instance_level(cr, 1) != 'section':
+            raise Exception(
+                _('The values entered above are for a synched user, the password reset functionality is not possible for this user type. Please contact your UF referent/UF support via the ticketing system.')
+            )
+
+        same_email_user_ids = self.search(cr, 1, [
+            ('active', '=', True),
+            ('user_email', '=ilike', email),
+        ], context=context)
+
+        if len(same_email_user_ids) > 1:
+            raise Exception(
+                _('The values entered above are for a user whose email address is used by multiple user accounts, the password reset functionality is not possible for this user type. Please contact your UF referent/UF support via the ticketing system.')
+            )
+
+        token = ''.join(random.choices(string.digits, k=10))
+        now = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        self.write(cr, 1, user_ids[0], {
+            'reset_password_token': token,
+            'reset_password_date': now,
+        }, context=context)
+        cr.commit()
+
+        body = _(
+            "<p><strong>Password reset request</strong></p>"
+            "<p>A request has been received to reset your password.</p>"
+            "<p>This password reset request is valid for the next 6 hours.</p>"
+            "<p>Otherwise you will need to renew your request for a new password via UF login screen.</p>"
+            "<p>Here are the details of your account:</p>"
+            "<ul>"
+            "    <li><strong>User login:</strong> %s</li>"
+            "    <li><strong>Temporary code:</strong> %s</li>"
+            "</ul>"
+            "<p>Please note this temporary code will only be valid 6 hours.</p>"
+            "<p>Please return to UF login page and click on button \"Forgotten password?\".<br>"
+            "In this screen click button \"Add temporary code\". Fill in details there.</p>"
+            "<p>If it was not you who has triggered this password reset, please contact your IT - security responsible to alert them.</p>"
+        ) % (user.login, token)
+
+        try:
+            tools.email_send(email_from=None, email_to=[email],
+                             subject=_("[UniField] Account password reset"),
+                             body=body, subtype="html")
+            state = 'success'
+            result = 'Email sent successfully'
+
+        except Exception as e:
+            state = 'error'
+            result = tools.ustr(e)
+
+        body_without_token = _("""
+                Password reset request
+                A request has been received to reset your password.
+                -This password reset request is valid for the next 6 hours.
+                Otherwise you will need to renew your request for a new password via UF login screen.
+
+                Here are the details of your account:
+                User login: %s
+                Temporary code: **********
+                Please note this temporary code will only be valid 6 hours.
+                Please return to UF login page and click on button "Forgotten password?". In this screen click
+                button "Add temporary code". Fill in details there.
+
+                If it was not you who has triggered this password reset, please contact your IT - security
+                responsible to alert them.
+            """) % (user.login)
+
+        email_log_obj = self.pool.get('email.log')
+        sender_model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.users')], context=context)[0]
+
+        email_log_obj.create(cr, 1, {
+            'recipients': email,
+            'subject': _("[UniField] Account password reset"),
+            'body': body_without_token,
+            'state': state,
+            'result': result,
+            'failed_attempts': 0 if state == 'success' else 1,
+            'sender_model_id': sender_model_id,
+            'date_sent': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'user_id': 1,
+        }, context=context)
+
+        cr.commit()
+        cr.close()
+        return True
+
+    def send_login_email(self, db_name, email, context=None):
+        context = context or {}
+
+        cr = pooler.get_db(db_name).cursor()
+
+        user_ids = self.search(cr, 1, [
+            ('active', '=', True),
+            ('user_email', '=ilike', email),
+        ], context=context)
+
+        if not user_ids:
+            return True
+
+        users = self.browse(cr, 1, user_ids, context=context)
+        if not context.get("lang"):
+            context["lang"] = users[0].context_lang or "en_MF"
+
+        login_lines = ""
+        login_line_without_html = ""
+        for user in users:
+            login_lines += "<li><strong>Login:</strong> %s</li>" % user.login
+            login_line_without_html += "Login: %s\n" % user.login
+
+        body = _(
+            "<p><strong>Request to retrieve forgotten user login information</strong></p>"
+            "<p>A request has been received to identify your user login.</p>"
+            "<p>Here are the details of user login(s) linked to this email address for the selected instance:</p>"
+            "<ul>"
+            "    %(logins)s"
+            "</ul>"
+            "<p>To log in using correct login, please return to UniField login page and proceed as usual.</p>"
+            "<p>If it was not you who has triggered this login request, please contact your IT security responsible.</p>"
+        ) % {
+            "logins": login_lines
+        }
+
+        body_without_html = _("""
+            Request to retrieve forgotten user login information
+            A request has been received to identify your user login.
+        
+            Here are the details of user login(s) linked to this email address for the selected instance:
+        
+            %s
+        
+            To log in using correct login, please return to UniField login page and proceed as usual.
+        
+            If it was not you who has triggered this login request, please contact your IT security responsible.
+        """) % login_line_without_html
+
+        try:
+            tools.email_send(
+                email_from=None,
+                email_to=[email],
+                subject=_("[UniField] User Account Login identification"),
+                body=body,
+                subtype="html"
+            )
+
+            state = 'success'
+            result = 'Email sent successfully'
+
+        except Exception as e:
+            state = 'error'
+            result = tools.ustr(e)
+
+        email_log_obj = self.pool.get('email.log')
+        sender_model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.users')], context=context)[0]
+
+        email_log_obj.create(cr, 1, {
+            'recipients': email,
+            'subject': _("[UniField] User Account Login identification"),
+            'body': body_without_html,
+            'state': state,
+            'result': result,
+            'failed_attempts': 0 if state == 'success' else 1,
+            'sender_model_id': sender_model_id,
+            'date_sent': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'user_id': 1,
+        }, context=context)
+
+        cr.commit()
+        cr.close()
+        return True
+
+    def reset_password_from_token(self, db_name, login, email, token, new_password, context=None):
+        context = context or {}
+
+        cr = pooler.get_db(db_name).cursor()
+
+        now = datetime.now()
+
+        limit = now - timedelta(hours=6)
+
+        limit_str = limit.strftime('%Y-%m-%d %H:%M:%S')
+
+        if not login or not isinstance(login, str):
+            raise osv.except_osv(
+                _('Error'),
+                _('The login must be a non-empty string')
+            )
+
+        user_ids = self.search(cr, 1, [
+            ('reset_password_token', '=', token),
+            ('login', '=', login.lower()),
+            ('active', '=', True),
+            ('user_email', '=ilike', email),
+            ('reset_password_date', '>=', limit_str),
+        ], context=context)
+
+        if not user_ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('At least one of the values entered is not valid. Please check your email. If code was generated more than 6 hours ago, it will have expired, restart the process via UniField login page')
+            )
+
+        user = self.browse(cr, 1, user_ids[0], context=context)
+
+        security.check_password_validity(self, cr, 1, '', new_password, new_password, user.login)
+        new_passwd = bcrypt.encrypt(tools.ustr(new_password))
+
+        self.write(cr, 1, user_ids[0], {
+            'password': new_passwd,
+            'reset_password_token': False,
+            'reset_password_date': False,
+        }, context=dict(context or {}, from_reset_password=True))
+        cr.commit()
+        cr.close()
+
+        return True
+
+    def is_mail_configured(self, db_name):
+        return bool(
+            tools.config.get('smtp_server')
+            and tools.config.get('email_from')
+            and tools.config.get('smtp_port')
+        )
+
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
 
@@ -1429,6 +1675,16 @@ class users(osv.osv):
         return cr.fetchone() and True or False
 
 
+    def change_email(self, cr, uid, ids, email, context=None):
+        if ids == [1] and email:
+            return {
+                'value': {'user_email': False},
+                'warning': {
+                    'message': _('An email address cannot be set for the admin user.')
+                }
+            }
+
+        return {}
 users()
 
 class wizard_add_users_synchronized(osv.osv_memory):

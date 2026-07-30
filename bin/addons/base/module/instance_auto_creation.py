@@ -752,6 +752,22 @@ class instance_auto_creation(osv.osv):
                         cr.rollback()
                         logging.getLogger('autoinstall').warn('Unable to set Silent Upgrade, please check the silent upgrade and auto sync times')
 
+            if config_dict.get('accounting') and config_dict.get('accounting').get('active_currency'):
+                cr.commit()
+                currency_obj = self.pool.get('res.currency')
+                for cur in config_dict['accounting']['active_currency'].split(','):
+                    cur = cur.strip()
+                    if cur:
+                        try:
+                            cur_id = currency_obj.search(cr, uid, [('name', '=', cur), ('active', '=', False)])
+                            if cur_id:
+                                currency_obj.write(cr, uid, cur_id[0], {'active': True})
+                                cr.commit()
+                            else:
+                                logging.getLogger('autoinstall').warn('Currency %s not found or already active' % cur)
+                        except:
+                            cr.rollback()
+                            logging.getLogger('autoinstall').warn('Unable to activate currency: %s' % cur)
 
             self.write(cr, 1, creation_id,
                        {'state': 'done'}, context=context)

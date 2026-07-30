@@ -104,6 +104,27 @@ HAVING abs(avg(l.credit - l.debit) - sum(COALESCE(account_analytic_line.amount, 
 order by account_period.date_start, m.name;"""
     },
     {
+        'ref': 'aji_corrected_at_2_levels',
+        'title': _('Same AJI corrected on multiple instances'),
+        'headers': [_('Period'), _('Original Entry Sequence'), _('Corrections'), _('Func. Amount')],
+        'query': """select
+            array_to_string(array_agg(distinct(period.name)), ','),
+            array_to_string(array_agg(distinct(aji.ref)), ','),
+            array_to_string(array_agg(distinct(aji.entry_sequence)),','),
+            round(sum(aji.amount),2)
+        from
+            account_analytic_line aji
+            left join account_period period on period.id = aji.real_period_id
+        where
+            aji.reversal_origin is not null
+        group by
+            aji.reversal_origin
+        having
+            count(distinct(aji.entry_sequence)) > 1
+            %s
+        """,
+    },
+    {
         'ref': 'unbalanced_rec_fctal',
         'title': _('Unbalanced reconciliations in functional currency'),
         'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],

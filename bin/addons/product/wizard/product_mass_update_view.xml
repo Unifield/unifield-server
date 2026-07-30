@@ -10,7 +10,7 @@
                 <form string="Product Mass Update" hide_delete_button="1" >
                     <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <group string=" New Data " colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}">
-                        <field name="active_product" />
+                        <field name="active_product" on_change="onchange_active_product(active_product)" />
                         <field name="dangerous_goods" />
                         <field name="heat_sensitive_item" />
                         <field name="single_use" />
@@ -21,7 +21,7 @@
                         <field name="procure_delay" />
                         <field name="procure_method" />
                         <group colspan="2">
-                            <field name="product_state" attrs="{'readonly':[('state', '!=', 'draft')]}" />
+                            <field name="product_state" attrs="{'readonly':['|', ('state', '!=', 'draft'), ('active_product', '=', 'no')]}" />
                             <field name="empty_status" attrs="{'invisible': [('empty_status', '=', False)]}" />
                         </group>
                         <field name="sterilized" />

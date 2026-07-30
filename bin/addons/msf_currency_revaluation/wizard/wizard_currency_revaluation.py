@@ -647,7 +647,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # get coordo projects...
         projects = [
             p for p in company.instance_id.child_ids
-            if p.level == 'project' and p.state != 'inactive'
+            if p.level == 'project' and p.state not in  ('draft', 'inactive')
         ]
         if projects:
             project_ids = [p.id for p in projects]

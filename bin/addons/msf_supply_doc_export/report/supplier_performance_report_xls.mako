@@ -88,6 +88,16 @@
         </Borders>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
+    <Style ss:ID="line_right_nb_plus_minus">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1" />
+         <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <NumberFormat ss:Format="\+0.00##;\-0.00##;"/>
+    </Style>
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1" />
         <Borders>
@@ -135,10 +145,14 @@
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## SI Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## SI Unit Price after Discount
+        <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy IN to PO
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy SI to PO
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## SI Unit Price Discounted Amount (Before vs After Discount)
+        <Column ss:AutoFitWidth="1" ss:Width="140.0" />
         ## Catalogue Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## PO Unit Price (functional)
@@ -147,10 +161,14 @@
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## SI Unit Price (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## SI Unit Price after Discount (functional)
+        <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy IN to PO (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
         ## Discrepancy SI to PO (functional)
         <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## SI Unit Price Discounted Amount (Before vs After Discount) (functional)
+        <Column ss:AutoFitWidth="1" ss:Width="140.0" />
         ## PO Creation Date
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
         ## Validation Date
@@ -249,14 +267,18 @@
             _('PO Unit Price'),
             _('IN Unit Price'),
             _('SI Unit Price'),
+            _('SI Unit Price after Discount'),
             _('Discrepancy IN to PO'),
             _('Discrepancy SI to PO'),
+            _('SI Unit Price Discounted Amount (Before vs After Discount)'),
             _('Catalogue Unit Price (functional)'),
             _('PO Unit Price (functional)'),
             _('IN Unit Price (functional)'),
             _('SI Unit Price (functional)'),
+            _('SI Unit Price after Discount (functional)'),
             _('Discrepancy IN to PO (functional)'),
             _('Discrepancy SI to PO (functional)'),
+            _('SI Unit Price Discounted Amount (Before vs After Discount) (functional)'),
             _('PO Creation Date'),
             _('Validation Date'),
             _('Confirmation Date'),
@@ -311,7 +333,9 @@
                 % endif
                 % if line['si_unit_price'] != '-':
                 <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['si_unit_price'] or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['si_discount_price'] or 0|x}</Data></Cell>
                 % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['discrep_in_po'] != '-':
@@ -324,6 +348,7 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
+                <Cell ss:StyleID="line_right_nb_plus_minus"><Data ss:Type="Number">${line['discrep_si_discount'] or 0|x}</Data></Cell>
 
                 ## Functional Prices
                 % if line['func_cat_unit_price'] != '-':
@@ -339,7 +364,9 @@
                 % endif
                 % if line['func_si_unit_price'] != '-':
                 <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_si_unit_price'] or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_si_discount_price'] or 0|x}</Data></Cell>
                 % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['func_discrep_in_po'] != '-':
@@ -352,6 +379,7 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
+                <Cell ss:StyleID="line_right_nb_plus_minus"><Data ss:Type="Number">${line['func_discrep_si_discount'] or 0|x}</Data></Cell>
 
                 ## Dates
                 % if line['po_crea_date'] and isDateTime(line['po_crea_date']):

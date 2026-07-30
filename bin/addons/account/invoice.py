@@ -365,6 +365,9 @@ class account_invoice(osv.osv):
         'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1),
         'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
         'is_partner_active': fields.related('partner_id', 'active', type='boolean', string='Partner Active', store=False, write_relate=False),
+        'po_details': fields.char(size=86, string='PO Details'),
+        'tax_identification_number': fields.related('partner_id', 'tax_identification_number', type='char', size=15, string='Supplier TIN', store=False, readonly=True, context={'active_test': False}),
+        'business_registration_number': fields.related('partner_id', 'business_registration_number', type='char', size=15, string='Supplier RCCM', store=False, readonly=True, context={'active_test': False}),
     }
     _defaults = {
         'type': _get_type,
@@ -440,7 +443,7 @@ class account_invoice(osv.osv):
             elif context.get('journal_type', False) == 'inkind':
                 partner_string = _('Donor')
             elif context.get('type', 'out_invoice') in ('in_invoice', 'in_refund') or context.get('doc_type', '') in ('isi', 'isr'):
-                partner_string = _('Supplier')
+                partner_string = _('Partner')
             else:
                 partner_string = _('Customer')
             for node in nodes:
@@ -1309,6 +1312,8 @@ class account_invoice(osv.osv):
         for line in lines:
             # in case of a refund cancel/modify, mark each SR line as reversal of the corresponding SI line IF it's an
             # account.invoice.line with an account having the type Income or Expense (EXCLUDE Extra-accounting expenses)
+            line['original_invoice_line_id'] = line['id']
+            line['original_line_qty'] = line.get('quantity')
             if is_account_inv_line and context.get('refund_mode', '') in ['cancel', 'modify'] and line['account_id']:
                 account_id = type(line['account_id']) == tuple and line['account_id'][0] or line['account_id']
                 account = account_obj.browse(cr, uid, account_id,
@@ -1580,7 +1585,13 @@ class account_invoice_line(osv.osv):
             }
         }
 
-
+    def change_refund_quantity(self, cr, uid, ids, quantity, original_invoice_line_id, original_line_qty, context=None):
+        if original_invoice_line_id and quantity - original_line_qty > 0.001:
+            return {
+                'warning': {'message': _('Quantity cannot be greater than %s') % original_line_qty},
+                'value': {'quantity': original_line_qty}
+            }
+        return {}
 
     def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, is_asset=False, context=None):
         if context is None:

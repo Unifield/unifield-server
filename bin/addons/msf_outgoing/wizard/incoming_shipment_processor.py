@@ -318,19 +318,12 @@ class stock_incoming_processor(osv.osv):
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
         data_obj = self.pool.get('ir.model.data')
-        wizard_obj = self.pool.get('stock.incoming.processor')
 
         if context is None:
             context = {}
 
         if not ids:
-            raise osv.except_osv(
-                _('Error'),
-                _('No wizard found !'),
-            )
-
-        # Delete drafts
-        wizard_obj.write(cr, uid, ids, {'draft': False}, context=context)
+            raise osv.except_osv(_('Error'), _('No wizard found !'))
 
         to_unlink = []
 
@@ -369,7 +362,7 @@ class stock_incoming_processor(osv.osv):
                                                                             {'location_id': line.location_id.id, 'location_dest_id': line.move_id.location_dest_id.id, 'obj_type': 'in', 'partner_type': proc.picking_id.partner_id.partner_type},
                                                                             context=context)
                 # If one line as an error, return to wizard
-                if line.integrity_status not in ['empty', 'missing_1', 'to_smaller_than_from', 'overlap', 'gap', 'missing_weight']:
+                if line.integrity_status not in ['empty', 'to_smaller_than_from', 'overlap', 'missing_weight']:
                     return {
                         'type': 'ir.actions.act_window',
                         'res_model': proc._name,
@@ -431,30 +424,17 @@ class stock_incoming_processor(osv.osv):
             if proc.direct_incoming and not proc.location_dest_active_ok:
                 self.write(cr, uid, [proc.id], {'direct_incoming': False}, context=context)
 
-            # Add the warning if there's a signed signature during partial processing
-            if not context.get('auto_import_ok') and proc.picking_id.signature_id and not proc.partial_process_sign:
-                cr.execute("""
-                    SELECT mp.id FROM stock_move_in_processor mp LEFT JOIN stock_incoming_processor ip ON mp.wizard_id = ip.id 
-                            LEFT JOIN stock_picking p ON ip.picking_id = p.id
-                        , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
-                    WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s 
-                        AND mp.id IN %s AND sl.signed = 't' AND ip.picking_id = %s 
-                        AND mp.quantity < mp.ordered_quantity LIMIT 1
-                """, (proc.picking_id.id, tuple(l_ids), proc.picking_id.id))
-                if cr.fetchone():
-                    self.write(cr, uid, proc.id, {'partial_process_sign': True, 'already_processed': False}, context=context)
-                    target = not context.get('from_simu_screen') and 'new' or 'same'
-                    return {
-                        'type': 'ir.actions.act_window',
-                        'res_model': self._name,
-                        'res_id': proc.id,
-                        'view_type': 'form',
-                        'view_mode': 'form',
-                        'target': target,
-                        'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing',
-                                                                                        'stock_incoming_processor_form_view')[1]],
-                        'context': context,
-                    }
+        # The IN is partially processed and signed if there is at least 1 signee during the partial process
+        if not context.get('auto_import_ok') and proc.picking_id.signature_id and not proc.partial_process_sign:
+            cr.execute("""
+                SELECT mp.id FROM stock_move_in_processor mp LEFT JOIN stock_incoming_processor ip ON mp.wizard_id = ip.id
+                    LEFT JOIN stock_picking p ON ip.picking_id = p.id
+                    , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
+                WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s
+                    AND mp.id IN %s AND sl.user_id IS NOT NULL AND ip.picking_id = %s AND mp.quantity < mp.ordered_quantity LIMIT 1
+            """, (proc.picking_id.id, tuple(l_ids), proc.picking_id.id))
+            if cr.fetchone():
+                self.write(cr, uid, proc.id, {'partial_process_sign': True}, context=context)
 
         if to_unlink:
             in_proc_obj.unlink(cr, uid, to_unlink, context=context)
@@ -590,7 +570,11 @@ class stock_incoming_processor(osv.osv):
         res_id = []
         for incoming in incoming_ids:
             res_id = incoming['picking_id']['id']
-        incoming_obj.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False}, context=context)
+        incoming_obj.write(cr, uid, ids, {'draft': False, 'sde_updated': False}, context=context)
+
+        # Remove the SDE flag
+        stock_p_obj.write(cr, uid, res_id, {'sde_updated': False}, context=context)
+
         return stock_p_obj.action_process(cr, uid, res_id, context=context)
 
     def do_save_draft(self, cr, uid, ids, context=None):
@@ -609,7 +593,7 @@ class stock_incoming_processor(osv.osv):
         # make sure that the current incoming proc is not already processed :
         for r in incoming_obj.read(cr, uid, ids, ['already_processed']):
             if not r['already_processed']:
-                incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
+                incoming_obj.write(cr, uid, ids, {'draft': True, 'partial_process_sign': False}, context=context)
             else:
                 raise osv.except_osv(
                     _('Error'), _('The incoming shipment has already been processed, you cannot save it as draft.')
@@ -730,6 +714,8 @@ class stock_incoming_processor(osv.osv):
 
         sequence_ok = True
         rounding_issues = []
+        sde_parcels_errors = []
+        sde_parcels_errors_list = {}
         total_qty = 0
         sequences = {}
         for move in wizard.move_ids:
@@ -740,6 +726,14 @@ class stock_incoming_processor(osv.osv):
                 if num_of_packs:
                     if not self.pool.get('ppl.processor')._check_rounding(cr, uid, move.uom_id, num_of_packs, move.quantity, context=context):
                         rounding_issues.append(move.line_number)
+                    if move.sde_updated_line and move.pack_info_id and move.pack_info_id.parcel_ids:
+                        nb_parcels = len(move.pack_info_id.parcel_ids.split(','))
+                        if num_of_packs != nb_parcels:
+                            # To display all lines from the same parcels in the same error
+                            if sde_parcels_errors_list.get(move.pack_info_id.id) and str(move.line_number) not in sde_parcels_errors_list[move.pack_info_id.id][0]:
+                                sde_parcels_errors_list[move.pack_info_id.id][0].append(str(move.line_number))
+                            else:
+                                sde_parcels_errors_list[move.pack_info_id.id] = ([str(move.line_number)], move.from_pack, move.to_pack, nb_parcels, num_of_packs)
 
         if not total_qty:
             raise osv.except_osv(
@@ -747,13 +741,18 @@ class stock_incoming_processor(osv.osv):
                 _("You have to enter the quantities you want to process before processing the move")
             )
 
+        for parcel_id in sde_parcels_errors_list:
+            error = sde_parcels_errors_list[parcel_id]
+            sde_parcels_errors.append(_('Line(s) %s: from pack: %d, to pack %d: number of Parcel IDs %d does not match number of packs %d.')
+                                      % (', '.join(error[0]), error[1], error[2], error[3], error[4]))
+
         if not sequences:
             sequence_ok = False
-            return (rounding_issues, sequence_ok)
+            return (rounding_issues, sequence_ok, sde_parcels_errors)
         for pl in sequences:
             sequence_ok = sequence_ok and self.pool.get('ppl.processor').check_sequences(cr, uid, sequences[pl], self.pool.get('stock.move.in.processor'), field='sequence_issue')
 
-        return (rounding_issues, sequence_ok)
+        return (rounding_issues, sequence_ok, sde_parcels_errors)
 
 
     def process_to_ship(self, cr, uid, ids, context=None):
@@ -766,7 +765,7 @@ class stock_incoming_processor(osv.osv):
         if out['linked_to_out'] != 'picking':
             raise osv.except_osv(_('Warning'), _('This type of import cannot be used because related PICK document has been converted to %s') % out['linked_to_out'])
 
-        rounding_issues, sequence_ok = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
+        rounding_issues, sequence_ok, sde_parcels_errors = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
         cr.execute('''
             select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.quantity)
             from stock_move_in_processor wiz_line
@@ -802,6 +801,13 @@ class stock_incoming_processor(osv.osv):
                 'target': 'new',
                 'context': context,
             }
+
+        if sde_parcels_errors:
+            raise osv.except_osv(
+                _('Error'),
+                _('There are errors with the Parcel IDs:\n%s\n\nPlease reset this popup and fix the SDE import file before reimporting it with SDE.')
+                % ('\n'.join(sde_parcels_errors),)
+            )
 
         if rounding_issues:
             rounding_issues.sort()
@@ -941,23 +947,19 @@ class stock_move_in_processor(osv.osv):
             if ret['purchase_line_id']:
                 move_id_to_purchase_line_id[ret['id']] = ret['purchase_line_id'][0]
 
-        purchase_line_order_id = self.pool.get('purchase.order.line').read(cr,
-                                                                           uid, set(move_id_to_purchase_line_id.values()), ['id', 'order_id'], context=context)
+        purchase_line_order_id = self.pool.get('purchase.order.line').read(cr, uid, set(move_id_to_purchase_line_id.values()), ['id', 'order_id'], context=context)
 
-        purchase_line_id_by_order_id = dict([(ret['id'], ret['order_id'][0])
-                                             for ret in purchase_line_order_id])
+        purchase_line_id_by_order_id = dict([(ret['id'], ret['order_id'][0]) for ret in purchase_line_order_id])
         order_id_set = set(purchase_line_id_by_order_id.values())
 
         order_id_location_dict = {}
         for order_id in order_id_set:
-            sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid,
-                                                     [order_id], context=context)
+            sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid, [order_id], context=context)
             if sol_ids:
                 location_ids = [main_stock_id] if main_stock_id else []
                 # move associated with a SO, check not with an IR (so is FO)
                 is_from_fo = True
-                for sol in sol_obj.browse(cr, uid, sol_ids,
-                                          context=context):
+                for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
                         # from an IR then not from FO
                         is_from_fo = False
@@ -1267,6 +1269,7 @@ class stock_move_in_processor(osv.osv):
         'split_move_ok': fields.boolean(string='Is split move ?'),
         'filter_pack': fields.function(_get_pack_info, method=True, type='char', string='Pack', fnct_search=_search_pack_info),
         'cost_as_ro': fields.boolean('Set Cost Price as RO', internal=1),
+        'sde_updated_line': fields.boolean('Line updated by SDE'),
     }
 
 
@@ -1304,6 +1307,7 @@ class stock_move_in_processor(osv.osv):
                 vals['cost'] = price
             if not vals.get('currency', False):
                 vals['currency'] = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+
         return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
 
 

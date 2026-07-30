@@ -100,19 +100,20 @@ class currency_setup(osv.osv_memory):
 
         # Change the currencies on all internal partners
         partner_ids = self.pool.get('res.partner').search(cr, uid, [('partner_type', 'in', ['internal', 'intermission']), ('active', 'in', ['t', 'f'])])
+        try:
+            # main partner is not yet set as internal ...
+            partner_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'main_partner')[1])
+        except:
+            pass
+
         self.pool.get('res.partner').write(cr, uid, partner_ids, {'property_product_pricelist': sale_price_id[0],
                                                                   'property_product_pricelist_purchase': purchase_price_id[0]})
 
         # Modify the currency on some already created objects
         # product_price_type
-        price_type_ids = self.pool.get('product.price.type').search(cr, uid, [('currency_id', '=', 1)])
-        self.pool.get('product.price.type').write(cr, uid, price_type_ids, {'currency_id': cur_id})
-
+        cr.execute('update product_price_type set currency_id=%s where currency_id!=%s', (cur_id, cur_id))
         # account.analytic.account
-        analytic_ids = self.pool.get('account.analytic.account').search(cr, uid, [('currency_id', '=', 1)])
-        # use a for to avoid a recursive account error
-        for analytic_id in analytic_ids:
-            self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id}, context={'lang': 'en_MF'})
+        cr.execute('update account_analytic_account set currency_id=%s where currency_id!=%s', (cur_id, cur_id))
 
         # product.product
         # UF-1766 : Pass out the OpenObject framework to gain time on currency change with a big amount of products

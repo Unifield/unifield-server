@@ -51,7 +51,7 @@ $(selector).signature({color: 'blue', guideline: true}) */
 			distance: 0,
 			background: '#fff',
 			color: '#000',
-			thickness: 2,
+			thickness: 5,
 			guideline: false,
 			guidelineColor: '#a0a0a0',
 			guidelineOffset: 50,

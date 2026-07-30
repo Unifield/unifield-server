@@ -353,9 +353,18 @@ class wizard_import_pick_line(osv.osv_memory):
         wiz_common_import = self.pool.get('wiz.common.import')
         pick_obj = self.pool.get('stock.picking')
         for wiz_read in self.browse(cr, uid, ids, context=context):
-            picking_id = wiz_read.picking_id.id
+            picking = wiz_read.picking_id
             if not wiz_read.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
+            if picking.state not in ['draft', 'confirmed', 'assigned']:
+                doc_name = _('Pick')
+                if picking.type == 'in':
+                    doc_name = _('IN')
+                elif picking.type == 'internal':
+                    doc_name = _('INT')
+                elif picking.type == 'out' and picking.subtype == 'standard':
+                    doc_name = _('OUT')
+                return self.write(cr, uid, ids, {'state': 'done', 'message': _("You can only import on a Draft, Not Available or Available %s; import file is ignored") % (doc_name,)}, context=context)
             try:
                 fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read.file))
                 # iterator on rows
@@ -364,7 +373,7 @@ class wizard_import_pick_line(osv.osv_memory):
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'picking_id': picking_id, 'header_index': header_index})
+                context.update({'picking_id': picking.id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_internal_line_import)
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
@@ -374,7 +383,7 @@ class wizard_import_pick_line(osv.osv_memory):
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            pick_obj.write(cr, uid, picking_id, {'state': 'import', 'import_in_progress': True, 'state_before_import': wiz_read.picking_id.state}, context)
+            pick_obj.write(cr, uid, picking.id, {'state': 'import', 'import_in_progress': True, 'state_before_import': wiz_read.picking_id.state}, context)
             cr.commit()
         if not context.get('yml_test', False):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))

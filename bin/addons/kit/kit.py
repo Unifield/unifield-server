@@ -363,8 +363,6 @@ class composition_kit(osv.osv):
         assert isinstance(ids, list)
 
         for kit in self.browse(cr, uid, ids, context=context):
-
-
             # For kits with a batch, take the stock of the batch
             # Otherwise, take the global stock of the product
             request_context = context.copy()
@@ -378,8 +376,7 @@ class composition_kit(osv.osv):
             stock = self.pool.get("product.product").get_product_available(cr, uid, [kit.composition_product_id.id], context=request_context)[kit.composition_product_id.id]
 
             if stock <= 0:
-                raise osv.except_osv(_('Error'),
-                                     _('This kit product / batch is not available in stock !'))
+                raise osv.except_osv(_('Error'), _('This kit product / batch is not available in stock !'))
 
 
     def substitute_items(self, cr, uid, ids, context=None):
@@ -397,6 +394,52 @@ class composition_kit(osv.osv):
         name = _("Substitute Kit Items")
         model = 'substitute'
         step = 'substitute' # this value is used in substitute wizard for attrs of src location
+        wiz_obj = self.pool.get('wizard')
+
+        # get a context with needed data
+        wiz_context = self._get_new_context(cr, uid, ids, context=dict(context))
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=wiz_context)
+        # write wizard id back in the wizard object, cannot use ID in the wizard form... openERP bug ?
+        self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=res['context'])
+        # generate mirrors item objects
+        self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=res['context'])
+        return res
+
+    def add_items(self, cr, uid, ids, context=None):
+        '''
+        Add lines to the KCL
+        '''
+        if context is None:
+            context = {}
+
+        # data
+        name = _('Add Kit Items')
+        model = 'substitute'
+        step = 'kcl_add_items' # this value is used in substitute wizard for attrs of src location
+        wiz_obj = self.pool.get('wizard')
+
+        # get a context with needed data
+        wiz_context = self._get_new_context(cr, uid, ids, context=dict(context))
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=wiz_context)
+        # write wizard id back in the wizard object, cannot use ID in the wizard form... openERP bug ?
+        self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=res['context'])
+        return res
+
+    def remove_items(self, cr, uid, ids, context=None):
+        '''
+        Remove lines from the KCL
+        '''
+        if context is None:
+            context = {}
+
+        self.assert_available_stock(cr, uid, ids, context=context)
+
+        # data
+        name = _('Remove Kit Items')
+        model = 'substitute'
+        step = 'kcl_remove_items' # this value is used in substitute wizard for attrs of src location
         wiz_obj = self.pool.get('wizard')
 
         # get a context with needed data
@@ -1068,6 +1111,23 @@ class composition_kit(osv.osv):
             'context': {'composition_type': 'theoretical'},
         }
 
+    def _get_comparison_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
+
+        ftf = ['composition_version_id', 'composition_product_id', 'composition_lot_id', 'composition_reference']
+        kcl = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
+        if not kcl.composition_version_id:
+            raise osv.except_osv(_('Error'), _('This report is only available for KCLs using a Version'))
+
+        return (_('TKC_KCL_%s_%s_Comparison_Report_%s') % (kcl.composition_product_id.default_code,
+                                                           (kcl.composition_lot_id and kcl.composition_lot_id.name or kcl.composition_reference).replace('/', '_'),
+                                                           time.strftime('%Y_%m_%d_%H_%M')))
+
 
 composition_kit()
 
@@ -1077,7 +1137,7 @@ class composition_item(osv.osv):
     kit composition items representing kit parts
     '''
     _name = 'composition.item'
-    _order = 'item_module'
+    _order = 'item_module, id'
 
     def _common_update(self, cr, uid, vals, context=None):
         '''
@@ -1328,8 +1388,7 @@ class composition_item(osv.osv):
                 'item_kit_id': fields.many2one('composition.kit', string='Kit/Version', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
                 'item_stock_move_id': fields.many2one('stock.move', string='Kitting Order Stock Move', readonly=True, help='This field represents the stock move corresponding to this item for Kit production.'),
-                'item_kit_name': fields.related('item_kit_id', 'composition_product_id', type='many2one', relation='product.product', string="Kit Product Code", store=True, readonly=True),
-                'item_kit_batch': fields.related('item_kit_id', 'composition_lot_id', type='many2one', relation='stock.production.lot', string="Kit/BN", store=True, readonly=True),
+                'item_kit_name': fields.related('item_kit_id', 'composition_product_id', type='many2one', relation='product.product', string="Kit/Product Code", store=True, readonly=True),
                 'comment': fields.char(size=256, string='Comment'),
                 'kit_state': fields.related('item_kit_id', 'state', type='char', size=64, string='Kit State', readonly=True),
                 'to_consume_id': fields.many2one('kit.creation.to.consume', 'KO Components to Consume'),

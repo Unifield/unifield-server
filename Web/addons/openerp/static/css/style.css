@@ -1116,28 +1116,27 @@ iframe.ui-dialog-content {
 }
 
 #parcelids {
-  border: 1px solid #eee;
-  width: 100%;
-  min-height: 20px;
-  list-style-type: none;
-  margin: 0;
-  margin-right: 0px;
-  padding: 5px 0 0 0;
-  float: left;
-  margin-right: 10px;
-  background: white:
+    border: 1px solid #eee;
+    width: 100%;
+    min-height: 20px;
+    max-height: 40em;
+    list-style-type: none;
+    padding: 5px 0 0 0;
+    float: left;
+    margin: 0 10px 0 0;
+    overflow: scroll;
 }
 
 #parcelids li {
-  margin: 0 5px 5px 5px;
-  padding: 5px;
-  font-size: 1.2em;
-  width: 25%;
-  border: 1px solid black;
-  cursor: pointer;
-  background: ghostwhite;
-  float:left;
-  display:inline;
+    padding: 5px;
+    font-size: 1.2em;
+    min-width: 99%;
+    border-top: 1px solid black;
+    cursor: pointer;
+    background: ghostwhite;
+    float:left;
+    display:block;
+    list-style: none;
 }
 
 #parcelids .selected {
@@ -1146,15 +1145,10 @@ iframe.ui-dialog-content {
 }
 
 #parcels-form .button {
-    margin-left: 10px;
+    margin-left: 5px;
 }
 
-#parcels-form #select-buttons {
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-
-#parcels-form #parcel-list {
+#parcels-form #parcel-list, #parcels-form #select-buttons {
     margin-top: 10px;
     margin-bottom: 10px;
 }

@@ -74,7 +74,7 @@ class expiry_quantity_report(osv.osv_memory):
         '''
         Print the report of expiry report
         '''
-        datas = {'ids': ids}
+        datas = {'ids': ids, 'target_filename': _('Expiry Report_%s') % (time.strftime('%Y%m%d_%H_%M'),)}
 
         return {
             'type': 'ir.actions.report.xml',
@@ -759,7 +759,7 @@ class product_likely_expire_report(osv.osv):
         '''
         if not self._has_expiry(cr, uid, ids, context=context):
             raise osv.except_osv(_("Warning"), _("There is not any product in expiry"))
-        datas = {'ids': ids}
+        datas = {'ids': ids, 'target_filename': _('Products Likely to Expire_%s') % (time.strftime('%Y%m%d_%H_%M'),)}
 
         return {
             'type': 'ir.actions.report.xml',
@@ -775,7 +775,7 @@ class product_likely_expire_report(osv.osv):
         '''
         if not self._has_expiry(cr, uid, ids, context=context):
             raise osv.except_osv(_("Warning"), _("There is not any product in expiry"))
-        datas = {'ids': ids}
+        datas = {'ids': ids, 'target_filename': _('Products Likely to Expire_%s') % (time.strftime('%Y%m%d_%H_%M'),)}
 
         return {
             'type': 'ir.actions.report.xml',

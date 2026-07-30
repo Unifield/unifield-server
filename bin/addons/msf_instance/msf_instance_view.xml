@@ -343,6 +343,8 @@
                         icon="terp-check" name="active" string="Active"/>
                     <filter domain="[('state', '=', 'inactive')]"
                         icon="gtk-dialog-error" name="inactive" string="Inactive"/>
+                    <filter domain="[('state', '=', 'draft')]"
+                        icon="terp-document-new" name="draft" string="Draft"/>
                     <separator orientation="vertical"/>
                     <field name="code" select="1"/>
                     <field name="mission" select="1"/>

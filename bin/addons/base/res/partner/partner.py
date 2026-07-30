@@ -24,6 +24,7 @@ import math
 from osv import fields,osv
 import tools
 import pooler
+import re
 from tools.translate import _
 
 
@@ -140,6 +141,8 @@ class res_partner(osv.osv):
         'employee': fields.boolean('Employee', help="Check this box if the partner is an Employee."),
         'email': fields.related('address', 'email', type='char', size=240, string='E-mail', write_relate=True),
         'company_id': fields.many2one('res.company', 'Company', select=1),
+        'tax_identification_number': fields.char('Tax Identification Number', size=15, help="Tax Identification Number"),
+        'business_registration_number': fields.char('Business Registration Number', size=15, help="Business Registration Number"),
     }
 
     def _default_category(self, cr, uid, context={}):
@@ -185,6 +188,23 @@ class res_partner(osv.osv):
         name = self.read(cr, uid, [id], ['name'])[0]['name']
         default.update({'name': name+ _(' (copy)'), 'events':[]})
         return super(res_partner, self).copy(cr, uid, id, default, context)
+
+    def on_change_name(self, cr, uid, ids, name, partner_type, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        if name and partner_type:
+            entity_obj = self.pool.get('sync.client.entity')
+            if entity_obj and partner_type == 'external':
+                if entity_obj.get_entity(cr, uid).oc == 'ocb' and re.match('^E[0-9]{3} ', name):
+                    res['value'] = {'can_be_msf_entity': False, 'is_msf_entity': False, 'msf_entity': False}
+                else:
+                    res['value'] = {'can_be_msf_entity': True}
+
+        return res
 
     def do_share(self, cr, uid, ids, *args):
         return True
@@ -309,6 +329,24 @@ class res_partner_address(osv.osv):
     _description ='Partner Addresses'
     _name = 'res.partner.address'
     _order = 'id'
+
+    def _search_allowed_for_user(self, cr, uid, obj, name, args, context):
+        new_args = []
+        for arg in args:
+            if arg[0] == 'allowed_for_user':
+                if arg[1] != '=' or not arg[2]:
+                    raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
+                com_partner_id = False
+                user = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'])
+                if user.company_id and user.company_id.partner_id:
+                    com_partner_id = user.company_id.partner_id.id
+
+                new_args += [('partner_id', 'in', [False, com_partner_id])]
+            else:
+                new_args.append(arg)
+        return new_args
+
+
     _columns = {
         'partner_id': fields.many2one('res.partner', 'Partner Name', ondelete='set null', select=True, help="Keep empty for a private address, not related to partner."),
         'type': fields.selection( [ ('default','Default'),('invoice','Invoice'), ('delivery','Delivery'), ('contact','Contact'), ('other','Other') ],'Address Type', help="Used to select automatically the right address according to the context in sales and purchases documents."),
@@ -331,10 +369,12 @@ class res_partner_address(osv.osv):
         'active': fields.boolean('Active', help="Uncheck the active field to hide the contact."),
         #        'company_id': fields.related('partner_id','company_id',type='many2one',relation='res.company',string='Company', store=True),
         'company_id': fields.many2one('res.company', 'Company',select=1),
+        'allowed_for_user': fields.function(tools.misc.get_fake, type='boolean', string='Filter for user address', method=True, fnct_search=_search_allowed_for_user),
     }
     _defaults = {
         'active': lambda *a: 1,
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'res.partner.address', context=c),
+        'name': lambda s,cr,uid,c: c and c.get('default_name_for_creation') or '',
     }
 
     def name_get(self, cr, user, ids, context={}):

@@ -832,6 +832,11 @@ class stock_picking(osv.osv):
                 wizard.physical_reception_date = time.strftime('%Y-%m-%d %H:%M:%S')
             picking_id = wizard.picking_id.id
 
+            # Remove "draft" in processors linked to the IN
+            draft_wiz_ids = inc_proc_obj.search(cr, uid, [('picking_id', '=', picking_id), ('draft', '=', True)], context=context)
+            if draft_wiz_ids:
+                inc_proc_obj.write(cr, uid, draft_wiz_ids, {'draft': False}, context=context)
+
             in_forced = wizard.picking_id.state == 'assigned' and \
                 not wizard.register_a_claim and \
                 process_avg_sysint and \
@@ -839,10 +844,7 @@ class stock_picking(osv.osv):
                 wizard.picking_id.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
                 wizard.picking_id.purchase_id.order_type != 'direct'
 
-            picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
-                                                                  'type',
-                                                                  'purchase_id',
-                                                                  'name'], context=context)
+            picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines', 'type', 'purchase_id', 'name'], context=context)
 
             picking_ids.append(picking_id)
             backordered_moves = []  # Moves that need to be put in a backorder
@@ -852,8 +854,7 @@ class stock_picking(osv.osv):
             processed_out_moves_by_exp = {}
             track_changes_to_create = [] # list of dict that contains data on track changes to create at the method's end
 
-            picking_move_lines = move_obj.browse(cr, uid, picking_dict['move_lines'],
-                                                 context=context)
+            picking_move_lines = move_obj.browse(cr, uid, picking_dict['move_lines'], context=context)
 
             total_moves = len(picking_move_lines)
             move_done = 0
@@ -1156,6 +1157,7 @@ class stock_picking(osv.osv):
                     'in_dpo': context.get('for_dpo', False), # TODO used ?
                     'dpo_incoming': wizard.picking_id.dpo_incoming,
                     'physical_reception_date': wizard.physical_reception_date or False,
+                    'sde_updated': wizard.sde_updated,
                     'manual_ito_id': wizard.manual_ito_id.id or False,
                 }
 
@@ -1188,6 +1190,20 @@ class stock_picking(osv.osv):
                 if not backorder_id:
                     backorder_id = self.copy(cr, uid, picking_id, initial_vals_copy, context=context)
                     backorder_name = self.read(cr, uid, backorder_id, ['name'], context=context)['name']
+
+                    # To have the same users on the new IN signature lines
+                    if wizard.picking_id.signature_id and wizard.partial_process_sign:
+                        sign_line_obj = self.pool.get('signature.line')
+                        # Using admin user because there is no write rights by default on the signature object
+                        self.write(cr, 1, backorder_id, {'signature_state': wizard.picking_id.signature_id.signature_state}, context=context)
+                        for sign_line in wizard.picking_id.signature_id.signature_line_ids:
+                            if sign_line.user_id:
+                                sign_line_model = [('signature_id.signature_res_model', '=', 'stock.picking'),
+                                                   ('signature_id.signature_res_id', '=', backorder_id),
+                                                   ('name_key', '=', sign_line.name_key)]
+                                backorder_sign_line_ids = sign_line_obj.search(cr, uid, sign_line_model, limit=1, context=context)
+                                sign_line_vals = {'user_id': sign_line.user_id.id, 'user_name': sign_line.user_id.name}
+                                sign_line_obj.write(cr, uid, backorder_sign_line_ids, sign_line_vals, context=context)
 
                     back_order_post_copy_vals = {}
                     if usb_entity == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
@@ -1276,7 +1292,11 @@ class stock_picking(osv.osv):
                     }, context=context)
                     return backorder_id
 
-                self.write(cr, uid, [picking_id], {'backorder_id': backorder_id}, context=context)
+                orig_in_vals = {'backorder_id': backorder_id}
+                # The non-processed part should not stay SDE updated
+                if wizard.sde_updated:
+                    orig_in_vals['sde_updated'] = False
+                self.write(cr, uid, [picking_id], orig_in_vals, context=context)
 
                 # Claim specific code
                 current_backorder = picking_obj.read(cr, uid, backorder_id, ['backorder_id'], context=context)

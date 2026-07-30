@@ -318,8 +318,6 @@ class ud_sync():
         self.context = context
         self.logger = logger
         self.oc = self.pool.get('sync.client.entity').get_entity(self.cr, self.uid, context).oc
-        if self.oc == 'waca':
-            self.oc = 'ocp'
 
         sync_id = self.pool.get('ir.model.data').get_object_reference(self.cr, self.uid, 'product_attributes', 'unidata_sync_config')[1]
         config = self.pool.get('unidata.sync').read(self.cr, self.uid, sync_id, context=self.context)
@@ -531,6 +529,10 @@ class ud_sync():
                 'ud': 'mergeToCode',
                 'ignore_missing': True,
             },
+            'merge_to_msfid': {
+                'ud': 'mergeToId',
+                'ignore_missing': True,
+            },
             'sterilized': {
                 'ud': 'medical/sterile',
                 'mapping': {
@@ -583,6 +585,8 @@ class ud_sync():
             'ocb': 4,
             'ocg': 7,
             'ocp': 8,
+            'ubuntu': 14,
+            'waca': 15,
         }
 
         url = '%s/projects' % (self.url_msl, )
@@ -936,8 +940,10 @@ class ud_sync():
         if uf_values['en_MF'].get('batch_management'):
             uf_values['en_MF']['perishable'] = True
 
-        if uf_values['en_MF'].get('golden_status') != 'Merged' and uf_values['en_MF'].get('new_code'):
-            del(uf_values['en_MF']['new_code'])
+        if uf_values['en_MF'].get('golden_status') != 'Merged':
+            for to_remove in ['new_code', 'merge_to_msfid']:
+                if uf_values['en_MF'].get(to_remove):
+                    del(uf_values['en_MF'][to_remove])
         return uf_values
 
     def update_single_nomenclature(self, nom_type, nomen_msf_id="", session_id=False):
@@ -1180,11 +1186,22 @@ class ud_sync():
                                     if x.get('state') == 'Merged' and x.get('mergeToCode'):
                                         to_write['new_code'] = x.get('mergeToCode')
                                         self.log('Write New code %s on product id: %s' % (to_write['new_code'], prod_ids[0]))
+                                    if x.get('mergeToId'):
+                                        to_write['merge_to_msfid'] = x.get('mergeToId')
                                     prod_obj.write(self.cr, self.uid, [prod_ids[0]], to_write)
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
                         self.log('%s product found %s' % (x.get('formerCodes'), prod_ids[0]))
+
+                    if x.get('state') == 'Merged' and prod_ids:
+                        # do not update Merged on both side products
+                        prod_data = prod_obj.browse(self.cr, self.uid, prod_ids[0], fields_to_fetch=['golden_status', 'merge_to_msfid'])
+                        if prod_data['golden_status'] == 'Merged':
+                            if x.get('mergeToId') and x['mergeToId'] != prod_data.merge_to_msfid:
+                                prod_obj.write(self.cr, self.uid, [prod_ids[0]], {'merge_to_msfid': x['mergeToId']})
+                            self.log('Ignore product %s with UD state Merged on UD and UF' % x.get('code'))
+                            continue
 
                     if not x.get('formerCodes'):
                         raise UDException('No formerCodes code')
@@ -1594,6 +1611,7 @@ class unidata_sync(osv.osv):
             raise osv.except_osv(_('Error'), _('A sync is already running ...'))
         try:
             self._start_ud_sync(cr, uid, context=context)
+            self.pool.get('product.product').unidata_start_auto_merge(cr, uid, context=context)
         finally:
             self._lock[cr.dbname].release()
 
@@ -1716,16 +1734,31 @@ class unidata_sync(osv.osv):
                 cr.commit()
 
 
+            max_ud_msfid = 100000
+            existing_done = False
+            last_tries = False # max msfid hard coded, last_tries to check if products existed after this value
             while not last_loop:
                 cr.execute('SAVEPOINT unidata_sync_log')
-                cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
-                min_id, max_id = cr.fetchone()
-                min_msfid = max_id
+                if not existing_done:
+                    cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
+                    min_id, max_id = cr.fetchone()
+                    original_min_msfid = min_msfid
+                    min_msfid = max_id or 0
+
                 if not min_id:
-                    last_loop = True
-                    cr.execute("select max(msfid) from product_product p")
-                    min_msfid = cr.fetchone()[0] or 0
-                    q_filter = "(msfIdentifier>=%s)" % min_msfid
+                    if not existing_done:
+                        existing_done = True
+                        min_msfid = original_min_msfid
+                    if last_tries:
+                        last_loop = True
+                        cr.execute("select max(msfid) from product_product p")
+                        min_msfid = cr.fetchone()[0] or 0
+                        q_filter = "(msfIdentifier>=%s)" % max_ud_msfid
+                    else:
+                        q_filter = "(msfIdentifier>=%s and msfIdentifier<%s)"%(min_msfid, min_msfid + page_size)
+                        min_msfid = min_msfid + page_size
+                        if min_msfid >= max_ud_msfid:
+                            last_tries = True
                 else:
                     if first_query:
                         min_id = 0
@@ -1778,7 +1811,7 @@ class unidata_sync(osv.osv):
             prod_obj = self.pool.get('product.product')
             unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
 
-            not_seen_ud_ids = prod_obj.search(cr, uid, [('ud_seen', '=', False), ('international_status', '=', unidata_id), ('active', 'in', ['t', 'f'])])
+            not_seen_ud_ids = prod_obj.search(cr, uid, [('ud_seen', '=', False), ('international_status', '=', unidata_id), ('active', 'in', ['t', 'f']), ('golden_status', '!=', 'Merged')])
 
             if not_seen_ud_ids:
                 prod_obj.write(cr, uid, not_seen_ud_ids, {'golden_status': ''})
@@ -1938,3 +1971,76 @@ class unidata_products_error(osv.osv):
         'type': 'product',
     }
 unidata_products_error()
+
+class unidata_auto_merge(osv.osv):
+    _name = 'unidata.auto_merge'
+    _order = 'date desc, id desc'
+    _rec_name = 'kept_code'
+
+    _columns = {
+        'date': fields.datetime('Date', required=1, select=1, readonly=1),
+        'non_kept_msfid': fields.integer('Non-kept MSFID', select=1, readonly=1, group_operator='no_group'),
+        'non_kept_code': fields.char('Non-kept Code', size=64, readonly=1),
+        'non_kept_product_id': fields.many2one('product.product', 'Product Non-kept', readonly=1),
+        'kept_msfid': fields.integer('Kept MSFID', select=1, readonly=1, group_operator='no_group'),
+        'kept_code': fields.char('Kept Code', size=64, readonly=1),
+        'kept_product_id': fields.many2one('product.product', 'Product Kept', readonly=1),
+        'first_date': fields.datetime('Date of first try', select=1, readonly=1),
+        'msg': fields.text('Error', readonly=1),
+        'log': fields.text('Full Log', readonly=1),
+        'state': fields.selection([('done', 'done'), ('ok', 'ok'), ('error', 'Error')], string='State', readonly=1),
+    }
+
+    _sql_constraints = [
+        ('unique_key', 'unique(kept_msfid, non_kept_msfid)', 'key already exists.')
+    ]
+
+    _defaults = {
+        'date': lambda *a, **b: fields.datetime.now(),
+        'first_date': lambda *a, **b: fields.datetime.now(),
+    }
+
+    def open_product_from_automerge(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if context.get('active_ids'):
+            ids = context['active_ids']
+        p_ids = []
+        if ids:
+            cr.execute('select non_kept_product_id, kept_product_id from unidata_auto_merge where id in %s', (tuple(ids), ))
+            for x in cr.fetchall():
+                p_ids += [x[0], x[1]]
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['tree', 'form'], context=context)
+        res['name'] = _('Auto merge products')
+        res['domain'] = [('active', 'in', ['t', 'f']), ('id', 'in', p_ids)]
+        res['target'] = 'current'
+        return res
+
+    def exec_auto_merge(self, cr, uid, ids, context=None):
+        prod_obj = self.pool.get('product.product')
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['non_kept_product_id', 'kept_product_id', 'state'], context=context):
+            if x.state != 'done':
+                try:
+                    cr.execute('SAVEPOINT unidata_auto_merge')
+                    prod_obj.merge_hq_product(cr, uid, x.kept_product_id.id, x.non_kept_product_id.id, context=context)
+                    self.write(cr, uid, x.id,  {'state': 'done', 'msg': False}, context=context)
+                except Exception as e:
+                    if isinstance(e, osv.except_osv):
+                        msg = e.value
+                    else:
+                        msg = e
+
+                    cr.execute('ROLLBACK TO SAVEPOINT unidata_auto_merge')
+                    self.write(cr, uid, x.id, {
+                        'state': 'error',
+                        'msg': msg,
+                        'log': tools.misc.get_traceback(e),
+                    }, context=context)
+                finally:
+                    cr.execute('RELEASE SAVEPOINT unidata_auto_merge')
+        return True
+
+unidata_auto_merge()

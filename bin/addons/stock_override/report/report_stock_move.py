@@ -892,8 +892,8 @@ product will be shown.""",
 
             attachment = self.pool.get('ir.attachment')
             attachment.create(new_cr, uid, {
-                'name': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-                'datas_fname': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'name': 'IN_OUT_Report_%s.xls' % time.strftime('%Y%m%d_%H_%M'),
+                'datas_fname': 'IN_OUT_Report_%s.xls' % time.strftime('%Y%m%d_%H_%M'),
                 'description': 'IN & OUT Report',
                 'res_model': 'export.report.stock.move',
                 'res_id': ids[0],

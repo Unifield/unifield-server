@@ -108,13 +108,13 @@
 						<xsl:when test="@tree='yes'">
 							<para>
 								<xsl:attribute name="leftIndent"><xsl:value-of select="@space"/></xsl:attribute>
-								<font fontName="Helvetica-bold" fontSize="9">
+								<font fontName="Helvetica-Bold" fontSize="9">
 								<xsl:value-of select="."/>
 								</font>
 							</para>
 						</xsl:when>
                        <xsl:when test="@tree='float'">
-                           <para style="float_right"><font fontName="Helvetica-bold" fontSize="9" color="black">
+                           <para style="float_right"><font fontName="Helvetica-Bold" fontSize="9" color="black">
                                <xsl:value-of select="."/>
                                </font></para>
                        </xsl:when>
@@ -131,7 +131,7 @@
 
 						<xsl:otherwise>
 							<para>
-								<font fontName="Helvetica-bold" fontSize="9" color="black">
+								<font fontName="Helvetica-Bold" fontSize="9" color="black">
 								<xsl:value-of select="."/>
 								</font>
 							</para>

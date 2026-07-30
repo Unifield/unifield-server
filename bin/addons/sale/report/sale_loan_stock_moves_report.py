@@ -257,7 +257,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
 
         if not move.price_currency_id:
             if move.price_unit is None:
-                return round(move.product_id.standard_price, 2)
+                return round(move.product_id.standard_price, 5)
             if move.type == 'in':
                 from_currency_id = move.partner_id.property_product_pricelist_purchase.currency_id.id
             else:
@@ -269,9 +269,9 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         to_currency_id = self.user_company['currency_id'].id
 
         if from_currency_id == to_currency_id:
-            return round(move.price_unit, 2)
+            return round(move.price_unit, 5)
 
-        return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, move.price_unit, round=False, context=context), 2)
+        return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, move.price_unit, round=False, context=context), 5)
 
 
 class sale_loan_stock_moves_report_xls(SpreadsheetReport):

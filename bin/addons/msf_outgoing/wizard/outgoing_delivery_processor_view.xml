@@ -29,6 +29,7 @@
                            colspan="4" nolabel="1" />
                     <field name="draft" invisible="1"/>
                     <field name="partial_process_sign" invisible="1" />
+                    <field name="sde_updated" readonly="1" attrs="{'invisible': [('sde_updated', '=', False)]}"/>
                     <group colspan="4" col="6" name="actions">
                         <separator string="Actions" colspan="6" />
                         <group colspan="6" attrs="{'invisible': [('partial_process_sign', '=', False)]}">

@@ -446,24 +446,26 @@ Importation completed in %s!
         if isinstance(ids, int):
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
-        purchase_obj = self.pool.get('purchase.order')
-        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
-            po_id = wiz_read['po_id']
-            if not wiz_read['file']:
+        for wiz_read in self.browse(cr, uid, ids, fields_to_fetch=['po_id', 'file'], context=context):
+            po = wiz_read.po_id
+            if not wiz_read.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
+            if (not po.rfq_ok and po.state != 'draft') or (po.rfq_ok and po.rfq_state != 'draft'):
+                doc_name = _('PO')
+                if po.rfq_ok:
+                    doc_name = _('RfQ')
+                return self.write(cr, uid, ids, {'state': 'done', 'message': _("You can only import on a Draft %s; import file is ignored") % (doc_name,)}, context=context)
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.b64decode(wiz_read.file))
                 # iterator on rows
                 reader_iterator = fileobj.getRows()
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(
                     cr, uid, ids, first_row, error_list=[], line_num=0, origin='PO', context=context)
-                context.update({'po_id': po_id, 'header_index': header_index})
-                rfq = purchase_obj.read(cr, uid, po_id, ['state', 'rfq_ok'], context=context)
-                is_rfq = rfq['rfq_ok']
+                context.update({'po_id': po.id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index, is_rfq and columns_for_rfq_line_import
+                    cr, uid, ids, context, header_index, po.rfq_ok and columns_for_rfq_line_import
                     or columns_for_po_line_import[1:], origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
@@ -478,11 +480,8 @@ Importation completed in %s!
                           "avoid conflict accesses (you can see the loading on the PO note "
                           "tab check box). At the end of the load, POXX will be back in the "
                           "right state. You can refresh the screen if you need to follow "
-                          "the upload progress") % (purchase_obj.browse(cr, uid, po_id).name)
-        return self.write(
-            cr, uid, ids,
-            {'message': msg_to_return, 'state': 'in_progress'},
-            context=context)
+                          "the upload progress") % (po.name,)
+        return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):
         """

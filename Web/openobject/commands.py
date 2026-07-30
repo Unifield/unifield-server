@@ -167,6 +167,15 @@ def revprox(redir_port):
     if cherrypy.config.get('server.https_port'):
         cmd += ['-listen-port', str(cherrypy.config.get('server.https_port'))]
 
+    for rpc_type in ['json', 'xml']:
+        if cherrypy.config.get('server.redir-%srpc-port' % (rpc_type, )):
+            cmd += ['-%srpc-port' % rpc_type, str(cherrypy.config.get('server.redir-%srpc-port' % (rpc_type, )))]
+
+    http_redir = False
+    if not cherrypy.config.get('server.disable-ufweb-redir'):
+        cmd += ['-http-port', "18061"]
+        http_redir = True
+
     to_reopen = []
     # close log files, so Popen doens't keep an opened descriptor
     # the log file rotation will not be locked
@@ -238,5 +247,5 @@ def revprox(redir_port):
             pass
 
     cherrypy.engine.subscribe('stop', lambda p=proc: _cb(p))
-    return True
+    return http_redir
 

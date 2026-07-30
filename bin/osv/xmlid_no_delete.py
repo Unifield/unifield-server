@@ -82,6 +82,7 @@ prevent_deletion =  {
     'res.users': [
         ('base', 'user_sync'),
         ('base', 'user_unidata_pull'),
+        ('base', 'user_sde_tool'),
     ],
     'stock.incoterms': [
         ('stock', 'incoterm_EXW'),

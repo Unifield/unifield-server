@@ -67,8 +67,8 @@
         
         <menuitem action="action_batch_recall"
                   id="menu_batch_recall"
-                  sequence="-5"
-                  parent="stock.menu_traceability" />
+                  sequence="2"
+                  parent="stock.menu_action_bn_management" />
                   
         <record id="action_report_batch_recall" model="ir.actions.act_window">
             <field name="name">Batch Location</field>

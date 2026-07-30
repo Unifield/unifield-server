@@ -36,8 +36,18 @@ class product_mass_update(osv.osv):
 
         return res
 
+    def get_product_state_selection(self, cr, uid, context=None):
+        """
+        Only "Valid" and "Phase Out" by default, add "Forbidden" and "Archived" at HQ level
+        """
+        res = [('valid', _('Valid')), ('phase_out', _('Phase Out'))]
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+            res.extend([('forbidden', _('Forbidden')), ('archived', _('Archived'))])
+
+        return res
+
     _columns = {
-        'name': fields.char(size=64, string='Update Reference'),
+        'name': fields.char(size=128, string='Update Reference'),
         'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done'), ('cancel', 'Cancelled')], string='Status', readonly=True),
         'date_done': fields.datetime(string='Date of the update', readonly=True),
         'user_id': fields.many2one('res.users', string='User who Updated', readonly=True),
@@ -66,7 +76,7 @@ class product_mass_update(osv.osv):
                                      help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
         'procure_method': fields.selection([('make_to_stock', 'Make to Stock'), ('make_to_order', 'Make to Order')], 'Procurement Method',
                                            help="If you encode manually a Procurement, you probably want to use a make to order method."),
-        'product_state': fields.selection([('valid', 'Valid'), ('phase_out', 'Phase Out'), ('forbidden', 'Forbidden'), ('archived', 'Archived')], 'Status', help="Tells the user if he can use the product or not."),
+        'product_state': fields.selection(selection=get_product_state_selection, string='Status', help="Tells the user if he can use the product or not."),
         'sterilized': fields.selection(selection=[('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Sterile'),
         'supply_method': fields.selection([('produce', 'Produce'), ('buy', 'Buy')], 'Supply Method',
                                           help="Produce will generate production order or tasks, according to the product type. Purchase will trigger purchase orders when requested."),
@@ -128,6 +138,8 @@ class product_mass_update(osv.osv):
             vals['property_account_income'] = False
         if 'empty_exp_account' in vals and vals['empty_exp_account']:
             vals['property_account_expense'] = False
+        if 'active_product' in vals and vals['active_product'] == 'no':
+            vals['product_state'] = False
 
         return super(product_mass_update, self).write(cr, user, ids, vals, context)
 
@@ -153,6 +165,11 @@ class product_mass_update(osv.osv):
         })
 
         return super(product_mass_update, self).copy(cr, uid, id, default=default, context=context)
+
+    def onchange_active_product(self, cr, uid, ids, active_product):
+        if active_product == 'no':
+            return {'value': {'product_state': False}}
+        return {'value': {}}
 
     def onchange_inc_check(self, cr, uid, ids, empty_inc_account):
         if empty_inc_account:
@@ -387,7 +404,7 @@ class product_mass_update(osv.osv):
 
             if not not_deactivated and not not_activated:
                 prod_obj.write(cr, uid, [prod.id for prod in p_mass_upd.product_ids], vals, context=context)
-                user_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).id
+                real_user = hasattr(uid, 'realUid') and uid.realUid or uid
 
                 # Unlink existing errors
                 errors_ids = upd_errors_obj.search(cr, uid, [('p_mass_upd_id', '=', p_mass_upd.id)], context=context)
@@ -397,7 +414,7 @@ class product_mass_update(osv.osv):
                     'has_not_deactivable': False,
                     'has_not_activable': False,
                     'date_done': time.strftime('%Y-%m-%d %H:%M'),
-                    'user_id': user_id,
+                    'user_id': real_user,
                     'state': 'done',
                     'message': '',
                 }

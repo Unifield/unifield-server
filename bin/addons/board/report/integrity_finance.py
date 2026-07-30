@@ -16,6 +16,9 @@ class integrity_finance(report_sxw.rml_parse):
         self.sql_rec_params = []
         self.sql_nr_additional = ""  # specific to queries related to not runs
         self.sql_nr_params = []
+
+        self.sql_pure_aji_additional = ""
+        self.sql_pure_aji_params = []
         self.localcontext.update({
             'get_title': self.get_title,
             'list_checks': self.list_checks,
@@ -65,6 +68,9 @@ class integrity_finance(report_sxw.rml_parse):
                 self.sql_rec_params.append(tuple(instance_ids,))
                 self.sql_nr_additional += " AND source IN (SELECT instance FROM msf_instance WHERE id IN %s) "
                 self.sql_nr_params.append(tuple(instance_ids, ))
+
+                self.sql_pure_aji_additional += " AND array_agg(aji.instance_id)&&%s "
+                self.sql_pure_aji_params.append(list(instance_ids))
             # FY
             fiscalyear_id = data['form'].get('fiscalyear_id', False)
             if fiscalyear_id:
@@ -74,6 +80,10 @@ class integrity_finance(report_sxw.rml_parse):
                 self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
                 self.sql_rec_params.append(fiscalyear.date_start)
                 self.sql_rec_params.append(fiscalyear.date_stop)
+
+                self.sql_pure_aji_additional += " AND array_agg(period.fiscalyear_id)&&%s "
+                self.sql_pure_aji_params.append([fiscalyear_id])
+
             wiz_filter = data['form'].get('filter', '')
             # entry status
             move_state = data['form'].get('move_state', '')
@@ -100,6 +110,9 @@ class integrity_finance(report_sxw.rml_parse):
                     self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
                     self.sql_rec_params.append(per_from.date_start)
                     self.sql_rec_params.append(per_to.date_stop)
+
+                    self.sql_pure_aji_additional += " AND array_agg(period.id)&&%s"
+                    self.sql_pure_aji_params += [list(period_ids)]
             # dates
             if wiz_filter in ('filter_date_doc', 'filter_date'):
                 date_from = data['form'].get('date_from', False)
@@ -110,11 +123,14 @@ class integrity_finance(report_sxw.rml_parse):
                     if wiz_filter == 'filter_date_doc':
                         # JI doc dates
                         self.sql_additional += " AND l.document_date >= %s AND l.document_date <= %s "
+                        self.sql_pure_aji_additional += " AND count(aji.document_date between %s and %s or NULL) > 0 "
                     else:
                         # JI posting dates
                         self.sql_additional += " AND l.date >= %s AND l.date <= %s "
+                        self.sql_pure_aji_additional += " AND count(aji.date between %s and %s or NULL) > 0 "
                     self.sql_params.append(date_from)
                     self.sql_params.append(date_to)
+                    self.sql_pure_aji_params += [date_from, date_to]
                     # reconciliation dates
                     self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
                     self.sql_rec_params.append(date_from)
@@ -154,6 +170,12 @@ class integrity_finance(report_sxw.rml_parse):
             sql = sql % self.sql_additional
             if self.sql_params:
                 self.cr.execute(sql, tuple(self.sql_params))
+            else:
+                self.cr.execute(sql)
+        elif query_ref == 'aji_corrected_at_2_levels':
+            sql = sql % self.sql_pure_aji_additional
+            if self.sql_pure_aji_params:
+                self.cr.execute(sql, tuple(self.sql_pure_aji_params))
             else:
                 self.cr.execute(sql)
         return self.cr.fetchall()

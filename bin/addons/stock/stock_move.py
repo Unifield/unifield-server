@@ -1598,6 +1598,8 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
+        audit_rule_ids = self.check_audit(cr, uid, 'write')
+
         for move in self.browse(cr, uid, ids, context=context):
             if move.location_id.usage == 'supplier' or (move.location_id.usage == 'customer' and move.location_id.location_category == 'consumption_unit'):
                 if move.state in ('confirmed', 'waiting'):
@@ -1632,6 +1634,11 @@ class stock_move(osv.osv):
                         prodlot_id = r[3] or None
                         expired_date = r[2] or None
                     cr.execute("update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s, state=%s, qty_to_process=%s where id=%s", (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, state, r[0], move.id))
+                    # Manually create the Track Change for the state as removing the change from the SQL creates Availability discrepancies
+                    if move.state != state:
+                        self.pool.get('audittrail.rule').audit_log(cr, uid, audit_rule_ids, self, move.id, 'write',
+                                                                   {'id': move.id, 'state': move.state}, {move.id:{'state': state}},
+                                                                   context=context)
                     while res:
                         r = res.pop(0)
                         prodlot_id = False

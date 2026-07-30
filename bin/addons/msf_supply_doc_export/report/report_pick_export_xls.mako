@@ -130,11 +130,13 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Content')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id and o.sale_id.details or '' | x}</Data></Cell> 
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id and o.sale_id.details or '' | x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination Location:')}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport mode')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o.sale_id, 'transport_type') or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${o.ext_cu and o.ext_cu.name or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Priority')}</Data></Cell>

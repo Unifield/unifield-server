@@ -659,9 +659,9 @@ class product_attributes(osv.osv):
             if arg[1] != '=':
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
             if arg[2]:
-                dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('replace_product_id', '=', False)]
+                dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
             else:
-                dom = [('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]
+                dom = [('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local')]
 
         return dom
 
@@ -692,7 +692,7 @@ class product_attributes(osv.osv):
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
             prod_domain = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True),
-                           ('replace_product_id', '!=', False), ('standard_ok', '!=', 'non_standard_local')]
+                           ('nb_merge_from', '!=', 0), ('standard_ok', '!=', 'non_standard_local')]
             for _id in self.search(cr, uid, prod_domain, context=context):
                 res[_id] = True
 
@@ -712,12 +712,13 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
         if context.get('sync_update_execution') or self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            dom = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('replace_product_id', '=', False)]
+            dom = [('id', 'in', ids), ('international_status', '=', 'UniData')]
             if context.get('sync_update_execution'):
                 # UD prod deactivated in coordo + merge + sync : proj does not see the deactivation
                 dom += [('active', 'in', ['t', 'f'])]
             else:
-                dom += ['|', '&', ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'), '&', ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
+                dom += ['|', '&', ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'),
+                        '&', ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
             for p_id in self.search(cr, uid, dom, context=context):
                 res[p_id] = True
         return res
@@ -1223,7 +1224,9 @@ class product_attributes(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'nsl_merged': fields.function(_get_nsl_merged, method=True, type='boolean', string='UD / NSL merged'),
         'local_product_merged': fields.boolean('Local Merged', help='Local Product Merged with another Local Product', readonly=1),
+        # FIXME: Remove many2one after UF41.0
         'replace_product_id': fields.many2one('product.product', string='Merged from', select=1),
+        'nb_merge_from': fields.integer(string='Count the number of times the product was merged from', readonly=1),
         'replaced_by_product_id': fields.many2one('product.product', string='Merged to'),
         'allow_merge': fields.function(_get_allow_merge, type='boolean', method=True, string="UD Allow merge"),
         'uf_write_date': fields.datetime(_('Write date')),
@@ -1259,6 +1262,7 @@ class product_attributes(osv.osv):
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
 
         'incompatible_oc_default_values': fields.function(tools.misc.get_fake, method=True, type='boolean', string='Incompatible OC default', fnct_search=_search_incompatible_oc_default_values),
+        'merge_to_msfid': fields.integer('Merge to msfid', copy=False),
     }
 
 
@@ -1840,6 +1844,25 @@ class product_attributes(osv.osv):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             return False
 
+
+        cr.execute('''
+            select
+                p.id
+            from
+                product_product p, product_product kept, product_international_status c
+            where
+                c.id = p.international_status and
+                p.golden_status = 'Merged' and
+                p.active = 't' and
+                p.merge_to_msfid is not null and
+                p.merge_to_msfid = kept.msfid and
+                c.code = 'unidata' and
+                kept.active = 'f'
+        ''')
+        to_inactive = [x[0] for x in cr.fetchall()]
+        if to_inactive:
+            self.write(cr, uid, to_inactive, {'active': False}, context=context)
+
         ids = []
         products_used = set()
 
@@ -1853,6 +1876,55 @@ class product_attributes(osv.osv):
         logging.getLogger('UD deactivation').info('%d products deactivated, %d kept as active' % (len(ids), len(products_used)))
 
         return True
+
+    def unidata_start_auto_merge(self, cr, uid, context=None):
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            return False
+
+
+        cr.execute("update unidata_auto_merge set state='ok', msg='' where state='error'")
+        cr.execute('''
+            select
+                non.id, non.default_code, non.msfid, kept.id, kept.default_code, kept.msfid
+            from
+                product_product non, product_product kept, product_international_status c
+            where
+                c.id = non.international_status and
+                non.golden_status = 'Merged' and
+                non.merge_to_msfid is not null and
+                non.merge_to_msfid = kept.msfid and
+                c.code = 'unidata' and
+                kept.active = 't' and
+                non.active = 't'
+        ''')
+
+
+        auto_merge_obj = self.pool.get('unidata.auto_merge')
+        auto_ids_to_exec = []
+        for non_id, non_default_code, non_msfid, kept_id, kept_default_code, kept_msfid in cr.fetchall():
+            logging.getLogger('Auto-Merge').info('kept: %s , non-kep: %s' % (kept_default_code, non_default_code))
+            auto_ids = auto_merge_obj.search(cr, uid, [('non_kept_msfid', '=', non_msfid), ('kept_msfid', '=', kept_msfid)], context=context)
+            auto_data = {
+                'non_kept_msfid': non_msfid,
+                'non_kept_code': non_default_code,
+                'non_kept_product_id': non_id,
+                'kept_msfid': kept_msfid,
+                'kept_code': kept_default_code,
+                'kept_product_id': kept_id,
+                'date': fields.datetime.now(),
+            }
+            if auto_ids:
+                auto_id = auto_ids[0]
+                auto_merge_obj.write(cr, uid, auto_id, auto_data, context=context)
+            else:
+                auto_id = auto_merge_obj.create(cr, uid, auto_data, context=context)
+            auto_ids_to_exec.append(auto_id)
+
+        if auto_ids_to_exec:
+            auto_merge_obj.exec_auto_merge(cr, uid, auto_ids_to_exec, context=context)
+
+        return True
+
 
     def unidata_products_used(self, cr, uid, ids):
         if not ids:
@@ -1992,7 +2064,6 @@ class product_attributes(osv.osv):
                         del(vals[field])
 
 
-
         if unidata_product and not context.get('sync_update_execution'):
             if 'international_status' not in vals and 'oc_subscription' in vals:
                 if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
@@ -2024,6 +2095,9 @@ class product_attributes(osv.osv):
                     state_id = [state_id]
                 prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
 
+        if unidata_product and context.get('sync_update_execution') and vals.get('active') and 'state' not in vals and \
+                self.search_exists(cr, uid, [('id', 'in', ids), ('active', '=', False), ('standard_ok', '=', 'non_standard_local')], context=context):
+            vals['state'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'status_1')[1] # state UD = Valid
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -2168,12 +2242,18 @@ class product_attributes(osv.osv):
                     raise osv.except_osv(_('Error'), _('Product activation is not allowed on Non-Standard Local Products which are not OC Subscribed'))
                 if instance_level == 'project':
                     raise osv.except_osv(_('Error'), _('%s activation is not allowed at project') % (product.default_code,))
+                if instance_level == 'coordo':
+                    vals['state'] = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]
             if (instance_level == 'section' and (product.international_status.id in (hq_status, itc_status, esc_status) or
                                                  (product.oc_subscription and product.state_ud in ('valid', 'outdated', 'discontinued')))) or \
                     (instance_level == 'coordo' and product.international_status.id == local_status):
                 vals.update({'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]})
-            real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-            self.write(cr, real_uid, product.id, vals, context=context)
+
+            # US-15613/ US-7665 allowed if FARLs allow write on active field
+            if not self.has_write_access_on_field(cr, uid, product.id, 'active', context=context):
+                raise osv.except_osv(_('Error'), _('Permission denied on active field'))
+
+            self.write(cr, uid, product.id, vals, context=context)
 
         return True
 
@@ -2662,7 +2742,7 @@ class product_attributes(osv.osv):
         if default is None:
             default = {}
 
-        to_reset_list = ['replace_product_id', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id',
+        to_reset_list = ['replace_product_id', 'nb_merge_from', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id',
                          'kept_initial_product_id', 'unidata_merged', 'unidata_merge_date', 'local_merged_product']
         for to_reset in to_reset_list:
             if to_reset not in default:
@@ -2687,6 +2767,10 @@ class product_attributes(osv.osv):
                        local_merged_product=False,
                        )
         copydef.update(default)
+
+        if 'type' not in copydef or copydef['type'] != 'service_recep':
+            copydef['transport_ok'] = False
+
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
 
     def onchange_code(self, cr, uid, ids, default_code, nomen_manda_2, international_status, context=None):
@@ -2733,12 +2817,15 @@ class product_attributes(osv.osv):
 
         if type in ('consu', 'service', 'service_recep'):
             res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
+        if type != 'service_recep':
+            res.setdefault('value', {}).update({'transport_ok': False})
         return res
 
-    def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, context=None):
+    def onchange_international_status(self, cr, uid, ids, international_status, nomen_manda_3, state, context=None):
         '''
         Prevent users to select the "Temporary" Product Creator
         Archived MISC nomenclatures are only available to "Local" Product Creator
+        Prevent users to select the Product Creator Local if the UniField Status is "Archived" or "Forbidden"
         '''
         data_obj = self.pool.get('ir.model.data')
         if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]:
@@ -2755,6 +2842,38 @@ class product_attributes(osv.osv):
                 'warning': {
                     'title': _('Warning'),
                     'message': _('Please select a non-archived Root Nomenclature if you want to modify the Product Creator')
+                }
+            }
+        arch_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_4')[1]
+        forb_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_forbidden')[1]
+        if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1] \
+                and state in [arch_state_id, forb_state_id]:
+            return {
+                'value': {'international_status': False},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('The combination of the current UniField Status and the selected Product Creator "Local" are not allowed')
+                }
+            }
+        return {}
+
+    def onchange_state(self, cr, uid, ids, state, international_status, context=None):
+        '''
+        Prevent users to select the "Archived" or "Forbidden" UniField Status if the Product Creator is Local
+        '''
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+        arch_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_4')[1]
+        forb_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_forbidden')[1]
+        if international_status and international_status == data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1] \
+                and state in [arch_state_id, forb_state_id]:
+            return {
+                'value': {'state': False},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('The combination of Product Creator "Local" and the selected UniField Status are not allowed')
                 }
             }
         return {}
@@ -3139,6 +3258,10 @@ class product_attributes(osv.osv):
         failed = []
         for f in fields_to_check:
             if old_values[f] != new_values[f]:
+                if level != 'coordo' and f == 'nomen_manda_0':
+                    srv_log_ids = self.pool.get('product.nomenclature').search(cr, uid, [('name', 'in', ['SRV', 'LOG']), ('type', '=', 'mandatory'), ('level', '=', 0)], context=context)
+                    if old_values[f][0] in srv_log_ids and new_values[f][0] in srv_log_ids:
+                        continue
                 failed.append(f)
 
         if failed:
@@ -3249,9 +3372,12 @@ class product_attributes(osv.osv):
 
         kept_context = context.copy()
         kept_context['lang'] = 'en_US'
-        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'standard_ok', 'international_status', 'finance_price'], context=kept_context)
+        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id',
+                                                 'standard_price', 'qty_available', 'active', 'standard_ok', 'international_status',
+                                                 'finance_price', 'nb_merge_from'], context=kept_context)
 
-        old_fields_to_read = ['default_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'can_be_hq_merged', 'international_status', 'standard_ok', 'finance_price']
+        old_fields_to_read = ['default_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active',
+                              'can_be_hq_merged', 'international_status', 'standard_ok', 'finance_price']
         if merge_type != 'section':
             old_fields_to_read = list(set(old_fields_to_read).union(self.merged_fields_to_keep))
 
@@ -3287,8 +3413,7 @@ class product_attributes(osv.osv):
         if instance_level != 'project':
             block_msg = self.check_same_value( cr, uid,  kept_id, old_prod_id, level=merge_type, blocker=True, context=context)
             if block_msg:
-                prod_data = self.read(cr, uid, [kept_id, old_prod_id], ['default_code'], context=context)
-                errors.append(_('%s\nProducts: %s and %s') % (block_msg, prod_data[0]['default_code'], prod_data[1]['default_code']))
+                errors.append(block_msg)
 
         if errors:
             raise osv.except_osv(_('Error'), "\n".join(errors))
@@ -3296,7 +3421,7 @@ class product_attributes(osv.osv):
         if merge_type == 'section':
             new_write_data = {'is_kept_product': True}
         else:
-            new_write_data = {'active': True, 'replace_product_id': old_prod_id}
+            new_write_data = {'active': True, 'nb_merge_from': kept_data['nb_merge_from'] + 1}
 
         if not kept_data['old_code']:
             new_write_data['old_code'] = old_prod_data['default_code']
@@ -3348,6 +3473,8 @@ class product_attributes(osv.osv):
                 ('product_merged', 'old_product_id'),
                 ('standard_price_track_changes', 'product_id'),
                 ('product_product', 'kept_initial_product_id'),
+                ('unidata_auto_merge', 'non_kept_product_id'),
+                ('unidata_auto_merge', 'kept_product_id'),
             ]
         }
 
@@ -3446,10 +3573,9 @@ class product_attributes(osv.osv):
         # generate terms on translations export
         [_('Merge Product non-kept product'), _('Merge Product kept product')]
 
-
+        _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
+        _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
         if merge_type == 'section':
-            _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
-            _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
             if not context.get('sync_update_execution') or instance_level == 'coordo':
                 merge_data = {'new_product_id': kept_id, 'old_product_id': old_prod_id, 'level': 'section'}
                 new_ctx = context.copy()

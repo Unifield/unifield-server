@@ -191,6 +191,7 @@
                         <field name="date" />
                         <field name="min_date" />
                         <field name="product_id" />
+                        <field name="sde_updated" />
                     </xpath>
                     <xpath expr="/search//field[@name='company_id']" position="replace" />
                     <xpath expr="/search//filter[@name='done']" position="attributes">

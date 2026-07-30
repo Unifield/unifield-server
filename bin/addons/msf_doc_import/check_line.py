@@ -232,7 +232,7 @@ def compute_location_value(cr, uid, **kwargs):
 
                 loc_ids = loc_obj.search(cr, uid, domain, context=context)
                 loc_by_name_ids = loc_obj.search(cr, uid, [('name', '=ilike', loc_name)], context=context)
-                if pick_ext_cu:
+                if pick_type == 'in' and pick_ext_cu:
                     if loc_ids and loc_ids[0] != pick_ext_cu.id:
                         error_list.append(
                             _('The Location "%s" on line level is not the same as the Location "%s" on header level.')
