@@ -131251,3 +131251,9 @@ msgstr "Le Partenaire du Fournisseur d'un OTE à fusionner n'est pas cohérent a
 #: view:merge.ito.wizard:0
 msgid "They have the same Shipment Flow"
 msgstr "Ils ont le même Flux d'Expédition"
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:79
+#, python-format
+msgid "The ITOs %s among the ones selected have already been merged"
+msgstr "Les OTEs %s parmis ceux sélectionnés ont déjà été fusionnés"

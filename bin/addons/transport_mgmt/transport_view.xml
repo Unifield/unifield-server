@@ -136,7 +136,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <tree string="Inbound Transport Object" hide_delete_button="1">
+                <tree string="Inbound Transport Object" colors="grey:state=='cancel'" hide_delete_button="1">
                     <field name="name" />
                     <field name="supplier_partner_id" string="Supplier" />
                     <field name="ship_ref" />
@@ -466,7 +466,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <tree string="Outbound Transport Object" hide_delete_button="1">
+                <tree string="Outbound Transport Object" colors="grey:state=='cancel'" hide_delete_button="1">
                     <field name="name" />
                     <field name="customer_partner_id" string="Customer"/>
                     <field name="transport_partner_id" />
