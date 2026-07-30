@@ -370,7 +370,7 @@ register_widget(Label, ["label"])
 class Char(TinyInputWidget):
 
     template = "/openerp/widgets/form/templates/char.mako"
-    params = ['password', 'size', 'readonly_before_state', 'ro_by_trans']
+    params = ['password', 'password_with_eye', 'size', 'readonly_before_state', 'ro_by_trans']
 
     def __init__(self, **attrs):
 

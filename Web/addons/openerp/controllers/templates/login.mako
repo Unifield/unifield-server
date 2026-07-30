@@ -66,9 +66,10 @@
                                     <td class="label">
                                         <label for="show_password">${_("Password:")}</label>
                                     </td>
-                                    <td style="padding: 3px;">
-                                        <div style="position: relative; width: 100%;">
+                                    <td style="padding: 3px; vertical-align: top;">
+                                        <div style="position: relative; width: 100%; height: 24px;">
                                             <input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown="if (event.keyCode == 13) disable_save()" style="width:100%; padding-right: 24px; box-sizing: border-box;" />
+                                            <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
                                             <img
                                                 src="/openerp/static/images/eye.png"
                                                 alt=""
@@ -88,7 +89,6 @@
                                             />
                                         </div>
 
-                                        <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
                                         <input type="hidden" name="password" id="password" />
                                     </td>
 

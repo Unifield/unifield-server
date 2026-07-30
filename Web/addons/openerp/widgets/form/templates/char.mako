@@ -29,7 +29,7 @@
         % if error:
             <span class="fielderror">${error}</span>
         % endif
-        % if password:
+        % if password_with_eye:
             <img
                 src="/openerp/static/images/eye.png"
                 alt=""

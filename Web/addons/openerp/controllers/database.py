@@ -78,6 +78,11 @@ class ReplacePasswordField(openobject.widgets.PasswordField):
         })
         super(ReplacePasswordField, self).__init__(*arg, **kwargs)
 
+class ReplacePasswordFieldWithEye(ReplacePasswordField):
+    template = "/openobject/widgets/templates/password_eye.mako"
+    params = {
+        'replace_for': 'Name of the original field to toggle',
+    }
 
 class DBForm(openobject.widgets.Form):
     strip_name = True

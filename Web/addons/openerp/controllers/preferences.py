@@ -40,9 +40,9 @@ class PrefsPassword(database.FormPassword):
     display_string = True
     display_description = True
     fields = [
-        database.ReplacePasswordField(name='old_password', label=_('Current password:')),
-        database.ReplacePasswordField(name='new_password', label=_('New password:')),
-        database.ReplacePasswordField(name='confirm_password', label=_('Confirm new password:')),
+        database.ReplacePasswordFieldWithEye(name='old_password', label=_('Current password:')),
+        database.ReplacePasswordFieldWithEye(name='new_password', label=_('New password:')),
+        database.ReplacePasswordFieldWithEye(name='confirm_password', label=_('Confirm new password:')),
     ]
 
 class UpdatePassword(PrefsPassword):
