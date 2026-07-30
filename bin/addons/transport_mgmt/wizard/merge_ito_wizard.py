@@ -30,10 +30,12 @@ class merge_ito_wizard(osv.osv_memory):
 
     _columns = {
         'ito_template_id': fields.many2one('transport.order.in', string='Template ITO', help='All information of the ITO template will be written in the new ITO'),
+        'merged_itos_msg': fields.char(string='Some of the ITOs in the selected list have already been merged', size=512, readonly=1),
         'cant_merge_msg': fields.text(string='The ITOs can not be merged', readonly=1),
     }
 
     _defaults = {
+        'merged_itos_msg': '',
         'cant_merge_msg': '',
     }
 
@@ -55,8 +57,12 @@ class merge_ito_wizard(osv.osv_memory):
         cant_merge_msg = ''
         ito_errors = {}
         states, suppliers, ship_flows, cargo_refs = set(), set(), set(), set()
-        ftf = ['name', 'state', 'zone_type', 'shipment_type', 'supplier_partner_id', 'shipment_flow', 'original_cargo_ref']
+        ftf = ['name', 'state', 'zone_type', 'shipment_type', 'supplier_partner_id', 'shipment_flow',
+               'original_cargo_ref', 'merged_order']
+        merged_itos = []
         for ito in self.pool.get('transport.order.in').read(cr, uid, context['active_ids'], ftf, context=context):
+            if ito['merged_order']:
+                merged_itos.append(ito['name'])
             # Data to check
             ito_errors[ito['name']] = []
             if ito['state'] not in ('draft', 'planned', 'prearrival', 'transit', 'entry'):
@@ -68,6 +74,9 @@ class merge_ito_wizard(osv.osv_memory):
             suppliers.add(ito['supplier_partner_id'])
             ship_flows.add(ito['shipment_flow'])
             cargo_refs.add(ito['original_cargo_ref'])
+
+        if merged_itos:
+            res['merged_itos_msg'] = _('The ITOs %s among the ones selected have already been merged') % (', '.join(merged_itos))
 
         for ito in ito_errors:
             if ito_errors.get(ito):
@@ -121,7 +130,7 @@ class merge_ito_wizard(osv.osv_memory):
                 'weight': line.weight,
                 'amount': line.amount,
                 'currency_id': line.currency_id and line.currency_id.id or False,
-                'cargo_category': tmpl_ito.cargo_category,
+                'cargo_category': line.cargo_category or tmpl_ito.cargo_category,
                 'comment': line.comment,
                 'kc': line.kc,
                 'dg': line.dg,
@@ -162,6 +171,7 @@ class merge_ito_wizard(osv.osv_memory):
 
         merged_cargo_category = tmpl_ito.cargo_category
         merged_sync_refs = tmpl_ito.sync_ref and tmpl_ito.sync_ref.split(';') or []
+        merged_notes = tmpl_ito.notes and tmpl_ito.notes.replace('\r\n', '\n').split('\n') or []
         for ito in [ito for ito in ito_obj.browse(cr, uid, context.get('active_ids', []), context=context) if ito.id != tmpl_ito.id]:
             if merged_cargo_category != 'mixed' and merged_cargo_category != ito.cargo_category:
                 merged_cargo_category = 'mixed'
@@ -169,6 +179,9 @@ class merge_ito_wizard(osv.osv_memory):
                 for oto_ref in ito.sync_ref.split(';'):
                     if oto_ref not in merged_sync_refs:
                         merged_sync_refs.append(oto_ref)
+            if ito.notes:
+                for note in ito.notes.replace('\r\n', '\n').split('\n'):
+                    merged_notes.append(note)
 
             for line in ito.line_ids:
                 merged_ito_data['line_ids'].append((0, 0, {
@@ -179,7 +192,7 @@ class merge_ito_wizard(osv.osv_memory):
                     'weight': line.weight,
                     'amount': line.amount,
                     'currency_id': line.currency_id and line.currency_id.id or False,
-                    'cargo_category': ito.cargo_category,
+                    'cargo_category': line.cargo_category or ito.cargo_category,
                     'comment': line.comment,
                     'kc': line.kc,
                     'dg': line.dg,
@@ -188,7 +201,7 @@ class merge_ito_wizard(osv.osv_memory):
 
         # Update the merged ITO data then create it
         merged_ito_data.update({'cargo_category': merged_cargo_category, 'from_sync': merged_sync_refs and True or False,
-                                'sync_ref': ';'.join(merged_sync_refs)})
+                                'sync_ref': ';'.join(merged_sync_refs), 'notes': '\n'.join(merged_notes)})
         merged_ito_id = ito_obj.copy(cr, uid, tmpl_ito.id, merged_ito_data, context=context)
 
         # Cancel all ITOs used in the merge
