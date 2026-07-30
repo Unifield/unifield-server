@@ -1501,6 +1501,9 @@ msgstr "Formulaire du Partenaire"
 #: selection:transport.order,cargo_category:0
 #: selection:transport.order.in,cargo_category:0
 #: selection:transport.order.out,cargo_category:0
+#: selection:transport.order.in.line,cargo_category:0
+#: selection:transport.order.line,cargo_category:0
+#: selection:transport.order.out.line,cargo_category:0
 msgid "Medical"
 msgstr "Médical"
 
@@ -8674,6 +8677,12 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: view:msf.instance:0
 #: selection:transport.order.customs.fees,state:0
 #: selection:transport.order.transport.fees,state:0
+#: selection:transport.order.customs.fees,parent_state:0
+#: view:transport.order.in:0
+#: selection:transport.order.in,state:0
+#: view:transport.order.out:0
+#: selection:transport.order.out,state:0
+#: selection:transport.order.transport.fees,parent_state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -27591,6 +27600,9 @@ msgstr "% terminé"
 #: selection:transport.order,cargo_category:0
 #: selection:transport.order.in,cargo_category:0
 #: selection:transport.order.out,cargo_category:0
+#: selection:transport.order.in.line,cargo_category:0
+#: selection:transport.order.line,cargo_category:0
+#: selection:transport.order.out.line,cargo_category:0
 msgid "Mixed"
 msgstr "Mixte"
 
@@ -57078,6 +57090,9 @@ msgstr "Autres Types"
 #: selection:transport.order,cargo_category:0
 #: selection:transport.order.in,cargo_category:0
 #: selection:transport.order.out,cargo_category:0
+#: selection:transport.order.in.line,cargo_category:0
+#: selection:transport.order.line,cargo_category:0
+#: selection:transport.order.out.line,cargo_category:0
 msgid "Logistic"
 msgstr "Logistique"
 
@@ -97452,6 +97467,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:transport.order.in:0
 #: view:transport.order.out.line:0
 #: view:ubuntu.export.wizard:0
+#: view:merge.ito.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -126406,8 +126422,8 @@ msgstr "Planifié"
 #: view:transport.order.in:0
 #: selection:transport.order.in,state:0
 #: selection:transport.order.transport.fees,parent_state:0
-msgid "Under Preclearance"
-msgstr "Avant Autorisation"
+msgid "Pre-Arrival"
+msgstr "Avant Arrivée"
 
 #. module: transport_mgmt
 #: selection:transport.order.customs.fees,parent_state:0
@@ -126427,7 +126443,7 @@ msgstr "À la Frontière"
 #: view:transport.order.in:0
 #: selection:transport.order.in,state:0
 #: selection:transport.order.transport.fees,parent_state:0
-msgid "Customs Cleared"
+msgid "Customs Released"
 msgstr "Dédouané"
 
 #. module: transport_mgmt
@@ -126467,14 +126483,20 @@ msgstr "Cargaison Entrante en Attente de Réception du Colis"
 
 #. module: transport_mgmt
 #: view:board.board:0
-#: model:ir.actions.act_window,name:transport_mgmt.transport_order_in_preclearance_action
-msgid "Inbound Cargo Under Pre Clearance"
-msgstr "Cargaison Entrante Sous Pré-Dédouanement"
+#: model:ir.actions.act_window,name:transport_mgmt.transport_order_in_prearrival_action
+msgid "Inbound Cargo Pre-Arrival"
+msgstr "Cargaison Entrante Avant Arrivée"
+
+#. module: transport_mgmt
+#: view:board.board:0
+msgid "Inbound Cargo Under Pre-Arrival Processing"
+msgstr "Cargaison Entrante en Traitement Avant Arrivée"
 
 #. module: transport_mgmt
 #: model:ir.actions.act_window,name:transport_mgmt.transport_order_in_action
 #: model:ir.ui.menu,name:transport_mgmt.transport_order_in_menu
 #: view:transport.order.in:0
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:200
 msgid "Inbound Transport Object"
 msgstr "Objet de Transport Entrant"
 
@@ -126741,6 +126763,9 @@ msgstr "Notification de Cargaison (Prêt à être Expédié)"
 #: field:transport.order,cargo_category:0
 #: field:transport.order.in,cargo_category:0
 #: field:transport.order.out,cargo_category:0
+#: field:transport.order.in.line,cargo_category:0
+#: field:transport.order.line,cargo_category:0
+#: field:transport.order.out.line,cargo_category:0
 msgid "Cargo Type"
 msgstr "Type de Cargaison"
 
@@ -127067,8 +127092,9 @@ msgstr "Arrivé dans le Pays"
 #: selection:transport.order.customs.fees,parent_state:0
 #: selection:transport.order.in,state:0
 #: selection:transport.order.transport.fees,parent_state:0
-msgid "At Border Point"
-msgstr "Au Point de Passage Frontalier"
+#: view:transport.order.in:0
+msgid "At Customs Entry Point"
+msgstr "Au Point d'Entrée de la Douane"
 
 #. module: transport_mgmt
 #: code:addons/transport_mgmt/transport.py:958
@@ -127279,8 +127305,8 @@ msgstr "Référence OTE"
 
 #. module: transport_mgmt
 #: field:transport.order.in,incoming_ids:0
-msgid "Incoming Shipment Reference"
-msgstr "Référence de Livraison Entrante"
+msgid "IN Ref."
+msgstr "Réf. IN"
 
 #. module: transport_mgmt
 #: field:transport.order,incoterm_location:0
@@ -127367,7 +127393,7 @@ msgstr "Prochain type de partenaire"
 #: field:transport.order.in,notify_partner_id:0
 #: field:transport.order.out,notify_partner_id:0
 msgid "Notify Partner"
-msgstr "Partnaire à Informer"
+msgstr "Partenaire à Informer"
 
 #. module: transport_mgmt
 #: field:transport.order.in.line,parcels_nb:0
@@ -127546,7 +127572,7 @@ msgstr "Conteneur Réfrigéré"
 #: field:transport.order.in,shipment_flow:0
 #: field:transport.order.out,shipment_flow:0
 msgid "Shipment Flow"
-msgstr "Flux de l'Expedition"
+msgstr "Flux d'Expedition"
 
 #. module: transport_mgmt
 #: field:transport.order.out,shipment_ids:0
@@ -127556,7 +127582,7 @@ msgstr "Référence de l'Expedition"
 #. module: transport_mgmt
 #: field:transport.order.out.line,shipment_state:0
 msgid "Shipment State"
-msgstr "Statut de l'Expedition"
+msgstr "Statut de l'Expédition"
 
 #. module: transport_mgmt
 #: field:transport.order,shipment_type:0
@@ -127602,7 +127628,7 @@ msgstr "Addresse du Fournisseur"
 #: field:transport.order.in,supplier_partner_id:0
 #: field:transport.order.out,supplier_partner_id:0
 msgid "Supplier Partner"
-msgstr "Partnaire du Fournisseur"
+msgstr "Partenaire du Fournisseur"
 
 #. module: transport_mgmt
 #: field:transport.order.out,next_partner_id:0
@@ -127693,9 +127719,12 @@ msgid "Transport Object"
 msgstr "Objet de Transport"
 
 #. module: transport_mgmt
-#: field:transport.order,transport_po_id:0
-#: field:transport.order.in,transport_po_id:0
-#: field:transport.order.out,transport_po_id:0
+#: field:transport.order,transport_po_ids:0
+#: field:transport.order,transport_po_names:0
+#: field:transport.order.in,transport_po_ids:0
+#: field:transport.order.in,transport_po_names:0
+#: field:transport.order.out,transport_po_ids:0
+#: field:transport.order.out,transport_po_names:0
 msgid "Transport PO"
 msgstr "BdC de Transport"
 
@@ -131067,3 +131096,158 @@ msgstr "Certificat"
 msgid "all fields: Tenant-id, App-id and Certificate must be filled."
 msgstr "tous les champs Tenant-id, App-id et Certificat doivent être renseignés."
 
+#. module: transport_mgmt
+#: view:board.board:0
+#: model:ir.actions.act_window,name:transport_mgmt.transport_order_in_draft_action
+msgid "Inbound Cargo Awaiting Validation"
+msgstr "Cargaison Entrante en Attente de Validation"
+
+#. module: transport_mgmt
+#: view:board.board:0
+#: model:ir.actions.act_window,name:transport_mgmt.transport_order_out_draft_action
+msgid "Outbound Cargo Awaiting Validation"
+msgstr "Cargaison Sortante en Attente de Validation"
+
+#. module: transport_mgmt
+#: view:transport.order.in:0
+#: view:transport.order.out:0
+msgid "To Planned"
+msgstr "Vers Planifié"
+
+#. module: transport_mgmt
+#: field:transport.order,merged_order:0
+#: field:transport.order.in,merged_order:0
+#: field:transport.order.out,merged_order:0
+msgid "Merged Transport Object"
+msgstr "Objet de Transport Fusionné"
+
+#. module: transport_mgmt
+#: help:transport.order,merged_order:0
+#: help:transport.order.in,merged_order:0
+#: help:transport.order.out,merged_order:0
+msgid "If the Transport Order is merged, Cargo Type will be displayed on its Transport Object Lines"
+msgstr "Si l'Objet de Transport est fusionné, le Type de Cargaison sera affiché sur les lignes de l'Objet de Transport"
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "\n"
+"                                    All information of the ITO template will be written in the new ITO, except the Cargo Type which will depend on the template and merged ITO data.<br/>If they are identical the merged Cargo Type will be the same, but if they are not the merged Cargo Type will be Mixed.<br/>A Cargo Type will also be shown on the Lines of the merged ITO.\n"
+"                                "
+msgstr "\n"
+"                                    Toutes les informations de l'OTE modèle seront écrites dans le nouvel OTE, sauf le Type de Cargaison qui dépendra du modèle et des données des OTEs fusionnés.<br/>Si elles sont identiques le Type de Cargaison restera le même. Dans le cas contraire, le Type de Cargaison sera Mixte.<br/>Un Type de Cargaison sera aussi affiché sur les Lignes de l'OTE fusionné.\n"
+"                                "
+
+#. module: transport_mgmt
+#: model:ir.actions.act_window,name:transport_mgmt.action_view_merge_ito_wizard
+#: view:merge.ito.wizard:0
+msgid "Merge ITOs"
+msgstr "Fusionner OTEs"
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "Are you sure you want to merge these ITOs ?"
+msgstr "Êtes-vous sûr(e) de vouloir fusionner ces OTEs ?"
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "Please note that the Inbound Transport Objects will only be merged if: "
+msgstr "Veuillez noter que les Objets de Transport Entrant seront uniquement fusionnés si: "
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:45
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:51
+#, python-format
+msgid "Please select multiple Inbound Transport Orders to merge in the list view."
+msgstr "Veuillez sélectionner plusieurs Objets de Transport Entrant à fusionner dans la vue liste."
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "They have the International Zone Type"
+msgstr "Ils ont le Type de Zone International"
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "They have the same Original Cargo ref"
+msgstr "Ils ont la même Ref de Cargaison originelle"
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "They have the same Shipment flow"
+msgstr "Ils ont le même Flux d'Expédition"
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "They have the same Supplier Partner"
+msgstr "Ils ont le même Partenaire du Fournisseur"
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "They have the same state and are in the state: Draft, Planned, Pre-Arrival, In Transit or At Customs Entry Point"
+msgstr "Ils sont dans le même état et sont dans l'état: Brouillon, Planifié, Avant Arrivée, En Transit ou Au Point d'Entrée de la Douane"
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "IMPOSSIBLE TO MERGE:"
+msgstr "IMPOSSIBLE DE FUSIONNER:"
+
+#. module: transport_mgmt
+#: field:merge.ito.wizard,ito_template_id:0
+msgid "Template ITO"
+msgstr "Modèle d'OTE"
+
+#. module: transport_mgmt
+#: model:ir.model,name:transport_mgmt.model_merge_ito_wizard
+#: model:ir.model,name:transport_mgmt.model_transport_order_in_merge
+msgid "Inbound Transport Object Merge"
+msgstr "Fusion d'Objet de Transport Entrant"
+
+#. module: transport_mgmt
+#: help:merge.ito.wizard,ito_template_id:0
+msgid "All information of the ITO template will be written in the new ITO"
+msgstr "Toutes les informations de l'OTE modèle seront écrites dans le nouvel OTE"
+
+#. module: transport_mgmt
+#: field:merge.ito.wizard,cant_merge_msg:0
+msgid "The ITOs can not be merged"
+msgstr "Les OTEs ne peuvent pas être fusionnés"
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:63
+#, python-format
+msgid "the State must be Draft, Planned, Pre-Arrival, In Transit or At Customs Entry Point"
+msgstr "l'état doit être Brouillon, Planifié, Avant Arrivée, En Transit ou Au Point d'Entrée de la Douane"
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:65
+#, python-format
+msgid "the Zone Type must be International"
+msgstr "le Type de Zone doit être International"
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:83
+#, python-format
+msgid "The Original Cargo ref of an ITO to merge is not consistent with the Original Cargo ref of the template ITO. "
+msgstr "La Ref de Cargaison originelle d'un OTE à fusionner n'est pas cohérent avec la Ref de Cargaison originelle de l'OTE modèle. "
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:81
+#, python-format
+msgid "The Shipment Flow of an ITO to merge is not consistent with the Shipment Flow of the template ITO. "
+msgstr "Le Flux d'Expédition d'un OTE à fusionner n'est pas cohérent avec le Flux d'Expédition de l'OTE modèle. "
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:77
+#, python-format
+msgid "The State of an ITO to merge is not consistent with the State of the template ITO. "
+msgstr "L'État d'un OTE à fusionner n'est pas cohérent avec l'État de l'OTE modèle. "
+
+#. module: transport_mgmt
+#: code:addons/transport_mgmt/wizard/merge_ito_wizard.py:79
+#, python-format
+msgid "The Supplier Partner of an ITO to merge is not consistent with the Supplier Partner of the template ITO. "
+msgstr "Le Partenaire du Fournisseur d'un OTE à fusionner n'est pas cohérent avec le Partenaire du Fournisseur de l'OTE modèle. "
+
+#. module: transport_mgmt
+#: view:merge.ito.wizard:0
+msgid "They have the same Shipment Flow"
+msgstr "Ils ont le même Flux d'Expédition"

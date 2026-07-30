@@ -1356,5 +1356,9 @@
         <record id="us_15663_15664_customs_transport_fees_state" model="patch.scripts">
             <field name="method">us_15663_15664_customs_transport_fees_state</field>
         </record>
+
+        <record id="us_15771_15779_15909_15911_15947_transport_update" model="patch.scripts">
+            <field name="method">us_15771_15779_15909_15911_15947_transport_update</field>
+        </record>
     </data>
 </openerp>

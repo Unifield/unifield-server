@@ -232,7 +232,7 @@ class stock_picking(osv.osv):
             in_id = self.get_incoming_id_from_file(cr, uid, file_path, context)
 
             # Prevent the import if the IN was updated by SDE
-            in_data = self.read(cr, uid, in_id, ['name', 'shipment_ref', 'partner_id', 'order_category', 'sde_updated'], context=context)
+            in_data = self.read(cr, uid, in_id, ['name', 'sde_updated'], context=context)
             if in_data['sde_updated']:
                 raise osv.except_osv(_('Error'), _('%s was already updated by SDE and can not be updated by the automated import') % (in_data['name'],))
 
@@ -299,12 +299,12 @@ class stock_picking(osv.osv):
 
             # Create/Update an ITO using the shipment_ref
             if self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='transport'):
-                if context.get('new_picking') and context['new_picking'] != in_id:
-                    in_data = self.read(cr, uid, context['new_picking'], ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
-                if in_data['shipment_ref']:
-                    in_partner_id = in_data['partner_id'] and in_data['partner_id'][0] or False
-                    self.create_update_ito(cr, uid, in_data['id'], in_data['name'], in_data['shipment_ref'],
-                                           in_partner_id, in_data['order_category'], context=context)
+                in_after_imp_id = context.get('new_picking') and context['new_picking'] or in_id
+                in_after_imp = self.read(cr, uid, in_after_imp_id, ['name', 'shipment_ref', 'partner_id', 'order_category'], context=context)
+                if in_after_imp['shipment_ref']:
+                    in_partner_id = in_after_imp['partner_id'] and in_after_imp['partner_id'][0] or False
+                    self.create_update_ito(cr, uid, in_after_imp['id'], in_after_imp['name'], in_after_imp['shipment_ref'],
+                                           in_partner_id, in_after_imp['order_category'], context=context)
         except Exception as e:
             raise e
 
@@ -513,7 +513,8 @@ class stock_picking(osv.osv):
                     'ship_ref': in_shipment_ref,
                     'zone_type': company_address and company_address.country_id and supplier_address and supplier_address.country_id and
                     company_address.country_id.id == supplier_address.country_id.id and 'domestic' or 'int',
-                    'cargo_category': ito_categ
+                    'cargo_category': ito_categ,
+                    'state': 'planned',
                 }
                 ito_id = ito_obj.create(cr, uid, ito_data, context=context)
                 crea_upd = _('created')

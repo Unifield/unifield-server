@@ -2,6 +2,16 @@
 
 <openerp>
     <data>
+        <record id="transport_order_in_draft_action" model="ir.actions.act_window">
+            <field name="name">Inbound Cargo Awaiting Validation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', '=', 'draft')]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
         <record id="transport_order_in_planned_action" model="ir.actions.act_window">
             <field name="name">Planned Inbound Cargo</field>
             <field name="type">ir.actions.act_window</field>
@@ -12,13 +22,13 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <record id="transport_order_in_preclearance_action" model="ir.actions.act_window">
-            <field name="name">Inbound Cargo Under Pre Clearance</field>
+        <record id="transport_order_in_prearrival_action" model="ir.actions.act_window">
+            <field name="name">Inbound Cargo Pre-Arrival</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">transport.order.in</field>
             <field name="view_type">form</field>
             <field name="context">{}</field>
-            <field name="domain">[('state', 'in', ['preclearance', 'transit'])]</field>
+            <field name="domain">[('state', 'in', ['prearrival', 'transit'])]</field>
             <field name="view_mode">tree,form</field>
         </record>
 
@@ -28,7 +38,17 @@
             <field name="res_model">transport.order.in</field>
             <field name="view_type">form</field>
             <field name="context">{}</field>
-            <field name="domain">[('state', 'in', ['border', 'customs', 'warehouse'])]</field>
+            <field name="domain">[('state', 'in', ['entry', 'customs', 'warehouse'])]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_out_draft_action" model="ir.actions.act_window">
+            <field name="name">Outbound Cargo Awaiting Validation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.out</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', '=', 'draft')]</field>
             <field name="view_mode">tree,form</field>
         </record>
 
@@ -84,11 +104,12 @@
             <field name="arch" type="xml">
                 <search string="Inbound Transport Object">
                     <group col="8" colspan="4">
-                        <filter icon="terp-document-new" name="planned" string="Planned" domain="[('state', '=', 'planned')]" />
-                        <filter icon="terp-check" name="under_preclearance" string="Under Preclearance" domain="[('state', '=', 'preclearance')]" />
+                        <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', '=', 'draft')]" />
+                        <filter icon="terp-check" name="planned" string="Planned" domain="[('state', '=', 'planned')]" />
+                        <filter icon="terp-camera_test" name="prearrival" string="Pre-Arrival" domain="[('state', '=', 'prearrival')]" />
                         <filter icon="gtk-media-forward" name="in_transit" string="In Transit" domain="[('state', '=', 'transit')]" />
-                        <filter icon="gtk-goto-last" name="at_border" string="At Border" domain="[('state', '=', 'border')]" />
-                        <filter icon="gtk-paste-v" name="customs_cleared" string="Customs Cleared" domain="[('state', '=', 'customs')]" />
+                        <filter icon="gtk-goto-last" name="at_entry" string="At Customs Entry Point" domain="[('state', '=', 'entry')]" />
+                        <filter icon="gtk-paste-v" name="customs_cleared" string="Customs Released" domain="[('state', '=', 'customs')]" />
                         <filter icon="gtk-home" name="at_warehouse" string="At Warehouse" domain="[('state', '=', 'warehouse')]" />
                         <filter icon="gtk-close" name="closed" string="Closed" domain="[('state', '=', 'closed')]" />
                         <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', '=', 'cancel')]" />
@@ -101,7 +122,7 @@
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
                         <field name="incoming_ids"  />
-                        <field name="transport_po_id" />
+                        <field name="transport_po_ids" />
                         <field name="cargo_category" />
                         <field name="arrival_planned_date" />
                     </group>
@@ -123,7 +144,10 @@
                     <field name="transport_partner_id" />
                     <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
                     <field name="incoming_ids" />
-                    <field name="transport_po_id" />
+                    <field name="transport_po_names" />
+                    <field name="cargo_parcels" />
+                    <field name="cargo_volume" />
+                    <field name="cargo_weight" />
                     <field name="cargo_category" />
                     <field name="arrival_planned_date" />
                     <field name="details"  truncate="50"/>
@@ -177,26 +201,27 @@
                     <field name="name" />
                     <newline/>
                     <field name="shipment_type"  />
-                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <group colspan="2" col="3" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['draft', 'planned', 'prearrival', 'transit', 'entry'])]}"/>
+                    <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}"/>
+                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                    <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}"/>
+                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}"/>
+                    <field name="details" attrs="{'readonly': [('state', 'not in', ['draft', 'planned', 'planned', 'prearrival', 'transit', 'entry'])]}" />
+                    <group colspan="2" col="3" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                         <field name="no_line" invisible="1"/>
-                        <field name="ship_ref" on_change="onchange_ship_ref(ship_ref, select_incoming)"/>
+                        <field name="ship_ref" on_change="onchange_ship_ref(ship_ref, select_incoming)"  attrs="{'readonly': [('state', 'not in', ['draft', 'planned', 'planned', 'prearrival', 'transit', 'entry'])]}"/>
                         <field name="select_incoming" on_change="onchange_select_incoming(select_incoming)" nolabel="1"
                                domain="[('type', '=', 'in'), ('partner_id', '=', supplier_partner_id), ('shipment_ref', '!=', False)]"
                                attrs="{'invisible': ['|', ('no_line', '=', False), ('ship_ref', '!=', False)]}"
                                context="{'pick_type': 'incoming', 'transport_object': True}" />
                     </group>
-                    <group colspan="2" col="4" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', '!=', 'planned')]}">
+                    <group colspan="2" col="4" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'not in', ['draft', 'planned'])]}">
                         <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)" required="1"/>
                         <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id), ('partner_id', '!=', False)]" />
                     </group>
                     <field name="sync_ref" />
                     <field name="from_sync" invisible="1" />
+                    <field name="merged_order" invisible="1" />
                     <notebook colspan="4">
                         <page string="Steps">
                             <field name="macroprocess_id" on_change="onchange_macroprocess(macroprocess_id, shipment_type, context)" required="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" widget="selection" colspan="6" />
@@ -204,7 +229,7 @@
                         </page>
 
                         <page string="Transport Object">
-                            <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                            <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                                 <group colspan="4" col="4">
                                     <separator colspan="4" string="Transit" />
                                     <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
@@ -241,9 +266,9 @@
                                     <field name="incoterm_location" />
                                 </group>
                             </group>
-                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" on_change="onchange_line_ids(line_ids)" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id, 'parent_merged': merged_order}" on_change="onchange_line_ids(line_ids)" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                                 <tree string="Lines" editable="top">
-                                    <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
+                                    <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')]), ('state', '!=', 'cancel')]" on_change="change_incoming(incoming_id)"/>
                                     <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>
                                     <field name="incoming_state" />
                                     <field name="parcels_nb" required="1"/>
@@ -251,6 +276,7 @@
                                     <field name="weight" />
                                     <field name="amount" />
                                     <field name="currency_id" attrs="{'required': [('amount', '!=', False)]}"/>
+                                    <field name="cargo_category" invisible="not context.get('parent_merged', False)"/>
                                     <field name="comment" />
                                     <field name="kc" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
                                     <field name="dg" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
@@ -262,12 +288,12 @@
 
                         <page string="Cargo" on_change="change_line()">
                             <group colspan="4" col="6">
-                                <field name="cargo_parcels" />
-                                <field name="cargo_volume" />
-                                <field name="cargo_weight" />
-                                <field name="container_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                                <field name="container_size" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                                <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="cargo_parcels" attrs="{'readonly': [('state', 'not in', ['prearrival', 'transit', 'entry'])]}" />
+                                <field name="cargo_volume" attrs="{'readonly': [('state', 'not in', ['prearrival', 'transit', 'entry'])]}" />
+                                <field name="cargo_weight" attrs="{'readonly': [('state', 'not in', ['prearrival', 'transit', 'entry'])]}" />
+                                <field name="container_type" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                                <field name="container_size" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                                <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                             </group>
                             <field name="manifest_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                             <field name="packing_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
@@ -275,8 +301,8 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                         </page>
 
-                        <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'domestic'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', 'not in', ['planned', 'cancel'])]}"/>
+                        <page string="Customs Fees" attrs="{'invisible': [('zone_type', 'not in', ['int', 'domestic'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', '!=', 'cancel')]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []), ('Hide cancelled', [('state', '!=', 'cancel')]), ('Validated only', [('state', '=', 'validated')]), ('Hide validated', [('state', 'not in', ['validated', 'cancel'])])]"
@@ -334,17 +360,18 @@
                     </notebook>
                     <field name="state" />
                     <group colspan="2" col="14">
+                        <button string="To Planned" states="draft" type="object" name="button_to_planned" icon="terp-check" />
                         <button string="Process" states="planned" type="object" name="button_process" icon="terp-check" />
                         <button string="Process Lines" states="planned" type="object" name="button_process_lines" icon="gtk-indent" />
-                        <button string="Dispatch" states="preclearance" type="object" name="button_dispatch" icon="gtk-media-forward" />
+                        <button string="Dispatch" states="prearrival" type="object" name="button_dispatch" icon="gtk-media-forward" />
                         <button string="Arrive in Country" states="transit" type="object" name="button_arrive" icon="gtk-goto-last" />
-                        <button string="Clear Customs" states="border" type="object" name="button_clear_customs" icon="gtk-paste-v" />
+                        <button string="Clear Customs" states="entry" type="object" name="button_clear_customs" icon="gtk-paste-v" />
                         <button string="Delivery to Warehouse" states="customs" type="object" name="button_delivery" icon="gtk-home" />
                         <button string="Parcel Reception" states="warehouse" type="object" name="button_reception" icon="terp-check" />
                         <button string="Parcel Partial Reception" states="warehouse" type="object" name="button_partial_reception" icon="gtk-indent" />
                         <button string="Create Outbound Transport Order for these goods" type="object" name="button_create_oto" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('state', '!=', 'closed') ,('oto_created', '=', True)]}" />
                         <field name="oto_created" attrs="{'invisible': [('oto_created', '=', False)]}" />
-                        <button string="Cancel document" states="planned,preclearance,transit,border,customs,warehouse" type="object" name="button_cancel" icon="gtk-cancel"/>
+                        <button string="Cancel document" states="draft,planned,prearrival,transit,entry,customs,warehouse" type="object" name="button_cancel" icon="gtk-cancel"/>
                     </group>
                 </form>
             </field>
@@ -413,7 +440,8 @@
             <field name="arch" type="xml">
                 <search string="Outound Transport Object">
                     <group col="8" colspan="4">
-                        <filter icon="terp-document-new" name="planned" string="Planned" domain="[('state', '=', 'planned')]" />
+                        <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', '=', 'draft')]" />
+                        <filter icon="terp-check" name="planned" string="Planned" domain="[('state', '=', 'planned')]" />
                         <filter icon="terp-dialog-close" name="dispatched" string="Dispatched" domain="[('state', '=', 'dispatched')]" />
                         <filter icon="gtk-close" name="closed" string="Closed" domain="[('state', '=', 'closed')]" />
                         <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', '=', 'cancel')]" />
@@ -424,7 +452,7 @@
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
                         <field name="shipment_ids"  />
-                        <field name="transport_po_id" />
+                        <field name="transport_po_ids" />
                         <field name="cargo_category" />
                         <field name="departure_date" />
                     </group>
@@ -444,7 +472,10 @@
                     <field name="transport_partner_id" />
                     <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
                     <field name="shipment_ids"  />
-                    <field name="transport_po_id" />
+                    <field name="transport_po_names" />
+                    <field name="cargo_parcels" />
+                    <field name="cargo_volume" />
+                    <field name="cargo_weight" />
                     <field name="cargo_category" />
                     <field name="arrival_planned_date" />
                     <field name="details"  truncate="50"/>
@@ -494,14 +525,14 @@
                     <field name="name" />
                     <newline/>
                     <field name="shipment_type" />
-                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <group colspan="2" col="4">
+                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                    <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}"/>
+                    <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                    <field name="details" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                    <group colspan="2" col="4" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                         <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
                         <field name="customer_address_id" domain="[('partner_id', '=', customer_partner_id), ('partner_id', '!=', False)]"/>
                     </group>
@@ -514,7 +545,7 @@
                         </page>
 
                         <page string="Transport Object">
-                            <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                            <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                                 <group colspan="4" col="4">
                                     <separator colspan="4" string="Transit" />
                                     <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
@@ -553,9 +584,9 @@
                                 </group>
                             </group>
 
-                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}">
                                 <tree string="Lines" editable="top">
-                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [[parent.customer_partner_id, parent.transit_partner_id], context.get('parent_doc_id')])]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
+                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [[parent.customer_partner_id, parent.transit_partner_id], context.get('parent_doc_id')]), ('state', '!=', 'cancel')]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
                                     <field name="is_split" />
                                     <field name="description" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="parcels_nb" attrs="{'readonly': [('shipment_id', '!=', False)]}" required="1"/>
@@ -567,7 +598,7 @@
                                     <field name="kc" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="dg" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="cs" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
-                                    <button name="button_split" type="object" icon="terp-stock_effects-object-colorize" string="Split" attrs="{'invisible': ['|', '|', ('state', '!=', 'planned'), ('shipment_id', '=', 'False'), ('shipment_state', 'not in', ['done', 'delivered'])]}" />
+                                    <button name="button_split" type="object" icon="terp-stock_effects-object-colorize" string="Split" attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'planned']), ('shipment_id', '=', 'False'), ('shipment_state', 'not in', ['done', 'delivered'])]}" />
                                     <field name="shipment_state" />
                                 </tree>
 
@@ -576,12 +607,12 @@
 
                         <page string="Cargo" on_change="change_line()">
                             <group colspan="4" col="6">
-                                <field name="cargo_parcels" />
-                                <field name="cargo_volume" />
-                                <field name="cargo_weight" />
-                                <field name="container_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                                <field name="container_size" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                                <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="cargo_parcels" attrs="{'readonly': [('state', '!=', 'dispatched')]}" />
+                                <field name="cargo_volume" attrs="{'readonly': [('state', '!=', 'dispatched')]}" />
+                                <field name="cargo_weight" attrs="{'readonly': [('state', '!=', 'dispatched')]}" />
+                                <field name="container_type" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                                <field name="container_size" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
+                                <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['draft', 'planned'])]}" />
                             </group>
                             <field name="manifest_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}"/>
                             <field name="packing_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
@@ -589,8 +620,8 @@
                             <field name="donation_link" widget="url" attrs="{'readonly': [('state', 'in', ['cancel'])]}" />
                         </page>
 
-                        <page string="Customs Fees" attrs="{'invisible': ['|', ['state', '=', 'planned'], ('zone_type', 'not in', ['int', 'domestic'])]}">
-                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', 'not in', ['planned', 'cancel'])]}"/>
+                        <page string="Customs Fees" attrs="{'invisible': [('zone_type', 'not in', ['int', 'domestic'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')], 'required': [('state', '!=', 'cancel')]}"/>
                             <newline />
                             <field name="transport_customs_fees_ids" nolabel="1" colspan="4"
                                     filter_selector="[('Show all', []), ('Hide cancelled', [('state', '!=', 'cancel')]), ('Validated only', [('state', '=', 'validated')]), ('Hide validated', [('state', 'not in', ['validated', 'cancel'])])]"
@@ -648,9 +679,10 @@
                     </notebook>
                     <field name="state" />
                     <group colspan="2" col="6">
+                        <button string="To Planned" states="draft" type="object" name="button_to_planned" icon="terp-check" />
                         <button string="Dispatch" states="planned" type="object" name="button_dispatch" icon="terp-dialog-close" />
                         <button string="Validate" states="dispatched" type="object" name="button_validate"  icon="terp-check" />
-                        <button string="Cancel document" states="planned,dispatched" type="object" name="button_cancel" icon="gtk-cancel"/>
+                        <button string="Cancel document" states="draft,planned,dispatched" type="object" name="button_cancel" icon="gtk-cancel"/>
                     </group>
 
                 </form>
@@ -679,9 +711,11 @@
                 <form>
                     <hpaned>
                         <child1>
+                            <action colspan="4" height="220" name="%(transport_order_in_draft_action)d" string="Inbound Cargo Awaiting Validation" width="510" menu_ref="%(transport_order_in_menu)d"/>
                             <action colspan="4" height="220" name="%(transport_order_in_planned_action)d" string="Planned Inbound Cargo" width="510" menu_ref="%(transport_order_in_menu)d"/>
-                            <action colspan="4" height="220" name="%(transport_order_in_preclearance_action)d" string="Inbound Cargo Under Pre Clearance" width="510" menu_ref="%(transport_order_in_menu)d"/>
+                            <action colspan="4" height="220" name="%(transport_order_in_prearrival_action)d" string="Inbound Cargo Under Pre-Arrival Processing" width="510" menu_ref="%(transport_order_in_menu)d"/>
                             <action colspan="4" height="220" name="%(transport_order_in_waiting_action)d" string="Inbound Cargo Awaiting Parcel Reception" width="510" menu_ref="%(transport_order_in_menu)d" />
+                            <action colspan="4" height="220" name="%(transport_order_out_draft_action)d" string="Outbound Cargo Awaiting Validation" width="510" menu_ref="%(transport_order_out_menu)d"/>
                             <action colspan="4" height="220" name="%(transport_order_out_planned_action)d" string="Planned Outbound Cargo" width="510" menu_ref="%(transport_order_out_menu)d"/>
                             <action colspan="4" height="220" name="%(transport_order_out_transit_action)d" string="Outbound Cargo in Transit" width="510" menu_ref="%(transport_order_out_menu)d"/>
                         </child1>
@@ -700,10 +734,10 @@
                     <field name="step_id" widget="selection" get_selection="get_steps" />
                     <field name="sub_step_id" widget="selection" />
                     <field name="sub_step_name" readonly="1" invisible="1" />
-                    <field name="comment" />
                     <field name="name" />
                     <field name="target_end_date" />
                     <field name="end_date" />
+                    <field name="comment" />
                 </tree>
             </field>
         </record>

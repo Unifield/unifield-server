@@ -145,6 +145,7 @@ All unloading/offloading fees, whether done by manual labour or forklift charges
 Any other customs related fees that don't fit in any of the above defined categories**. Make sure you add a comment to explain why this fee is \"Other\".""")),
 ]
 
+from . import wizard
 from . import stock
 from . import purchase
 from . import product
