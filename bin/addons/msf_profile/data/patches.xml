@@ -1360,5 +1360,9 @@
         <record id="us_15771_15779_15909_15911_15947_transport_update" model="patch.scripts">
             <field name="method">us_15771_15779_15909_15911_15947_transport_update</field>
         </record>
+
+        <record id="us_15901_change_customs_transport_fees" model="patch.scripts">
+            <field name="method">us_15901_change_customs_transport_fees</field>
+        </record>
     </data>
 </openerp>

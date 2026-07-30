@@ -4,175 +4,119 @@
         <!-- Customs/Transport Fees selection -->
         <record id="fees_prearrival" model="transport.order.fees.type">
             <field name="code">prearrival</field>
-            <field name="name">Pre-Arrival processing fees (fixed)</field>
+            <field name="name">3rd Party Pre-Arrival Charges</field>
             <field name="customs_fee" eval="True" />
             <field name="transport_fee" eval="False" />
         </record>
 
         <record id="fees_prearrival_srv" model="transport.order.fees.type">
             <field name="code">prearrival_srv</field>
-            <field name="name">Pre-Arrival processing service fees (negotiable)</field>
+            <field name="name">Negotiated Pre-Arrival Services Fees</field>
             <field name="customs_fee" eval="True" />
             <field name="transport_fee" eval="False" />
         </record>
 
         <record id="fees_customs_clearance" model="transport.order.fees.type">
-            <field name="code">customs_clearance</field>
-            <field name="name">Customs Clearance fees (fixed)</field>
+            <field name="code">customs_charges</field>
+            <field name="name">3rd Party Customs Charges</field>
             <field name="customs_fee" eval="True" />
             <field name="transport_fee" eval="False" />
         </record>
 
         <record id="fees_customs_clearance_srv" model="transport.order.fees.type">
             <field name="code">customs_clearance_srv</field>
-            <field name="name">Customs Clearance service fees (negotiable)</field>
+            <field name="name">Negotiated Customs Clearance Services Fees</field>
             <field name="customs_fee" eval="True" />
             <field name="transport_fee" eval="False" />
         </record>
 
         <record id="fees_freight_fixed" model="transport.order.fees.type">
-            <field name="code">freight_fixed</field>
-            <field name="name">Freight Service fees (fixed)</field>
+            <field name="code">transport_charges</field>
+            <field name="name">3rd Party Transport Charges</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
 
         <record id="fees_freight_negotiable" model="transport.order.fees.type">
-            <field name="code">freight_negotiable</field>
-            <field name="name">Freight Service fees (negotiable)</field>
-            <field name="customs_fee" eval="False" />
-            <field name="transport_fee" eval="True" />
-        </record>
-
-        <record id="fees_freight_return" model="transport.order.fees.type">
-            <field name="code">freight_return</field>
-            <field name="name">Freight Service fees (return trip)</field>
+            <field name="code">negotiated_transport</field>
+            <field name="name">Negotiated Transport Cost</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
 
         <record id="fees_insurance" model="transport.order.fees.type">
             <field name="code">insurance</field>
-            <field name="name">Insurance Service fees</field>
+            <field name="name">Insurance Service Fees [MSF]</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
 
         <record id="fees_truck" model="transport.order.fees.type">
             <field name="code">truck</field>
-            <field name="name">Truck Detention fees</field>
+            <field name="name">Truck Detention Fees</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
 
         <record id="fees_demurrage" model="transport.order.fees.type">
             <field name="code">demurrage</field>
-            <field name="name">Demurrage fees</field>
+            <field name="name">Demurrage Fees</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
 
         <record id="fees_freight_storage" model="transport.order.fees.type">
             <field name="code">freight_storage</field>
-            <field name="name">Freight Storage fees</field>
+            <field name="name">Storage Fees</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
 
         <record id="fees_container" model="transport.order.fees.type">
             <field name="code">container</field>
-            <field name="name">Container Deposit fees</field>
-            <field name="customs_fee" eval="False" />
-            <field name="transport_fee" eval="True" />
-        </record>
-
-        <record id="fees_freight_load" model="transport.order.fees.type">
-            <field name="code">freight_load</field>
-            <field name="name">Freight Loading Service fees</field>
-            <field name="customs_fee" eval="False" />
-            <field name="transport_fee" eval="True" />
-        </record>
-
-        <record id="fees_freight_unload" model="transport.order.fees.type">
-            <field name="code">freight_unload</field>
-            <field name="name">Freight Unloading Service fees</field>
+            <field name="name">Container Deposit Fees</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
 
         <record id="fees_direct" model="transport.order.fees.type">
-            <field name="code">direct</field>
-            <field name="name">Direct Taxes / Duties</field>
-            <field name="customs_fee" eval="True" />
+            <field name="code">taxes_duties_transport</field>
+            <field name="name">Taxes / Duties (Transport)</field>
+            <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>
 
-        <record id="fees_indirect" model="transport.order.fees.type">
-            <field name="code">indirect</field>
-            <field name="name">Other Indirect Taxes / Duties</field>
-            <field name="customs_fee" eval="True" />
-            <field name="transport_fee" eval="True" />
-        </record>
-
-        <record id="fees_handling" model="transport.order.fees.type">
-            <field name="code">handling</field>
-            <field name="name">Terminal Handling Fees</field>
-            <field name="customs_fee" eval="True" />
-            <field name="transport_fee" eval="False" />
-        </record>
-
-        <record id="fees_bonded_wh" model="transport.order.fees.type">
-            <field name="code">bonded_wh</field>
-            <field name="name">Customs Bonded service fees (warehousing)</field>
-            <field name="customs_fee" eval="True" />
-            <field name="transport_fee" eval="False" />
-        </record>
-
-        <record id="fees_bonded_ex_wh" model="transport.order.fees.type">
-            <field name="code">bonded_ex_wh</field>
-            <field name="name">Customs Bonded service fees (ex-warehousing)</field>
+        <record id="fees_taxes_duties_customs" model="transport.order.fees.type">
+            <field name="code">taxes_duties_customs</field>
+            <field name="name">Taxes / Duties (Customs)</field>
             <field name="customs_fee" eval="True" />
             <field name="transport_fee" eval="False" />
         </record>
 
         <record id="fees_storage" model="transport.order.fees.type">
             <field name="code">storage</field>
-            <field name="name">Customs Storage fees</field>
+            <field name="name">Customs Storage Fees</field>
             <field name="customs_fee" eval="True" />
             <field name="transport_fee" eval="False" />
         </record>
 
         <record id="fees_penalty" model="transport.order.fees.type">
             <field name="code">penalty</field>
-            <field name="name">Customs Penalty fees</field>
-            <field name="customs_fee" eval="True" />
-            <field name="transport_fee" eval="False" />
-        </record>
-
-        <record id="fees_loading" model="transport.order.fees.type">
-            <field name="code">loading</field>
-            <field name="name">Loading Service fees</field>
-            <field name="customs_fee" eval="True" />
-            <field name="transport_fee" eval="False" />
-        </record>
-
-        <record id="fees_unloading" model="transport.order.fees.type">
-            <field name="code">unloading</field>
-            <field name="name">Unloading Service fees</field>
+            <field name="name">Customs Penalty Fees</field>
             <field name="customs_fee" eval="True" />
             <field name="transport_fee" eval="False" />
         </record>
 
         <record id="fees_other_customs" model="transport.order.fees.type">
             <field name="code">other_customs</field>
-            <field name="name">Other Customs fees</field>
+            <field name="name">Other Customs Fees</field>
             <field name="customs_fee" eval="True" />
             <field name="transport_fee" eval="False" />
         </record>
 
         <record id="fees_other_transport" model="transport.order.fees.type">
             <field name="code">other_transport</field>
-            <field name="name">Other Freight fees</field>
+            <field name="name">Other Transport Fees</field>
             <field name="customs_fee" eval="False" />
             <field name="transport_fee" eval="True" />
         </record>

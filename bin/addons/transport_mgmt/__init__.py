@@ -23,126 +23,94 @@ from tools.translate import _
 
 
 TRANSPORT_FEES_HELP = [
-    ('freight_fixed', _("""What:
-Use this type when encoding sum of any official fees paid to government authorities (with official receipts) that are not part of the transport costs negotiated in the MSF contract or quotation agreed with the service provider/transporter.
+    ('transport_charges', _("""What:
+Includes fees linked to non-negotiable/fixed operational charges such as loading, unloading, terminal handling, forklift use and any other mandatory 3rd party fees (with official receipts).
 
 How:
-Identify all transport-related expenses that MSF is paying to transporters when they provide these transportation services to MSF. MSF or Transporter has no control on these fees.""")),
-    ('freight_negotiable', _("""What:
-Use this type when encoding the actual transport costs according to what is negotiated in the MSF contract or quotation agreed with the service provider/transporter.
+Identify fees that neither MSF nor the transporter controls. They are imposed by authorities, non-negotiable, and operational adds-on.""")),
+    ('negotiated_transport', _("""What:
+Includes all fees linked to the transport rates negotiated in the MSF contract or agreed quotation with transporters.
 
 How:
-Identify all transport-related expenses that MSF is paying to transporters when they provide these transportation services to MSF. Usually negotiated and defined in the contracts (eg: MIFAT contracts).""")),
-    ('freight_return', _("""What:
-Use this type when encoding transport costs linked to return of cargo (eg: from project back to coordination) according to what is negotiated in the MSF contract or quotation agreed with the service provider/transporter.
-
-How:
-Identify all transport-related expenses that MSF is paying to transporters when they provide these reverse logistics transportation services to MSF. Usually negotiated and defined in the contracts (eg: MIFAT contracts).""")),
+Identify the fees that MSF has under its control and useful for negotiation for future market assessments.""")),
     ('insurance', _("""What:
-Any expenses on transport that are classified as insurance costs/fees.
+Includes MSF owned fees linked to mandatory insurance requirements and cargo insurance during transport.
 
 How:
-Fees indicate if both mandatory insurance obligations are being fulfilled by MSF and the appointed transporter (MSF Due diligence) or if MSF is insuring its cargo during transportation.""")),
+Identify if mandatory insurance obligations are being fulfilled by MSF by insuring its own cargo during transportation or by Service providers.""")),
     ('truck', _("""What:
-For all expenses/costs paid to the transporter per day for delay of MSF offloading cargo from the truck and releasing the truck according to agreed detention free days.
+Includes fees linked to delays in offloading and releasing cargo/truck according to agreed detention free days that lead to daily penalty fees from the transporter.
 
 How:
-These are fees that can provide an indicator that the transportation management process may not be efficient, especially if MSF continues to pay huge detention expenses. It will be an indicator of point of improvement in the transportation process.""")),
+Identify that the transportation management process may not be efficient especially if MSF pays huge detention expenses. It will be an indicator of point of improvement to be re-negotiated with transporter to be shared with ESCs & RSCs.""")),
     ('demurrage', _("""What:
-For all expenses/costs paid to the shipping line or agent per day for delay of MSF returning the empty container back to the shipping line/port terminal according to demurrage free days negotiated by supplier center (eg: ESC/RSC) on behalf of the MSF country of importation.
+Includes fees linked to delays in returning empty containers to the shipping line or agent at the port of entry according to demurrage free days negotiated by supplier center (eg: ESC/RSC) on behalf of the MSF country of importation.
 
 How:
-These are fees that can provide an indicator that the transportation management process may not be efficient, especially if MSF continues to pay huge detention expenses. It will be an indicator of point of improvement in the transportation process.""")),
+Identify that there is inefficiency in container handling or coordination process may not be efficient especially if MSF pays huge demurrage expenses. It will be an indicator of point of improvement to be shared with ESCs & RSCs.""")),
     ('freight_storage', _("""What:
-This applies to only fees/ expenses linked to storage costs accumulated by MSF cargo staying in a defined transporter terminal or storage facility including in the trucks or containers, etc...
+Includes fees linked to storing cargo in transporter terminal or 3rd party storage facilities when it exceeds the free storage period.
 
 How:
-These are fees that can provide an indicator that the transport process/negotiated contract terms may not be efficient.""")),
+Identify that the transportation management process may not be efficient especially if MSF pays huge storage expenses. It will be an indicator of point of improvement.""")),
     ('container', _("""What:
-This applies to expenses/fees advanced to the shipping line by MSF or its appointed agent and is only reimbursed after MSF has officially returned back the container to the shipping line and obtained proof of container reception by the shipping line or its agent.
+Includes fees advanced to the shipping line by MSF or its appointed agent and is only reimbursed after MSF has officially returned back the container to the shipping line and obtained proof of container reception by the shipping line or its agent.
 
 How:
-These are fees that can provide an indicator that the transport process may not be efficient or the appointed Transporter is not efficient. It will be an indicator of point of improvement in the transport management process.""")),
-    ('freight_load', _("""What:
-All loading fees, whether done by manual labour or forklift charges.""")),
-    ('freight_unload', _("""What:
-All unloading/offloading fees, whether done by manual labour or forklift charges.""")),
-    ('direct', _("""What:
-This applies to all expenses that we can classify as official direct taxes paid to government or any official authority during cargo transportation (comes with official receipts). Infrastructure Tax, Environmental Tax, etc...
+Identify that the transportation management process or the appointed transporter may not be efficient. It will be an indicator of point of improvement.""")),
+    ('taxes_duties_transport', _("""What:
+Includes fees linked to transport-related taxes & duties such as weighbridge fees, official levies, environmental taxes and VAT when applicable.
 
 How:
-Identify all transport-related expenses/taxes that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).""")),
-    ('indirect', _("""What:
-This applies to all expenses that we can classify as official non direct taxes paid to government or any official authority during cargo transportation (comes with official receipts) (eg: VAT/Sales tax on the Transporters Invoice, Weigh bridge fees, any airfreight related taxes/fees, transport levies etc...)
-
-How:
-Identify all transport-related expenses/taxes that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).""")),
+Identify all transport related expenses/taxes that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).""")),
     ('other_transport', _("""What:
-Any other freight-related fees that don't fit in any of the above defined categories**. Make sure you add a comment to explain why this fee is \"Other\".""")),
+Includes costs linked to any transport-related charges that do not fall within the defined categories above.
+
+How:
+Make sure you add a remark to explain why this fee is \"Other\".""")),
 ]
 
 CUSTOMS_FEES_HELP = [
-    ('customs_clearance', _("""What:
-Use this type of fee when encoding all (sum) of clearance fees/costs that we pay either to government authorities that are fixed by government or any other authority/service provider. MSF doesn't have control on this fee.
+    ('customs_charges', _("""What:
+Includes all the non-negotiable/fixed customs-related service fees such as terminal handling charges, port inspection fees, loading/unloading charges, escorts, bonded warehousing and other official port or airport charges.
 
 How:
-Identify all customs clearance related expenses that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).""")),
+Identify all customs clearance expenses MSF can not negotiate or control because they are mandated by authorities, port/airport operators or shipping/airline handlers.""")),
     ('customs_clearance_srv', _("""What:
-Use this type of fee when encoding all (sum) of clearance fees/costs we pay to service providers that are not fixed by government or any other authority/service provider. MSF has control on this fee and is able to negotiate the rates. 
+Include all the fees linked to clearance services provided by contracted service providers when fees are negotiated and not fixed by authorities.
 
 How:
-Identify all customs clearance related expenses that MSF is paying to a service provider when they provide these clearance services to MSF (If not done by MSF customs teams). Usually negotiated and defined in the contracts (eg: MIFAT contracts).""")),
+Identify all customs clearance expenses MSF pays to service providers when these services are outsourced and negotiated - usually in a MIFAT contract or via agreed quotation.""")),
     ('prearrival', _("""What:
-Use this type of fee when encoding all (sum) of pre-clearance fees/costs that we pay either to government authorities that are fixed by government or any other authority/service provider. MSF doesn't have control on this fee.
+Includes costs linked to non-negotiable/fixed fees during pre-clearance process. These fees usually official/statutory and will have official receipts.
 
 How:
-Identify all pre-clearance related expenses that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).""")),
+Identify all pre-arrival fees that MSF can not negotiate or control because they are fixed by authorities or infrastructure operators.""")),
     ('prearrival_srv', _("""What:
-Use this type of fee when encoding all (sum) of pre-clearance fees/costs we pay to service providers that are not fixed by government or any other authority/service provider. MSF has control on this fee and is able to negotiate the rates.
+Includes fees linked to pre-arrival clearance services provided by contracted service providers or 3rd party provider when fees are negotiated and not fixed by authorities.
 
 How:
-Identify all pre-clearance related expenses that MSF is paying to a service provider when they provide this pre-clearance services to MSF (If not done by MSF customs teams). Usually negotiated and defined in the contracts (eg: MIFAT contracts).""")),
-    ('direct', _("""What:
-This applies to all expenses that we can classify as official direct taxes paid to or for government (eg: Import duty, Excise Duty, Withholding Tax, Environmental tax, VAT/Sales Tax, paid directly for MSF cargo at the point of customs clearance, etc...).
+Identify all pre-arrival expenses MSF pays to service providers when these services are outsourced and negotiated - usually in a MIFAT contract or via agreed quotation.""")),
+    ('taxes_duties_customs', _("""What:
+Includes statutory fees linked to customs-related taxes such as import duties, excise duties, withholding taxes, environmental taxes and VAT or sales tax paid directly for MSF cargo.
 
 How:
-Identify all direct taxes that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).""")),
-    ('indirect', _("""What:
-This applies to all expenses that we can classify as official non-direct taxes paid to (eg: VAT/Sales tax) on the Customs agent Invoice. 
-
-How:
-Identify all indirect taxes that MSF is not exempted from either by law or via MSF Negotiated MOU/Host country Agreement (HCA).""")),
-    ('handling', _("""What:
-This applies to all the official fees paid at airport or sea-port or land port terminal even if they are paid by the service provider on behalf of MSF and then re-invoiced to MSF.
-
-How:
-Identify all customs related expenses linked to cargo handling that are not in the hands/control of MSF or even the MSF appointed service provider.""")),
-    ('bonded_wh', _("""What:
-This applies to a sum of all fees/expenses paid when MSF chooses to keep the cargo under "customs bonded" warehouse facility for a defined duration.
-
-How:
-Identify all customs related expenses linked to cargo handling that are not in the hands/control of MSF or even the MSF appointed service provider.""")),
-    ('bonded_ex_wh', _("""What:
-This applies to a sum of all fees/expenses paid when MSF chooses to take out the cargo from a "customs bonded" warehouse facility after a defined period.
-
-How:
-Identify all customs bonding clearance related expenses that MSF is paying to a service provider when they provide these customs bonded warehousing services to MSF. Usually negotiated and defined in the contracts (eg: MIFAT contracts).""")),
+Identify all direct or indirect taxes that MSF is not exempted from under the law or the MSF MOU/Host Country Agreement (HCA).""")),
     ('storage', _("""What:
-This applies to only fees/expenses linked to storage costs accumulated by MSF cargo staying in a defined customs terminal usually pending customs clearance.
+Includes fees linked to storing cargo in customs-controlled terminals when customs clearance is delayed or processing exceeds the free storage period.
 
 How:
-These are fees that can provide an indicator that the Importation process may not be efficient, especially if MSF continues to pay huge storage expenses. It will be an indicator of point of improvement in the importation process.""")),
+Identify inefficiencies or delays in the importation process that may cause unnecessary storage costs. It will be an indicator of point of improvement.""")),
     ('penalty', _("""What:
-This applies to customs official penalties paid by MSF or MSF appointed customs agent due to either missing documentation or mistakes in the cargo declaration or any other problem linked to the cargo that is penalized by customs authority or any other official authority linked to this importation file. 
+Includes fees/penalties/fines imposed by customs authorities due to mistakes in the customs declaration process or any other non-compliance deemed to be caused by MSF or the appointed clearing agent.
 
 How:
-These are fees that can provide an indicator that the Importation process may not be efficient or the appointed customs agent is not efficient, especially if MSF continues to pay penalties. It will be an indicator of point of improvement in the importation process or poor service provider appointed by MSF.""")),
-    ('loading', _("""What:
-All loading fees, whether done by manual labour or forklift charges.""")),
-    ('unloading', _("""What:
-All unloading/offloading fees, whether done by manual labour or forklift charges.""")),
+Identify non-compliance aspects either by MSF or by MSF appointed service providers during the customs clearance process. It will be an indicator of point of improvement.""")),
     ('other_customs', _("""What:
-Any other customs related fees that don't fit in any of the above defined categories**. Make sure you add a comment to explain why this fee is \"Other\".""")),
+Includes costs linked to customs-related fees that do not fit within the above defined categories.
+
+How:
+Make sure you add a remark to explain why this fee is \"Other\".""")),
 ]
 
 from . import wizard
