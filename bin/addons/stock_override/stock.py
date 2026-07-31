@@ -448,15 +448,49 @@ class stock_picking(osv.osv):
         return res
 
     def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+
         if ids:
             doc_type = self.browse(cr, uid, ids[0], fields_to_fetch=['type'], context=context).type
             # Ensure the moves have the same RT as the IN or INT if the change is necessary
             if vals and vals.get('reason_type_id') and doc_type in ('in', 'internal'):
-                for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines'], context=context):
+                int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+                loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+                loss_children_rt_ids = self.pool.get('stock.reason.type').search(cr, uid, [('parent_id', '=', loss_rt_id)], context=context)
+                destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+                exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+                destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+                restr_qua_loc_ids = [
+                    data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
+                    data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
+                    data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1],
+                    data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+                ]
+                child_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'in', restr_qua_loc_ids)], context=context)
+                restr_qua_loc_ids.extend(child_loc_ids)
+                for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines', 'from_wkf'], context=context):
                     moves_to_update_rt = []
                     for move in pick.move_lines:
-                        if move.location_dest_id and not (not move.location_dest_id.virtual_location and
-                                                          (move.location_dest_id.usage == 'inventory' or move.location_dest_id.scrap_location)):
+                        # INT from scratch move not to update RT if:
+                        #   - Source and Destination in restr_qua_loc_ids and RT is 7 Internal Move
+                        #   - Source in restr_qua_loc_ids, Destination is "Expired / Damaged / For Scrap" and RT in loss_children_rt_ids
+                        #   - Source "Expired / Damaged / For Scrap", Destination "Destruction" and RT is 23 Destruction
+                        int_move_ignore = False
+                        if doc_type == 'internal' and not pick.from_wkf and move.location_id and move.location_dest_id\
+                                and move.reason_type_id:
+                            loc_id = move.location_id.id
+                            loc_dest_id = move.location_dest_id.id
+                            rt_id = move.reason_type_id.id
+                            int_move_ignore = (loc_id in restr_qua_loc_ids and loc_dest_id in restr_qua_loc_ids and rt_id == int_move_rt_id)\
+                                              or (loc_id in restr_qua_loc_ids and loc_dest_id == exp_dam_scrap_loc_id and rt_id in loss_children_rt_ids)\
+                                              or (loc_id == exp_dam_scrap_loc_id and loc_dest_id == destr_loc_id and rt_id == destr_rt_id)
+
+                        if not int_move_ignore and move.location_dest_id and \
+                                not (not move.location_dest_id.virtual_location and
+                                     (move.location_dest_id.usage == 'inventory' or move.location_dest_id.scrap_location)):
                             moves_to_update_rt.append(move.id)
                     if moves_to_update_rt:
                         self.pool.get('stock.move').write(cr, uid, moves_to_update_rt,
@@ -1614,10 +1648,13 @@ class stock_move(osv.osv):
         if vals.get('location_dest_id'):
             dest_dict = loc_obj.read(cr, uid, vals['location_dest_id'],
                                      ['virtual_location', 'usage', 'scrap_location'], context=context)
-            if dest_dict['usage'] == 'inventory' and not dest_dict['virtual_location']:
-                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_dict['scrap_location'] and not dest_dict['virtual_location']:
-                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            if vals['location_dest_id'] == data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+            else:
+                if dest_dict['usage'] == 'inventory' and not dest_dict['virtual_location']:
+                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+                if dest_dict['scrap_location'] and not dest_dict['virtual_location']:
+                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
             if vals.get('picking_id') and not vals.get('reason_type_id'):  # Header RT
                 vals['reason_type_id'] = pick_obj.read(cr, uid, vals['picking_id'], ['reason_type_id'], context=context)['reason_type_id'][0]
             # if the source location and the destination location are the same, the state is done

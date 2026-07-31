@@ -2532,6 +2532,14 @@ class stock_move(osv.osv):
                             'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
                         }
                     }
+                elif location_id and location_id != exp_dam_scrap_loc_id and location_dest_id == destr_loc_id:
+                    return {
+                        'value': {'location_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Destination Location is "Destruction", the only authorized Source Location is "Expired / Damaged / For Scrap"')
+                        }
+                    }
 
         return {'value': vals}
 
@@ -2555,7 +2563,7 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = destr_rt_id
             elif dest_id.scrap_location:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-            elif picking_id:  # Header RT
+            elif picking_id and not rt_id:  # Header RT
                 vals['reason_type_id'] = self.pool.get('stock.picking').read(cr, uid, picking_id, ['reason_type_id'],
                                                                              context=context)['reason_type_id'][0]
 
@@ -2623,6 +2631,14 @@ class stock_move(osv.osv):
                         'warning': {
                             'title': _('Warning'),
                             'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
+                        }
+                    }
+                elif location_id != exp_dam_scrap_loc_id and location_dest_id == destr_loc_id:
+                    return {
+                        'value': {'location_dest_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The Destination Location "Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap"')
                         }
                     }
 
@@ -2857,6 +2873,17 @@ class stock_move(osv.osv):
                 raise osv.except_osv(_('Error'), _('Lines %s: If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
                                      % (', '.join(lines_pb),))
 
+            # Destination "Destruction" must have Source "Expired / Damaged / For Scrap"
+            lines_pb = []
+            cr.execute("""
+                SELECT line_number FROM stock_move WHERE id IN %s AND location_id != %s AND location_dest_id = %s
+            """, (tuple(ids), exp_dam_scrap_loc_id, destr_loc_id))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: If the Destination Location is "Destruction", the only authorized Source Location is "Expired / Damaged / For Scrap"')
+                                     % (', '.join(lines_pb),))
+
             # RT 23 Destruction must have Source "Expired / Damaged / For Scrap" and Destination "Destruction"
             lines_pb = []
             cr.execute("""
@@ -2873,4 +2900,3 @@ class stock_move(osv.osv):
 
 
 stock_move()
-

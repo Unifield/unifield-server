@@ -251,6 +251,11 @@ class stock_picking(osv.osv):
                         _('You cannot do this action on a Picking Ticket. Please check you are in the right view.')
                     )
 
+                # Check locations and RT in INTs from scratch
+                if pick.type == 'internal' and not pick.from_wkf:
+                    move_ids = [move.id for move in pick.move_lines]
+                    self.pool.get('stock.move').check_moves_loc_reason_type(cr, uid, move_ids, context=context)
+
                 if pick.type == 'in':
                     domain = [('picking_id', '=', pick.id), ('draft', '=', True), ('already_processed', '=', False)]
                 else:

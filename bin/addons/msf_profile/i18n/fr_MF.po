@@ -131027,3 +131027,15 @@ msgid "Line %s: If the Source Location is \"Quarantine (analyze)\" and the Desti
 ""
 msgstr "Ligne %s: Si la Zone Source est \"Quarantaine (analyse)\" et que la Zone Destination est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP, le seul Type de Raison autorisé est \"7 Mouvement Interne\"\n"
 ""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2540
+#, python-format
+msgid "If the Destination Location is \"Destruction\", the only authorized Source Location is \"Expired / Damaged / For Scrap\""
+msgstr "Si la Zone Destination est \"Destruction\", la seule Zone Source autorisée est \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2884
+#, python-format
+msgid "Lines %s: If the Destination Location is \"Destruction\", the only authorized Source Location is \"Expired / Damaged / For Scrap\""
+msgstr "Lignes %s: Si la Zone Destination est \"Destruction\", la seule Zone Source autorisée est \"Expiré / Endommagé / Pour Rebuts\""
