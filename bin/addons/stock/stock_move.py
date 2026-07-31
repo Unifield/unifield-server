@@ -2624,6 +2624,14 @@ class stock_move(osv.osv):
                                 'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
                             }
                         }
+                elif location_id != exp_dam_scrap_loc_id and location_dest_id == destr_loc_id:
+                    return {
+                        'value': {'location_dest_id': False, 'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The Destination Location "Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap"')
+                        }
+                    }
                 elif rt_id == destr_rt_id and ((location_id and location_id != exp_dam_scrap_loc_id) or
                                                (location_dest_id and location_dest_id != destr_loc_id)):
                     return {
@@ -2631,14 +2639,6 @@ class stock_move(osv.osv):
                         'warning': {
                             'title': _('Warning'),
                             'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
-                        }
-                    }
-                elif location_id != exp_dam_scrap_loc_id and location_dest_id == destr_loc_id:
-                    return {
-                        'value': {'location_dest_id': False},
-                        'warning': {
-                            'title': _('Warning'),
-                            'message': _('The Destination Location "Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap"')
                         }
                     }
 
