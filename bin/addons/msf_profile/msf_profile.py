@@ -109,7 +109,7 @@ class patch_scripts(osv.osv):
             ('step_goods_reception_claims_destination', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'step_goods_reception_claims_destination')[1]),
         ]
 
-        old_step_ids = [step[0] for step in old_steps if step[0]]
+        old_step_ids = [step[1] for step in old_steps if step[1]]
         if old_step_ids:
             macroprocesses = [
                 ('macroprocess_international_transport_import', data_obj.get_object_reference(cr, uid, 'transport_mgmt', 'macroprocess_international_transport_import')[1]),
@@ -151,21 +151,25 @@ class patch_scripts(osv.osv):
                     for step in old_steps:
                         if not step[1]:
                             continue
-                        new_step_id = data_obj.get_object_reference(cr, uid, 'transport_mgmt', step[0] + suffix)[1]
+                        try:
+                            new_step_id = data_obj.get_object_reference(cr, uid, 'transport_mgmt', step[0] + suffix)[1]
+                        except ValueError:  # get_object_reference returns a ValueError when no reference is found
+                            continue
                         if not new_step_id:
                             continue
                         cr.execute("""
-                            UPDATE transport_order_step SET step_id = %
+                            UPDATE transport_order_step SET step_id = %s
                             WHERE step_id = %s AND ((transport_out_id IS NULL AND transport_in_id IN (SELECT id FROM transport_order_in WHERE macroprocess_id = %s))
                                 OR (transport_in_id IS NULL AND transport_out_id IN (SELECT id FROM transport_order_out WHERE macroprocess_id = %s)))
                         """, (new_step_id, step[1], mp[1], mp[1]))
                         self.log_info(cr, uid, "US-15910-15922-16054: %d %s step lines were set to %s"
                                       % (cr.rowcount, step[0], step[0] + suffix))
 
-            # TODO: Delete any step line still using one of the old steps
-
+            # Delete any step line still using one of the old steps
+            cr.execute("""DELETE FROM transport_order_step WHERE step_id IN %s""", (tuple(old_step_ids),))
+            self.log_info(cr, uid, "US-15910-15922-16054: %d step lines were deleted" % (cr.rowcount,))
             # Delete the old steps
-            cr.execute("""DELETE FROM transport_order_step WHERE id IN %s""", (tuple(old_step_ids),))
+            cr.execute("""DELETE FROM transport_step WHERE id IN %s""", (tuple(old_step_ids),))
             self.log_info(cr, uid, "US-15910-15922-16054: %d steps were deleted" % (cr.rowcount,))
 
         return True

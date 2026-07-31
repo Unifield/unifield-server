@@ -270,9 +270,25 @@ class transport_step(osv.osv):
     _name = 'transport.step'
     _description = 'Steps'
     _order = 'macroprocess_id,step_number'
+
+    def name_get(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not len(ids):
+            return []
+        res = []
+        for step in self.browse(cr, uid, ids, context=context):
+            res.append((step.id, '%s %s' % (step.step_number, step.name)))
+        return res
+
+    def _name_get_fnc(self, cr, uid, ids, field_name, args, context=None):
+        res = self.name_get(cr, uid, ids, context=context)
+        return dict(res)
+
     _columns = {
         'name': fields.char('Name', size=256, select=1, required=1, translate=1),
         'step_number': fields.integer('Step', required=1, readonly=1),
+        'complete_name': fields.function(_name_get_fnc, method=True, type='char', size=256, string='Name'),
         'is_active': fields.boolean('Active'),
         'macroprocess_id': fields.many2one('transport.macroprocess', 'Linked Macroprocess'),
     }
@@ -432,6 +448,7 @@ class transport_order_step(osv.osv):
     _columns = {
         'name': fields.date('Start Date', required=1),
         'step_id': fields.many2one('transport.step', 'Step', add_empty=1, required=1, select=1),
+        'step_number': fields.related('step_id', 'step_number', string='Step Number', type='integer', store=True, write_relate=False),
         'sub_step_id': fields.many2one('transport.sub.step', 'Sub-Step', select=1),
         # Keep the original name on closed/cancelled ITO/OTO even if the sub-step is modified/deleted afterwards
         'sub_step_name': fields.related('sub_step_id', 'name', string='Sub-Step', type='char', size=128, store=True, write_relate=False),

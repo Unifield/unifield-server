@@ -1,0 +1,1104 @@
+<?xml version="1.0"?>
+<document filename="transport_order_steps_report.pdf">
+    <template pageSize="(842.0,595.0)" title="transport_order_steps_report" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="42.0" y1="62.0" width="756" height="500" />
+      <pageGraphics>
+        <fill color="blue"/>
+        <setFont name="Helvetica" size="9"/>
+        <fill color="black"/>
+        <drawString x="20.0" y="10.0">Page : <pageNumber /> / </drawString>
+        <drawString x="60.0" y="10.0"><pageCount /> </drawString>
+
+      </pageGraphics>
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="table_title">
+            <blockBackground colorName="gold" start="2,0" stop="-2,0"/>
+            <lineStyle kind="OUTLINE" colorName="black" thickness="1" start="1,0" stop="-2,-2"/>
+            <lineStyle kind="GRID" colorName="black" thickness="1" start="1,1" stop="-2,-1"/>
+            <blockValign value="MIDDLE" />
+        </blockTableStyle>
+
+        <blockTableStyle id="table_default">
+            <lineStyle kind="GRID" colorName="black" thickness="1" start="1,0" stop="-2,-1"/>
+            <blockValign value="MIDDLE" />
+        </blockTableStyle>
+
+        <blockTableStyle id="table_grey2_4">
+            <blockBackground colorName="#f0f0f0" start="0,0" stop="-4,0"/>
+            <blockBackground colorName="#f0f0f0" start="4,0" stop="-2,0"/>
+            <lineStyle kind="GRID" colorName="black" thickness="1" start="1,0" stop="-2,-1"/>
+            <blockValign value="MIDDLE" />
+        </blockTableStyle>
+        <blockTableStyle id="table_grey3">
+            <blockBackground colorName="#f0f0f0" start="0,0" stop="-3,0"/>
+            <lineStyle kind="GRID" colorName="black" thickness="1" start="1,0" stop="-2,-1"/>
+            <blockValign value="MIDDLE" />
+        </blockTableStyle>
+        <blockTableStyle id="table_grey4">
+            <blockBackground colorName="#f0f0f0" start="0,0" stop="-2,0"/>
+            <lineStyle kind="GRID" colorName="black" thickness="1" start="1,0" stop="-2,-1"/>
+            <blockValign value="MIDDLE" />
+        </blockTableStyle>
+
+        <paraStyle name="topTitle" fontName="Helvetica-Bold" fontSize="17" alignment="CENTER" />
+        <paraStyle name="title" fontName="Helvetica-Bold" fontSize="9"/>
+        <paraStyle name="title_center" fontName="Helvetica-Bold" fontSize="9" alignment="CENTER"/>
+        <paraStyle name="line" fontName="Helvetica" fontSize="9" alignment="LEFT"/>
+        <paraStyle name="line_center" fontName="Helvetica" fontSize="9" alignment="CENTER"/>
+        <paraStyle name="line_bold_center" fontName="Helvetica-Bold" fontSize="9" alignment="CENTER"/>
+        <paraStyle name="whitespace" fontName="Helvetica" fontSize="9" alignment="LEFT" spaceAfter="20"/>
+    </stylesheet>
+
+    <story>
+        <blockTable colWidths="842.0">
+            <tr>
+                <td><para style="topTitle">Step date definitions</para></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">International Transport &amp; Import process</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Notification</b> <i>(Ready to Ship)</i></para></td>
+                <td><para style="line">Date of reception of freight documentation</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Pre-Arrival processing</b> <i>(Preclearance)</i></para></td>
+                <td><para style="line">Start date of the pre-arrival process</para></td>
+                <td><para style="line">Target end date of the pre-arrival process</para></td>
+                <td><para style="line">Actual end date of the pre-arrival process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line">Date of greenlight sent to shipper</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Shipment dispatch confirmation</b> <i>(departure, initial ETA, updated ETA)</i></para></td>
+                <td><para style="line">Departure date</para></td>
+                <td><para style="line">Initial Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td><para style="line">Updated Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo arrival and customs processing</b> <i>(ATA destination port)</i></para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ETA)</i> at customs entry point <i>(incl. sea Port, int. airport, land border)</i></para></td>
+                <td><para style="line">Start date of customs clearance process</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo customs release and dispatch date</b></para></td>
+                <td><para style="line">Customs release date</para></td>
+                <td><para style="line">Dispatch date from customs entry point</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b></para></td>
+                <td><para style="line">Departure date from customs entry point</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at destination</para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at destination</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line">Parcels reception control date</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line">If claim - opening claim date</para></td>
+                <td><para style="line">If claim - resolution claim date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey4" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Return of container</i></para></td>
+                <td><para style="line">Date of container release from the Warehouse</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at port terminal</para></td>
+                <td><para style="line">Confirmed return date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Returned Container deposit reimbursement</i></para></td>
+                <td><para style="line">Reimbursement claim date</para></td>
+                <td><para style="line">Confirmed reimbursement date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport &amp; customs invoices processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">International Transport &amp; Transit process</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Notification</b> <i>(Ready to Ship)</i></para></td>
+                <td><para style="line">Date of reception of freight documentation</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Pre-Arrival processing</b> <i>(Preclearance)</i></para></td>
+                <td><para style="line">Start date of the pre-arrival process</para></td>
+                <td><para style="line">Target end date of the pre-arrival process</para></td>
+                <td><para style="line">Actual end date of the pre-arrival process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line">Date of greenlight sent to shipper</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transit Shipment dispatch confirmation</b> <i>(departure, initial ETA, updated ETA)</i></para></td>
+                <td><para style="line">Departure date</para></td>
+                <td><para style="line">Initial Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td><para style="line">Updated Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transit Cargo arrival and customs processing</b> <i>(ATA transit port)</i></para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at customs transit point <i>(incl. sea Port, int. airport, land border)</i></para></td>
+                <td><para style="line">Start date of customs clearance process</para></td>
+                <td><para style="line">Customs release date</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b> <i>(transit country)</i></para></td>
+                <td><para style="line">Departure date from customs transit point</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at border point</para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at border point</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transit reception &amp; Claim</b> <i>(transit country)</i></para></td>
+                <td><para style="line">Parcels reception control date <i>(optional)</i></para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line">If claim - opening claim date</para></td>
+                <td><para style="line">If claim - resolution claim date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport Onward transit Processing</b> <i>(Onward Transport preparation to Destination country)</i></para></td>
+                <td><para style="line">Start date of the onward transit process</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport Onward transit Green Light</b> <i>(Cargo ETA Confirmation)</i></para></td>
+                <td><para style="line">Date of greenlight sent to shipper</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b> <i>(Destination)</i></para></td>
+                <td><para style="line">Departure date from customs border point</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at destination</para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at destination</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> <i>(Destination)</i></para></td>
+                <td><para style="line">Reception date</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Claim</i></para></td>
+                <td><para style="line">If claim - opening claim date</para></td>
+                <td><para style="line">If claim - resolution claim date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport Transit invoices processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">International Transport &amp; Temporary Admission process (vehicles, telecom, ...)</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Notification</b> <i>(Ready to Ship)</i></para></td>
+                <td><para style="line">Date of reception of freight documentation</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Pre-Arrival processing</b> <i>(Preclearance)</i></para></td>
+                <td><para style="line">Start date of the pre-arrival process</para></td>
+                <td><para style="line">Target end date of the pre-arrival process</para></td>
+                <td><para style="line">Actual end date of the pre-arrival process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line">Date of greenlight sent to shipper</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Shipment dispatch confirmation</b> <i>(departure, initial ETA, updated ETA)</i></para></td>
+                <td><para style="line">Departure date</para></td>
+                <td><para style="line">Initial Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td><para style="line">Updated Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo arrival and customs processing</b> <i>(ATA destination port)</i></para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at customs entry point <i>(incl. sea Port, int. airport, land border)</i></para></td>
+                <td><para style="line">Start date of customs clearance process</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Customs release and dispatch date</b></para></td>
+                <td><para style="line">Customs release date</para></td>
+                <td><para style="line">Dispatch date from customs entry point</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b></para></td>
+                <td><para style="line">Departure date from customs entry point</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at destination</para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at destination</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line">Parcels reception control date</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line">If claim - opening claim date</para></td>
+                <td><para style="line">If claim - resolution claim date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">International Transport &amp; Bonded Warehousing</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Notification</b> <i>(Ready to Ship)</i></para></td>
+                <td><para style="line">Date of reception of freight documentation</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Pre-Arrival processing</b> <i>(Preclearance)</i></para></td>
+                <td><para style="line">Start date of the pre-arrival process</para></td>
+                <td><para style="line">Target end date of the pre-arrival process</para></td>
+                <td><para style="line">Actual end date of the pre-arrival process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line">Date of greenlight sent to shipper</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Shipment dispatch confirmation</b> <i>(departure, initial ETA, updated ETA)</i></para></td>
+                <td><para style="line">Departure date</para></td>
+                <td><para style="line">Initial Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td><para style="line">Updated Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo arrival processing</b> <i>(ATA destination port)</i></para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at customs entry point <i>(incl. sea Port, int. airport, land border)</i></para></td>
+                <td><para style="line">Start date of customs clearance process</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Customs Bonded warehouse processing</b></para></td>
+                <td><para style="line">Customs release date</para></td>
+                <td><para style="line">Dispatch date from customs entry point</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line">Parcels reception control date</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line">If claim - opening claim date</para></td>
+                <td><para style="line">If claim - resolution claim date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">Bonded Ex-Warehousing &amp; Domestic Transport</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Import Cargo request</b></para></td>
+                <td><para style="line">Date reception of the request</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Customs Bonded Ex-warehousing processing</b></para></td>
+                <td><para style="line">Start date of customs Bonded Ex-warehousing process</para></td>
+                <td><para style="line">Customs release date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport / Freight request</b></para></td>
+                <td><para style="line">Date reception of the request</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Bonded warehouse invoices Processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b></para></td>
+                <td><para style="line">Departure date from Customs Bonded warehouse</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at destination</para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at destination</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line">Parcels reception control date</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line">If claim - opening claim date</para></td>
+                <td><para style="line">If claim - resolution claim date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b> Domestic Transport invoices Processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">Bonded Ex-Warehousing &amp; International Transport</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Re-Export Cargo request</b></para></td>
+                <td><para style="line">Date reception of the request</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Notification</b> <i>(Ready to Ship)</i></para></td>
+                <td><para style="line">Date of reception of freight documentation</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Pre-shipment/ Pre-Departure processing</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line">Start date of the pre-shipment process</para></td>
+                <td><para style="line">Target end date of the pre-shipment process</para></td>
+                <td><para style="line">Actual end date of the pre-shipment process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight from Consignee</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line">Date of greenlight received from Consignee</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Customs Re-Export processing</b></para></td>
+                <td><para style="line">Start date of customs Re-Export process</para></td>
+                <td><para style="line">Customs release date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Re-Export Shipment dispatch confirmation</b> <i>(departure, initial ETA, updated ETA)</i></para></td>
+                <td><para style="line">Dispatch date from customs point</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at destination</para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at destination</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Bonded warehouse invoices Processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b></para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b> Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">Re-Export &amp; International Transport</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Re-Export Cargo request</b></para></td>
+                <td><para style="line">Date reception of the request</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Notification</b> <i>(Ready to Ship)</i></para></td>
+                <td><para style="line">Date of reception of freight documentation</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Pre-Shipment / Pre-Departure processing</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line">Start date of the pre-shipment process</para></td>
+                <td><para style="line">Target end date of the pre-shipment process</para></td>
+                <td><para style="line">Actual end date of the pre-shipment process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight from Consignee</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line">Date of greenlight received from Consignee</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Customs Re-Export processing</b></para></td>
+                <td><para style="line">Start date of customs Re-Export process</para></td>
+                <td><para style="line">Customs release date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Re-Export Shipment dispatch confirmation</b> <i>(departure, initial ETA, updated ETA)</i></para></td>
+                <td><para style="line">Dispatch date from customs point</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at destination</para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at destination</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b></para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">Export &amp; International Transport</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Export Cargo request</b></para></td>
+                <td><para style="line">Date reception of the request</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Cargo Notification</b> <i>(Ready to Ship)</i></para></td>
+                <td><para style="line">Date of reception of freight documentation</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Pre-Shipment/ Pre-Departure processing</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line">Start date of the pre-shipment process</para></td>
+                <td><para style="line">Target end date of the pre-shipment process</para></td>
+                <td><para style="line">Actual end date of the pre-shipment process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight from Consignee</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line">Date of greenlight received from Consignee</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Customs Export processing</b></para></td>
+                <td><para style="line">Start date of customs Export process</para></td>
+                <td><para style="line">Customs release date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Export Shipment dispatch confirmation</b> <i>(departure, initial ETA, updated ETA)</i></para></td>
+                <td><para style="line">Dispatch date from customs point</para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at destination</para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at destination</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b></para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">Motor vehicle Process</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Request to Dispose of MSF fleet</b> <i>(Re-export)</i></para></td>
+                <td><para style="line">Date reception of the request</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Notification Confirmation of RTS</b> <i>(ready to ship)</i></para></td>
+                <td><para style="line">Date when motor vehicle is ready to ship</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Pre-Shipment/ Pre-Departure processing</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line">Start date of the pre‑departure process</para></td>
+                <td><para style="line">Target end date of the pre‑departure process</para></td>
+                <td><para style="line">Actual end date of the pre‑departure process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight from Consignee</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line">Date of greenlight from Consignee</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Processing De-registration</b></para></td>
+                <td><para style="line">Start of the process</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line">Date when de-registration is confirmed</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Processing Bond Cancellation</b></para></td>
+                <td><para style="line">Start of the process</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line">Date when bond cancellation is confirmed</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport &amp; Customs invoices processing De-registration</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport &amp; Customs invoices processing Bond</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Customs Re-Export processing</b></para></td>
+                <td><para style="line">Start date of the motor vehicle re-export processing</para></td>
+                <td><para style="line">Target end date of the vehicle re-export processing</para></td>
+                <td><para style="line">Actual end date of the vehicle re-export processing</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Shipment dispatch confirmation</b> <i>(departure, initial ETA, updated ETA)</i></para></td>
+                <td><para style="line">Departure date</para></td>
+                <td><para style="line">Initial Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td><para style="line">Updated Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Customs Exit Point Processing</b></para></td>
+                <td><para style="line">Date of start of processing</para></td>
+                <td><para style="line">Target end of processing</para></td>
+                <td><para style="line">Completion of the exit process</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <para style="whitespace"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="title">Domestic Transport</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="title_center">Dates to fill</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line_bold_center">Step name</para></td>
+                <td><para style="line_bold_center">Start date</para></td>
+                <td><para style="line_bold_center">Target end date</para></td>
+                <td><para style="line_bold_center">Actual end date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Domestic Transport request</b></para></td>
+                <td><para style="line">Date of request <i>(from customer or shipper)</i></para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line">Date of greenlight from customer instance</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Transport</b></para></td>
+                <td><para style="line">Dispatch date </para></td>
+                <td><para style="line">Estimated Time of Arrival <i>(ETA)</i></para></td>
+                <td><para style="line">Actual Time of Arrival <i>(ATA)</i> at destination</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line">Reception date</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line">If claim - opening claim date</para></td>
+                <td><para style="line">If claim - resolution claim date</para></td>
+                <td><para style="line"></para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_grey2_4" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td><para style="line"><i>Optional</i></para></td>
+                <td><para style="line"><b>Reception &amp; claims</b> - <i>Reverse trip loading</i></para></td>
+                <td><para style="line">Loading date</para></td>
+                <td><para style="line"></para></td>
+                <td><para style="line">Actual reception confirmation date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
+            <tr>
+                <td></td>
+                <td><para style="line"><b>Domestic Transport invoices Processing</b></para></td>
+                <td><para style="line">Invoices reception date</para></td>
+                <td><para style="line">Invoices approval date</para></td>
+                <td><para style="line">If available - invoices payment date</para></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+    </story>
+</document>

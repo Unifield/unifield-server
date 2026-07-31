@@ -324,7 +324,7 @@
             <field name="name">Transit Cargo arrival and customs processing (ATA transit port)</field>
             <field name="step_number">5</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="ref('macroprocess_international_transport_transit')"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
         <record id="step_transport_transit_reception_mitt" model="transport.step">
             <field name="name">Transport (transit country)</field>
@@ -474,7 +474,7 @@
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
         </record>
-        <record id="step_transport_customs_invoice" model="transport.step">
+        <record id="step_transport_customs_invoice_mitb" model="transport.step">
             <field name="name">Transport &amp; Customs Invoice processing</field>
             <field name="step_number">9</field>
             <field name="is_active">True</field>
@@ -692,7 +692,7 @@
             <field name="name">Notification Confirmation of RTS (Ready to Ship)</field>
             <field name="step_number">2</field>
             <field name="is_active">True</field>
-            <field name="macroprocess_ids" eval="ref('macroprocess_motor_vehicle')"/>
+            <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
         </record>
         <record id="step_preship_preclear_mmv" model="transport.step">
             <field name="name">Pre-shipment / Pre-departure processing (Receiving Country)</field>

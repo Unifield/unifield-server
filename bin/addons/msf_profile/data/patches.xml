@@ -1353,8 +1353,8 @@
             <field name="method">us_15663_15664_customs_transport_fees_state</field>
         </record>
 
-<!--        <record id="us_15910_15922_16054_fix_steps" model="patch.scripts">-->
-<!--            <field name="method">us_15910_15922_16054_fix_steps</field>-->
-<!--        </record>-->
+        <record id="us_15910_15922_16054_fix_steps" model="patch.scripts">
+            <field name="method">us_15910_15922_16054_fix_steps</field>
+        </record>
     </data>
 </openerp>
