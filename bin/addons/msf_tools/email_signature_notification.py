@@ -253,7 +253,7 @@ class email_signature_notification(osv.osv):
                     LEFT JOIN physical_inventory phys ON sign.signature_res_id = phys.id AND sign.signature_res_model = 'physical.inventory'
                 WHERE signl.user_id IS NOT NULL AND u.signature_enabled = 't' AND signl.signed = 'f' AND signl.is_active = 't'
                     AND sign.signed_off_line = 'f' AND sign.signature_is_closed = 'f' AND """ + sql_date_where + """
-                    AND (""" + ' OR '.join(sql_doc_wheres) + """) AND u.notify_by_email
+                    AND (""" + ' OR '.join(sql_doc_wheres) + """) AND (u.synchronize = 'f' OR u.notify_by_email = 't')
                 GROUP BY signl.user_id, u.name, u.user_email, u.signature_to, sign.id, sign.signature_res_model,
                     sign.signature_res_id, signl.id, signl.prio, s.procurement_request, s.name, po.name, p.name, acbs.name,
                     inv.number, inv.origin, inv.supplier_reference, phys.ref, p.type, p.subtype, acj.type
@@ -446,7 +446,8 @@ class email_signature_notification(osv.osv):
         user_obj = self.pool.get('res.users')
 
         group_ids = self.pool.get('res.groups').search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
-        user_domain = [('id', '!=', 1), ('user_email', '!=', False), ('groups_id', 'in', group_ids)]
+        user_domain = [('id', '!=', 1), ('user_email', '!=', False), ('groups_id', 'in', group_ids),
+                       '|', ('synchronize', '=', False), ('notify_by_email', '=', True)]
         sign_doc_creator_ids = user_obj.search(cr, uid, user_domain, context=context)
         if sign_doc_creator_ids:
             error_msg = ''
@@ -513,10 +514,14 @@ class email_signature_notification(osv.osv):
         sign_doc_creator_supply_ids, sign_doc_creator_finance_ids = [], []
         if group_supply_ids:
             sign_doc_creator_supply_ids = user_obj.search(cr, uid, [('id', '!=', 1), ('user_email', '!=', False),
-                                                                    ('groups_id', '=', group_supply_ids[0])], context=context)
+                                                                    ('groups_id', '=', group_supply_ids[0]),
+                                                                    '|', ('synchronize', '=', False),
+                                                                    ('notify_by_email', '=', True)], context=context)
         if group_finance_ids:
             sign_doc_creator_finance_ids = user_obj.search(cr, uid, [('id', '!=', 1), ('user_email', '!=', False),
-                                                                     ('groups_id', '=', group_finance_ids[0])], context=context)
+                                                                     ('groups_id', '=', group_finance_ids[0]),
+                                                                     '|', ('synchronize', '=', False),
+                                                                     ('notify_by_email', '=', True)], context=context)
         if sign_doc_creator_supply_ids or sign_doc_creator_finance_ids:
             name_doc_creators_supply, email_doc_creators_supply = [], []
             for user in user_obj.read(cr, uid, sign_doc_creator_supply_ids, ['name', 'user_email'], context=context):

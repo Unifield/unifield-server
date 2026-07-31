@@ -727,7 +727,7 @@ class signature_object(osv.osv):
                 LEFT JOIN signature sign ON signl.signature_id = sign.id
                 LEFT JOIN res_users u ON signl.user_id = u.id
                 WHERE signl.signature_id = %s AND signl.user_id IS NOT NULL AND u.signature_enabled = 't' AND signl.signed = 'f'
-                    AND signl.is_active = 't' AND sign.signed_off_line = 'f' AND sign.signature_is_closed = 'f'
+                    AND signl.is_active = 't' AND sign.signed_off_line = 'f' AND sign.signature_is_closed = 'f'  AND (u.synchronize = 'f' OR u.notify_by_email = 't')
                 GROUP BY signl.id, u.user_email, u.name, signl.first_reminder_sent_date, u.signature_to
                 HAVING signl.prio <= MIN(osignl.prio)
             """, (doc.signature_id.id,))
