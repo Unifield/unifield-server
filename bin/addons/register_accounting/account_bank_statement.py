@@ -98,7 +98,7 @@ class account_journal(osv.osv):
         if not context:
             context = {}
         regline_obj = self.pool.get('account.bank.statement.line')
-        dom = [('type', 'in', ['cash', 'bank', 'cheque']), ('is_active', '=', True)]
+        dom = [('type', 'in', ['cash', 'bank', 'cheque', 'other_reg']), ('is_active', '=', True)]
         has_cp_tranfert = False
         if context.get('from', '') == 'regline_view' and context.get('active_id'):
             # get the currency and journal values for the View "Register Lines" accessible from the reg. Actions Menu
@@ -502,7 +502,7 @@ class account_bank_statement(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        if context.get('journal_type', False) and context.get('journal_type') == 'bank':
+        if context.get('journal_type', False) and context.get('journal_type') in ('bank', 'other_reg'):
             for reg in self.browse(cr, uid, ids):
                 # Verify that the closing balance (balance_end_real) correspond to the calculated balance (balance_end)
                 # NB: UTP-187 reveals that some difference appears between balance_end_real and balance_end. These fields are float. And balance_end_real is calculated. In python this imply some difference.
@@ -675,7 +675,15 @@ The starting balance will be proposed automatically and the closing balance is t
             search_view = 'view_account_bank_statement_filter'
             res_module = 'register_accounting'
             res_view = 'inherit_view_bank_statement_form2'
-            st_help = "A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box."
+            st_help = "A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up  cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box."
+        elif st_type == 'other_reg':
+            name = _('Other Registers')
+            tree_module = 'account'
+            tree_view = 'view_other_statement_tree'
+            search_module = 'register_accounting'
+            search_view = 'view_other_statement_search'
+            res_module = 'account'
+            res_view = 'view_other_statement_form'
         # Search views
         tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, tree_module, tree_view)
         tree_view_id = tree_view_id and tree_view_id[1] or False
@@ -2960,10 +2968,6 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Error'), _('This wizard only accept ONE advance line.'))
         # others verifications
         for st_line in self.browse(cr, uid, ids, context=context):
-            # verify that the journal id is a cash, cheque or bank journal
-            if not st_line.statement_id or not st_line.statement_id.journal_id or not st_line.statement_id.journal_id.type \
-                    or st_line.statement_id.journal_id.type not in ['cash', 'bank', 'cheque']:
-                raise osv.except_osv(_('Error'), _("The register journal is not compatible with an advance return."))
             # verify that there is a third party, particularly an employee_id in order to do something
             if not st_line.employee_id:
                 raise osv.except_osv(_('Error'), _("The staff field is not filled in. Please complete the third parties field with an employee/staff."))

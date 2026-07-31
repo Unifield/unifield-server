@@ -36,6 +36,7 @@ class account_journal(osv.osv):
                 ('bank', 'Bank'),
                 ('cash','Cash'),
                 ('cheque', 'Cheque'),
+                ('other_reg', 'Other fin institutions/mobile money'),
                 ('correction', 'Correction Auto'),
                 ('correction_hq', 'Correction HQ'),
                 ('correction_manual', 'Correction Manual'),
@@ -90,7 +91,7 @@ class account_journal(osv.osv):
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, select=1),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
         'bank_journal_id': fields.many2one('account.journal', _("Corresponding bank journal"),
-                                           domain="[('type', '=', 'bank'), ('currency', '=', currency), ('is_active', '=', True)]"),
+                                           domain="[('type', 'in', ['bank', 'other_reg']), ('currency', '=', currency), ('is_active', '=', True)]"),
         'cheque_journal_id': fields.one2many('account.journal', 'bank_journal_id', 'Linked cheque'),
         'has_entries': fields.function(_get_has_entries, type='boolean', method=True, string='Has journal entries'),
         'has_non_draft_register': fields.function(_get_has_non_draft_register, type='boolean', method=True, string='Has non-draft register'),
@@ -202,6 +203,18 @@ class account_journal(osv.osv):
                 value['value']['default_debit_account_id'] = company.bank_debit_account_id.id
             if company.bank_credit_account_id:
                 value['value']['default_credit_account_id'] = company.bank_credit_account_id.id
+        elif type == 'other_reg':
+            analytic_ids = analytic_journal_obj.search(cr, uid, [('code', '=', 'OFIN'),
+                                                                 ('is_current_instance', '=', True)], context=context)
+
+            if analytic_ids:
+                value['value']['analytic_journal_id'] = analytic_ids[0]
+            value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            if company.other_debit_account_id:
+                value['value']['default_debit_account_id'] = company.other_debit_account_id.id
+            if company.other_credit_account_id:
+                value['value']['default_credit_account_id'] = company.other_credit_account_id.id
         elif type == 'cheque':
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK'),
                                                                             ('is_current_instance', '=', True)], context=context)[0]
@@ -268,7 +281,7 @@ class account_journal(osv.osv):
         """
         reg_obj = self.pool.get('account.bank.statement')
         # UTP-182: the register isn't created if the journal comes from another instance via the synchronization
-        if 'type' in vals and vals['type'] in ('cash', 'bank', 'cheque') \
+        if 'type' in vals and vals['type'] in ('cash', 'bank', 'cheque', 'other_reg') \
                 and not context.get('sync_update_execution', False) and \
                 not reg_obj.search_exist(cr, uid, [('journal_id', '=', journal_id)], context=context):
 
@@ -305,7 +318,7 @@ class account_journal(osv.osv):
         if not context.get('sync_update_execution', False) and \
             not context.get('allow_journal_system_create', False) and \
                 vals.get('type', '') == 'system':
-                    # user not allowed to create 'system' journal
+            # user not allowed to create 'system' journal
             raise osv.except_osv(_('Warning'),
                                  _('You can not create a System journal'))
 

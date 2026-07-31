@@ -30,7 +30,8 @@ from tools.translate import _
 from ftplib import FTP
 
 import pooler
-
+from .automated_import import RemoteOneDrive
+import traceback
 
 class automated_export(osv.osv):
     _name = 'automated.export'
@@ -113,15 +114,18 @@ class automated_export(osv.osv):
             help="""Defines the priority of the automated export processing because some of them needs other data
 to export well some data (e.g: Product Categories needs Product nomenclatures)."""
         ),
-        'ftp_ok': fields.boolean(string='Enable FTP server', help='Enable FTP server if you want to read or write from a remote FTP server'),
-        'ftp_protocol': fields.selection([('ftp', 'FTP'), ('sftp','SFTP')], string='Protocol', required=True),
-        'ftp_url': fields.char(string='FTP server address', size=256),
-        'ftp_port': fields.char(string='FTP server port', size=56),
-        'ftp_login': fields.char(string='FTP login', size=256),
-        'ftp_password': fields.char(string='FTP password', size=256),
-        'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
-        'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
-        'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'ftp_ok': fields.boolean(string='Enable remote server', help='Enable remote server if you want to read or write from a remote server'),
+        'ftp_protocol': fields.selection([('ftp', 'FTP'), ('sftp','SFTP'), ('onedrive', 'OneDrive')], string='Protocol', required=True),
+        'ftp_url': fields.char(string='Remote server address', size=256),
+        'ftp_port': fields.char(string='Remote server port', size=56),
+        'ftp_login': fields.char(string='Remote login', size=256),
+        'ftp_password': fields.char(string='Remote password', size=256),
+        'sharepoint_cert': fields.text(string='Certificate', help="format:\n-----BEGIN CERTIFICATE-----\nXXX\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\nZZZ\n-----END PRIVATE KEY-----"),
+        'sharepoint_app_id': fields.char('App-id', size=128),
+        'sharepoint_tenant_id': fields.char('Tenant-id', size=128),
+        'ftp_dest_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
+        'ftp_dest_fail_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
+        'ftp_report_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
         'partner_id': fields.many2one('res.partner', 'Partner', domain=[('supplier', '=', True), ('partner_type', '=', 'esc')]),
         'pause': fields.integer('Pause between generation and transfer (in seconds)'),
 
@@ -182,6 +186,18 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             if obj.ftp_protocol == 'sftp':
                 return self.sftp_test_connection(cr, uid, ids, context=context)
 
+            if obj.ftp_protocol == 'onedrive':
+                try:
+                    keys = ['ftp_url', 'sharepoint_tenant_id', 'sharepoint_app_id', 'sharepoint_cert', 'ftp_protocol']
+                    dav = RemoteOneDrive(**{x : getattr(obj, x) for x in keys})
+                    dav.connect()
+                except Exception as e:
+                    self.infolog(cr, uid, traceback.format_exc())
+                    raise osv.except_osv(_('Error'), _('OneDrive error: %s') % e)
+                if not context.get('no_raise_if_ok'):
+                    raise osv.except_osv(_('Info'), _('Connection succeeded'))
+                return dav
+
             ftp = FTP()
             try:
                 port = int(obj.ftp_port or 0)
@@ -215,6 +231,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             try:
                 cnopts = pysftp.CnOpts()
                 cnopts.hostkeys = None
+                cnopts.compression = True
                 port = 22
                 if obj.ftp_port:
                     port = int(obj.ftp_port)
@@ -510,6 +527,9 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
                         if job.ftp_protocol == 'sftp':
                             with conn.cd(job.dest_path):
                                 pass
+                        elif job.ftp_protocol == 'onedrive':
+                            if not conn.dav.folder_exists(job.dest_path):
+                                raise
                         else:
                             conn.cwd(job.dest_path)
                     except:
@@ -519,6 +539,9 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
                         if job.ftp_protocol == 'sftp':
                             with conn.cd(job.report_path):
                                 pass
+                        elif job.ftp_protocol == 'onedrive':
+                            if not conn.dav.folder_exists(job.report_path):
+                                raise
                         else:
                             conn.cwd(job.report_path)
                     except:

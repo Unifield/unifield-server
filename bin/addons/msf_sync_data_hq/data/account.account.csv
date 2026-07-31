@@ -6,6 +6,7 @@ account_101,View,FALSE,1-Nov-13,101,,,View,Cash on hand,,None,FALSE,10,FALSE,FAL
 account_10100,Cash,FALSE,1-Nov-13,10100,,,Liquidity,Cash on hand,,None,FALSE,101,FALSE,TRUE,TRUE,TRUE
 account_102,View,FALSE,1-Nov-13,102,,,View,Cash at Bank,,None,FALSE,10,FALSE,FALSE,FALSE,TRUE
 account_10200,Cash,FALSE,1-Nov-13,10200,,,Liquidity,Cash at Bank,,None,FALSE,102,FALSE,TRUE,TRUE,TRUE
+account_10300,Cash,FALSE,1-Nov-13,10300,,,Liquidity,Other financial institutions,,None,FALSE,102,FALSE,TRUE,TRUE,TRUE
 account_10210,Cash,FALSE,1-Nov-13,10210,,,Liquidity,Outstanding checks,,None,TRUE,102,FALSE,TRUE,TRUE,TRUE
 account_11,View,FALSE,1-Nov-13,11,,,View,Financial assets,,None,FALSE,1,FALSE,FALSE,FALSE,TRUE
 account_110,View,FALSE,1-Nov-13,110,,,View,Guarantee and  Deposits,,None,FALSE,11,FALSE,FALSE,FALSE,TRUE

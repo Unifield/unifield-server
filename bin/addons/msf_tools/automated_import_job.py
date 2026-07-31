@@ -274,6 +274,7 @@ class automated_import_job(osv.osv):
                         import_obj.path_is_accessible(import_data[path[0]], path[1])
             except osv.except_osv as e:
                 error = tools.ustr(e)
+                state = 'error'
                 # In case of manual processing, raise the error
                 if job.file_to_import:
                     raise e
@@ -298,10 +299,12 @@ class automated_import_job(osv.osv):
                     except Exception:
                         no_file = True
                         error = tools.ustr(traceback.format_exc())
+                        state = 'error'
 
                     if not error:
                         if no_file:
                             if not prev_job_id:
+                                state = 'done'
                                 if job.import_id.function_id.startswith:
                                     error = _('No files to import that start with prefix "%s" found in location "%s" !') % (job.import_id.function_id.startswith, import_data.src_path)
                                 else:
@@ -315,6 +318,7 @@ class automated_import_job(osv.osv):
                         elif md5 and not import_data.disable_checksum and\
                                 self.search_exist(cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
                             non_blocking_error = _('A file with same checksum has been already imported !')
+                            state = 'error'
                             remote.move_to_process_path(filename, success=False)
                             self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
 
@@ -328,7 +332,7 @@ class automated_import_job(osv.osv):
                             'nb_rejected_records': 0,
                             'comment': error or non_blocking_error,
                             'file_sum': md5,
-                            'state': 'done' if no_file else 'error',
+                            'state': state,
                         }, context=context)
                         if error:
                             no_file = True

@@ -505,6 +505,7 @@ msgstr "US/Arizona"
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:203
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Register name:"
 msgstr "Nom du Registre:"
 
@@ -3469,11 +3470,6 @@ msgstr "Date d'Engagement"
 msgid "Document name"
 msgstr "Nom du Document"
 
-#. module: msf_tools
-#: help:automated.export,ftp_ok:0
-msgid "Enable FTP server if you want to read or write from a remote FTP server"
-msgstr "Activez le serveur FTP pour pouvoir lire ou écrire depuis un server FTP distant"
-
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:4282
 #, python-format
@@ -6009,6 +6005,7 @@ msgstr "Cette ligne est liée à une facture directe inconnue."
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Cheque journal code(s):"
 msgstr "Code(s) des Journaux de Chèques :"
 
@@ -6651,11 +6648,6 @@ msgstr "Début de Période"
 #: help:product.packaging,sequence:0
 msgid "Gives the sequence order when displaying a list of packaging."
 msgstr "Donne l'ordre séquenciel lors de l'affichage d'une liste de colisage"
-
-#. module: msf_tools
-#: field:automated.export,ftp_login:0
-msgid "FTP login"
-msgstr "FTP login"
 
 #. module: base
 #: model:res.currency,currency_name:base.RUB
@@ -7523,6 +7515,7 @@ msgstr "Taxe de Remplacement"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Register closing date:"
 msgstr "Date de clôture du registre:"
 
@@ -10441,6 +10434,7 @@ msgstr "Clôture Annuelle"
 #: selection:purchase.order.line.allocation.report,line_state:0
 #: selection:transport.order.customs.fees,purchase_state:0
 #: selection:transport.order.transport.fees,purchase_state:0
+#: report:balance.reconciliation:0
 #: field:waca.fin.sync,confirmed:0
 #, python-format
 msgid "Confirmed"
@@ -10449,6 +10443,7 @@ msgstr "Confirmé"
 #. module: register_accounting
 #: report:cash.inventory:0
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Not confirmed"
 msgstr "Non confirmé"
 
@@ -11333,7 +11328,7 @@ msgstr "Lignes analytiques"
 msgid "Line %s. You cannot only add partner or employee or journal."
 msgstr "Line %s. You cannot only add partner or employee or journal."
 
-#. modules: purchase, account, base, useability_dashboard_and_menu, msf_partner, stock
+#. modules: purchase, account, base, useability_dashboard_and_menu, msf_partner, stock, register_accounting
 #: model:ir.ui.menu,name:account.menu_account_customer
 #: model:ir.ui.menu,name:account.menu_finance_receivables
 #: model:ir.actions.act_window,name:base.action_partner_customer_form
@@ -11345,6 +11340,7 @@ msgstr "Line %s. You cannot only add partner or employee or journal."
 #: field:purchase.order,dest_partner_names:0
 #: model:ir.ui.menu,name:useability_dashboard_and_menu.menu_customer
 #: field:stock.picking,customers:0
+#: field:wizard.account.invoice,customers:0
 msgid "Customers"
 msgstr "Clients"
 
@@ -12015,6 +12011,7 @@ msgstr "Annulation d'Appel d'Offre"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Starting Balance:"
 msgstr "Solde Initial :"
 
@@ -12117,7 +12114,6 @@ msgstr "La Régularisation \"%s\" est déjà au statut Terminé !"
 #, python-format
 msgid "The Accrual \"%s\" has all total debit/credit amounts equal to zero."
 msgstr "La Régularisation \"%s\" a tous les montants totaux débit/crédit égaux à zéro."
-
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:532
@@ -13040,13 +13036,6 @@ msgid "Percent of lines with discrepancies"
 msgstr "Pourcentage de lignes avec des écarts"
 
 #. module: msf_tools
-#: field:automated.export,ftp_dest_fail_ok:0
-#: field:automated.export,ftp_dest_ok:0
-#: field:automated.export,ftp_report_ok:0
-msgid "on FTP server"
-msgstr "sur le serveur FTP"
-
-#. module: msf_tools
 #: field:automated.export,pause:0
 msgid "Pause between generation and transfer (in seconds)"
 msgstr "Pause entre la generation et l'envoi (en secondes)"
@@ -13807,11 +13796,12 @@ msgstr "kit.selection.sale.line"
 msgid "Private Phone"
 msgstr "Téléphone Privé"
 
-#. modules: account_mcdb, analytic_distribution
+#. modules: account_mcdb, analytic_distribution, register_accounting
 #: view:account.mcdb:0
 #: view:account.account:0
 #: field:account.account,destination_ids:0
 #: view:account.analytic.account:0
+#: field:wizard.account.invoice.line,destinations:0
 msgid "Destinations"
 msgstr "Destinations"
 
@@ -15834,6 +15824,7 @@ msgstr "Référence du document à l'origine de cette facture."
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Register opening date:"
 msgstr "Date d'ouverture du registre:"
 
@@ -16052,13 +16043,6 @@ msgstr "Assistant Importation Ecritures HQ"
 #: help:purchase.order,name:0
 msgid "unique number of the purchase order,computed automatically when the purchase order is created"
 msgstr "Numéro unique du bon de commande, calculé automatiquement à la création du bon de commande"
-
-#. module: msf_tools
-#: help:automated.export,ftp_dest_fail_ok:0
-#: help:automated.export,ftp_dest_ok:0
-#: help:automated.export,ftp_report_ok:0
-msgid "Is given path is located on FTP server ?"
-msgstr "Est-ce que le chemin donné est situé sur le serveur FTP ?"
 
 #. modules: account, analytic_distribution, account_mcdb
 #: model:ir.actions.act_window,name:account.action_account_analytic_account_tree2
@@ -20280,11 +20264,6 @@ msgstr "Simulation en cours"
 msgid "# of Entries "
 msgstr "Nombre d'Ecritures "
 
-#. module: msf_tools
-#: field:automated.export,ftp_url:0
-msgid "FTP server address"
-msgstr "Adresse serveur FTP"
-
 #. module: account
 #: view:res.partner:0
 msgid "Customer Accounting Properties"
@@ -22553,6 +22532,7 @@ msgstr "Filtrer par"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "End of month balance state:"
 msgstr "Statut du solde de fin de mois :"
 
@@ -22692,6 +22672,7 @@ msgstr "Le type de partnenaire et le type de commande sont incompatibles. Veuill
 #. module: base, msf_tools
 #: help:res.log,name:0
 #: help:log.phase.out.partner.deactivation,message:0
+#: help:res.log.catalogue.deletion,name:0
 msgid "The logging message."
 msgstr "Le message d'enregistrement"
 
@@ -24164,11 +24145,6 @@ msgstr "If checked, the location is the output location of a warehouse or a chil
 #: view:mission.stock.wizard:0
 msgid "Open Consolidated XLSX file"
 msgstr "Ouvrir ficher XLSX Consolidé"
-
-#. module: msf_tools
-#: field:automated.export,ftp_ok:0
-msgid "Enable FTP server"
-msgstr "Activer serveur FTP"
 
 #. module: tender_flow
 #: model:process.transition,name:tender_flow.process_transition_tender_draft_rfq
@@ -27231,6 +27207,7 @@ msgstr "Réf Origin:"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Register state:"
 msgstr "État du Registre:"
 
@@ -27891,11 +27868,6 @@ msgstr "Vous ne pouvez pas changer la distribution."
 #: help:board.board.line,sequence:0
 msgid "Gives the sequence order                         when displaying a list of board lines."
 msgstr "Donne l'ordre de séquence lors de l'affichage d'une liste de lignes de tableau."
-
-#. module: msf_tools
-#: field:automated.export,ftp_password:0
-msgid "FTP password"
-msgstr "Mot de passe FTP"
 
 #. module: msf_outgoing, product_attributes
 #: selection:stock.picking,flow_type:0
@@ -30471,7 +30443,7 @@ msgstr "America/Argentina/San_Juan"
 msgid "Operator '%s' not suported"
 msgstr "Operator '%s' not suported"
 
-#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account, purchase, product, product_asset, msf_accrual, tender_flow, msf_outgoing
+#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account, purchase, product, product_asset, msf_accrual, tender_flow, msf_outgoing, msf_tools
 #: view:account.line.csv.export:0
 #: field:account.line.csv.export,message:0
 #: field:import.commitment.wizard,last_error:0
@@ -30535,6 +30507,8 @@ msgstr "Operator '%s' not suported"
 #: field:import.asset.reference,message:0
 #: field:sde.import,message:0
 #: field:wizard.rfq.sent.import,message:0
+#: field:log.phase.out.partner.deactivation,message:0
+#: field:res.log.catalogue.deletion,name:0
 msgid "Message"
 msgstr "Message"
 
@@ -33519,11 +33493,13 @@ msgstr "Vous ne pouvez pas supprimer cette ligne !"
 msgid "- Items from engagement journal"
 msgstr "- Items from engagement journal"
 
-#. modules: account, base, msf_audittrail, register_accounting
+#. modules: account, base, msf_audittrail, register_accounting, msf_tools
 #: view:audittrail.log.line:0
 #: view:res.log:0
 #: view:audittrail.log.line:0
 #: view:audittrail.log.line:0
+#: view:log.phase.out.partner.deactivation:0
+#: view:res.log.catalogue.deletion:0
 msgid "Logs"
 msgstr "Journaux"
 
@@ -36169,6 +36145,7 @@ msgstr "_Ok"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Calculated Balance - Pending cheque:"
 msgstr "Solde calculé - Chèques en attente :"
 
@@ -38257,6 +38234,11 @@ msgstr "Fax :"
 #: report:bank.reconciliation:0
 msgid "Bank journal code:"
 msgstr "Code du Journal de Banque :"
+
+#. module: register_accounting
+#: report:balance.reconciliation:0
+msgid "Balance journal code:"
+msgstr "Code du Journal de Solde :"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:270
@@ -50076,6 +50058,7 @@ msgstr "kit.selection.sale"
 #: field:shipment,consignee_email:0
 #: field:shipment,shipper_email:0
 #: field:automated.import,email:0
+#: model:ir.ui.menu,name:msf_tools.email_main_menu
 msgid "Email"
 msgstr "Courriel"
 
@@ -54291,6 +54274,7 @@ msgstr "Kit '%s' - Module '%s' - Item '%s' not found in file, item removed"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Journal name:"
 msgstr "Nom du Journal:"
 
@@ -58990,6 +58974,7 @@ msgstr "Lot atteignant probablement expiration"
 #: report:msf.pdf.engagement:0
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 #: code:addons/account/report/account_general_ledger.py:650
 msgid "Page"
 msgstr "Page"
@@ -66968,7 +66953,7 @@ msgstr "Boîte"
 msgid "Please note that users can be added to the white list only if:"
 msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la liste blanche que si:"
 
-#. modules: msf_budget, account_mcdb, financing_contract, msf_instance, analytic_override, analytic_distribution, account
+#. modules: msf_budget, account_mcdb, financing_contract, msf_instance, analytic_override, analytic_distribution, account, register_accounting
 #: view:account.mcdb:0
 #: view:account.analytic.account:0
 #: field:account.analytic.account,cost_center_ids:0
@@ -66981,6 +66966,7 @@ msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la list
 #: field:account.analytic.account,dest_cc_link_ids:0
 #: view:multiple.cc.selection.wizard:0
 #: field:multiple.cc.selection.wizard,cc_ids:0
+#: field:wizard.account.invoice.line,cost_centers:0
 msgid "Cost Centers"
 msgstr "Centres de Coût"
 
@@ -68206,6 +68192,7 @@ msgstr "Sequence issue"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Gap:"
 msgstr "Écart :"
 
@@ -69008,11 +68995,6 @@ msgstr "Expédié - Statut de l'expédition."
 #, python-format
 msgid "Cannot reconcile entries : Cross check between transfer currencies fails."
 msgstr "Ne peut lettrer les écritures: la vérification entre les devises de transfert a échoué."
-
-#. module: msf_tools
-#: field:automated.export,ftp_port:0
-msgid "FTP server port"
-msgstr "Port FTP"
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:902
@@ -70337,6 +70319,7 @@ msgstr "Account code - Destination code"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Responsible:"
 msgstr "Responsable:"
 
@@ -71268,6 +71251,7 @@ msgstr "Numéro de Taxe sur la Valeur Ajoutée. Cochez cette case si le partenai
 #: report:addons/financing_contract/report/project_expenses_xls.mako:363
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:299
 #: report:liquidity.position.pdf:0
+#: report:balance.reconciliation:0
 #, python-format
 msgid "Report date:"
 msgstr "Date du rapport :"
@@ -75153,6 +75137,7 @@ msgstr "Tiers- Employé"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
 msgid "Total amount of pending cheque:"
 msgstr "Montant total des chèques en attente :"
 
@@ -75297,6 +75282,11 @@ msgstr "valid - (res.currency.table)"
 #: selection:wizard.register.creation.lines,register_type:0
 msgid "Bank Statement"
 msgstr "Registre de Banque"
+
+#. module: register_accounting
+#: selection:wizard.register.creation.lines,register_type:0
+msgid "Other Register"
+msgstr "Autre Registre"
 
 #. module: register_accounting
 #: field:account.bank.statement.line,cash_register_op_advance_po_id:0
@@ -75803,6 +75793,7 @@ msgstr "Taxes à l'achat"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 #: report:account.invoice2:0
+#: report:balance.reconciliation:0
 msgid "Comments:"
 msgstr "Commentaires:"
 
@@ -77075,6 +77066,7 @@ msgstr "Stock - Inventaire "
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:balance.reconciliation:0
 msgid "Calculated Balance:"
 msgstr "Solde calculé:"
 
@@ -78089,6 +78081,7 @@ msgstr "L'écriture \"%s\" n'est pas valide !"
 #: report:cash.inventory:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:484
 #: code:addons/product_asset/asset_register_report.py:74
+#: report:balance.reconciliation:0
 msgid "Period:"
 msgstr "Période:"
 
@@ -87997,11 +87990,6 @@ msgstr "Etat fédéral"
 #: field:purchase.line.import.xml.line,line_ignored_ok:0
 msgid "Ignored?"
 msgstr "Ignoré?"
-
-#. module: msf_tools
-#: view:automated.export:0
-msgid "FTP server"
-msgstr "Serveur FTP"
 
 #. modules: base, procurement_report, consumption_calculation, msf_tools
 #: selection:weekly.forecast.report,interval_type:0
@@ -99931,6 +99919,7 @@ msgstr "Commande En Attente de Sourcing"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 #: report:account.invoice2:0
+#: report:balance.reconciliation:0
 msgid "(Name, Function)"
 msgstr "(Nom, Fonction)"
 
@@ -100778,6 +100767,11 @@ msgstr "RAPPORT COMPLET DU REGISTRE DE CAISSE"
 #: report:addons/register_accounting/report/fully_report_xls.mako:453
 msgid "BANK REGISTER FULL REPORT"
 msgstr "RAPPORT COMPLET DU REGISTRE DE BANQUE"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:453
+msgid "MOBILE REGISTER FULL REPORT"
+msgstr "RAPPORT COMPLET DU REGISTRE MOBILE"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:453
@@ -112314,8 +112308,8 @@ msgstr "Le chemin local %s n'existe pas."
 
 #. module: msf_tools
 #: view:automated.export:0
-msgid "Manually send to FTP"
-msgstr "Envoyer manuellement sur le serveur FTP"
+msgid "Manually send to remote"
+msgstr "Envoyer manuellement sur le serveur distant"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import_job.py:102
@@ -113451,11 +113445,12 @@ msgstr " Demande Interne"
 msgid " Field Order"
 msgstr " Commande de Terrain"
 
-#. module: msf_supply_doc_export, transport_mgmt, account
+#. module: msf_supply_doc_export, transport_mgmt, account, register_accounting
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:1064
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:237
 #: field:transport.order.customs.fees,purchase_details:0
 #: field:transport.order.transport.fees,purchase_details:0
+#: field:wizard.account.invoice,po_details:0
 #: field:account.invoice,po_details:0
 #, python-format
 msgid "PO Details"
@@ -116858,6 +116853,7 @@ msgstr "Sous-type de Raison"
 
 #. module: msf_tools
 #: field:automated.import,ftp_ok:0
+#: field:automated.export,ftp_ok:0
 msgid "Enable remote server"
 msgstr "Activer serveur Distant"
 
@@ -116871,11 +116867,15 @@ msgstr "Activez le serveur distant pour pouvoir lire ou écrire depuis un server
 #: help:automated.import,ftp_dest_ok:0
 #: help:automated.import,ftp_report_ok:0
 #: help:automated.import,ftp_source_ok:0
+#: help:automated.export,ftp_dest_fail_ok:0
+#: help:automated.export,ftp_dest_ok:0
+#: help:automated.export,ftp_report_ok:0
 msgid "Is given path is located on remote server ?"
 msgstr "Est-ce que le chemin donné est situé sur le serveur Distant ?"
 
 #. module: msf_tools
 #: selection:automated.import,ftp_protocol:0
+#: selection:automated.export,ftp_protocol:0
 msgid "OneDrive"
 msgstr "OneDrive"
 
@@ -116887,11 +116887,13 @@ msgstr "Veuillez indiquer le Chemin du Rapport"
 
 #. module: msf_tools
 #: field:automated.import,ftp_login:0
+#: field:automated.export,ftp_login:0
 msgid "Remote login"
 msgstr "Identifiant Distant"
 
 #. module: msf_tools
 #: field:automated.import,ftp_password:0
+#: field:automated.export,ftp_password:0
 msgid "Remote password"
 msgstr "Mot de passe Distant"
 
@@ -116902,11 +116904,13 @@ msgstr "Serveur Distant"
 
 #. module: msf_tools
 #: field:automated.import,ftp_url:0
+#: field:automated.export,ftp_url:0
 msgid "Remote server address"
 msgstr "Adresse Serveur Distant"
 
 #. module: msf_tools
 #: field:automated.import,ftp_port:0
+#: field:automated.export,ftp_port:0
 msgid "Remote server port"
 msgstr "Port Distant"
 
@@ -116915,6 +116919,9 @@ msgstr "Port Distant"
 #: field:automated.import,ftp_dest_ok:0
 #: field:automated.import,ftp_report_ok:0
 #: field:automated.import,ftp_source_ok:0
+#: field:automated.export,ftp_dest_fail_ok:0
+#: field:automated.export,ftp_dest_ok:0
+#: field:automated.export,ftp_report_ok:0
 msgid "on remote server"
 msgstr "sur le serveur distant"
 
@@ -116978,6 +116985,12 @@ msgstr "Toujours Applicable"
 #: code:addons/useability_dashboard_and_menu/report/signature_follow_up_search_report.py:35
 msgid "Bank Register"
 msgstr "Registre de Banque"
+
+#. module: useability_dashboard_and_menu
+#: selection:signature.follow_up,doc_type:0
+#: code:addons/useability_dashboard_and_menu/report/signature_follow_up_search_report.py:35
+msgid "Other Register"
+msgstr "Autre Registre"
 
 #. module: base
 #: selection:signature.set_user,position:0
@@ -117812,7 +117825,7 @@ msgid "Signature: Start Date must be before End Date !"
 msgstr "Signature: la date de début doit être avant la date de fin !"
 
 #. modules: purchase, account, procurement_request, register_accounting,
-#. account_override, stock
+#. account_override, stock, msf_tools
 #: view:account.invoice:0
 #: view:account.invoice:0
 #: view:sale.order:0
@@ -117820,6 +117833,7 @@ msgstr "Signature: la date de début doit être avant la date de fin !"
 #: view:account.bank.statement:0
 #: view:stock.picking:0
 #: view:physical.inventory:0
+#: field:email.log,signature_ids:0
 msgid "Signatures"
 msgstr "Signatures"
 
@@ -124183,8 +124197,9 @@ msgstr "Ligne %s %s: le compte %s ne peut pas être utilisé pour une immobilisa
 msgid "List of owners (accurate at Coo)"
 msgstr "Liste des propriétaires (valable en coordo)"
 
-#. module: account
+#. module: account, register_accounting
 #: field:account.invoice,is_partner_active:0
+#: field:wizard.account.invoice,is_partner_active:0
 msgid "Partner Active"
 msgstr "Partenaire Actif"
 
@@ -129141,6 +129156,71 @@ msgstr "Date d'Exp. obligatoire"
 msgid "An email address cannot be set for the admin user."
 msgstr "Une adresse email ne peut pas être mise sur le compte admin."
 
+#. module: account, register_accounting
+#: model:ir.ui.menu,name:account.menu_other_statement_tree
+#: model:ir.actions.server,name:register_accounting.action_view_other_statement_search
+#, python-format
+msgid "Other Financial Registers"
+msgstr "Autres registres financiers"
+
+#. module: account
+#: selection:account.invoice,journal_type:0
+#: selection:account.journal,type:0
+msgid "Other financial institutions"
+msgstr "Autres établissements financiers"
+
+#. module: account, finance,account_override,msf_instance,register_accounting
+#: selection:account.invoice,journal_type:0
+#: selection:account.journal,type:0
+#: selection:account.move,journal_type:0
+#: selection:account.move.line,journal_type:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
+#: selection:account.journal.fake,type:0
+#: selection:wizard.account.invoice,journal_type:0
+msgid "Other fin institutions/mobile money"
+msgstr "Autres établissements financiers/services de paiement mobile"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:680
+#, python-format
+msgid "Other Registers"
+msgstr "Autre Registres"
+
+#. module: register_accounting
+#: view:account.bank.statement:0
+msgid "Statement balance"
+msgstr "Solde du Relévé"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:508
+msgid "Statement balance:"
+msgstr "Solde du Relévé :"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
+#: code:ir.actions.report.xml:name:bank.reconciliation
+#: model:ir.actions.report.xml,name:register_accounting.balance_reconciliation
+#, python-format
+msgid "Balance Reconciliation"
+msgstr "Reconciliation des soldes"
+
+#. module: register_accounting
+#: view:account.bank.statement:0
+msgid "Account number"
+msgstr "Numéro de Compte"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+#: report:balance.reconciliation:0
+msgid "Account number:"
+msgstr "Numéro de Compte :"
+
 #. module: register_accounting
 #: code:addons/register_accounting/account_cash_statement.py:159
 #, python-format
@@ -130146,6 +130226,7 @@ msgstr "Notification par Courriel pour la Signature est Active"
 #: code:addons/msf_tools/email_signature_notification.py:65
 #: code:addons/msf_tools/email_signature_notification.py:128
 #: field:email.signature.notification.doc.applicability,email_sign_notif_id:0
+#: model:ir.model,name:msf_tools.model_email_signature_notification
 #, python-format
 msgid "Email Notification for Signatures"
 msgstr "Notification par Courriel pour les Signatures"
@@ -130936,3 +131017,17 @@ msgstr "Vous ne pouvez pas annuler un Frais de Douane non-Brouillon"
 #, python-format
 msgid "You can not cancel a non-Draft Transport Fee"
 msgstr "Vous ne pouvez pas annuler un Frais de Transport non-Brouillon"
+
+#. module: msf_tools
+#: field:automated.export,sharepoint_cert:0
+#: field:automated.import,sharepoint_cert:0
+msgid "Certificate"
+msgstr "Certificat"
+
+#. module: msf_tools
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import.py:93
+#, python-format
+msgid "all fields: Tenant-id, App-id and Certificate must be filled."
+msgstr "tous les champs Tenant-id, App-id et Certificat doivent être renseignés."
+

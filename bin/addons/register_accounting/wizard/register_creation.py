@@ -66,7 +66,7 @@ class register_creation_lines(osv.osv_memory):
         'period_id': fields.many2one('account.period', string='Period', required=True, domain=[('state','=','draft')], readonly=True),
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', string="Journal", required=True, readonly=True),
-        'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Statement'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
+        'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Statement'), ('cheque', 'Cheque Register'), ('other_reg', 'Other Register')], string="Type", readonly=True),
         'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement",
                                         required=False, readonly=True, string="Previous register", store=False),
         'wizard_id': fields.many2one("wizard.register.creation", string="Wizard"),
@@ -132,7 +132,7 @@ class register_creation(osv.osv_memory):
         period_id = wizard.period_id.id
         instance_id = wizard.instance_id.id
         prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
-        reg_type = ['bank', 'cheque', 'cash']
+        reg_type = ['bank', 'cheque', 'cash', 'other_reg']
 
         for rtype in reg_type:
             # Search all register from previous period

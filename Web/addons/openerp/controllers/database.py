@@ -443,6 +443,7 @@ class Database(BaseController):
                 ('reconfigure', 'functional_currency'),
                 ('company', 'default_cheque_account'),
                 ('company', 'default_bank_account'),
+                ('company', 'default_other_account'),
                 ('company', 'default_cash_account'),
             )
             for section, option in not_empty_string_option_list:

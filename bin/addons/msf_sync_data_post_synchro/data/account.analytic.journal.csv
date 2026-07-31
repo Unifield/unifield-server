@@ -14,6 +14,7 @@ TRUE,IKD,In-Kind Donation,inkind
 TRUE,INT,Intermission,intermission
 TRUE,ODX,Extra-Accounting corrections,extra
 TRUE,BNK,Bank,cash
+TRUE,OFIN,Other Financial Institutions,cash
 TRUE,CAS,Cash,cash
 TRUE,CHK,Cheque,cash
 TRUE,REV,Revaluation,revaluation
