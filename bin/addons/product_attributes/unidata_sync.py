@@ -1649,6 +1649,7 @@ class unidata_sync(osv.osv):
         min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
         if min_msfid:
             # do not update last sync date
+            min_msfid = int(min_msfid)
             first_query = False
             sync_type = 'cont'
             last_ud_date_sync = param_obj.get_param(cr, 1, 'FORMER_UD_DATE_SYNC')
