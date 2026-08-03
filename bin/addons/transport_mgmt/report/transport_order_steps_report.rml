@@ -99,7 +99,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line"><b>Greenlight to Shipper</b></para></td>
                 <td><para style="line">Date of greenlight sent to shipper</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -123,7 +123,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Cargo customs release and dispatch date</b></para></td>
+                <td><para style="line"><b>Cargo Customs release and dispatch date</b></para></td>
                 <td><para style="line">Customs release date</para></td>
                 <td><para style="line">Dispatch date from customs entry point</para></td>
                 <td><para style="line"></para></td>
@@ -139,7 +139,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b></para></td>
                 <td><para style="line">Parcels reception control date</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -149,7 +149,7 @@
         <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Claim</i></para></td>
                 <td><para style="line">If claim - opening claim date</para></td>
                 <td><para style="line">If claim - resolution claim date</para></td>
                 <td><para style="line"></para></td>
@@ -159,7 +159,7 @@
         <blockTable style="table_grey4" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Return of container</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Return of container</i></para></td>
                 <td><para style="line">Date of container release from the Warehouse</para></td>
                 <td><para style="line">Estimated Time of Arrival <i>(ETA)</i> at port terminal</para></td>
                 <td><para style="line">Confirmed return date</para></td>
@@ -169,7 +169,7 @@
         <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Returned Container deposit reimbursement</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Returned Container deposit reimbursement</i></para></td>
                 <td><para style="line">Reimbursement claim date</para></td>
                 <td><para style="line">Confirmed reimbursement date</para></td>
                 <td><para style="line"></para></td>
@@ -179,7 +179,7 @@
         <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport &amp; customs invoices processing</b></para></td>
+                <td><para style="line"><b>Transport &amp; Customs Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -226,7 +226,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line"><b>Greenlight to Shipper</b></para></td>
                 <td><para style="line">Date of greenlight sent to shipper</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -268,7 +268,7 @@
         <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Claim</i></para></td>
                 <td><para style="line">If claim - opening claim date</para></td>
                 <td><para style="line">If claim - resolution claim date</para></td>
                 <td><para style="line"></para></td>
@@ -286,7 +286,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport Onward transit Green Light</b> <i>(Cargo ETA Confirmation)</i></para></td>
+                <td><para style="line"><b>Transport Onward transit greenlight</b> <i>(Cargo ETA Confirmation)</i></para></td>
                 <td><para style="line">Date of greenlight sent to shipper</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -322,7 +322,7 @@
         <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport Transit invoices processing</b></para></td>
+                <td><para style="line"><b>Transport Transit Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -369,7 +369,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line"><b>Greenlight to Shipper</b></para></td>
                 <td><para style="line">Date of greenlight sent to shipper</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -409,7 +409,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b></para></td>
                 <td><para style="line">Parcels reception control date</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -419,7 +419,7 @@
         <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Claim</i></para></td>
                 <td><para style="line">If claim - opening claim date</para></td>
                 <td><para style="line">If claim - resolution claim date</para></td>
                 <td><para style="line"></para></td>
@@ -429,7 +429,7 @@
         <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line"><b>Transport &amp; Customs Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -476,7 +476,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line"><b>Greenlight to Shipper</b></para></td>
                 <td><para style="line">Date of greenlight sent to shipper</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -508,7 +508,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b></para></td>
                 <td><para style="line">Parcels reception control date</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -518,7 +518,7 @@
         <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Claim</i></para></td>
                 <td><para style="line">If claim - opening claim date</para></td>
                 <td><para style="line">If claim - resolution claim date</para></td>
                 <td><para style="line"></para></td>
@@ -528,7 +528,7 @@
         <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line"><b>Transport &amp; Customs Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -567,7 +567,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Customs Bonded Ex-warehousing processing</b></para></td>
+                <td><para style="line"><b>Customs Bonded Ex-Warehousing processing</b></para></td>
                 <td><para style="line">Start date of customs Bonded Ex-warehousing process</para></td>
                 <td><para style="line">Customs release date</para></td>
                 <td><para style="line"></para></td>
@@ -583,7 +583,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Bonded warehouse invoices Processing</b></para></td>
+                <td><para style="line"><b>Bonded warehouse Invoices Processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -599,7 +599,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b></para></td>
                 <td><para style="line">Parcels reception control date</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -609,7 +609,7 @@
         <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Claim</i></para></td>
                 <td><para style="line">If claim - opening claim date</para></td>
                 <td><para style="line">If claim - resolution claim date</para></td>
                 <td><para style="line"></para></td>
@@ -619,7 +619,7 @@
         <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td></td>
-                <td><para style="line"><b> Domestic Transport invoices Processing</b></para></td>
+                <td><para style="line"><b>Domestic Transport Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -666,7 +666,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Pre-shipment/ Pre-Departure processing</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line"><b>Pre-shipment / Pre-departure processing</b> <i>(Receiving Country)</i></para></td>
                 <td><para style="line">Start date of the pre-shipment process</para></td>
                 <td><para style="line">Target end date of the pre-shipment process</para></td>
                 <td><para style="line">Actual end date of the pre-shipment process</para></td>
@@ -698,7 +698,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Bonded warehouse invoices Processing</b></para></td>
+                <td><para style="line"><b>Bonded warehouse Invoices Processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -714,7 +714,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b> Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line"><b> Transport &amp; Customs Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -761,7 +761,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Pre-Shipment / Pre-Departure processing</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line"><b>Pre-shipment / Pre-departure processing</b> <i>(Receiving Country)</i></para></td>
                 <td><para style="line">Start date of the pre-shipment process</para></td>
                 <td><para style="line">Target end date of the pre-shipment process</para></td>
                 <td><para style="line">Actual end date of the pre-shipment process</para></td>
@@ -801,7 +801,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line"><b>Transport &amp; Customs Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -848,7 +848,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Pre-Shipment/ Pre-Departure processing</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line"><b>Pre-shipment / Pre-departure processing</b> <i>(Receiving Country)</i></para></td>
                 <td><para style="line">Start date of the pre-shipment process</para></td>
                 <td><para style="line">Target end date of the pre-shipment process</para></td>
                 <td><para style="line">Actual end date of the pre-shipment process</para></td>
@@ -888,7 +888,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line"><b>Transport &amp; Customs Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -927,7 +927,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Notification Confirmation of RTS</b> <i>(ready to ship)</i></para></td>
+                <td><para style="line"><b>Notification Confirmation of RTS</b> <i>(Ready to Ship)</i></para></td>
                 <td><para style="line">Date when motor vehicle is ready to ship</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -935,7 +935,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Pre-Shipment/ Pre-Departure processing</b> <i>(Receiving Country)</i></para></td>
+                <td><para style="line"><b>Pre-shipment / Pre-departure processing</b> <i>(Receiving Country)</i></para></td>
                 <td><para style="line">Start date of the pre‑departure process</para></td>
                 <td><para style="line">Target end date of the pre‑departure process</para></td>
                 <td><para style="line">Actual end date of the pre‑departure process</para></td>
@@ -951,7 +951,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Processing De-registration</b></para></td>
+                <td><para style="line"><b>Processing De-Registration</b></para></td>
                 <td><para style="line">Start of the process</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line">Date when de-registration is confirmed</para></td>
@@ -967,7 +967,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport &amp; Customs invoices processing De-registration</b></para></td>
+                <td><para style="line"><b>Transport &amp; Customs Invoices processing De-registration</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -975,7 +975,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport &amp; Customs invoices processing Bond</b></para></td>
+                <td><para style="line"><b>Transport &amp; Customs Invoices processing Bond</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -1007,7 +1007,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Transport &amp; Customs invoices processing</b></para></td>
+                <td><para style="line"><b>Transport &amp; Customs Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>
@@ -1046,7 +1046,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Greenlight to shipper</b></para></td>
+                <td><para style="line"><b>Greenlight to Shipper</b></para></td>
                 <td><para style="line">Date of greenlight from customer instance</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -1062,7 +1062,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><para style="line"><b>Reception &amp; claims</b></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b></para></td>
                 <td><para style="line">Reception date</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line"></para></td>
@@ -1072,7 +1072,7 @@
         <blockTable style="table_grey3" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Claim</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Claim</i></para></td>
                 <td><para style="line">If claim - opening claim date</para></td>
                 <td><para style="line">If claim - resolution claim date</para></td>
                 <td><para style="line"></para></td>
@@ -1082,7 +1082,7 @@
         <blockTable style="table_grey2_4" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td><para style="line"><i>Optional</i></para></td>
-                <td><para style="line"><b>Reception &amp; claims</b> - <i>Reverse trip loading</i></para></td>
+                <td><para style="line"><b>Reception &amp; Claims</b> - <i>Reverse trip loading</i></para></td>
                 <td><para style="line">Loading date</para></td>
                 <td><para style="line"></para></td>
                 <td><para style="line">Actual reception confirmation date</para></td>
@@ -1092,7 +1092,7 @@
         <blockTable style="table_default" colWidths="50.0,185.5,185.5,185.5,185.5,50.0">
             <tr>
                 <td></td>
-                <td><para style="line"><b>Domestic Transport invoices Processing</b></para></td>
+                <td><para style="line"><b>Domestic Transport Invoices processing</b></para></td>
                 <td><para style="line">Invoices reception date</para></td>
                 <td><para style="line">Invoices approval date</para></td>
                 <td><para style="line">If available - invoices payment date</para></td>

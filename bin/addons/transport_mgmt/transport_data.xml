@@ -289,7 +289,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
         </record>
         <record id="step_transport_customs_invoice_miti" model="transport.step">
-            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="name">Transport &amp; Customs Invoices processing</field>
             <field name="step_number">9</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_import')"/>
@@ -363,7 +363,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
         </record>
         <record id="step_transport_transit_invoice_mitt" model="transport.step">
-            <field name="name">Transport Transit Invoice processing</field>
+            <field name="name">Transport Transit Invoices processing</field>
             <field name="step_number">12</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_transit')"/>
@@ -419,7 +419,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
         </record>
         <record id="step_transport_customs_invoice_mittm" model="transport.step">
-            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="name">Transport &amp; Customs Invoices processing</field>
             <field name="step_number">9</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_temp')"/>
@@ -475,7 +475,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
         </record>
         <record id="step_transport_customs_invoice_mitb" model="transport.step">
-            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="name">Transport &amp; Customs Invoices processing</field>
             <field name="step_number">9</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_international_transport_bonded')"/>
@@ -501,7 +501,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
         </record>
         <record id="step_bonded_wh_invoice_mbd" model="transport.step">
-            <field name="name">Bonded Warehouse Invoice Processing</field>
+            <field name="name">Bonded Warehouse Invoices Processing</field>
             <field name="step_number">4</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
@@ -519,7 +519,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
         </record>
         <record id="step_domestic_transport_invoice_mbd" model="transport.step">
-            <field name="name">Domestic Transport Invoice processing</field>
+            <field name="name">Domestic Transport Invoices processing</field>
             <field name="step_number">7</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_bonded_domestic')"/>
@@ -563,7 +563,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
         </record>
         <record id="step_bonded_wh_invoice_mbi" model="transport.step">
-            <field name="name">Bonded Warehouse Invoice Processing</field>
+            <field name="name">Bonded Warehouse Invoices Processing</field>
             <field name="step_number">7</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
@@ -575,7 +575,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
         </record>
         <record id="step_transport_customs_invoice_mbi" model="transport.step">
-            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="name">Transport &amp; Customs Invoices processing</field>
             <field name="step_number">9</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_bonded_international')"/>
@@ -625,7 +625,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
         </record>
         <record id="step_transport_customs_invoice_mri" model="transport.step">
-            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="name">Transport &amp; Customs Invoices processing</field>
             <field name="step_number">8</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_reexport_international')"/>
@@ -675,7 +675,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
         </record>
         <record id="step_transport_customs_invoice_mei" model="transport.step">
-            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="name">Transport &amp; Customs Invoices processing</field>
             <field name="step_number">8</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_export_international')"/>
@@ -737,7 +737,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
         </record>
         <record id="step_transport_customs_invoice_mmv" model="transport.step">
-            <field name="name">Transport &amp; Customs Invoice processing</field>
+            <field name="name">Transport &amp; Customs Invoices processing</field>
             <field name="step_number">10</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_motor_vehicle')"/>
@@ -769,7 +769,7 @@
             <field name="macroprocess_id" eval="ref('macroprocess_domestic')"/>
         </record>
         <record id="step_domestic_transport_invoice_md" model="transport.step">
-            <field name="name">Domestic Transport Invoice processing</field>
+            <field name="name">Domestic Transport Invoices processing</field>
             <field name="step_number">5</field>
             <field name="is_active">True</field>
             <field name="macroprocess_id" eval="ref('macroprocess_domestic')"/>

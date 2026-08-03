@@ -18768,7 +18768,7 @@ msgstr "* Quand un compte est créé, il est sous statut \"Brouillon\".         
 " S'il doit être révisé, alors le statut est \"En attente\".\n"
 " Quand le projet est terminé, le statut passe sous \"Terminé\"."
 
-#. modules: return_claim, msf_doc_import, msf_outgoing, stock
+#. modules: return_claim, msf_doc_import, msf_outgoing, stock, transport_mgmt
 #: model:ir.model,name:msf_doc_import.model_return_claim
 #: view:stock.incoming.processor:0
 #: model:ir.model,name:return_claim.model_return_claim
@@ -18785,6 +18785,8 @@ msgstr "* Quand un compte est créé, il est sous statut \"Brouillon\".         
 #: model:ir.ui.menu,name:return_claim.return_claim_purchase
 #: model:ir.ui.menu,name:return_claim.return_claim_sale
 #: view:return.claim:0
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 #, python-format
 msgid "Claim"
 msgstr "Réclamation"
@@ -34894,7 +34896,7 @@ msgstr "Imprimer Donation"
 msgid "Shipment Date:"
 msgstr "Shipment Date:"
 
-#. modules: sales_followup, sync_client, sale, mission_stock, msf_doc_import, purchase_followup, account_override, stock, finance
+#. modules: sales_followup, sync_client, sale, mission_stock, msf_doc_import, purchase_followup, account_override, stock, finance, transport_mgmt
 #: field:msr_in_progress,start_date:0
 #: field:abstract.wizard.import,start_date:0
 #: field:wizard.import.batch,start_date:0
@@ -34908,6 +34910,8 @@ msgstr "Shipment Date:"
 #: field:integrity.finance.wizard,date_from:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:178
 #: field:fo.follow.up.finance.wizard,start_date:0
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Start date"
 msgstr "Date de début"
 
@@ -46482,6 +46486,16 @@ msgstr "Activer l'attribut Paie"
 #: model:ir.model,name:transport_mgmt.model_transport_order
 #: field:transport.order.in.line,transport_id:0
 #: field:transport.order.out.line,transport_id:0
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+#: model:transport.step,name:transport_mgmt.step_transport_reception_mbd
+#: model:transport.step,name:transport_mgmt.step_transport_reception_mbi
+#: model:transport.step,name:transport_mgmt.step_transport_reception_md
+#: model:transport.step,name:transport_mgmt.step_transport_reception_mei
+#: model:transport.step,name:transport_mgmt.step_transport_reception_mitb
+#: model:transport.step,name:transport_mgmt.step_transport_reception_miti
+#: model:transport.step,name:transport_mgmt.step_transport_reception_mittm
+#: model:transport.step,name:transport_mgmt.step_transport_reception_mri
 msgid "Transport"
 msgstr "Transport"
 
@@ -50326,10 +50340,12 @@ msgstr "Distribution"
 msgid "You must select a new product and specify a reason."
 msgstr "Vous devez sélectionner un nouveau produit et en indiquer la raison."
 
-#. modules: product_nomenclature, update_client
+#. modules: product_nomenclature, update_client, transport_mgmt
 #: selection:product.nomenclature,nomen_type_s:0
 #: selection:product.nomenclature,type:0
 #: selection:sync_client.version,importance:0
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Optional"
 msgstr "Optionnel"
 
@@ -96557,7 +96573,7 @@ msgstr "Type pour traitement spécifique"
 msgid "Account Entry Lines"
 msgstr "Lignes d'Ecritures Comptables"
 
-#. modules: sales_followup, sale, msf_outgoing, purchase_followup, purchase_override, register_accounting,stock_override,order_types,procurement_request, base, stock, useability_dashboard_and_menu
+#. modules: sales_followup, sale, msf_outgoing, purchase_followup, purchase_override, register_accounting,stock_override,order_types,procurement_request, base, stock, useability_dashboard_and_menu, transport_mgmt
 #: report:empty.picking.ticket:0
 #: report:invoice:0
 #: report:packing.list:0
@@ -96585,6 +96601,8 @@ msgstr "Lignes d'Ecritures Comptables"
 #: report:ship.loan.certificate:0
 #: report:ship.loan.return.certificate:0
 #: report:signature.follow_up.search.pdf:0
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Page :"
 msgstr "Page :"
 
@@ -126552,11 +126570,15 @@ msgstr "Activer le Macroprocessus"
 
 #. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_bonded_domestic
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Bonded Ex-Warehousing & Domestic Transport"
 msgstr "Sortie d'Entrepôt sous Douane & Transport Domestique"
 
 #. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_bonded_international
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Bonded Ex-Warehousing & International Transport"
 msgstr "Sortie d'Entrepôt sous Douane & Transport International"
 
@@ -126567,11 +126589,15 @@ msgstr "Désactiver le Macroprocessus"
 
 #. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_domestic
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Domestic Transport"
 msgstr "Transport Domestique"
 
 #. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_export_international
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Export & International Transport"
 msgstr "Export & Transport International"
 
@@ -126593,11 +126619,15 @@ msgstr "Sortant"
 
 #. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_international_transport_bonded
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "International Transport & Bonded Warehousing"
 msgstr "Transport International & Stockage sous Douane"
 
 #. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_international_transport_import
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "International Transport & Import process"
 msgstr "Transport International & processus d'Import"
 
@@ -126607,7 +126637,15 @@ msgid "International Transport & Temporary Admission process"
 msgstr "Transport International & processus d'Admission Temporaire"
 
 #. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "International Transport & Temporary Admission process (vehicles, telecom, ...)"
+msgstr "Transport International & processus d'Admission Temporaire (véhicules, télécommunications, ...)"
+
+#. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_international_transport_transit
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "International Transport & Transit process"
 msgstr "Transport International & processus de Transit"
 
@@ -126635,11 +126673,15 @@ msgstr "Macroprocessus"
 
 #. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_motor_vehicle
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Motor vehicle Process"
 msgstr "Processus de véhicule à moteur"
 
 #. module: transport_mgmt
 #: model:transport.macroprocess,name:transport_mgmt.macroprocess_reexport_international
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Re-Export & International Transport"
 msgstr "Réexportation & Transport International"
 
@@ -126706,8 +126748,11 @@ msgid "Transport Steps"
 msgstr "Étapes de Transport"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_bonded_wh_invoice
-msgid "Bonded Warehouse Invoice Processing"
+#: model:transport.step,name:transport_mgmt.step_bonded_wh_invoice_mbd
+#: model:transport.step,name:transport_mgmt.step_bonded_wh_invoice_mbi
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Bonded Warehouse Invoices Processing"
 msgstr "Traitement des Factures d'Entrepôt sous Douane"
 
 #. module: transport_mgmt
@@ -126717,22 +126762,32 @@ msgid "Cargo"
 msgstr "Cargaison"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_cargo_customs_bonded
+#: model:transport.step,name:transport_mgmt.step_cargo_customs_bonded_mitb
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Cargo Customs Bonded warehouse processing"
 msgstr "Traitement du Fret Douanier en entrepôt sous Douane"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_cargo_customs
+#: model:transport.step,name:transport_mgmt.step_cargo_customs_miti
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Cargo Customs release and dispatch date"
 msgstr "Dédouanement du Fret et date d'expédition"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_cargo_customs_temp
+#: model:transport.step,name:transport_mgmt.step_cargo_customs_temp_mittm
 msgid "Cargo Customs temporary release and dispatch date"
 msgstr "Dédouanement du Fret temporaire et date d'expédition"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_cargo_notif
+#: model:transport.step,name:transport_mgmt.step_cargo_notif_mbi
+#: model:transport.step,name:transport_mgmt.step_cargo_notif_mei
+#: model:transport.step,name:transport_mgmt.step_cargo_notif_mitb
+#: model:transport.step,name:transport_mgmt.step_cargo_notif_miti
+#: model:transport.step,name:transport_mgmt.step_cargo_notif_mitt
+#: model:transport.step,name:transport_mgmt.step_cargo_notif_mittm
+#: model:transport.step,name:transport_mgmt.step_cargo_notif_mri
 msgid "Cargo Notification (Ready to Ship)"
 msgstr "Notification de Cargaison (Prêt à être Expédié)"
 
@@ -126744,42 +126799,64 @@ msgid "Cargo Type"
 msgstr "Type de Cargaison"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_cargo_arrival
+#: model:transport.step,name:transport_mgmt.step_cargo_arrival_mitb
+#: model:transport.step,name:transport_mgmt.step_cargo_arrival_miti
+#: model:transport.step,name:transport_mgmt.step_cargo_arrival_mittm
 msgid "Cargo arrival and customs processing (ATA destination port)"
 msgstr "Processus d'arrivée de la Cargaison et de traitement de la douane (port de destination ATA)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_customs_bonded_ex_wh
+#: model:transport.step,name:transport_mgmt.step_customs_bonded_ex_wh_mbd
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Customs Bonded Ex-Warehousing processing"
 msgstr "Traitement du Fret Douanier en sortie d'entrepôt sous Douane"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_domestic_transport_invoice
-msgid "Domestic Transport Invoice processing"
+#: model:transport.step,name:transport_mgmt.step_domestic_transport_invoice_mbd
+#: model:transport.step,name:transport_mgmt.step_domestic_transport_invoice_md
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Domestic Transport Invoices processing"
 msgstr "Traitement des Factures de Transport domestique"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_domestic_transport_req
+#: model:transport.step,name:transport_mgmt.step_domestic_transport_req_md
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Domestic Transport request"
 msgstr "Requête de Transport domestique"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_export_cargo_req
+#: model:transport.step,name:transport_mgmt.step_export_cargo_req_mei
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Export Cargo request"
 msgstr "Requête d'export de Cargaison"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_greenlight_consignee
+#: model:transport.step,name:transport_mgmt.step_greenlight_consignee_mbi
+#: model:transport.step,name:transport_mgmt.step_greenlight_consignee_mei
+#: model:transport.step,name:transport_mgmt.step_greenlight_consignee_mmv
+#: model:transport.step,name:transport_mgmt.step_greenlight_consignee_mri
 msgid "Greenlight from Consignee (Receiving Country)"
 msgstr "Feu vert du Destinataire (Pays de Réception)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_greenlight_shipper
+#: model:transport.step,name:transport_mgmt.step_greenlight_shipper_coor_md
+#: model:transport.step,name:transport_mgmt.step_greenlight_shipper_mitb
+#: model:transport.step,name:transport_mgmt.step_greenlight_shipper_miti
+#: model:transport.step,name:transport_mgmt.step_greenlight_shipper_mitt
+#: model:transport.step,name:transport_mgmt.step_greenlight_shipper_mittm
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Greenlight to Shipper"
 msgstr "Feu vert à l'Expéditeur"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_imp_cargo_req
+#: model:transport.step,name:transport_mgmt.step_imp_cargo_req_mbd
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Import Cargo request"
 msgstr "Requête d'Import de Cargaison"
 
@@ -126789,102 +126866,149 @@ msgid "Linked ITOs"
 msgstr "OTEs liés"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_notif_conf_rts
+#: model:transport.step,name:transport_mgmt.step_notif_conf_rts_mmv
 msgid "Notification Confirmation of RTS (Ready to Ship)"
 msgstr "Notification de Confirmation de Prêt à être Expédié"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_prearrival_proc
+#: model:transport.step,name:transport_mgmt.step_prearrival_proc_mitb
+#: model:transport.step,name:transport_mgmt.step_prearrival_proc_miti
+#: model:transport.step,name:transport_mgmt.step_prearrival_proc_mitt
+#: model:transport.step,name:transport_mgmt.step_prearrival_proc_mittm
 msgid "Pre-Arrival processing (Preclearance)"
 msgstr "Traitement avant l'arrivée (Pré-autorisation)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_preship_preclear
+#: model:transport.step,name:transport_mgmt.step_preship_preclear_mbi
+#: model:transport.step,name:transport_mgmt.step_preship_preclear_mei
+#: model:transport.step,name:transport_mgmt.step_preship_preclear_mmv
+#: model:transport.step,name:transport_mgmt.step_preship_preclear_mri
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Pre-shipment / Pre-departure processing (Receiving Country)"
 msgstr "Traitement Pré-Expédition / Avant départ (Pays de Réception)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_proc_deregistration_bond_cancel
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Pre-shipment / Pre-departure processing"
+msgstr "Traitement Pré-Expédition / Avant départ"
+
+#. module: transport_mgmt
+#: model:transport.step,name:transport_mgmt.step_proc_deregistration_bond_cancel_mmv
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Processing De-Registration"
 msgstr "Traitement de la Désinscription"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_proc_deregistration_bond_cancel
+#: model:transport.step,name:transport_mgmt.step_proc_bond_cancel_mmv
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Processing Bond Cancellation"
 msgstr "Traitement de l'Annulation de la Caution"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_reexport_cargo_req
+#: model:transport.step,name:transport_mgmt.step_reexport_cargo_req_mbi
+#: model:transport.step,name:transport_mgmt.step_reexport_cargo_req_mri
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Re-Export Cargo request"
 msgstr "Requête de Réexporation de la Cargaison"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_reexport_ship_conf
+#: model:transport.step,name:transport_mgmt.step_reexport_ship_conf_mbi
+#: model:transport.step,name:transport_mgmt.step_reexport_ship_conf_mei
+#: model:transport.step,name:transport_mgmt.step_reexport_ship_conf_mri
 msgid "Re-Export Shipment dispatch confirmation (departure, initial ETA, updated ETA)"
 msgstr "Confirmation & Expédition de la Réexportation (départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_req_dispose_msf_fleet
+#: model:transport.step,name:transport_mgmt.step_req_dispose_msf_fleet_mmv
 msgid "Request to Dispose of MSF Fleet (Re-Export)"
 msgstr "Requête de Cession de la Flotte MSF (Réexportation)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_ship_dispatch_customs_exit
+#: model:transport.step,name:transport_mgmt.step_ship_dispatch_customs_exit_mmv
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Customs Exit Point Processing"
 msgstr "Traitement du Point de Sortie des Douanes"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_ship_conf
+#: model:transport.step,name:transport_mgmt.step_ship_conf_bond_invoice_mmv
+#: model:transport.step,name:transport_mgmt.step_ship_conf_mitb
+#: model:transport.step,name:transport_mgmt.step_ship_conf_miti
+#: model:transport.step,name:transport_mgmt.step_ship_conf_mittm
 msgid "Shipment dispatch confirmation (departure, initial ETA, updated ETA)"
 msgstr "Confirmation d'Expédition (départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transit_cargo_arrival
+#: model:transport.step,name:transport_mgmt.step_transit_cargo_arrival_mitt
 msgid "Transit Cargo arrival and customs processing (ATA transit port)"
 msgstr "Traitement de l'arrivée de la Cargaison en Transit et de la douane (port de transit ATA)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transit_ship_conf
+#: model:transport.step,name:transport_mgmt.step_transit_ship_conf_mitt
 msgid "Transit Shipment dispatch confirmation (departure, initial ETA, updated ETA)"
 msgstr "Confirmation de l'Expédition en Transit (départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transport_customs_invoice
-msgid "Transport & Customs Invoice processing"
+#: model:transport.step,name:transport_mgmt.step_transport_customs_invoice_mbi
+#: model:transport.step,name:transport_mgmt.step_transport_customs_invoice_mei
+#: model:transport.step,name:transport_mgmt.step_transport_customs_invoice_mitb
+#: model:transport.step,name:transport_mgmt.step_transport_customs_invoice_miti
+#: model:transport.step,name:transport_mgmt.step_transport_customs_invoice_mittm
+#: model:transport.step,name:transport_mgmt.step_transport_customs_invoice_mmv
+#: model:transport.step,name:transport_mgmt.step_transport_customs_invoice_mri
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transport & Customs Invoices processing"
 msgstr "Transport & traitement des Factures de Douane"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transport_freight_req
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transport & Customs Invoices processing Bond"
+msgstr "Transport & traitement de la Caution des Factures de Douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transport & Customs Invoices processing De-registration"
+msgstr "Transport & traitement de la Désinscription des Factures de Douane"
+
+#. module: transport_mgmt
+#: model:transport.step,name:transport_mgmt.step_transport_freight_req_mbd
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "Transport / Freight request"
 msgstr "Requête de Transport / Fret"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transport_onward_transit_greenlight
+#: model:transport.step,name:transport_mgmt.step_transport_onward_transit_greenlight_mitt
 msgid "Transport Onward transit greenlight (Cargo ETA Confirmation)"
 msgstr "Feu vert pour la Poursuite du Transport en Transit (Confirmation de l'Heure d'Arrivée Estimée de la Cargaison)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transport_onward_transit_proc
+#: model:transport.step,name:transport_mgmt.step_transport_onward_transit_proc_mitt
 msgid "Transport Onward transit processing (onward Transport preparation to Destination country)"
 msgstr "Traitement de la Poursuite du Transport en Transit (poursuite des préparations du Transport vers le pays de Destination)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transport_transit_invoice
-msgid "Transport Transit Invoice processing"
+#: model:transport.step,name:transport_mgmt.step_transport_transit_invoice_mitt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transport Transit Invoices processing"
 msgstr "Traitement des Factures du Transport en Transit"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transport_reception
-msgid "Transport"
-msgstr "Transport"
-
-#. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transport_reception_dest
+#: model:transport.step,name:transport_mgmt.step_transport_reception_dest_mitt
 msgid "Transport (Destination)"
 msgstr "Transport (Destination)"
 
 #. module: transport_mgmt
-#: model:transport.step,name:transport_mgmt.step_transport_transit_reception
+#: model:transport.step,name:transport_mgmt.step_transport_transit_reception_mitt
 msgid "Transport (transit country)"
 msgstr "Transport (pays de transit)"
 
@@ -131031,3 +131155,647 @@ msgstr "Certificat"
 msgid "all fields: Tenant-id, App-id and Certificate must be filled."
 msgstr "tous les champs Tenant-id, App-id et Certificat doivent être renseignés."
 
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Cargo Notification"
+msgstr "Notification de Cargaison"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Ready to Ship)"
+msgstr "(Prêt à être Expédié)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Pre-Arrival processing"
+msgstr "Traitement avant l'arrivée"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(ATA destination port)"
+msgstr "(port de destination ATA)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(ATA transit port)"
+msgstr "(port de transit ATA)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(ATA)"
+msgstr "(ATA)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Cargo ETA Confirmation)"
+msgstr "(Confirmation de l'Heure d'Arrivée Estimée de la Cargaison)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Destination)"
+msgstr "(Destination)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(ETA)"
+msgstr "(ETA)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Onward Transport preparation to Destination country)"
+msgstr "(poursuite des préparations du Transport vers le pays de Destination)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Preclearance)"
+msgstr "(Pré-autorisation)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Re-export)"
+msgstr "(Réexportation)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Re-export)"
+msgstr "(Réexportation)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Ready to Ship)"
+msgstr "(Prêt à être Expédié)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(Receiving Country)"
+msgstr "(Pays de Réception)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(departure, initial ETA, updated ETA)"
+msgstr "(départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(from customer or shipper)"
+msgstr "(depuis le client ou l'expéditeur)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(incl. sea Port, int. airport, land border)"
+msgstr "(incl. port maritime, aéroport int., frontière terrestre)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(optional)"
+msgstr "(optionnel)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "(transit country)"
+msgstr "(pays de transit)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Shipment dispatch confirmation"
+msgstr "Confirmation d'Expédition"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Cargo arrival and customs processing"
+msgstr "Processus d'arrivée de la Cargaison et de traitement de la douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+#: model:transport.step,name:transport_mgmt.step_reception_claims_mbd
+#: model:transport.step,name:transport_mgmt.step_reception_claims_md
+#: model:transport.step,name:transport_mgmt.step_reception_claims_mitb
+#: model:transport.step,name:transport_mgmt.step_reception_claims_miti
+#: model:transport.step,name:transport_mgmt.step_reception_claims_mittm
+msgid "Reception & Claims"
+msgstr "Réception & Réclamations"
+
+#. module: transport_mgmt
+#: model:transport.step,name:transport_mgmt.step_reception_claims_dest_mitt
+msgid "Reception & Claims (destination)"
+msgstr "Réception & Réclamations (destination)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Return of container"
+msgstr "Retour du conteneur"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Returned Container deposit reimbursement"
+msgstr "Remboursement de la caution pour les conteneurs retournés"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transit Shipment dispatch confirmation"
+msgstr "Confirmation de l'Expédition en Transit"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transit Cargo arrival and customs processing"
+msgstr "Traitement de l'arrivée de la Cargaison en Transit et de la douane"
+
+#. module: transport_mgmt
+#: model:transport.step,name:transport_mgmt.step_transport_reception_claims_mitt
+msgid "Transit Reception & Claims (transit country)"
+msgstr "Réception du Transit & Réclamations (pays de transit)"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transit reception & Claim"
+msgstr "Réception du Transit & Réclamations"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transport Onward transit Processing"
+msgstr "Traitement de la Poursuite du Transport en Transit"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Transport Onward transit greenlight"
+msgstr "Feu vert pour la Poursuite du Transport en Transit"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Greenlight from Consignee"
+msgstr "Feu vert du Destinataire"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+#: model:transport.step,name:transport_mgmt.step_customs_reexport_mbi
+#: model:transport.step,name:transport_mgmt.step_customs_reexport_mmv
+#: model:transport.step,name:transport_mgmt.step_customs_reexport_mri
+msgid "Customs Re-Export processing"
+msgstr "Traitement Douanier de la Réexportation"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+#: model:transport.step,name:transport_mgmt.step_customs_export_mei
+msgid "Customs Export processing"
+msgstr "Traitement Douanier de l'Exportation"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Dates to fill"
+msgstr "Dates à remplir"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Actual Time of Arrival"
+msgstr "Date d'Arrivée Réelle"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "at customs entry point"
+msgstr "au point d'entrée de la douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "at border point"
+msgstr "au poste frontière"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "at destination"
+msgstr "à la destination"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "at port terminal"
+msgstr "au terminal portuaire"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Actual end date"
+msgstr "Date de fin réelle"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Actual end date of the pre-arrival process"
+msgstr "Date de fin réelle de la procédure d'avant arrivée"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Actual end date of the pre-shipment process"
+msgstr "Date de fin réelle de la procédure de pré-expédition"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Actual end date of the pre‑departure process"
+msgstr "Date de fin réelle de la procédure d'avant départ"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Actual end date of the vehicle re-export processing"
+msgstr "Date de fin réelle de la procédure de réexportation du véhicule"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Actual reception confirmation date"
+msgstr "Date de confirmation de réception réelle"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Completion of the exit process"
+msgstr "Accomplissement du processus de sortie"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Confirmed reimbursement date"
+msgstr "Date de confirmation du remboursement"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Confirmed return date"
+msgstr "Date de retour confirmée"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Customs release date"
+msgstr "Date de dédouanement"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date of container release from the Warehouse"
+msgstr "Date de libération du conteneur depuis l'Entrepôt"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date of greenlight from Consignee"
+msgstr "Date de feu vert du Destinataire"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date of greenlight from customer instance"
+msgstr "Date de feu vert de l'instance cliente"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date of greenlight received from Consignee"
+msgstr "Date de réception du feu vert du Destinataire"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date of greenlight sent to shipper"
+msgstr "Date de feu vert envoyée à l'expéditeur"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date of reception of freight documentation"
+msgstr "Date de réception des documents du fret"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date of request"
+msgstr "Date de la requête"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date of start of processing"
+msgstr "Date de début du traitement"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date reception of the request"
+msgstr "Date de réception de la requête"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date when bond cancellation is confirmed"
+msgstr "Date de confirmation de l'annulation de la caution"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date when de-registration is confirmed"
+msgstr "Date de confirmation de désinscription"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Date when motor vehicle is ready to ship"
+msgstr "Date à laquelle le véhicule à moteur est prêt à être expédié"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Departure date"
+msgstr "Date de départ"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Departure date from Customs Bonded warehouse"
+msgstr "Date de départ de l'Entrepôt sous Douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Departure date from customs border point"
+msgstr "Date de départ du poste frontière de la douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Departure date from customs entry point"
+msgstr "Date de départ du point d'entrée de la douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Departure date from customs transit point"
+msgstr "Date de départ du point de transit douanier"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Dispatch date"
+msgstr "Date d'expédition"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Dispatch date from customs entry point"
+msgstr "Date d'expédition depuis le point d'entrée de la douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Dispatch date from customs point"
+msgstr "Date d'expédition depuis le point de douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Estimated Time of Arrival"
+msgstr "Heure d'Arrivée Estimée"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Export Shipment dispatch confirmation"
+msgstr "Confirmation & Expédition de l'Exportation"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Re-Export Shipment dispatch confirmation"
+msgstr "Confirmation & Expédition de la Réexportation"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "If available - invoices payment date"
+msgstr "Si disponible, date de paiement des factures"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "If claim - opening claim date"
+msgstr "Si réclamation, date d'ouverture de la réclamation"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "If claim - resolution claim date"
+msgstr "Si réclamation, date de résolution de la réclamation"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Initial Estimated Time of Arrival"
+msgstr "Heure d'Arrivée Estimée Initiale"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Invoices approval date"
+msgstr "Date d'approbation des factures"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Invoices reception date"
+msgstr "Date de réception des factures"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Loading date"
+msgstr "Date du chargement"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Notification Confirmation of RTS"
+msgstr "Notification de Confirmation de Prêt à être Expédié"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Parcels reception control date"
+msgstr "Date de contrôle de réception des colis"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Reception date"
+msgstr "Date de réception"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Reimbursement claim date"
+msgstr "Date de remboursement de la réclamation"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Request to Dispose of MSF fleet"
+msgstr "Requête de Cession de la Flotte MSF"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Reverse trip loading"
+msgstr "Chargement pour le voyage retour"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of customs Bonded Ex-warehousing process"
+msgstr "Date de début du traitement du Fret Douanier en sortie d'entrepôt sous Douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of customs Export process"
+msgstr "Date de début de la procédure d'Exportation en douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of customs Re-Export process"
+msgstr "Date de début de la procédure de Réexportation en douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of customs clearance process"
+msgstr "Date de début de la procédure de dédouannement"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of the motor vehicle re-export processing"
+msgstr "Date de début de la procédure de Réexportation de véhicule à moteur en douane"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of the onward transit process"
+msgstr "Date de début du traitement de la poursuite du transport en transit"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of the pre-arrival process"
+msgstr "Date de début de la procédure d'avant arrivée"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of the pre-shipment process"
+msgstr "Date de début de la procédure de pré-expédition"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start date of the pre‑departure process"
+msgstr "Date de début de la procédure d'avant départ"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Start of the process"
+msgstr "Début de la procédure"
+
+#. module: transport_mgmt
+#: model:ir.actions.report.xml,name:transport_mgmt.transport_order_ito_steps_pdf
+#: model:ir.actions.report.xml,name:transport_mgmt.transport_order_oto_steps_pdf
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Step date definitions"
+msgstr "Définitions des dates d'étapes"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Step name"
+msgstr "Nom de l'étape"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Target end date"
+msgstr "Date de fin cible"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Target end date of the pre-arrival process"
+msgstr "Date de fin cible de la procédure d'avant arrivée"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Target end date of the pre-shipment process"
+msgstr "Date de fin cible de la procédure de pré-expédition"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Target end date of the pre‑departure process"
+msgstr "Date de fin cible de la procédure d'avant départ"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Target end date of the vehicle re-export processing"
+msgstr "Date de fin cible du traitement de la réexportation du véhicule"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Target end of processing"
+msgstr "Fin cible du traitement"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Updated Estimated Time of Arrival"
+msgstr "Heure d'Arrivée Estimée Mise à Jour"
