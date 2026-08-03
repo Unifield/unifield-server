@@ -686,7 +686,7 @@
                                         <field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id), ('id', '!=', location_id)]"
-                                            on_change="location_dest_change(location_dest_id, picking_id, False, False, False, False)"
+                                            on_change="location_dest_change(location_dest_id, picking_id, False, parent.type, False, False)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     </group>

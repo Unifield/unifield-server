@@ -471,26 +471,28 @@ class stock_picking(osv.osv):
                 ]
                 child_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'in', restr_qua_loc_ids)], context=context)
                 restr_qua_loc_ids.extend(child_loc_ids)
-                for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines', 'from_wkf'], context=context):
+                for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines'], context=context):
                     moves_to_update_rt = []
                     for move in pick.move_lines:
-                        # INT from scratch move not to update RT if:
+                        # INT move not to update RT if:
                         #   - Source and Destination in restr_qua_loc_ids and RT is 7 Internal Move
                         #   - Source in restr_qua_loc_ids, Destination is "Expired / Damaged / For Scrap" and RT in loss_children_rt_ids
                         #   - Source "Expired / Damaged / For Scrap", Destination "Destruction" and RT is 23 Destruction
+                        #   - Header RT is 23 Destruction, Source is not "Expired / Damaged / For Scrap" or Destination is not "Destruction"
                         int_move_ignore = False
-                        if doc_type == 'internal' and not pick.from_wkf and move.location_id and move.location_dest_id\
-                                and move.reason_type_id:
+                        if doc_type == 'internal' and move.location_id and move.location_dest_id and move.reason_type_id:
                             loc_id = move.location_id.id
                             loc_dest_id = move.location_dest_id.id
                             rt_id = move.reason_type_id.id
                             int_move_ignore = (loc_id in restr_qua_loc_ids and loc_dest_id in restr_qua_loc_ids and rt_id == int_move_rt_id)\
                                               or (loc_id in restr_qua_loc_ids and loc_dest_id == exp_dam_scrap_loc_id and rt_id in loss_children_rt_ids)\
-                                              or (loc_id == exp_dam_scrap_loc_id and loc_dest_id == destr_loc_id and rt_id == destr_rt_id)
+                                              or (loc_id == exp_dam_scrap_loc_id and loc_dest_id == destr_loc_id and rt_id == destr_rt_id)\
+                                              or (vals['reason_type_id'] == destr_rt_id and (loc_id != exp_dam_scrap_loc_id or loc_dest_id != destr_loc_id))
 
                         if not int_move_ignore and move.location_dest_id and \
-                                not (not move.location_dest_id.virtual_location and
-                                     (move.location_dest_id.usage == 'inventory' or move.location_dest_id.scrap_location)):
+                                (not (not move.location_dest_id.virtual_location and
+                                     (move.location_dest_id.usage == 'inventory' or move.location_dest_id.scrap_location)) \
+                                or (doc_type == 'internal' and move.location_dest_id.id == destr_loc_id)):
                             moves_to_update_rt.append(move.id)
                     if moves_to_update_rt:
                         self.pool.get('stock.move').write(cr, uid, moves_to_update_rt,

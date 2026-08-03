@@ -131039,3 +131039,9 @@ msgstr "Si la Zone Destination est \"Destruction\", la seule Zone Source autoris
 #, python-format
 msgid "Lines %s: If the Destination Location is \"Destruction\", the only authorized Source Location is \"Expired / Damaged / For Scrap\""
 msgstr "Lignes %s: Si la Zone Destination est \"Destruction\", la seule Zone Source autorisée est \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2568
+#, python-format
+msgid "You can not select the Destination \"Destruction\" manually"
+msgstr "Vous ne pouvez pas sélectionner la Destination \"Destruction\" manuellement"

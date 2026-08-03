@@ -2560,6 +2560,14 @@ class stock_move(osv.osv):
             if dest_id.usage == 'inventory' and location_dest_id != destr_loc_id:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             elif location_dest_id == destr_loc_id:
+                if parent_type == 'in':
+                    return {
+                        'value': {'location_dest_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('You can not select the Destination "Destruction" manually')
+                        }
+                    }
                 vals['reason_type_id'] = destr_rt_id
             elif dest_id.scrap_location:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
