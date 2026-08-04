@@ -131393,6 +131393,12 @@ msgstr "au point d'entrée de la douane"
 #. module: transport_mgmt
 #: report:transport.order.ito.steps.pdf:0
 #: report:transport.order.oto.steps.pdf:0
+msgid "at customs transit point"
+msgstr "au point de transit douanier"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
 msgid "at border point"
 msgstr "au poste frontière"
 
