@@ -1,6 +1,7 @@
 <%inherit file="/openerp/controllers/templates/base_dispatch.mako"/>
 
 <%def name="header()">
+    <script type="text/javascript" src="/openerp/static/javascript/password_eye.js"></script>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css?v=7.0"/>
     <style type="text/css">
         .form-container {

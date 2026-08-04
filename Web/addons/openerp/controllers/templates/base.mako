@@ -20,6 +20,7 @@
     <script type="text/javascript" src="/openerp/static/jscal/calendar-setup.js?v=21.0"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/web_keyboard_shortcuts.js?v=7.0rc4b"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/password_eye.js"></script>
 
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/style.css?v=42.0rc1"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/menu.css?v=2.7b1"/>

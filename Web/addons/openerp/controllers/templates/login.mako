@@ -22,6 +22,7 @@
             $("#loginform").submit();
         }
     </script>
+    <script type="text/javascript" src="/openerp/static/javascript/password_eye.js"></script>
 </%def>
 
 <%def name="content()">
@@ -67,28 +68,8 @@
                                         <label for="show_password">${_("Password:")}</label>
                                     </td>
                                     <td style="padding: 3px; vertical-align: top;">
-                                        <div style="position: relative; width: 100%; height: 24px;">
-                                            <input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown="if (event.keyCode == 13) disable_save()" style="width:100%; padding-right: 24px; box-sizing: border-box;" />
-                                            <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
-                                            <img
-                                                src="/openerp/static/images/eye.png"
-                                                alt=""
-                                                title="${_('Hold to show password')}"
-                                                style="
-                                                    width:12px;
-                                                    height:12px;
-                                                    position:absolute;
-                                                    right:8px;
-                                                    top:50%;
-                                                    transform:translateY(-50%);
-                                                    cursor:pointer;
-                                                "
-                                                onmousedown="document.getElementById('show_password').type='text';"
-                                                onmouseup="document.getElementById('show_password').type='password';"
-                                                onmouseleave="document.getElementById('show_password').type='password';"
-                                            />
-                                        </div>
-
+                                        <input type="password" id="show_password" name="show_password" class="db_user_pass js-password-eye" autocomplete="off" onkeydown="if (event.keyCode == 13) disable_save()"/>
+                                        <input id="replace_password" type="text" class="db_user_pass js-eye-overlay-target" style="display:none;"/>
                                         <input type="hidden" name="password" id="password" />
                                     </td>
 

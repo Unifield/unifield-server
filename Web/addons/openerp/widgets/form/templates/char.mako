@@ -1,7 +1,7 @@
 % if editable:
     <span class="char">
         <input type="${password and 'password' or 'text'}" size="1"
-            id="${name}" name="${name}" class="${css_class}"
+            id="${name}" name="${name}" class="${css_class}${' js-password-eye' if password_with_eye else ''}"
         % if translatable:
             translatable="1"
         % endif
@@ -28,25 +28,6 @@
         % endif
         % if error:
             <span class="fielderror">${error}</span>
-        % endif
-        % if password_with_eye:
-            <img
-                src="/openerp/static/images/eye.png"
-                alt=""
-                title="${_('Hold to show password')}"
-                style="
-                    width:12px;
-                    height:12px;
-                    position:absolute;
-                    right:8px;
-                    top:50%;
-                    transform:translateY(-50%);
-                    cursor:pointer;
-                "
-                onmousedown="document.getElementById('${name}').type='text';"
-                onmouseup="document.getElementById('${name}').type='password';"
-                onmouseleave="document.getElementById('${name}').type='password';"
-            />
         % endif
     </span>
 % endif
