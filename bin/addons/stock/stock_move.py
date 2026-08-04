@@ -2565,7 +2565,7 @@ class stock_move(osv.osv):
                         'value': {'location_dest_id': False},
                         'warning': {
                             'title': _('Warning'),
-                            'message': _('You can not select the Destination "Destruction" manually')
+                            'message': _('You can not select the Destination "Destruction" in Incoming Shipments')
                         }
                     }
                 vals['reason_type_id'] = destr_rt_id

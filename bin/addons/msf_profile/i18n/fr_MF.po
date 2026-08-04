@@ -131043,5 +131043,5 @@ msgstr "Lignes %s: Si la Zone Destination est \"Destruction\", la seule Zone Sou
 #. module: stock
 #: code:addons/stock/stock_move.py:2568
 #, python-format
-msgid "You can not select the Destination \"Destruction\" manually"
-msgstr "Vous ne pouvez pas sélectionner la Destination \"Destruction\" manuellement"
+msgid "You can not select the Destination \"Destruction\" in Incoming Shipments"
+msgstr "Vous ne pouvez pas sélectionner la Destination \"Destruction\" dans les Livraisons Entrantes"
