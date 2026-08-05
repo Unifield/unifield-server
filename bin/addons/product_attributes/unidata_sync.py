@@ -821,6 +821,11 @@ class ud_sync():
                         fr_text = uf_values['en_MF'][map_ff_fields[part['header']['english']]]
                     uf_values['fr_MF'][map_ff_fields[part['header']['english']]] = fr_text
 
+        if ud_data.get('type') in ('MED', 'LOG') and ud_data.get('group', {}).get('code') == 'L' and ud_data.get('family', {}).get('id') == 'LEAF':
+            msfid = '%s-%s-%s%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'])
+            if not self.pool.get('product.nomenclature').search_exists(self.cr, self.uid, [('msfid', '=', msfid), ('level', '=', 2)], context=self.context):
+                ud_data['type'] = 'LIB'
+
         for uf_key in self.uf_config:
             for lang in self.uf_config[uf_key].get('lang', ['default']):
                 if lang == 'default':
@@ -1031,7 +1036,7 @@ class ud_sync():
                     sync_action = False
                     if not current_id:
                         if nomen_data['status'] == 'archived' or 'Valid' not in x.get('status', {}).get('label', ''):
-                            self.log('Nomen %s creation ignored, status: %s' % (current_id, x.get('status', {}).get('label')))
+                            self.log('Nomen %s creation ignored, status: %s' % (current_msfid, x.get('status', {}).get('label')))
                             continue
                         self.log('Nomen %s created' % (current_msfid, ))
                         current_id = nom_obj.create(self.cr, self.uid, nomen_data, context={'lang': 'en_MF'})
