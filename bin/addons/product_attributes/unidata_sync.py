@@ -800,6 +800,13 @@ class ud_sync():
             return text
         return BeautifulSoup(text, 'html.parser').get_text(' ', strip=True)
 
+    def _build_nomen_msfid(self, ud_data, field):
+        if field == 'nomen_manda_1':
+            return '%s-%s' % (ud_data['type'], ud_data['group']['code'])
+        if field == 'nomen_manda_2':
+            return'%s-%s-%s%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'])
+        return  '%s-%s-%s%s-%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'], ud_data['root']['code'])
+
     def map_ud_fields(self, ud_data, new_prod, session_id=False, create_missing_nomen=False):
         uf_values = {'en_MF': {}, 'fr_MF': {}}
         map_ff_fields = {
@@ -822,9 +829,14 @@ class ud_sync():
                     uf_values['fr_MF'][map_ff_fields[part['header']['english']]] = fr_text
 
         if ud_data.get('type') in ('MED', 'LOG') and ud_data.get('group', {}).get('code') == 'L' and ud_data.get('family', {}).get('id') == 'LEAF':
-            msfid = '%s-%s-%s%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'])
-            if not self.pool.get('product.nomenclature').search_exists(self.cr, self.uid, [('msfid', '=', msfid), ('level', '=', 2)], context=self.context):
+            fam_msfid = self._build_nomen_msfid(ud_data, 'nomen_manda_2')
+            if not self.pool.get('product.nomenclature').search_exists(self.cr, self.uid, [('msfid', '=', fam_msfid), ('level', '=', 2)], context=self.context):
                 ud_data['type'] = 'LIB'
+            else:
+                root_msfid = self._build_nomen_msfid(ud_data, 'nomen_manda_3')
+                if not self.pool.get('product.nomenclature').search_exists(self.cr, self.uid, [('msfid', '=', root_msfid), ('level', '=', 3)], context=self.context):
+                    ud_data['type'] = 'LIB'
+
 
         for uf_key in self.uf_config:
             for lang in self.uf_config[uf_key].get('lang', ['default']):
@@ -872,13 +884,7 @@ class ud_sync():
                     }[uf_key]
                     self.uf_product_cache.setdefault(uf_key, {})
 
-                    if uf_key == 'nomen_manda_1':
-                        msfid = '%s-%s' % (ud_data['type'], ud_data['group']['code'])
-                    elif uf_key == 'nomen_manda_2':
-                        msfid = '%s-%s-%s%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'])
-                    else:
-                        msfid = '%s-%s-%s%s-%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'], ud_data['root']['code'])
-
+                    msfid = self._build_nomen_msfid(ud_data, uf_key)
                     #if previous_nom not in lang_values:
                     #    continue
                     cache_key = (uf_key, lang_values[previous_nom], msfid)
