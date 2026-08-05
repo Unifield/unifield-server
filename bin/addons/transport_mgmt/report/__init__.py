@@ -22,5 +22,6 @@
 from . import intl_transport
 from . import local_transport
 from . import transport_order_fees_report
+from . import transport_order_steps_report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

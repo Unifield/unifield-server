@@ -1368,5 +1368,9 @@
         <record id="us_15880_15972_sde_pi" model="patch.scripts">
             <field name="method">us_15880_15972_sde_pi</field>
         </record>
+
+        <record id="us_15910_15922_16054_fix_steps" model="patch.scripts">
+            <field name="method">us_15910_15922_16054_fix_steps</field>
+        </record>
     </data>
 </openerp>

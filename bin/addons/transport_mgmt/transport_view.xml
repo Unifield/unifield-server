@@ -784,7 +784,7 @@
                     <newline />
                     <field name="step_ids" nolabel="1" readonly="1" colspan="6">
                         <tree string="Linked Steps" noteditable="1">
-                            <field name="name"/>
+                            <field name="complete_name"/>
                             <field name="is_active"/>
                         </tree>
                     </field>
@@ -815,6 +815,7 @@
                     <filter icon="gtk-dialog-error" name="inactive" string="Inactive" domain="[('is_active', '=', False)]" separator="1" />
                     <separator orientation="vertical" />
                     <field name="name" />
+                    <field name="macroprocess_id" />
                 </search>
             </field>
         </record>
@@ -826,7 +827,8 @@
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
                 <tree string="Steps" hide_delete_button="1" hide_new_button="1">
-                    <field name="name" />
+                    <field name="complete_name" />
+                    <field name="macroprocess_id" />
                     <field name="is_active" />
                 </tree>
             </field>
@@ -840,14 +842,9 @@
             <field name="arch" type="xml">
                 <form string="Steps" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="name" readonly="1"/>
+                    <field name="step_number" readonly="1" />
+                    <field name="macroprocess_id" readonly="1" />
                     <field name="is_active" on_change="onchange_is_active(is_active)" />
-                    <newline />
-                    <field name="macroprocess_ids" nolabel="1" readonly="1" colspan="6">
-                        <tree string="Linked Macroprocesses" noteditable="1">
-                            <field name="name"/>
-                            <field name="active"/>
-                        </tree>
-                    </field>
                 </form>
             </field>
         </record>
@@ -991,6 +988,27 @@ action = self.open_ito_from_po(cr, uid, ids, context=context)
             header="False"
             auto="False"
             menu="True"/>
+
+        <report id="transport_order_oto_steps_pdf"
+            string="Step date definitions"
+            target_filename="Step date definitions"
+            model="transport.order.out"
+            name="transport.order.oto.steps.pdf"
+            rml="transport_mgmt/report/transport_order_steps_report.rml"
+            header="False"
+            auto="False"
+            menu="True"/>
+
+        <report id="transport_order_ito_steps_pdf"
+            string="Step date definitions"
+            target_filename="Step date definitions"
+            model="transport.order.in"
+            name="transport.order.ito.steps.pdf"
+            rml="transport_mgmt/report/transport_order_steps_report.rml"
+            header="False"
+            auto="False"
+            menu="True"/>
+
 
     </data>
 </openerp>
