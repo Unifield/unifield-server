@@ -46493,7 +46493,6 @@ msgstr "Activer l'attribut Paie"
 #: model:transport.step,name:transport_mgmt.step_transport_reception_md
 #: model:transport.step,name:transport_mgmt.step_transport_reception_mei
 #: model:transport.step,name:transport_mgmt.step_transport_reception_mitb
-#: model:transport.step,name:transport_mgmt.step_transport_reception_miti
 #: model:transport.step,name:transport_mgmt.step_transport_reception_mittm
 #: model:transport.step,name:transport_mgmt.step_transport_reception_mri
 msgid "Transport"
@@ -126800,7 +126799,6 @@ msgstr "Type de Cargaison"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_cargo_arrival_mitb
-#: model:transport.step,name:transport_mgmt.step_cargo_arrival_miti
 #: model:transport.step,name:transport_mgmt.step_cargo_arrival_mittm
 msgid "Cargo arrival and customs processing (ATA destination port)"
 msgstr "Processus d'arrivée de la Cargaison et de traitement de la douane (port de destination ATA)"
@@ -126918,10 +126916,14 @@ msgstr "Requête de Réexporation de la Cargaison"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_reexport_ship_conf_mbi
-#: model:transport.step,name:transport_mgmt.step_reexport_ship_conf_mei
 #: model:transport.step,name:transport_mgmt.step_reexport_ship_conf_mri
 msgid "Re-Export Shipment dispatch confirmation (departure, initial ETA, updated ETA)"
 msgstr "Confirmation & Expédition de la Réexportation (départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
+
+#. module: transport_mgmt
+#: model:transport.step,name:transport_mgmt.step_reexport_ship_conf_mei
+msgid "Export Shipment dispatch confirmation (departure, initial ETA, updated ETA)"
+msgstr "Confirmation & Expédition de l'Exportation (départ, heure d'arrivée estimée initiale, heure d'arrivée mise à jour)"
 
 #. module: transport_mgmt
 #: model:transport.step,name:transport_mgmt.step_req_dispose_msf_fleet_mmv
@@ -131805,3 +131807,14 @@ msgstr "Fin cible du traitement"
 #: report:transport.order.oto.steps.pdf:0
 msgid "Updated Estimated Time of Arrival"
 msgstr "Heure d'Arrivée Estimée Mise à Jour"
+
+#. module: transport_mgmt
+#: report:transport.order.ito.steps.pdf:0
+#: report:transport.order.oto.steps.pdf:0
+msgid "Cargo arrival processing"
+msgstr "Processus d'arrivée de la Cargaison"
+
+#. module: transport_mgmt
+#: model:transport.step,name:transport_mgmt.step_cargo_arrival_mitb
+msgid "Cargo arrival processing (ATA destination port)"
+msgstr "Processus d'arrivée de la Cargaison (port de destination ATA)"
