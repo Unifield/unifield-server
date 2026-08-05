@@ -2659,7 +2659,8 @@ class stock_move(osv.osv):
 
         return {'value': vals}
 
-    def onchange_reason_type(self, cr, uid, ids, parent_type=False, rt_id=False, loc_id=False, loc_dest_id=False, context=None):
+    def onchange_reason_type(self, cr, uid, ids, parent_type=False, rt_id=False, loc_id=False, loc_dest_id=False,
+                             from_wkf=False, context=None):
         """
         On INTs, limit the RT 7 Internal Move to moves from/to the locations Stock, Intermediate Stocks, EPREP Stocks,
             Quarantine (analyze), or their children
@@ -2687,13 +2688,21 @@ class stock_move(osv.osv):
             restr_loc_ids.extend(child_loc_ids)
             restr_qua_loc_ids = restr_loc_ids.copy()
             restr_qua_loc_ids.append(quarantine_loc_id)
-            if rt_id == int_move_rt_id and ((loc_id and loc_id not in restr_qua_loc_ids) or
-                                            (loc_dest_id and loc_dest_id not in restr_qua_loc_ids)):
+            if rt_id == int_move_rt_id and not from_wkf and ((loc_id and loc_id not in restr_qua_loc_ids) or
+                                                             (loc_dest_id and loc_dest_id not in restr_qua_loc_ids)):
                 res.update({
                     'value': {'reason_type_id': False},
                     'warning': {
                         'title': _('Warning'),
                         'message': _('The Reason Type "7 Internal Move" can only be selected if the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                    }
+                })
+            elif rt_id == int_move_rt_id and from_wkf and loc_dest_id and loc_dest_id not in restr_qua_loc_ids:
+                res.update({
+                    'value': {'reason_type_id': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The Reason Type "7 Internal Move" can only be selected if the Destination is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
                     }
                 })
             elif loc_id in restr_qua_loc_ids and loc_dest_id in restr_qua_loc_ids and rt_id != int_move_rt_id:

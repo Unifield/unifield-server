@@ -130969,6 +130969,12 @@ msgstr "Ligne %s: Le Type de Raison \"23 Destruction\" peut uniquement être sé
 msgid "The Reason Type \"7 Internal Move\" can only be selected if the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
 msgstr "Le Type de Raison \"7 Mouvement Interne\" peut uniquement être sélectionné si les Zones Source et Destination sont une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
 
+#. module: stock
+#: code:addons/stock/stock_move.py:2700
+#, python-format
+msgid "The Reason Type \"7 Internal Move\" can only be selected if the Destination is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "Le Type de Raison \"7 Mouvement Interne\" peut uniquement être sélectionné si la Zone Destination est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
+
 #. modules: stock, reason_types_moves
 #: code:addons/reason_types_moves/reason_type.py:432
 #: code:addons/stock/stock_move.py:2686

@@ -451,7 +451,7 @@
                                         </group>
                                         <field name="reason_type_id" widget="selection"
                                                domain="[('internal_ok', '=', True)]"
-                                               on_change="onchange_reason_type(parent.type, reason_type_id, location_id, location_dest_id)"
+                                               on_change="onchange_reason_type(parent.type, reason_type_id, location_id, location_dest_id, parent.from_wkf)"
                                                attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                     </group>
 
