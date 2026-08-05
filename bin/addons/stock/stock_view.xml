@@ -1574,22 +1574,7 @@
             res_model="stock.move"
             src_model="product.product"/>
 
-        <record id="ir_act_product_location_open" model="ir.values">
-            <field name="key2">tree_but_open</field>
-            <field name="model">stock.location</field>
-            <field name="name">Products</field>
-            <field eval="'ir.actions.act_window,%d'%act_product_location_open" name="value"/>
-            <field eval="True" name="object"/>
-        </record>
 
-
-        <record id="ir_act_product_location_open" model="ir.values">
-            <field name="key2">tree_but_open</field>
-            <field name="model">stock.location</field>
-            <field name="name">Open Products</field>
-            <field eval="'ir.actions.act_window,%d'%action_view_stock_location_product" name="value"/>
-            <field eval="True" name="object"/>
-        </record>
         <record id="action_picking_tree_out" model="ir.actions.act_window">
             <field name="name">Customers Packings</field>
             <field name="res_model">stock.picking</field>
