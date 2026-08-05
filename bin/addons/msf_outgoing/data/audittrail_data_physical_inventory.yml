@@ -2,7 +2,7 @@
   For a Physical Inventory, rule for the CREATE/WRITE of objects with the list of fields to track
 -
   !python {model: audittrail.rule}: |
-    name = 'PACK TYPE CREATE/WRITE'
+    name = 'PHYSICAL INVENTORY CREATE/WRITE'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'physical.inventory')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
