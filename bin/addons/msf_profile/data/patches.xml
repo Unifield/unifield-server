@@ -1372,5 +1372,9 @@
         <record id="us_15910_15922_16054_fix_steps" model="patch.scripts">
             <field name="method">us_15910_15922_16054_fix_steps</field>
         </record>
+
+        <record id="us_12708_14170_15700_fix_reason_types" model="patch.scripts">
+            <field name="method">us_12708_14170_15700_fix_reason_types</field>
+        </record>
     </data>
 </openerp>

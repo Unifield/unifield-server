@@ -35340,6 +35340,7 @@ msgstr "Michigan"
 #: field:product.status,code:0
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:234
 #: field:stock.reason.type,code:0
+#: field:stock.reason.type,complete_code:0
 #: field:warning.import.currencies.lines,code:0
 #: field:resource.resource,code:0
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:120
@@ -43497,7 +43498,8 @@ msgstr "Europe/Mariehamn"
 msgid "Actual Receipt Date   :"
 msgstr "Date de Réception Effective:"
 
-#. module: stock
+#. modules: reason_types_moves, stock
+#: model:stock.reason.type,name:reason_types_moves.reason_type_destruction
 #: model:stock.location,name:stock.stock_location_scrapped
 msgid "Destruction"
 msgstr "Destruction"
@@ -132648,3 +132650,198 @@ msgstr "Processus d'arrivée de la Cargaison"
 #: model:transport.step,name:transport_mgmt.step_cargo_arrival_mitb
 msgid "Cargo arrival processing (ATA destination port)"
 msgstr "Processus d'arrivée de la Cargaison (port de destination ATA)"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_batch_recall
+msgid "Batch Recall"
+msgstr "Rappel de Lot"
+
+#. module: stock
+#: field:stock.expired.damaged.report,loss_batch_recall_ok:0
+msgid "12.5 Loss / Batch Recall"
+msgstr "12.5 Perte / Rappel de Lot"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:199
+#, python-format
+msgid "You can only select \"Destruction\" as Destination Location when the Source Location is \"Expired / Damaged / For Scrap\""
+msgstr "Vous pouvez uniquement sélectionner \"Destruction\" en tant que Zone Destination si la Zone Source est \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2498
+#, python-format
+msgid "If the Destination Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\", you can not select \"Expired / Damaged / For Scrap\" as the Source Location"
+msgstr "Si la Zone Destination est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\", vous ne pouvez pas sélectionner \"Expiré / Endommagé / Pour Rebuts\" en tant que Zone Source"
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2523
+#: code:addons/stock/stock_move.py:2616
+#: code:addons/stock/stock_move.py:2695
+#, python-format
+msgid "If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\" and the Destination Location is \"Expired / Damaged / For Scrap\", the only authorized Reason Types are \"12.1 Loss / Scrap\", \"12.2 Loss / Sample\", \"12.3 Loss / Expiry\", \"12.4 Loss / Damage\" and \"12.5 Loss / Batch Recall\""
+msgstr "Si la Zone Source est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\" et que la Zone Destination est \"Expiré / Endommagé / Pour Rebuts\", les seuls Types de Raison autorisés sont \"12.1 Perte / Détruit\", \"12.2 Perte / Échantillon\", \"12.3 Perte / Expiration\", \"12.4 Perte / Dommage\" et \"12.5 Perte / Rappel de Lot\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2857
+#, python-format
+msgid "Lines %s: If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\" and the Destination Location is \"Expired / Damaged / For Scrap\", the only authorized Reason Types are \"12.1 Loss / Scrap\", \"12.2 Loss / Sample\", \"12.3 Loss / Expiry\", \"12.4 Loss / Damage\" and \"12.5 Loss / Batch Recall\""
+msgstr "Lignes %s: Si la Zone Source est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\" et que la Zone Destination est \"Expiré / Endommagé / Pour Rebuts\", les seuls Types de Raison autorisés sont \"12.1 Perte / Détruit\", \"12.2 Perte / Échantillon\", \"12.3 Perte / Expiration\", \"12.4 Perte / Dommage\" et \"12.5 Perte / Rappel de Lot\""
+
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:185
+#, python-format
+msgid "Line %s: If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\" and the Destination Location is \"Expired / Damaged / For Scrap\", the only authorized Reason Types are \"12.1 Loss / Scrap\", \"12.2 Loss / Sample\", \"12.3 Loss / Expiry\", \"12.4 Loss / Damage\" and \"12.5 Loss / Batch Recall\"\n"
+""
+msgstr "Ligne %s: Si la Zone Source est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\" et que la Zone Destination est \"Expiré / Endommagé / Pour Rebuts\", les seuls Types de Raison autorisés sont \"12.1 Perte / Détruit\", \"12.2 Perte / Échantillon\", \"12.3 Perte / Expiration\", \"12.4 Perte / Dommage\" et \"12.5 Perte / Rappel de Lot\"\n"
+""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2581
+#, python-format
+msgid "If the Source Location is \"Expired / Damaged / For Scrap\", you can not select a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\" as Destination Location"
+msgstr "Si la Zone Source est \"Expiré / Endommagé / Pour Rebuts\", vous ne pouvez pas sélectionner de zone Stock, de zone Stocks Intermédiaire, de zone Stocks EPREP ou \"Quarantaine (analyse)\" en tant que Zone Destination"
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2844
+#, python-format
+msgid "Lines %s: If the Source Location is \"Expired / Damaged / For Scrap\", you can not select a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\" as Destination Location"
+msgstr "Lignes %s: Si la Zone Source est \"Expiré / Endommagé / Pour Rebuts\", vous ne pouvez pas sélectionner de zone Stock, de zone Stocks Intermédiaire, de zone Stocks EPREP ou \"Quarantaine (analyse)\" en tant que Zone Destination"
+
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:163
+#, python-format
+msgid "Line %s: If the Source Location is \"Expired / Damaged / For Scrap\", you can not select a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\" as Destination Location\n"
+""
+msgstr "Ligne %s: Si la Zone Source est \"Expiré / Endommagé / Pour Rebuts\", vous ne pouvez pas sélectionner de zone Stock, de zone Stocks Intermédiaire, de zone Stocks EPREP ou \"Quarantaine (analyse)\" en tant que Zone Destination\n"
+""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2589
+#, python-format
+msgid "The selected Destination Location can not be used with the Reason Type \"7 Internal Move\". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "La Zone Destination sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
+
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:167
+#, python-format
+msgid "Line %s: The selected Destination Location can not be used with the Reason Type \"7 Internal Move\". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\"\n"
+""
+msgstr "Ligne %s: La Zone Destination sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\"\n"
+""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2512
+#, python-format
+msgid "The selected Source Location can not be used with the Reason Type \"7 Internal Move\". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "La Zone Source sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2532
+#: code:addons/stock/stock_move.py:2625
+#: code:addons/stock/stock_move.py:2703
+#, python-format
+msgid "The Reason Type \"23 Destruction\" can only be selected if the Source Location is \"Expired / Damaged / For Scrap\" and the Destination Location is \"Destruction\""
+msgstr "Le Type de Raison \"23 Destruction\" peut uniquement être sélectionné si la Zone Source est \"Expiré / Endommagé / Pour Rebuts\" et la Zone Destination est \"Destruction\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2869
+#, python-format
+msgid "Lines %s: The Reason Type \"23 Destruction\" can only be selected if the Source Location is \"Expired / Damaged / For Scrap\" and the Destination Location is \"Destruction\""
+msgstr "Lignes %s: Le Type de Raison \"23 Destruction\" peut uniquement être sélectionné si la Zone Source est \"Expiré / Endommagé / Pour Rebuts\" et la Zone Destination est \"Destruction\""
+
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:190
+#, python-format
+msgid "Line %s: The Reason Type \"23 Destruction\" can only be selected if the Source Location is \"Expired / Damaged / For Scrap\" and the Destination Location is \"Destruction\"\n"
+""
+msgstr "Ligne %s: Le Type de Raison \"23 Destruction\" peut uniquement être sélectionné si la Zone Source est \"Expiré / Endommagé / Pour Rebuts\" et la Zone Destination est \"Destruction\"\n"
+""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2672
+#, python-format
+msgid "The Reason Type \"7 Internal Move\" can only be selected if the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "Le Type de Raison \"7 Mouvement Interne\" peut uniquement être sélectionné si les Zones Source et Destination sont une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2700
+#, python-format
+msgid "The Reason Type \"7 Internal Move\" can only be selected if the Destination is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "Le Type de Raison \"7 Mouvement Interne\" peut uniquement être sélectionné si la Zone Destination est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
+
+#. modules: stock, reason_types_moves
+#: code:addons/reason_types_moves/reason_type.py:432
+#: code:addons/stock/stock_move.py:2686
+#, python-format
+msgid "You can not select the Reason Type \"12 Loss\" manually"
+msgstr "Vous ne pouvez pas sélectionner le Type de Raison \"12 Perte\" manuellement"
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2809
+#, python-format
+msgid "Lines %s: You can not select the Reason Type \"12 Loss\" manually"
+msgstr "Lignes %s: Vous ne pouvez pas sélectionner le Type de Raison \"12 Perte\" manuellement"
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2680
+#, python-format
+msgid "If the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\", the only authorized Reason Type is \"7 Internal Move\""
+msgstr "Si les Zones Source et Destination sont une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\", le seul Type de Raison autorisé est \"7 Mouvement Interne\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2820
+#, python-format
+msgid "Lines %s: If the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\", the only authorized Reason Type is \"7 Internal Move\""
+msgstr "Lignes %s: Si les Zones Source et Destination sont une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\", le seul Type de Raison autorisé est \"7 Mouvement Interne\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2832
+#, python-format
+msgid "Lines %s: If the Reason Type is \"7 Internal Move\", the only authorized Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "Lignes %s: Si le Type de Raison est \"7 Internal Move\", les seules Zones Source et Destination autorisées sont les zones Stock, les zones Stocks Intermédiaire, les zones Stocks EPREP ou \"Quarantaine (analyse)\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2597
+#, python-format
+msgid "If the Source Location is a Stock location, an Intermediate Stocks location or an EPREP Stocks location and the Destination Location is \"Quarantine (analyze)\", the only authorized Reason Type is \"7 Internal Move\""
+msgstr "Si la Zone Source est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP et que la Zone Destination est \"Quarantaine (analyse)\", le seul Type de Raison autorisé est \"7 Mouvement Interne\""
+
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:172
+#, python-format
+msgid "Line %s: If the Source Location is a Stock location, an Intermediate Stocks location or an EPREP Stocks location and the Destination Location is \"Quarantine (analyze)\", the only authorized Reason Type is \"7 Internal Move\"\n"
+""
+msgstr "Ligne %s: Si la Zone Source est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP et que la Zone Destination est \"Quarantaine (analyse)\", le seul Type de Raison autorisé est \"7 Mouvement Interne\"\n"
+""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2605
+#, python-format
+msgid "If the Source Location is \"Quarantine (analyze)\" and the Destination Location is a Stock location, an Intermediate Stocks location or an EPREP Stocks location, the only authorized Reason Type is \"7 Internal Move\""
+msgstr "Si la Zone Source est \"Quarantaine (analyse)\" et que la Zone Destination est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP, le seul Type de Raison autorisé est \"7 Mouvement Interne\""
+
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:177
+#, python-format
+msgid "Line %s: If the Source Location is \"Quarantine (analyze)\" and the Destination Location is a Stock location, an Intermediate Stocks location or an EPREP Stocks location, the only authorized Reason Type is \"7 Internal Move\"\n"
+""
+msgstr "Ligne %s: Si la Zone Source est \"Quarantaine (analyse)\" et que la Zone Destination est une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP, le seul Type de Raison autorisé est \"7 Mouvement Interne\"\n"
+""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2540
+#, python-format
+msgid "If the Destination Location is \"Destruction\", the only authorized Source Location is \"Expired / Damaged / For Scrap\""
+msgstr "Si la Zone Destination est \"Destruction\", la seule Zone Source autorisée est \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2884
+#, python-format
+msgid "Lines %s: If the Destination Location is \"Destruction\", the only authorized Source Location is \"Expired / Damaged / For Scrap\""
+msgstr "Lignes %s: Si la Zone Destination est \"Destruction\", la seule Zone Source autorisée est \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2568
+#, python-format
+msgid "You can not select the Destination \"Destruction\" in Incoming Shipments"
+msgstr "Vous ne pouvez pas sélectionner la Destination \"Destruction\" dans les Livraisons Entrantes"

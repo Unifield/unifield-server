@@ -1118,8 +1118,7 @@ class stock_move(osv.osv):
             }
         return {'warning': warning}
 
-    def onchange_quantity(self, cr, uid, ids, product_id, product_qty,
-                          product_uom, product_uos):
+    def onchange_quantity(self, cr, uid, ids, product_id, product_qty, product_uom, product_uos):
         """ On change of product quantity finds UoM and UoS quantities
         @param product_id: Product id
         @param product_qty: Changed Quantity of product
@@ -1136,8 +1135,7 @@ class stock_move(osv.osv):
 
         return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'], result)
 
-    def onchange_uos_quantity(self, cr, uid, ids, product_id, product_uos_qty,
-                              product_uos, product_uom):
+    def onchange_uos_quantity(self, cr, uid, ids, product_id, product_uos_qty, product_uos, product_uom):
         """ On change of product quantity finds UoM and UoS quantities
         @param product_id: Product id
         @param product_uos_qty: Changed UoS Quantity of product
@@ -1443,6 +1441,11 @@ class stock_move(osv.osv):
                     not move.confirmed_qty:
                 l_vals.update({'confirmed_qty': move.product_qty})
             self.write(cr, uid, move.id, vals)
+
+        # Check locations and RT in INTs from scratch
+        if context.get('from_button') and context.get('picking_type') == 'internal_move':
+            self.check_moves_loc_reason_type(cr, uid, ids, context=context)
+
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
@@ -2462,44 +2465,279 @@ class stock_move(osv.osv):
 
         return False
 
-# reason types
-    def location_src_change(self, cr, uid, ids, location_id, context=None):
+    # reason types
+    def location_src_change(self, cr, uid, ids, location_id=False, parent_type=False, rt_id=False, location_dest_id=False, context=None):
         '''
         Tries to define a reason type for the move according to the source location
         '''
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+        rt_obj = self.pool.get('stock.reason.type')
         vals = {}
 
         if location_id:
-            loc_id = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
+            loc_id = loc_obj.browse(cr, uid, location_id, context=context)
             if loc_id.usage == 'inventory':
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+
+            rt_id = vals.get('reason_type_id', rt_id)
+            if parent_type == 'internal':
+                int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+                destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+                quarantine_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+                exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+                destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+                restr_loc_ids = [
+                    data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
+                    data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
+                    data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1]
+                ]
+                child_loc_ids = loc_obj.search(cr, uid, [('location_id', 'in', restr_loc_ids)], context=context)
+                restr_loc_ids.extend(child_loc_ids)
+                restr_qua_loc_ids = restr_loc_ids.copy()
+                restr_qua_loc_ids.append(quarantine_loc_id)
+                if location_id == exp_dam_scrap_loc_id and location_dest_id in restr_qua_loc_ids:
+                    return {
+                        'value': {'location_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Destination Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)", you can not select "Expired / Damaged / For Scrap" as the Source Location')
+                        }
+                    }
+                if rt_id == int_move_rt_id and location_id not in restr_qua_loc_ids:
+                    return {
+                        'value': {'location_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The selected Source Location can not be used with the Reason Type "7 Internal Move". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                        }
+                    }
+                elif rt_id and location_id in restr_qua_loc_ids and location_dest_id == exp_dam_scrap_loc_id:
+                    loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+                    loss_children_rt_ids = rt_obj.search(cr, uid, [('parent_id', '=', loss_rt_id)], context=context)
+                    if rt_id not in loss_children_rt_ids:
+                        return {
+                            'value': {'reason_type_id': False},
+                            'warning': {
+                                'title': _('Warning'),
+                                'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
+                            }
+                        }
+                elif rt_id == destr_rt_id and ((location_id and location_id != exp_dam_scrap_loc_id) or
+                                               (location_dest_id and location_dest_id != destr_loc_id)):
+                    return {
+                        'value': {'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
+                        }
+                    }
+                elif location_id and location_id != exp_dam_scrap_loc_id and location_dest_id == destr_loc_id:
+                    return {
+                        'value': {'location_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Destination Location is "Destruction", the only authorized Source Location is "Expired / Damaged / For Scrap"')
+                        }
+                    }
 
         return {'value': vals}
 
-    def location_dest_change(self, cr, uid, ids, location_dest_id, picking_id, product_id=False, context=None):
+    def location_dest_change(self, cr, uid, ids, location_dest_id=False, picking_id=False, product_id=False,
+                             parent_type=False, rt_id=False, location_id=False, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
         data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+        rt_obj = self.pool.get('stock.reason.type')
         vals = {}
 
         if location_dest_id:
-            dest_id = self.pool.get('stock.location').browse(cr, uid, location_dest_id, context=context)
-            if dest_id.usage == 'inventory':
+            destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+            destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+            dest_id = loc_obj.browse(cr, uid, location_dest_id, context=context)
+            if dest_id.usage == 'inventory' and location_dest_id != destr_loc_id:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            elif location_dest_id == destr_loc_id:
+                if parent_type == 'in':
+                    return {
+                        'value': {'location_dest_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('You can not select the Destination "Destruction" in Incoming Shipments')
+                        }
+                    }
+                vals['reason_type_id'] = destr_rt_id
             elif dest_id.scrap_location:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-            elif picking_id:  # Header RT
+            elif picking_id and not rt_id:  # Header RT
                 vals['reason_type_id'] = self.pool.get('stock.picking').read(cr, uid, picking_id, ['reason_type_id'],
                                                                              context=context)['reason_type_id'][0]
+
+            rt_id = vals.get('reason_type_id', rt_id)
+            if parent_type == 'internal':
+                int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+                quarantine_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+                exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+                restr_loc_ids = [
+                    data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
+                    data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
+                    data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1]
+                ]
+                child_loc_ids = loc_obj.search(cr, uid, [('location_id', 'in', restr_loc_ids)], context=context)
+                restr_loc_ids.extend(child_loc_ids)
+                restr_qua_loc_ids = restr_loc_ids.copy()
+                restr_qua_loc_ids.append(quarantine_loc_id)
+                if location_id == exp_dam_scrap_loc_id and location_dest_id in restr_qua_loc_ids:
+                    return {
+                        'value': {'location_dest_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Source Location is "Expired / Damaged / For Scrap", you can not select a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" as Destination Location')
+                        }
+                    }
+                if rt_id == int_move_rt_id and location_dest_id not in restr_qua_loc_ids:
+                    return {
+                        'value': {'location_dest_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The selected Destination Location can not be used with the Reason Type "7 Internal Move". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                        }
+                    }
+                elif location_id in restr_loc_ids and location_dest_id == quarantine_loc_id and rt_id != int_move_rt_id:
+                    return {
+                        'value': {'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Source Location is a Stock location, an Intermediate Stocks location or an EPREP Stocks location and the Destination Location is "Quarantine (analyze)", the only authorized Reason Type is "7 Internal Move"')
+                        }
+                    }
+                elif location_id == quarantine_loc_id and location_dest_id in restr_loc_ids and rt_id != int_move_rt_id:
+                    return {
+                        'value': {'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Source Location is "Quarantine (analyze)" and the Destination Location is a Stock location, an Intermediate Stocks location or an EPREP Stocks location, the only authorized Reason Type is "7 Internal Move"')
+                        }
+                    }
+                elif rt_id and location_id in restr_qua_loc_ids and location_dest_id == exp_dam_scrap_loc_id:
+                    loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+                    loss_children_rt_ids = rt_obj.search(cr, uid, [('parent_id', '=', loss_rt_id)], context=context)
+                    if rt_id not in loss_children_rt_ids:
+                        return {
+                            'value': {'reason_type_id': False},
+                            'warning': {
+                                'title': _('Warning'),
+                                'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
+                            }
+                        }
+                elif location_id != exp_dam_scrap_loc_id and location_dest_id == destr_loc_id:
+                    return {
+                        'value': {'location_dest_id': False, 'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The Destination Location "Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap"')
+                        }
+                    }
+                elif rt_id == destr_rt_id and ((location_id and location_id != exp_dam_scrap_loc_id) or
+                                               (location_dest_id and location_dest_id != destr_loc_id)):
+                    return {
+                        'value': {'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
+                        }
+                    }
 
             if product_id:
                 # Test the compatibility of the product with the location
                 vals, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product_id, field_name='location_dest_id', values={'value': vals}, vals={'location_id': location_dest_id})
                 if test:
                     return vals
+                vals = vals.get('value', {})
 
         return {'value': vals}
+
+    def onchange_reason_type(self, cr, uid, ids, parent_type=False, rt_id=False, loc_id=False, loc_dest_id=False,
+                             from_wkf=False, context=None):
+        """
+        On INTs, limit the RT 7 Internal Move to moves from/to the locations Stock, Intermediate Stocks, EPREP Stocks,
+            Quarantine (analyze), or their children
+        """
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+        rt_obj = self.pool.get('stock.reason.type')
+
+        res = {}
+        if rt_id and parent_type == 'internal':
+            int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+            loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+            quarantine_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+            exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+            destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+            restr_loc_ids = [
+                data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
+                data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
+                data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1]
+            ]
+            child_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'in', restr_loc_ids)], context=context)
+            restr_loc_ids.extend(child_loc_ids)
+            restr_qua_loc_ids = restr_loc_ids.copy()
+            restr_qua_loc_ids.append(quarantine_loc_id)
+            if rt_id == int_move_rt_id and not from_wkf and ((loc_id and loc_id not in restr_qua_loc_ids) or
+                                                             (loc_dest_id and loc_dest_id not in restr_qua_loc_ids)):
+                res.update({
+                    'value': {'reason_type_id': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The Reason Type "7 Internal Move" can only be selected if the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                    }
+                })
+            elif rt_id == int_move_rt_id and from_wkf and loc_dest_id and loc_dest_id not in restr_qua_loc_ids:
+                res.update({
+                    'value': {'reason_type_id': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The Reason Type "7 Internal Move" can only be selected if the Destination is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                    }
+                })
+            elif loc_id in restr_qua_loc_ids and loc_dest_id in restr_qua_loc_ids and rt_id != int_move_rt_id:
+                res.update({
+                    'value': {'reason_type_id': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('If the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)", the only authorized Reason Type is "7 Internal Move"')
+                    }
+                })
+            elif rt_id == loss_rt_id:
+                res.update({
+                    'value': {'reason_type_id': False},
+                    'warning': {'title': _('Warning'), 'message': _('You can not select the Reason Type "12 Loss" manually')}
+                })
+            elif loc_id in restr_qua_loc_ids and loc_dest_id == exp_dam_scrap_loc_id:
+                loss_children_rt_ids = rt_obj.search(cr, uid, [('parent_id', '=', loss_rt_id)], context=context)
+                if rt_id not in loss_children_rt_ids:
+                    res.update({
+                        'value': {'reason_type_id': False},
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
+                        }
+                    })
+            elif rt_id == destr_rt_id and ((loc_id and loc_id != exp_dam_scrap_loc_id) or (loc_dest_id and loc_dest_id != destr_loc_id)):
+                res.update({
+                    'value': {'reason_type_id': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
+                    }
+                })
+
+        return res
 
     def update_linked_documents(self, cr, uid, ids, new_id, context=None):
         '''
@@ -2565,7 +2803,117 @@ class stock_move(osv.osv):
         res['name'] = '%s %s' % (res.get('name', ''), move.picking_id.name)
         return res
 
+    def check_moves_loc_reason_type(self, cr, uid, ids, context=None):
+        '''
+        Check if the location_id, location_dest_id and reason_type_id combination in moves is authorized in an INT from scratch
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if not isinstance(ids, list):
+            ids = [ids]
+
+        data_obj = self.pool.get('ir.model.data')
+
+        if context.get('from_button') and context.get('picking_type') == 'internal_move':
+            int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+            loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+            exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+            destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+            restr_qua_loc_ids = [
+                data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
+                data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
+                data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1],
+                data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+            ]
+            child_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'in', restr_qua_loc_ids)], context=context)
+            restr_qua_loc_ids.extend(child_loc_ids)
+
+            # RT 12 Loss is not allowed
+            lines_pb = []
+            cr.execute("""
+                SELECT line_number FROM stock_move WHERE id IN %s AND reason_type_id = %s
+            """, (tuple(ids), loss_rt_id))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: You can not select the Reason Type "12 Loss" manually') % (', '.join(lines_pb),))
+
+            # Source and Destination in restr_qua_loc_ids must have the RT 7 Internal Move
+            lines_pb = []
+            cr.execute("""
+                SELECT line_number FROM stock_move
+                WHERE id IN %s AND location_id IN %s AND location_dest_id IN %s AND reason_type_id != %s
+            """, (tuple(ids), tuple(restr_qua_loc_ids), tuple(restr_qua_loc_ids), int_move_rt_id))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: If the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)", the only authorized Reason Type is "7 Internal Move"')
+                                     % (', '.join(lines_pb),))
+
+            # RT 7 Internal Move must have Source and Destination in restr_qua_loc_ids
+            lines_pb = []
+            cr.execute("""
+                SELECT line_number FROM stock_move
+                WHERE id IN %s AND (location_id NOT IN %s OR location_dest_id NOT IN %s) AND reason_type_id = %s
+            """, (tuple(ids), tuple(restr_qua_loc_ids), tuple(restr_qua_loc_ids), int_move_rt_id))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: If the Reason Type is "7 Internal Move", the only authorized Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                                     % (', '.join(lines_pb),))
+
+            # Source is "Expired / Damaged / For Scrap" and Destination should not be in restr_qua_loc_ids
+            lines_pb = []
+            cr.execute("""
+                SELECT line_number FROM stock_move
+                WHERE id IN %s AND location_id = %s AND location_dest_id IN %s
+            """, (tuple(ids), exp_dam_scrap_loc_id, tuple(restr_qua_loc_ids)))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: If the Source Location is "Expired / Damaged / For Scrap", you can not select a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" as Destination Location')
+                                     % (', '.join(lines_pb),))
+
+            # Source in restr_qua_loc_ids and Destination is "Expired / Damaged / For Scrap", RT must be in loss_children_rt_ids
+            lines_pb = []
+            loss_children_rt_ids = self.pool.get('stock.reason.type').search(cr, uid, [('parent_id', '=', loss_rt_id)], context=context)
+            cr.execute("""
+                SELECT line_number FROM stock_move
+                WHERE id IN %s AND location_id IN %s AND location_dest_id = %s AND reason_type_id NOT IN %s
+            """, (tuple(ids), tuple(restr_qua_loc_ids), exp_dam_scrap_loc_id, tuple(loss_children_rt_ids)))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: If the Source Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" and the Destination Location is "Expired / Damaged / For Scrap", the only authorized Reason Types are "12.1 Loss / Scrap", "12.2 Loss / Sample", "12.3 Loss / Expiry", "12.4 Loss / Damage" and "12.5 Loss / Batch Recall"')
+                                     % (', '.join(lines_pb),))
+
+            # Destination "Destruction" must have Source "Expired / Damaged / For Scrap"
+            lines_pb = []
+            cr.execute("""
+                SELECT line_number FROM stock_move WHERE id IN %s AND location_id != %s AND location_dest_id = %s
+            """, (tuple(ids), exp_dam_scrap_loc_id, destr_loc_id))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: If the Destination Location is "Destruction", the only authorized Source Location is "Expired / Damaged / For Scrap"')
+                                     % (', '.join(lines_pb),))
+
+            # RT 23 Destruction must have Source "Expired / Damaged / For Scrap" and Destination "Destruction"
+            lines_pb = []
+            cr.execute("""
+                SELECT line_number FROM stock_move
+                WHERE id IN %s AND (location_id != %s OR location_dest_id != %s) AND reason_type_id = %s
+            """, (tuple(ids), exp_dam_scrap_loc_id, destr_loc_id, destr_rt_id))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: The Reason Type "23 Destruction" can only be selected if the Source Location is "Expired / Damaged / For Scrap" and the Destination Location is "Destruction"')
+                                     % (', '.join(lines_pb),))
+
+        return True
 
 
 stock_move()
-

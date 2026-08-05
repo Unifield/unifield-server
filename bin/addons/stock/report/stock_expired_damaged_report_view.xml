@@ -54,6 +54,7 @@
                         <field name="loss_sample_ok" />
                         <field name="loss_expiry_ok" />
                         <field name="loss_damage_ok" />
+                        <field name="loss_batch_recall_ok" />
                     </group>
                     <separator colspan="4" string="Actions" />
                     <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
