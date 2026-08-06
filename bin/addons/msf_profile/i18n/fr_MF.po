@@ -113621,6 +113621,11 @@ msgstr "ne s'applique pas à cette instance de tests"
 msgid "Last Password Change"
 msgstr "Dernier changement de mot de passe"
 
+#. module: base
+#: field:res.users,notify_by_email:0
+msgid "Enable e-mail notification"
+msgstr "Activer les notifications par e-mail"
+
 #. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:257
 msgid "Ave. Cost Price Total Cost (Functional currency)"

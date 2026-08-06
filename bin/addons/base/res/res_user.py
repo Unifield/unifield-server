@@ -582,6 +582,7 @@ class users(osv.osv):
         'reset_password_date': fields.datetime(
             'Reset Password Date'
         ),
+        'notify_by_email': fields.boolean('Enable e-mail notification'),
     }
 
     def search_web(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -625,11 +626,11 @@ class users(osv.osv):
             signature_enable = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
             if not signature_enable:
                 arch = etree.fromstring(fvg['arch'])
-                fields = arch.xpath('//group[@name="signature_tab"]')
-                if fields:
-                    parent_node = fields[0].getparent()
-                    parent_node.remove(fields[0])
-                    fvg['arch'] = etree.tostring(arch, encoding='unicode')
+                for xpath_expr in ('//group[@name="signature_tab"]', '//field[@name="notify_by_email"]'):
+                    nodes = arch.xpath(xpath_expr)
+                    if nodes:
+                        nodes[0].getparent().remove(nodes[0])
+                fvg['arch'] = etree.tostring(arch, encoding='unicode')
         return fvg
 
     def on_change_company_id(self, cr, uid, ids, company_id):
@@ -781,6 +782,7 @@ class users(osv.osv):
         'last_password_change': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'never_expire': lambda self, cr, *a: cr.dbname == 'SYNC_SERVER',
         'instance_level': lambda self, cr, uid, *a: _get_instance_level(self, cr, uid),
+        'notify_by_email': False,
     }
 
     @tools.cache()
