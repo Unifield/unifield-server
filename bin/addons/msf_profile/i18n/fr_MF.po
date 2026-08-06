@@ -113527,8 +113527,8 @@ msgstr "Dernier changement de mot de passe"
 
 #. module: base
 #: field:res.users,notify_by_email:0
-msgid "Notify by email"
-msgstr "Notification par email"
+msgid "Enable e-mail notification"
+msgstr "Activer les notifications par e-mail"
 
 #. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:257

@@ -582,7 +582,7 @@ class users(osv.osv):
         'reset_password_date': fields.datetime(
             'Reset Password Date'
         ),
-        'notify_by_email': fields.boolean('Notify by email'),
+        'notify_by_email': fields.boolean('Enable e-mail notification'),
     }
 
     def search_web(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
