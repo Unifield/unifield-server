@@ -22,6 +22,7 @@
             $("#loginform").submit();
         }
     </script>
+    <script type="text/javascript" src="/openerp/static/javascript/password_eye.js"></script>
 </%def>
 
 <%def name="content()">
@@ -63,10 +64,13 @@
                                     <td style="padding: 3px;"><input type="text" id="user" name="user" class="db_user_pass" value="${user}" autofocus="true" autocomplete="off"/></td>
                                 </tr>
                                 <tr>
-                                    <td class="label"><label for="show_password">${_("Password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
-                                    <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
-                                    <input type="hidden" name="password" id="password" />
+                                    <td class="label">
+                                        <label for="show_password">${_("Password:")}</label>
+                                    </td>
+                                    <td style="padding: 3px; vertical-align: top;">
+                                        <input type="password" id="show_password" name="show_password" class="db_user_pass js-password-eye" autocomplete="off" onkeydown="if (event.keyCode == 13) disable_save()"/>
+                                        <input id="replace_password" type="text" class="db_user_pass js-eye-overlay-target" style="display:none;"/>
+                                        <input type="hidden" name="password" id="password" />
                                     </td>
 
                                 </tr>

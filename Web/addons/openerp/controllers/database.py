@@ -78,6 +78,10 @@ class ReplacePasswordField(openobject.widgets.PasswordField):
         })
         super(ReplacePasswordField, self).__init__(*arg, **kwargs)
 
+class ReplacePasswordFieldWithEye(ReplacePasswordField):
+    def __init__(self, *arg, **kwargs):
+        super(ReplacePasswordFieldWithEye, self).__init__(*arg, **kwargs)
+        self.attrs['class'] = (self.attrs.get('class', '') + ' js-password-eye').strip()
 
 class DBForm(openobject.widgets.Form):
     strip_name = True

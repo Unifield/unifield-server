@@ -1,7 +1,7 @@
 % if editable:
     <span class="char">
         <input type="${password and 'password' or 'text'}" size="1"
-            id="${name}" name="${name}" class="${css_class}"
+            id="${name}" name="${name}" class="${css_class}${' js-password-eye' if password_with_eye else ''}"
         % if translatable:
             translatable="1"
         % endif

@@ -462,6 +462,7 @@
             <rng:optional><rng:attribute name="allow_sort"/></rng:optional>
             <rng:optional><rng:attribute name="not_sortable"/></rng:optional>
             <rng:optional><rng:attribute name="password"/></rng:optional>
+            <rng:optional><rng:attribute name="password_with_eye"/></rng:optional>
             <rng:optional><rng:attribute name="comparator"/></rng:optional>
             <rng:optional><rng:attribute name="sum"/></rng:optional>
             <rng:optional><rng:attribute name="sum_field"/></rng:optional>
