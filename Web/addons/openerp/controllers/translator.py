@@ -201,7 +201,24 @@ class Translator(SecuredController):
                 for id, val in list(value.items()):
                     rpc.session.execute('object', 'execute', 'ir.translation', 'write', [int(id)], {'value': val})
 
+        concurrency_info = ''
+
+        if params.id:
+            last_update = rpc.session.execute(
+                'object',
+                'execute',
+                params.model,
+                'read',
+                [params.id],
+                ['__last_update'],
+                ctx
+            )[0]['__last_update']
+
+            concurrency_info = repr((
+                "%s,%s" % (params.model, params.id),
+                last_update
+            ))
         # Encoding fields_value to prevent escaping characters and shorten sent data
-        return dict(close_popup=True, fields_values=base64.b64encode(bytes(json.dumps(fields_values), 'utf8')))
+        return dict(close_popup=True, fields_values=base64.b64encode(bytes(json.dumps(fields_values), 'utf8')), concurrency_info=base64.b64encode(concurrency_info.encode('utf8')))
 
 # vim: ts=4 sts=4 sw=4 si et

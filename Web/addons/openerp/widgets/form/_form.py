@@ -985,9 +985,9 @@ class Form(TinyInputWidget):
             attrs = node_attributes(node)
             # US-3071 : Check if product.product field is not readonly and translatable
             if self.id and not attrs.get('readonly') and not self.noteditable and node.localName == ustr('field') \
-                    and self.model == 'product.product' and attrs.get('name', False) \
+                    and self.model in ('product.product', 'account.tax') and attrs.get('name', False) \
                     and fields.get(attrs['name'], {}).get('translate') and not fields.get(attrs['name'], {}).get('no_write_access'):
-                product_proxy = rpc.RPCProxy(self.model)
+                product_proxy = rpc.RPCProxy('product.product')
                 if not product_proxy.is_field_translatable(self.context):
                     attrs['readonly'] = True
                     attrs['force_readonly'] = True

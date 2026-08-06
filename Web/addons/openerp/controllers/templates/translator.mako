@@ -8,6 +8,7 @@
 
 % if close_popup:
 <script type="text/javascript">
+var concurrencyInfo = window.atob("${concurrency_info}");
 var fields_values = JSON.parse(window.atob("${fields_values}"));
 jQuery(document).ready(function () {
     for (var i = 0; i < fields_values.length; i++) {
@@ -17,6 +18,9 @@ jQuery(document).ready(function () {
         } else {
             $(field_id, window.parent.document).val(fields_values[i].value);
         }
+    }
+    if (concurrencyInfo) {
+        $("[name='_terp_concurrency_info']", window.parent.document).val(concurrencyInfo);
     }
     window.frameElement.close();
 })
