@@ -76,7 +76,7 @@
     <table id="main_form_body" class="view" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
             <td width="100%" valign="top">
-                <div id="page_banner_container" style="display:none;"></div>
+                <div id="page_banner_container" style="display:none; position: sticky; top: 0; z-index: 1000;"></div>
                 % if tips:
                     <div id="help-tips">
                         <p>${tips}</p>
