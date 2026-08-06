@@ -149,3 +149,8 @@ msgstr "L'email doit finir par msf.org."
 
 msgid "Email address must end with msf.org."
 msgstr "L'adresse email doit finir par msf.org."
+
+#: static/javascript/password_eye.js:1
+msgid "Hold to show password"
+msgstr "Maintenir pour afficher le mot de passe"
+

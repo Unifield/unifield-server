@@ -37,7 +37,7 @@ function initPasswordEyeToggles(root) {
         var icon = document.createElement('img');
         icon.src = '/openerp/static/images/eye.png';
         icon.alt = '';
-        icon.title = 'Hold to show password';
+        icon.title = _('Hold to show password');
         icon.style.cssText =
             'width:12px;height:12px;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;';
         wrapper.appendChild(icon);
