@@ -9,6 +9,15 @@
         function do_select(id, src) {
             viewRecord(id, src);
         }
+        function showPageBanner(message) {
+            $('#page_banner_container')
+                .html(
+                    '<div style="background:repeating-linear-gradient(-45deg,#d9f0ff,#d9f0ff 8px,#eef8ff 8px,#eef8ff 16px);padding:6px 15px;text-align:center;color:black;font-weight:bold;font-style:italic;font-size:18px;line-height:22px;text-shadow:0 1px 1px rgba(0,0,0,.25);width:100%;box-sizing:border-box;">'
+                    + message +
+                    '</div>'
+                )
+                .show();
+        }
         jQuery(document).ready(function() {
             document.title = "${title|n}" + " - UniField";
             /*
@@ -67,6 +76,7 @@
     <table id="main_form_body" class="view" cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
             <td width="100%" valign="top">
+                <div id="page_banner_container" style="display:none;"></div>
                 % if tips:
                     <div id="help-tips">
                         <p>${tips}</p>
