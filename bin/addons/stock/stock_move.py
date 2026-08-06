@@ -2487,6 +2487,7 @@ class stock_move(osv.osv):
                 quarantine_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
                 exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
                 destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+                cross_loc_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
                 restr_loc_ids = [
                     data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
                     data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
@@ -2496,6 +2497,8 @@ class stock_move(osv.osv):
                 restr_loc_ids.extend(child_loc_ids)
                 restr_qua_loc_ids = restr_loc_ids.copy()
                 restr_qua_loc_ids.append(quarantine_loc_id)
+                restr_cross_loc_ids = restr_qua_loc_ids.copy()
+                restr_cross_loc_ids.append(cross_loc_id)
                 if location_id == exp_dam_scrap_loc_id and location_dest_id in restr_qua_loc_ids:
                     return {
                         'value': {'location_id': False},
@@ -2504,7 +2507,7 @@ class stock_move(osv.osv):
                             'message': _('If the Destination Location is a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)", you can not select "Expired / Damaged / For Scrap" as the Source Location')
                         }
                     }
-                if rt_id == int_move_rt_id and location_id not in restr_qua_loc_ids:
+                if rt_id == int_move_rt_id and location_id not in restr_cross_loc_ids:
                     return {
                         'value': {'location_id': False},
                         'warning': {
@@ -2580,6 +2583,7 @@ class stock_move(osv.osv):
                 int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
                 quarantine_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
                 exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+                cross_loc_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
                 restr_loc_ids = [
                     data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
                     data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
@@ -2589,6 +2593,8 @@ class stock_move(osv.osv):
                 restr_loc_ids.extend(child_loc_ids)
                 restr_qua_loc_ids = restr_loc_ids.copy()
                 restr_qua_loc_ids.append(quarantine_loc_id)
+                restr_cross_loc_ids = restr_qua_loc_ids.copy()
+                restr_cross_loc_ids.append(cross_loc_id)
                 if location_id == exp_dam_scrap_loc_id and location_dest_id in restr_qua_loc_ids:
                     return {
                         'value': {'location_dest_id': False},
@@ -2597,7 +2603,7 @@ class stock_move(osv.osv):
                             'message': _('If the Source Location is "Expired / Damaged / For Scrap", you can not select a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" as Destination Location')
                         }
                     }
-                if rt_id == int_move_rt_id and location_dest_id not in restr_qua_loc_ids:
+                if rt_id == int_move_rt_id and location_dest_id not in restr_cross_loc_ids:
                     return {
                         'value': {'location_dest_id': False},
                         'warning': {
@@ -2679,6 +2685,7 @@ class stock_move(osv.osv):
             quarantine_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
             exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
             destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+            cross_loc_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
             restr_loc_ids = [
                 data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
                 data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
@@ -2688,8 +2695,10 @@ class stock_move(osv.osv):
             restr_loc_ids.extend(child_loc_ids)
             restr_qua_loc_ids = restr_loc_ids.copy()
             restr_qua_loc_ids.append(quarantine_loc_id)
-            if rt_id == int_move_rt_id and not from_wkf and ((loc_id and loc_id not in restr_qua_loc_ids) or
-                                                             (loc_dest_id and loc_dest_id not in restr_qua_loc_ids)):
+            restr_cross_loc_ids = restr_qua_loc_ids.copy()
+            restr_cross_loc_ids.append(cross_loc_id)
+            if rt_id == int_move_rt_id and not from_wkf and ((loc_id and loc_id not in restr_cross_loc_ids) or
+                                                             (loc_dest_id and loc_dest_id not in restr_cross_loc_ids)):
                 res.update({
                     'value': {'reason_type_id': False},
                     'warning': {
@@ -2697,7 +2706,7 @@ class stock_move(osv.osv):
                         'message': _('The Reason Type "7 Internal Move" can only be selected if the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
                     }
                 })
-            elif rt_id == int_move_rt_id and from_wkf and loc_dest_id and loc_dest_id not in restr_qua_loc_ids:
+            elif rt_id == int_move_rt_id and from_wkf and loc_dest_id and loc_dest_id not in restr_cross_loc_ids:
                 res.update({
                     'value': {'reason_type_id': False},
                     'warning': {
@@ -2830,6 +2839,9 @@ class stock_move(osv.osv):
             ]
             child_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'in', restr_qua_loc_ids)], context=context)
             restr_qua_loc_ids.extend(child_loc_ids)
+            cross_loc_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+            restr_cross_loc_ids = restr_qua_loc_ids.copy()
+            restr_cross_loc_ids.append(cross_loc_id)
 
             # RT 12 Loss is not allowed
             lines_pb = []
@@ -2853,12 +2865,12 @@ class stock_move(osv.osv):
                 raise osv.except_osv(_('Error'), _('Lines %s: If the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)", the only authorized Reason Type is "7 Internal Move"')
                                      % (', '.join(lines_pb),))
 
-            # RT 7 Internal Move must have Source and Destination in restr_qua_loc_ids
+            # RT 7 Internal Move must have Source and Destination in restr_cross_loc_ids
             lines_pb = []
             cr.execute("""
                 SELECT line_number FROM stock_move
                 WHERE id IN %s AND (location_id NOT IN %s OR location_dest_id NOT IN %s) AND reason_type_id = %s
-            """, (tuple(ids), tuple(restr_qua_loc_ids), tuple(restr_qua_loc_ids), int_move_rt_id))
+            """, (tuple(ids), tuple(restr_cross_loc_ids), tuple(restr_cross_loc_ids), int_move_rt_id))
             for x in cr.fetchall():
                 lines_pb.append(str(x[0]))
             if lines_pb:
