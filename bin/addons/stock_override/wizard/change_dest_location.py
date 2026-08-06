@@ -130,7 +130,6 @@ class change_dest_location(osv.osv_memory):
 
             move_changed = []
             for move in move_obj.browse(cr, uid, move_ids, context=context):
-
                 if wizard.type == 'internal':
                     # Check if the new destination location is not the source location
                     if move.location_id.id == wizard.dest_location_id.id:
@@ -150,6 +149,7 @@ class change_dest_location(osv.osv_memory):
                     exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
                     destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
                     destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+                    cross_loc_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
                     restr_loc_ids = [
                         data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
                         data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
@@ -159,11 +159,13 @@ class change_dest_location(osv.osv_memory):
                     restr_loc_ids.extend(child_loc_ids)
                     restr_qua_loc_ids = restr_loc_ids.copy()
                     restr_qua_loc_ids.append(quarantine_loc_id)
+                    restr_cross_loc_ids = restr_qua_loc_ids.copy()
+                    restr_cross_loc_ids.append(cross_loc_id)
                     if move.location_id.id == exp_dam_scrap_loc_id and wizard.dest_location_id.id in restr_qua_loc_ids:
                         warn_msg.append(_('Line %s: If the Source Location is "Expired / Damaged / For Scrap", you can not select a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)" as Destination Location\n')
                                         % (move.line_number,))
                         continue
-                    if move.reason_type_id.id == int_move_rt_id and wizard.dest_location_id.id not in restr_qua_loc_ids:
+                    if move.reason_type_id.id == int_move_rt_id and wizard.dest_location_id.id not in restr_cross_loc_ids:
                         warn_msg.append(_('Line %s: The selected Destination Location can not be used with the Reason Type "7 Internal Move". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"\n')
                                         % (move.line_number,))
                         continue
