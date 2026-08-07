@@ -2,6 +2,7 @@
 
 <%def name="header()">
     <title>${_("Reset Password")}</title>
+    <script type="text/javascript" src="/openerp/static/javascript/password_eye.js"></script>
 </%def>
 
 <%def name="content()">
@@ -67,13 +68,13 @@
                                 <tr>
                                     <td class="label"><label for="password">${_("New password:")}</label></td>
                                     <td style="padding: 3px;">
-                                        <input type="password" id="password" name="password" class="db_user_pass" autocomplete="off"/>
+                                        <input type="password" id="password" name="password" class="db_user_pass js-password-eye" autocomplete="off"/>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="password2">${_("Confirm new password:")}</label></td>
                                     <td style="padding: 3px;">
-                                        <input type="password" id="password2" name="password2" class="db_user_pass" autocomplete="off"/>
+                                        <input type="password" id="password2" name="password2" class="db_user_pass js-password-eye" autocomplete="off"/>
                                     </td>
                                 </tr>
 
