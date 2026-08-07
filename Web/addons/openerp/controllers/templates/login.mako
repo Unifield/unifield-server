@@ -18,6 +18,9 @@
             $("#show_password").val(false);
             $("#replace_password").show();
             $("#replace_password").val(Array(pass.length+1).join('\u2022'));
+            var $icon = $("#show_password").parent().find('img');
+            $icon.attr('src', '/openerp/static/images/eye.png');
+            $icon.attr('title', _('Show password'));
             $("#show_password").remove();
             $("#loginform").submit();
         }

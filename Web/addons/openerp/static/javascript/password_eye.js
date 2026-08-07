@@ -61,3 +61,15 @@ if (window.jQuery) {
         initPasswordEyeToggles();
     });
 }
+
+window.addEventListener('pageshow', function () {
+    document.querySelectorAll('input.js-eye-bound').forEach(function (input) {
+        input.type = 'password';
+        var wrapper = input.parentElement;
+        if (!wrapper) { return; }
+        var icon = wrapper.querySelector('img');
+        if (!icon) { return; }
+        icon.title = _('Show password');
+        icon.src = '/openerp/static/images/eye.png';
+    });
+});
