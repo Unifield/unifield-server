@@ -34,24 +34,20 @@ function initPasswordEyeToggles(root) {
             wrapper.appendChild(nextEl);
         }
 
-        var icon = document.createElement('img');
+        let icon = document.createElement('img');
         icon.src = '/openerp/static/images/eye.png';
         icon.alt = '';
-        icon.title = _('Hold to show password');
+        icon.title = _('Show password');
         icon.style.cssText =
-            'width:12px;height:12px;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;';
+            'width:12px !important;height:12px !important;min-width:12px;min-height:12px;max-width:12px;max-height:12px;' +
+            'object-fit:contain;display:block;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;';
         wrapper.appendChild(icon);
 
-        icon.addEventListener('mousedown', function () {
-            input.type = 'text';
-        });
-
-        icon.addEventListener('mouseup', function () {
-            input.type = 'password';
-        });
-
-        icon.addEventListener('mouseleave', function () {
-            input.type = 'password';
+        icon.addEventListener('click', function () {
+            var revealed = input.type === 'text';
+            input.type = revealed ? 'password' : 'text';
+            icon.title = revealed ? _('Show password') : _('Hide password');
+            icon.src = revealed ? '/openerp/static/images/eye.png' : '/openerp/static/images/eye_hide.png';
         });
     }
 }
