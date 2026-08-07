@@ -132720,12 +132720,6 @@ msgid "Line %s: If the Source Location is \"Expired / Damaged / For Scrap\", you
 msgstr "Ligne %s: Si la Zone Source est \"Expiré / Endommagé / Pour Rebuts\", vous ne pouvez pas sélectionner de zone Stock, de zone Stocks Intermédiaire, de zone Stocks EPREP ou \"Quarantaine (analyse)\" en tant que Zone Destination\n"
 ""
 
-#. module: stock
-#: code:addons/stock/stock_move.py:2589
-#, python-format
-msgid "The selected Destination Location can not be used with the Reason Type \"7 Internal Move\". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
-msgstr "La Zone Destination sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
-
 #. module: stock_override
 #: code:addons/stock_override/wizard/change_dest_location.py:167
 #, python-format
@@ -132733,12 +132727,6 @@ msgid "Line %s: The selected Destination Location can not be used with the Reaso
 ""
 msgstr "Ligne %s: La Zone Destination sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\"\n"
 ""
-
-#. module: stock
-#: code:addons/stock/stock_move.py:2512
-#, python-format
-msgid "The selected Source Location can not be used with the Reason Type \"7 Internal Move\". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
-msgstr "La Zone Source sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
 
 #. module: stock
 #: code:addons/stock/stock_move.py:2532
@@ -132850,3 +132838,15 @@ msgstr "Lignes %s: Si la Zone Destination est \"Destruction\", la seule Zone Sou
 #, python-format
 msgid "You can not select the Destination \"Destruction\" in Incoming Shipments"
 msgstr "Vous ne pouvez pas sélectionner la Destination \"Destruction\" dans les Livraisons Entrantes"
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2540
+#, python-format
+msgid "The Destination Location \"Destruction\" can only be selected if the Source Location is \"Expired / Damaged / For Scrap\""
+msgstr "La Zone Destination \"Desctruction\" peut être sélectionnée uniquement si la zone source est \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2511
+#, python-format
+msgid "The selected Location can not be used with the Reason Type \"7 Internal Move\". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "La Zone sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
