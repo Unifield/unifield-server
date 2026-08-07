@@ -101,5 +101,9 @@ msgid "Field"
 msgstr ""
 
 #: static/javascript/password_eye.js:1
-msgid "Hold to show password"
+msgid "Show password"
+msgstr ""
+
+#: static/javascript/password_eye.js:1
+msgid "Hide password"
 msgstr ""

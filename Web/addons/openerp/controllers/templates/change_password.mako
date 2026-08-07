@@ -18,10 +18,14 @@
             $("#show_password").val(false);
             $("#replace_password").show();
             $("#replace_password").val(Array(pass.length+1).join('\u2022'));
+            var $icon = $("#show_password").parent().find('img');
+            $icon.attr('src', '/openerp/static/images/eye.png');
+            $icon.attr('title', _('Show password'));
             $("#show_password").remove();
             $("#changepasswordform").submit();
         }
     </script>
+    <script type="text/javascript" src="/openerp/static/javascript/password_eye.js"></script>
 </%def>
 
 <%def name="content()">
@@ -64,23 +68,23 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="show_password">${_("Current password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
-                                    <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
+                                    <td style="padding: 3px;"><input type="password" id="show_password" name="show_password" class="db_user_pass js-password-eye" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
+                                    <input id="replace_password" type="text" class="db_user_pass js-eye-overlay-target" style="display:none;"/>
                                     <input type="hidden" name="password" id="password" />
                                     </td>
 
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="show_password">${_("New password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" id="show_new_password" name="new_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
-                                    <input id="new_password" type="text" class="db_user_pass" style="display:none;"/>
+                                    <td style="padding: 3px;"><input type="password" id="show_new_password" name="new_password" class="db_user_pass js-password-eye" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
+                                    <input id="new_password" type="text" class="db_user_pass js-eye-overlay-target" style="display:none;"/>
                                     </td>
 
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="show_password">${_("Confirm new password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" id="show_confirm_password" name="confirm_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
-                                    <input id="confirm_password" type="text" class="db_user_pass" style="display:none;"/>
+                                    <td style="padding: 3px;"><input type="password" id="show_confirm_password" name="confirm_password" class="db_user_pass js-password-eye" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
+                                    <input id="confirm_password" type="text" class="db_user_pass js-eye-overlay-target" style="display:none;"/>
                                     </td>
 
                                 </tr>
