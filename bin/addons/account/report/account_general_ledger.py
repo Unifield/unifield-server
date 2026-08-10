@@ -209,6 +209,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             open_item_period = self.pool.get('account.period').browse(self.cr, self.uid, data['form']['open_items'], fields_to_fetch=['date_start', 'number'])
             self.query += """
                 AND a.reconcile = 't'
+                AND l.date <= '%(period_stop)s'
                 AND (
                             l.reconcile_id is null
                             or exists(
@@ -222,7 +223,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                                 )
                             )
                         )
-            """ % {'period_start': open_item_period.date_start, 'period_number': open_item_period.number}
+            """ % {'period_stop': open_item_period.date_stop, 'period_start': open_item_period.date_start, 'period_number': open_item_period.number}
 
         query = self.query
         if self.reconciled_filter:
