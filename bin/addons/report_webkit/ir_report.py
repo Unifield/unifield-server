@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-# Copyright (c) 2010 Camptocamp SA (http://www.camptocamp.com) 
+# Copyright (c) 2010 Camptocamp SA (http://www.camptocamp.com)
 # All Right Reserved
 #
 # Author : Nicolas Bessi (Camptocamp)
@@ -76,11 +76,11 @@ class ReportXML(osv.osv):
         # report will fail so it's ok.
 
         res = super(ReportXML, self).unlink(
-                                            cursor,
-                                            user,
-                                            ids,
-                                            context
-                                        )
+            cursor,
+            user,
+            ids,
+            context
+        )
         return res
 
     def create(self, cursor, user, vals, context=None):
@@ -89,10 +89,10 @@ class ReportXML(osv.osv):
         if vals.get('report_type','') == 'webkit':
             # I really look forward to virtual functions :S
             register_report(
-                        vals['report_name'],
-                        vals['model'],
-                        vals.get('report_rml', False)
-                        )
+                vals['report_name'],
+                vals['model'],
+                vals.get('report_rml', False)
+            )
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -102,19 +102,19 @@ class ReportXML(osv.osv):
         if isinstance(ids, int):
             ids = [ids,]
         for rep in self.browse(cr, uid, ids, context=context):
-            if rep.report_type != 'webkit':
+            if rep.report_type != 'webkit' or vals.get('report_type', 'webkit') != 'webkit':
                 continue
             if vals.get('report_name', False) and \
-                vals['report_name'] != rep.report_name:
+                    vals['report_name'] != rep.report_name:
                 report_name = vals['report_name']
             else:
                 report_name = rep.report_name
 
             register_report(
-                        report_name,
-                        vals.get('model', rep.model),
-                        vals.get('report_rml', rep.report_rml)
-                        )
+                report_name,
+                vals.get('model', rep.model),
+                vals.get('report_rml', rep.report_rml)
+            )
         res = super(ReportXML, self).write(cr, uid, ids, vals, context)
         return res
 
@@ -122,15 +122,15 @@ class ReportXML(osv.osv):
     _inherit = 'ir.actions.report.xml'
     _columns = {
         'webkit_header':  fields.property(
-                                            'ir.header_webkit',
-                                            type='many2one',
-                                            relation='ir.header_webkit',
-                                            string='WebKit Header',
-                                            help="The header linked to the report",
-                                            method=True,
-                                            view_load=True,
-                                            required=True
-                                        ),
+            'ir.header_webkit',
+            type='many2one',
+            relation='ir.header_webkit',
+            string='WebKit Header',
+            help="The header linked to the report",
+            method=True,
+            view_load=True,
+            required=True
+        ),
         'webkit_debug' : fields.boolean('Webkit debug', help="Enable the webkit engine debugger"),
         'report_webkit_data': fields.text('Webkit Template', help="This template will be used if the main report file is not found"),
     }
