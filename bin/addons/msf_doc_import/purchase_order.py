@@ -449,8 +449,8 @@ class purchase_order(osv.osv):
                 context.pop('no_raise_if_ok')
 
                 # write export on FTP server
-                tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-                tmp_file.write(str(base64.b64decode(file_res['result'])))
+                tmp_file = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+                tmp_file.write(base64.b64decode(file_res['result']))
                 tmp_file.close()
                 rep = ''
                 with open(tmp_file.name, 'rb') as fich:
