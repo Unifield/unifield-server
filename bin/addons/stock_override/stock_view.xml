@@ -419,12 +419,12 @@
                                         <field name="location_id" 
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
                                             domain="[('internal_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id), ('virtual_ok', '!=', 't')]"
-                                            on_change="location_src_change(location_id, parent.type, reason_type_id, location_dest_id)"
+                                            on_change="location_src_change(location_id, parent.type, reason_type_id, location_dest_id, parent.from_wkf)"
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" 
                                             />
                                        <field name="location_dest_id"
                                             domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id), ('output_ok', '=', False), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')]"
-                                            on_change="location_dest_change(location_dest_id, picking_id, product_id, parent.type, reason_type_id, location_id)"
+                                            on_change="location_dest_change(location_dest_id, picking_id, product_id, parent.type, reason_type_id, location_id, parent.from_wkf)"
                                             />
                                     </group>
 
@@ -686,7 +686,7 @@
                                         <field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id), ('id', '!=', location_id)]"
-                                            on_change="location_dest_change(location_dest_id, picking_id, False, parent.type, False, False)"
+                                            on_change="location_dest_change(location_dest_id, picking_id, False, parent.type, False, False, False)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     </group>
@@ -1029,7 +1029,7 @@
                                         <field name="move_cross_docking_ok" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('outgoing_dest', '=', parent.partner_id2)]"
-                                        	on_change="location_dest_change(location_dest_id, picking_id, False, False, False, False)"
+                                        	on_change="location_dest_change(location_dest_id, picking_id, False, False, False, False, False)"
                                             attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                             context="partner_id=parent.partner_id2"
                                         	 />
