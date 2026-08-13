@@ -27,7 +27,7 @@ transport_order_fees_type()
 
 class transport_order_customs_fees(osv.osv):
     _name = 'transport.order.customs.fees'
-    _description = 'Fees'
+    _description = 'Customs Fees'
     _order = 'name, id'
     _trace = True
 
@@ -1047,7 +1047,7 @@ class transport_order_in(osv.osv):
             ('closed', 'Closed'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=1, copy=False),
-        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'transport_in_id', 'Fees', copy=False),
+        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'transport_in_id', 'Customs Fees', copy=False),
         'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'transport_in_id', 'Transport Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_in_id', 'Steps', copy=False),
         'parent_ito_id': fields.many2one('transport.order.in', 'Backorder of', readonly=True, copy=False),
@@ -1506,7 +1506,7 @@ class transport_order_out(osv.osv):
             ('closed', 'Closed'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=1, copy=False),
-        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'transport_out_id', 'Fees', copy=False),
+        'transport_customs_fees_ids': fields.one2many('transport.order.customs.fees', 'transport_out_id', 'Customs Fees', copy=False),
         'transport_transport_fees_ids': fields.one2many('transport.order.transport.fees', 'transport_out_id', 'Transport Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_out_id', 'Steps', copy=False),
         'parent_oto_id': fields.many2one('transport.order.out', 'Backorder of', readonly=True, copy=False),

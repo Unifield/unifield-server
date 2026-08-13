@@ -59,6 +59,14 @@ class patch_scripts(osv.osv):
     }
 
     # UF42.0
+    def us_16107_fix_customs_fees_name(self, cr, uid, *a, **b):
+        '''
+        Change the ir_model name of transport.order.customs.fees from 'Fees' to 'Customs Fees'
+        '''
+        cr.execute("""UPDATE ir_model SET name = 'Customs Fees' WHERE model = 'transport.order.customs.fees'""")
+
+        return True
+
     def us_15901_change_customs_transport_fees(self, cr, uid, *a, **b):
         '''
         Fix the name of existing Customs/Transport Fees, fix the selected fees' type on ITO/OTO and delete unneeded fees

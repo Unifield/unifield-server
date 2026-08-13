@@ -126415,12 +126415,8 @@ msgid "Inbound/Outbound Transport Orders"
 msgstr "Commandes de Transport Entrantes/Sortantes"
 
 #. module: transport_mgmt
-#: model:ir.model,name:transport_mgmt.model_transport_order_customs_fees
-#: field:purchase.order,transport_customs_fees_ids:0
 #: view:transport.order.in:0
-#: field:transport.order.in,transport_customs_fees_ids:0
 #: view:transport.order.out:0
-#: field:transport.order.out,transport_customs_fees_ids:0
 msgid "Fees"
 msgstr "Frais"
 
@@ -127331,8 +127327,11 @@ msgid "Customer Partner"
 msgstr "Partenaire du Client"
 
 #. module: transport_mgmt
+#: model:ir.model,name:transport_mgmt.model_transport_order_customs_fees
 #: view:transport.order.in:0
 #: view:transport.order.out:0
+#: field:transport.order.in,transport_customs_fees_ids:0
+#: field:transport.order.out,transport_customs_fees_ids:0
 msgid "Customs Fees"
 msgstr "Frais de Douane"
 
