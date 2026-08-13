@@ -150,7 +150,6 @@ log = sys.stderr
 
 def warn(*args):
     """Define way to forward logs"""
-    global log
     try:
         log.write(("[%s] UPDATER: " % now())+" ".join([str(x) for x in args])+os.linesep)
     except:
@@ -791,7 +790,6 @@ def do_pg_update():
     stopped = False
     pg_new_db = None
     run_analyze = False
-    re_alter = False
     failed = False
     try:
         env = os.environ
@@ -801,12 +799,8 @@ def do_pg_update():
             env['PGPASSWORD'] = tools.config['db_password']
 
         pg_new = r'..\pgsql-next'
-        if oldVer == '8.4.17':
-            svc = 'PostgreSQL_For_OpenERP'
-            pg_old = r'D:\MSF data\Unifield\PostgreSQL'
-        else:
-            svc = 'Postgres'
-            pg_old = r'..\pgsql'
+        svc = 'Postgres'
+        pg_old = r'..\pgsql'
         if not os.path.exists(pg_old):
             raise RuntimeError('PostgreSQL install directory %s not found.' % pg_old)
 
@@ -847,14 +841,7 @@ def do_pg_update():
             warn("Removing previous %s directory" % pg_new)
             shutil.rmtree(pg_new)
 
-        if oldVer == '8.4.17':
-            warn("Creating %s by selective copy from %s" % (pg_new, pg_old))
-            os.mkdir(pg_new)
-            for d in ('bin', 'lib', 'share'):
-                shutil.copytree(os.path.join(pg_old, d),
-                                os.path.join(pg_new, d))
-        else:
-            shutil.copytree(pg_old, pg_new)
+        shutil.copytree(pg_old, pg_new)
 
         # 2: patch the pg exes -- no trial run here, because if applyPatch
         # fails, we have only left pg_new unusable, and we will revert
@@ -894,37 +881,6 @@ def do_pg_update():
                 f.write("listen_addresses = 'localhost'\n")
                 f.write("shared_buffers = 1024MB\n")
 
-            # 3.5: Alter tables to work around
-            # https://bugs.launchpad.net/openobject-server/+bug/782688
-            cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-A', '-t', '-c',
-                    'select datname from pg_database where not datistemplate and datname != \'postgres\'', 'postgres' ]
-            try:
-                out = subprocess.check_output(cmd, stderr=log, env=env)
-            except subprocess.CalledProcessError as e:
-                warn("alter tables failed to get db list: %s" % e)
-                out = ""
-            dbs = out.split()
-
-            cf = tempfile.NamedTemporaryFile('w', delete=False)
-            for db in dbs:
-                warn("alter tables in %s" % db)
-                cf.write("\\connect \"%s\"\n alter table ir_actions alter column \"name\" drop not null;\n" % db)
-            cf.close()
-            cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-f', cf.name, 'postgres' ]
-            out = None
-            try:
-                out = subprocess.check_output(cmd, stderr=log, env=env)
-            except subprocess.CalledProcessError as e:
-                warn("problem running psql: %s" % e)
-            warn("alter tables output is: ", out)
-            os.remove(cf.name)
-            re_alter = True
-
-            # 3.8: US-3506: remove any dependency on psql service
-            try:
-                subprocess.call('sc config openerp-server-6.0 depend= ""', stdout=log, stderr=log)
-            except OSError as e:
-                warn('Trying to remove the service dependency gave error %s, continuing.'%e)
 
         # 4: stop old service
         subprocess.call('net stop %s' % svc, stdout=log, stderr=log)
@@ -955,33 +911,21 @@ def do_pg_update():
             shutil.rmtree(pg_old_db2, True)
 
         # 6: commit to new bin dir
-        if oldVer == '8.4.17':
-            # Move pg_new to it's final name.
-            os.rename(pg_new, r'..\pgsql')
-            # For 8.4->9.9.x transition, nuke 8.4 install
-            warn("Removing stand-alone PostgreSQL 8.4 installation.")
-            cmd = [ os.path.join(pg_old, 'uninstall-postgresql.exe'),
-                    '--mode', 'unattended',
-                    ]
-            rc = subprocess.call(cmd, stdout=log, stderr=log)
-            warn("PostgreSQL 8.4 uninstall returned %d" % rc)
-            pg_old = r'..\pgsql'
-        else:
-            warn("Rename %s to %s." % (pg_old, pg_trash))
-            shutil.move(pg_old, pg_trash)
-            warn("Rename done.")
+        warn("Rename %s to %s." % (pg_old, pg_trash))
+        shutil.move(pg_old, pg_trash)
+        warn("Rename done.")
 
-            warn("Rename %s to %s." % (pg_new, pg_old))
-            shutil.move(pg_new, pg_old)
-            warn("Rename done.")
+        warn("Rename %s to %s." % (pg_new, pg_old))
+        shutil.move(pg_new, pg_old)
+        warn("Rename done.")
 
-            try:
-                warn("Remove %s." % pg_trash)
-                shutil.rmtree(pg_trash)
-                warn("Remove done.")
-            except Exception as e:
-                s = str(e) or type(e)
-                warn('Unable to delete %s : %s', (pg_trash, s))
+        try:
+            warn("Remove %s." % pg_trash)
+            shutil.rmtree(pg_trash)
+            warn("Remove done.")
+        except Exception as e:
+            s = str(e) or type(e)
+            warn('Unable to delete %s : %s', (pg_trash, s))
 
 
         pgp = os.path.normpath(os.path.join(pg_old, 'bin'))
@@ -991,20 +935,6 @@ def do_pg_update():
             tools.config.save()
         else:
             warn("pg_path is correct")
-
-        # 7: change service entry to the correct install location
-        if oldVer == '8.4.17':
-            cmd = [
-                os.path.join(pg_old, 'bin', 'pg_ctl'),
-                'register', '-N', 'Postgres',
-                '-U', 'openpgsvc',
-                '-P', '0p3npgsvcPWD',
-                '-D', pg_old_db,
-            ]
-            rc = subprocess.call(cmd, stdout=log, stderr=log)
-            if rc != 0:
-                raise RuntimeError("pg_ctl returned %d" % rc)
-            svc = 'Postgres'
 
     except Exception as e:
         failed = True
@@ -1024,21 +954,6 @@ def do_pg_update():
             warn('Starting service %s' % svc)
             subprocess.call('net start %s' % svc, stdout=log, stderr=log)
 
-        # 9. re-alter tables to put the problematic constraint back on
-        if re_alter:
-            cf = tempfile.NamedTemporaryFile('w', delete=False)
-            for db in dbs:
-                warn("alter tables in %s" % db)
-                cf.write("\\connect \"%s\"\n alter table ir_actions alter column \"name\" set not null;\n" % db)
-            cf.close()
-            cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-f', cf.name, 'postgres' ]
-            out = None
-            try:
-                out = subprocess.check_output(cmd, stderr=log, env=env)
-            except subprocess.CalledProcessError as e:
-                warn("problem running psql: %s" % e)
-            warn("re-alter tables output is: ", out)
-            os.remove(cf.name)
 
         if run_analyze:
             cmd = [ os.path.join(r'..\pgsql', 'bin', 'vacuumdb'),
