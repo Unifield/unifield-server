@@ -854,7 +854,13 @@ def do_pg_update():
             # 3: prepare the new db
             pg_old_db = r'D:\MSF data\Unifield\PostgreSQL'
             if not os.path.exists(pg_old_db):
-                raise RuntimeError('Could not find existing PostgreSQL data in %s' % pg_old_db)
+                cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-A', '-t', '-c',
+                        'show data_directory', 'postgres' ]
+                pg_old_db = subprocess.check_output(cmd, stderr=log, text=True, env=env).strip()
+
+                if not os.path.exists(pg_old_db):
+                    raise RuntimeError('Could not find existing PostgreSQL data in %s' % pg_old_db)
+
             pg_new_db = pg_old_db + '-new'
             if os.path.exists(pg_new_db):
                 raise RuntimeError('New data directory %s already exists.' % pg_new_db)
@@ -874,13 +880,11 @@ def do_pg_update():
             if rc != 0:
                 raise RuntimeError("initdb returned %d" % rc)
 
-            # modify the postgresql.conf file for best
-            # defaults
-            pgconf = os.path.join(pg_new_db, "postgresql.conf")
-            with open(pgconf, "a") as f:
-                f.write("listen_addresses = 'localhost'\n")
-                f.write("shared_buffers = 1024MB\n")
-
+            # copy postgresql.conf from old to new (config must be comptible)
+            for conf_to_copy in ['postgresql.conf', 'pg_hba.conf']:
+                pgconf = os.path.join(pg_new_db, conf_to_copy)
+                shutil.move(pgconf, '%s-psql-default.conf' % pgconf)
+                shutil.copy(os.path.join(pg_old_db, conf_to_copy), pgconf)
 
         # 4: stop old service
         subprocess.call('net stop %s' % svc, stdout=log, stderr=log)
@@ -906,8 +910,8 @@ def do_pg_update():
             # we do this with two renames since rmtree/rename sometimes
             # failed (why? due to antivirus still holding files open?)
             pg_old_db2 = pg_old_db + "-trash"
-            os.rename(pg_old_db, pg_old_db2)
-            os.rename(pg_new_db, pg_old_db)
+            shutil.move(pg_old_db, pg_old_db2)
+            shutil.move(pg_new_db, pg_old_db)
             shutil.rmtree(pg_old_db2, True)
 
         # 6: commit to new bin dir
@@ -945,6 +949,9 @@ def do_pg_update():
             if pg_new_db is not None and os.path.exists(pg_new_db):
                 warn("Removing failed DB upgrade directory %s" % pg_new_db)
                 shutil.rmtree(pg_new_db)
+                current_pg_control = os.path.join(pg_old_db, 'global', 'pg_control')
+                if os.path.exists('%s.old' % current_pg_control):
+                    shutil.move('%s.old' % current_pg_control, current_pg_control)
         except Exception:
             # don't know what went wrong, but we must not crash here
             # or else OpenERP-Server will not start.
