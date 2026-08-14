@@ -45,6 +45,7 @@
             <field name="name">location.classification.search</field>
             <field name="model">stock.location</field>
             <field name="type">search</field>
+            <field name="priority" eval="30"/>
             <field name="arch" type="xml">
                 <search string="Location Classification">
                     <filter string="Active" name="filter_active" domain="[('active','=',True)]" icon="terp-check" />
