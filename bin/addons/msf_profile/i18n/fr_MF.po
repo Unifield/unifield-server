@@ -16842,6 +16842,7 @@ msgstr "%s update%s"
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:24
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:101
 #: code:addons/stock/physical_inventory.py:1563
+#: selection:stock.location,external_system_managed_stock:0
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -25205,6 +25206,7 @@ msgstr "Europe/Bucharest"
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:24
 #: code:addons/kit/report/tkc_kcl_comparison_report.py:101
 #: code:addons/stock/physical_inventory.py:1562
+#: selection:stock.location,external_system_managed_stock:0
 #, python-format
 msgid "Yes"
 msgstr "Oui"
