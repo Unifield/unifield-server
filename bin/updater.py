@@ -791,6 +791,7 @@ def do_pg_update():
     pg_new_db = None
     run_analyze = False
     failed = False
+    check_basebackup = False
     try:
         env = os.environ
         if tools.config.get('db_user'):
@@ -912,6 +913,7 @@ def do_pg_update():
             pg_old_db2 = pg_old_db + "-trash"
             shutil.move(pg_old_db, pg_old_db2)
             shutil.move(pg_new_db, pg_old_db)
+            check_basebackup = True
             shutil.rmtree(pg_old_db2, True)
 
         # 6: commit to new bin dir
@@ -952,6 +954,7 @@ def do_pg_update():
                 current_pg_control = os.path.join(pg_old_db, 'global', 'pg_control')
                 if os.path.exists('%s.old' % current_pg_control):
                     shutil.move('%s.old' % current_pg_control, current_pg_control)
+
         except Exception:
             # don't know what went wrong, but we must not crash here
             # or else OpenERP-Server will not start.
@@ -967,6 +970,35 @@ def do_pg_update():
                     '--all', '--analyze-only' ]
             subprocess.call(cmd, stdout=log, stderr=log, env=env)
 
+        if check_basebackup:
+            try:
+                cmd = [ os.path.join(r'..\pgsql', 'bin', 'psql'), '-A', '-t', '-c',
+                        "select setting from pg_settings where name='archive_command' and setting != '(disabled)'", 'postgres' ]
+                archive_command = subprocess.check_output(cmd, stderr=log, text=True, env=env).strip()
+                if archive_command:
+                    warn('Archive command active')
+                    free_size = get_free_space_mb(pg_old_db[0:2])
+                    current_size = get_folder_size_mb(pg_old_db)
+
+                    if current_size*1.1 < free_size:
+                        cmd = [ os.path.join(r'..\pgsql', 'bin', 'psql'), '-A', '-t', '-c',
+                                'select datname from pg_database where not datistemplate and datname != \'postgres\'', 'postgres' ]
+                        out = subprocess.check_output(cmd, stderr=log, text=True, env=env).strip()
+
+                        for db in out.split():
+                            try:
+                                cmd = [os.path.join(r'..\pgsql', 'bin', 'psql'), '-A', '-t', '-c',
+                                       "update backup_config set basebackup_date=NULL where rsync_date > now() - interval '15 days'", db]
+                                r_bb = subprocess.check_output(cmd, stderr=log, text=True, env=env).strip()
+                                warn('Reset base backup on %s : %s' % (db, r_bb))
+                            except Exception as e:
+                                warn('Error when setting cont. bck on %s: %s' % (db, e))
+                    else:
+                        warn('Not enough free disk space %s (used), %s (free) on %s,  basebackup not reset' % (current_size, free_size, pg_old_db))
+
+            except Exception as e:
+                warn('Error when checking cont. bck: %s' % e)
+
         if not failed:
             warn("Update done.")
     return
@@ -981,6 +1013,29 @@ def get_free_space_mb(dirname):
     else:
         st = os.statvfs(dirname)
         return st.f_bavail * st.f_frsize / 1024 / 1024
+
+def get_folder_size_mb(root_folder):
+    total_size = 0
+    # Use a list as a stack for directory paths
+    stack = [root_folder]
+
+    while stack:
+        current_dir = stack.pop()
+        try:
+            with os.scandir(current_dir) as entries:
+                for entry in entries:
+                    try:
+                        # On Windows, entry.stat() does not require a new system call
+                        if entry.is_file(follow_symlinks=False):
+                            total_size += entry.stat(follow_symlinks=False).st_size
+                        elif entry.is_dir(follow_symlinks=False):
+                            stack.append(entry.path)
+                    except (PermissionError, FileNotFoundError):
+                        continue
+        except (PermissionError, FileNotFoundError):
+            continue
+
+    return total_size / 1024 / 1024
 
 #
 # Unit tests follow
