@@ -132789,8 +132789,14 @@ msgstr "Lignes %s: Si les Zones Source et Destination sont une zone Stock, une z
 #. module: stock
 #: code:addons/stock/stock_move.py:2832
 #, python-format
-msgid "Lines %s: If the Reason Type is \"7 Internal Move\", the only authorized Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
-msgstr "Lignes %s: Si le Type de Raison est \"7 Internal Move\", les seules Zones Source et Destination autorisées sont les zones Stock, les zones Stocks Intermédiaire, les zones Stocks EPREP ou \"Quarantaine (analyse)\""
+msgid "Lines %s: If the Reason Type is \"7 Internal Move\", the only authorized Source and Destination in an INT from scratch are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "Lignes %s: Si le Type de Raison est \"7 Internal Move\", les seules Zones Source et Destination autorisées dans un INT créé à partir de rien sont les zones Stock, les zones Stocks Intermédiaire, les zones Stocks EPREP ou \"Quarantaine (analyse)\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2783
+#, python-format
+msgid "Lines %s: If the Reason Type is \"7 Internal Move\", the only authorized Destination in an INT from a flow are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
+msgstr "Lignes %s: Si le Type de Raison est \"7 Internal Move\", les seules Zones Destination autorisées dans un INT créé depuis un flux sont les zones Stock, les zones Stocks Intermédiaire, les zones Stocks EPREP ou \"Quarantaine (analyse)\""
 
 #. module: stock
 #: code:addons/stock/stock_move.py:2597

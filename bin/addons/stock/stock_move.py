@@ -2552,7 +2552,8 @@ class stock_move(osv.osv):
             }
 
     # reason types
-    def location_src_change(self, cr, uid, ids, location_id=False, parent_type=False, rt_id=False, location_dest_id=False, context=None):
+    def location_src_change(self, cr, uid, ids, location_id=False, parent_type=False, rt_id=False, location_dest_id=False,
+                            from_wkf=False,context=None):
         '''
         Tries to define a reason type for the move according to the source location
         '''
@@ -2567,13 +2568,13 @@ class stock_move(osv.osv):
 
             rt_id = vals.get('reason_type_id', rt_id)
             if parent_type == 'internal':
-                if v := self.check_internal_cond(cr, uid, location_id, location_dest_id, rt_id, 'location_id', context=context):
+                if v := self.check_internal_cond(cr, uid, location_id, location_dest_id, rt_id, 'location_id', from_wkf, context=context):
                     return v
 
         return {'value': vals}
 
     def location_dest_change(self, cr, uid, ids, location_dest_id=False, picking_id=False, product_id=False,
-                             parent_type=False, rt_id=False, location_id=False, context=None):
+                             parent_type=False, rt_id=False, location_id=False, from_wkf=False, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
@@ -2605,7 +2606,7 @@ class stock_move(osv.osv):
 
             rt_id = vals.get('reason_type_id', rt_id)
             if parent_type == 'internal':
-                if v := self.check_internal_cond(cr, uid, location_id, location_dest_id, rt_id, 'location_dest_id', context=context):
+                if v := self.check_internal_cond(cr, uid, location_id, location_dest_id, rt_id, 'location_dest_id', from_wkf, context=context):
                     return v
 
             if product_id:
@@ -2757,16 +2758,29 @@ class stock_move(osv.osv):
                 raise osv.except_osv(_('Error'), _('Lines %s: If the Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)", the only authorized Reason Type is "7 Internal Move"')
                                      % (', '.join(lines_pb),))
 
-            # RT 7 Internal Move must have Source and Destination in restr_cross_loc_ids
+            # RT 7 Internal Move must have Source and Destination in restr_cross_loc_ids on an INT not from flow
             lines_pb = []
             cr.execute("""
-                SELECT line_number FROM stock_move
-                WHERE id IN %s AND (location_id NOT IN %s OR location_dest_id NOT IN %s) AND reason_type_id = %s
-            """, (tuple(ids), tuple(restr_cross_loc_ids), tuple(restr_cross_loc_ids), int_move_rt_id))
+                SELECT m.line_number FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id
+                WHERE m.id IN %s AND p.from_wkf = 'f' AND m.reason_type_id = %s
+                    AND (m.location_id NOT IN %s OR m.location_dest_id NOT IN %s)
+            """, (tuple(ids), int_move_rt_id, tuple(restr_cross_loc_ids), tuple(restr_cross_loc_ids)))
             for x in cr.fetchall():
                 lines_pb.append(str(x[0]))
             if lines_pb:
-                raise osv.except_osv(_('Error'), _('Lines %s: If the Reason Type is "7 Internal Move", the only authorized Source and Destination are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                raise osv.except_osv(_('Error'), _('Lines %s: If the Reason Type is "7 Internal Move", the only authorized Source and Destination in an INT from scratch are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
+                                     % (', '.join(lines_pb),))
+
+            # RT 7 Internal Move must have Destination in restr_cross_loc_ids on an INT from flow
+            lines_pb = []
+            cr.execute("""
+                SELECT m.line_number FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id
+                WHERE m.id IN %s AND p.from_wkf = 't' AND m.reason_type_id = %s AND m.location_dest_id NOT IN %s
+            """, (tuple(ids), int_move_rt_id, tuple(restr_cross_loc_ids)))
+            for x in cr.fetchall():
+                lines_pb.append(str(x[0]))
+            if lines_pb:
+                raise osv.except_osv(_('Error'), _('Lines %s: If the Reason Type is "7 Internal Move", the only authorized Destination in an INT from a flow are a Stock location, an Intermediate Stocks location, an EPREP Stocks location or "Quarantine (analyze)"')
                                      % (', '.join(lines_pb),))
 
             # Source is "Expired / Damaged / For Scrap" and Destination should not be in restr_qua_loc_ids
