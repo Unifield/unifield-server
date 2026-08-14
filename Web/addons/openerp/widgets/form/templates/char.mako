@@ -1,5 +1,5 @@
 % if editable:
-    <span class="char">
+    <span class="char" style="position: relative; display: block; width: 100%; height: auto;">
         <input type="${password and 'password' or 'text'}" size="1"
             id="${name}" name="${name}" class="${css_class}${' js-password-eye' if password_with_eye else ''}"
         % if translatable:
@@ -10,7 +10,7 @@
         % endif
             ${py.attrs(attrs, kind=kind, maxlength=size, value=value, required=required and 1 or 0, fld_readonly=1 if readonly_before_state else 0)}/>
         % if translatable and ( not readonly_before_state or ro_by_trans ) :
-            <img src="/openerp/static/images/stock/stock_translate.png" class="translatable" id="${name}_translatable"/>
+            <img src="/openerp/static/images/stock/stock_translate.png" class="translatable" id="${name}_translatable" width="16" height="16" style="position: absolute; top: 50%; right: 4px; transform: translateY(-50%);"/>
             <script type="text/javascript">
                 jQuery(idSelector('${name}_translatable')).click(function() {
                     var params = {
