@@ -898,6 +898,10 @@ def do_pg_update():
                     '-B', os.path.join(pg_new, 'bin'),
                     '-d', pg_old_db, '-D', pg_new_db, '-k', '-v',
                     ]
+            if tools.config.get('pg_cpu'):
+                cmd += ['-j', tools.config['pg_cpu']]
+
+            warn('%s' % cmd)
             rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
             if rc != 0:
                 raise RuntimeError("pg_upgrade returned %d" % rc)
