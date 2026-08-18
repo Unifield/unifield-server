@@ -295,8 +295,8 @@ class employee_ledger(report_sxw.rml_parse, common_report_header):
             "ON (l.journal_id = j.id) " \
             "LEFT JOIN account_account acc " \
             "ON (l.account_id = acc.id) " \
-            "LEFT JOIN res_currency c ON (l.currency_id=c.id)" \
-            "LEFT JOIN account_move m ON (m.id=l.move_id)" \
+            "LEFT JOIN res_currency c ON (l.currency_id=c.id) " \
+            "LEFT JOIN account_move m ON (m.id=l.move_id) " \
             "WHERE l.employee_id = %s " \
             "AND l.account_id = (SELECT id FROM account_account WHERE code = %s LIMIT 1) "
             "AND " + self.query + " " \

@@ -250,7 +250,7 @@ class sale_order(osv.osv):
                            'FROM sale_order AS sale, res_partner AS part ' \
                            'WHERE sale.id NOT IN ' \
                            '(SELECT rel.order_id ' \
-                           'FROM sale_order_invoice_rel AS rel) and sale.state != \'cancel\'' \
+                           'FROM sale_order_invoice_rel AS rel) and sale.state != \'cancel\' ' \
                            'AND sale.partner_id = part.id ' \
                            'AND sale.order_type = \'regular\' AND part.partner_type != \'internal\'')
             res.extend(cursor.fetchall())

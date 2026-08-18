@@ -150,7 +150,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 "SELECT id as partner_id, name "
                 "FROM res_partner "
                 "WHERE active IN %s "
-                "AND name != 'To be defined'"
+                "AND name != 'To be defined' "
                 "ORDER BY name;",
                 (active_selection,))
             res = self.cr.dictfetchall()
@@ -252,8 +252,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             "ON (l.journal_id = j.id) " \
             "LEFT JOIN account_account acc " \
             "ON (l.account_id = acc.id) " \
-            "LEFT JOIN res_currency c ON (l.currency_id=c.id)" \
-            "LEFT JOIN account_move m ON (m.id=l.move_id)" \
+            "LEFT JOIN res_currency c ON (l.currency_id=c.id) " \
+            "LEFT JOIN account_move m ON (m.id=l.move_id) " \
             "WHERE l.partner_id = %s " \
             "AND l.account_id = (SELECT id FROM account_account WHERE code = %s LIMIT 1) "
             "AND " + self.query + " " \

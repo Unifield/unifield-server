@@ -5318,8 +5318,8 @@ class orm(orm_template):
     def exists(self, cr, uid, ids, context=None):
         if type(ids) in (int, int):
             ids = [ids]
-        query = 'SELECT count(1) FROM "%s"' % (self._table)
-        cr.execute(query + "WHERE ID IN %s", (tuple(ids),))  # not_a_user_entry
+        query = 'SELECT count(1) FROM "%s" ' % (self._table)
+        cr.execute(query + " WHERE ID IN %s", (tuple(ids),))  # not_a_user_entry
         return cr.fetchone()[0] == len(ids)
 
     def check_recursion(self, cr, uid, ids, context=None, parent=None):
