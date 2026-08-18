@@ -190,7 +190,7 @@ class email_signature_notification(osv.osv):
         for email_sign_notif in self.browse(cr, uid, ids, context=context):
             if is_reminder:
                 # Only send a new reminder to signature lines that had their first reminder less than 30 days ago
-                sql_date_where = """signl.latest_reminder_sent_date IS NOT NULL AND EXTRACT(DAY FROM (NOW() - signl.latest_reminder_sent_date)) <= 30"""
+                sql_date_where = """signl.first_reminder_sent_date IS NOT NULL AND EXTRACT(DAY FROM (NOW() - signl.first_reminder_sent_date)) <= 30"""
             else:
                 sql_date_where = """signl.first_reminder_sent_date IS NULL"""
 
