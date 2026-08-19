@@ -837,7 +837,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if created_ids:
             # Set all booking amount to 0 for revaluation lines
             cr.execute('UPDATE account_move_line '
-                       'SET debit_currency = 0, credit_currency = 0, amount_currency = 0'
+                       'SET debit_currency = 0, credit_currency = 0, amount_currency = 0 '
                        'WHERE id IN %s', (tuple(created_ids),))
             if form.revaluation_method == 'liquidity_month' and form.period_id:
                 period_obj.write(cr, uid, form.period_id.id, {'is_revaluated': True}, context=context)

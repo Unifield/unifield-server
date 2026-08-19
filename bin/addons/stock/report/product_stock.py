@@ -70,8 +70,8 @@ class report_stock(report_int):
         cr.execute("select sum(r.product_qty * u.factor), r.date, r.product_id "
                    "from stock_move r left join product_uom u on (r.product_uom=u.id) "
                    "where state IN %s"
-                   "and location_id IN %s"
-                   "and product_id IN %s"
+                   "and location_id IN %s "
+                   "and product_id IN %s "
                    "group by date,product_id",(('confirmed','assigned','waiting'),tuple(loc_ids) ,tuple(product_ids),))
         for (qty, dt, prod_id) in cr.fetchall():
             if dt<=dt_from:
@@ -83,9 +83,9 @@ class report_stock(report_int):
 
         cr.execute("select sum(r.product_qty * u.factor), r.date, r.product_id "
                    "from stock_move r left join product_uom u on (r.product_uom=u.id) "
-                   "where state IN %s"
-                   "and location_dest_id IN %s"
-                   "and product_id IN %s"
+                   "where state IN %s "
+                   "and location_dest_id IN %s "
+                   "and product_id IN %s "
                    "group by date,product_id",(('confirmed','assigned','waiting'),tuple(loc_ids) ,tuple(product_ids),))
 
         for (qty, dt, prod_id) in cr.fetchall():
