@@ -480,6 +480,7 @@ ocp_export_wizard()
 class waca_fin_sync(osv.osv):
     _name = 'waca.fin.sync'
     _inherit = 'ocp.fin.sync'
+    __logger = logging.getLogger('waca.fin.sync')
 
     @jsonrpc_orm_exposed('waca.fin.sync', 'generate_session')
     def generate_session(self, cr, uid, model, client_key, full=False):
@@ -608,5 +609,191 @@ class waca_fin_sync(osv.osv):
         'hr.employee': _get_hr_employee,
         'account.journal': _get_journal,
     }
+
+    def _import_expat_employee(self, cr, uid, data):
+        hr_obj = self.pool.get('hr.employee')
+        if not isinstance(data, dict):
+            raise osv.except_osv('Error', "A dictionnary must by used: {'name': XXX, 'identification_id': YYY}")
+
+        if not data.get('identification_id') or not data['identification_id'].strip():
+            raise osv.except_osv('Error', '"identification_id" value cannot be empty (name: %s)' % (data.get('name'), ))
+        identification_id = data['identification_id'].strip()
+
+        if not data.get('name') or not data['name'].strip():
+            raise osv.except_osv('Error', '"name" value cannot be empty (identification_id: %s)' % (identification_id, ))
+        name = data['name'].strip()
+
+        c_data = {
+            'name': name,
+            'employee_type': 'ex',
+        }
+
+        if data.get('creation_date'):
+            try:
+                time.strptime(data['creation_date'], '%Y-%m-%d')
+                c_data['expat_creation_date'] = data['creation_date']
+            except:
+                raise osv.except_osv('Error', '"creation_date %s must be a date, format: YYYY-MM-DD' % (data['creation_date'], ))
+
+        expat_id = hr_obj.search(cr, uid, [('identification_id', '=ilike', identification_id), ('employee_type', '=', 'ex'), ('active', 'in', ['t','f'])])
+
+        if not expat_id:
+            c_data['identification_id'] = identification_id
+            c_data['active'] = False
+            hr_obj.create(cr, uid, c_data)
+            return 'created'
+
+        if not hr_obj.search_exists(cr, uid, [('id', '=', expat_id[0]), ('name', '=', c_data['name']), ('active', 'in', ['t','f'])]):
+            hr_obj.write(cr, uid, expat_id[0], c_data)
+            return 'updated'
+
+        return ''
+
+    @jsonrpc_orm_exposed('waca.fin.sync', 'import_expat_employees')
+    def import_expat_employees(self, cr, uid, datas):
+        return self.import_records(cr, uid, datas, update_method=self._import_expat_employee, all_or_nothing=False)
+
+
+    def _import_currency(self, cr, uid, data):
+        cur_obj = self.pool.get('res.currency')
+        if not isinstance(data, dict):
+            raise osv.except_osv('Error', "A dictionnary must by used: {'code': XXX, 'name_fr': 'YYY', 'name_en': 'ZZZ'}")
+
+        for mandat_field in ['code', 'name_fr', 'name_en']:
+            if not data.get(mandat_field) or not data[mandat_field].strip():
+                raise osv.except_osv('Error', f'"{mandat_field}" cannot be empty')
+
+        cur_id = cur_obj.search(cr, uid, [('name', '=ilike', data['code'].strip()), ('active', 'in', ['t','f'])])
+
+        if not cur_id:
+            cur_id = cur_obj.create(cr, uid, {
+                'name': data['code'].strip(),
+                'currency_name': data['name_en'].strip()
+            }, context={'lang': 'en_MF'})
+            cur_obj.write(cr, uid, cur_id, {'currency_name': data['name_fr'].strip()}, context={'lang': 'fr_MF'})
+            return 'created'
+
+        updated = False
+        for lang, value in [('en_MF', data['name_en'].strip()), ('fr_MF', data['name_fr'].strip())]:
+            if not cur_obj.search_exists(cr, uid, [('id', '=', cur_id[0]), ('currency_name', '=ilike', value), ('active', 'in', ['t','f'])], context={'lang': lang}):
+                cur_obj.write(cr, uid, cur_id[0], {'currency_name': value}, context={'lang': lang})
+                updated = True
+
+        if updated:
+            return 'updated'
+
+        return ''
+
+    @jsonrpc_orm_exposed('waca.fin.sync', 'import_currencies')
+    def import_currencies(self, cr, uid, datas):
+        return self.import_records(cr, uid, datas, update_method=self._import_currency, all_or_nothing=False)
+
+
+    def _import_rate(self, cr, uid, data):
+        cur_obj = self.pool.get('res.currency')
+        rate_obj = self.pool.get('res.currency.rate')
+        if not isinstance(data, dict):
+            raise osv.except_osv('Error', "A dictionnary must by used: {'currency': XXX, 'date': 'YYYY-MM-DD', 'rate': 33.3333}")
+
+        for mandat_field in ['currency', 'date', 'rate']:
+            if not data.get(mandat_field):
+                raise osv.except_osv('Error', f'"{mandat_field}" cannot be empty')
+
+
+        try:
+            time.strptime(data['date'], '%Y-%m-%d')
+        except:
+            raise osv.except_osv('Error', '"date" %s must be a date, format: YYYY-MM-DD' % data['date'])
+
+
+        try:
+            rate = round(data['rate'], 6)
+        except:
+            raise osv.except_osv('Error', '"rate" %s must be float' % data['rate'])
+
+        cur_id = cur_obj.search(cr, uid, [('name', '=ilike', data['currency'].strip()), ('active', 'in', ['t','f'])])
+        if not cur_id:
+            raise osv.except_osv('Error', '"currency" %s does not exist' % data['currency'])
+
+        rate_id = rate_obj.search(cr, uid, [('currency_id', '=', cur_id[0]), ('name', '=', data['date'])])
+        if not rate_id:
+            rate_obj.create(cr, uid, {
+                'currency_id': cur_id[0],
+                'name': data['date'],
+                'rate': rate
+            })
+            return 'created'
+
+        if not rate_obj.search_exists(cr, uid, [('id', '=', rate_id[0]), ('rate', '=', rate)]):
+            rate_obj.write(cr, uid, rate_id[0], {'rate': rate})
+            return 'updated'
+
+        return ''
+
+    @jsonrpc_orm_exposed('waca.fin.sync', 'import_rates')
+    def import_rates(self, cr, uid, datas):
+        return self.import_records(cr, uid, datas, update_method=self._import_rate, all_or_nothing=False)
+
+
+    def import_records(self, cr, uid, datas, update_method, all_or_nothing=True):
+        updated = 0
+        created = 0
+        error = 0
+        errors = []
+        record = 0
+        if isinstance(datas, dict):
+            datas = [datas]
+        elif not isinstance(datas, list):
+            return {
+                'success': False,
+                'error': "Datas attribute must be a list of dictionnaries [{'key_1': 'value_1', 'key_2': 'value_2'}] or a single dictionnary {'key_1': 'value_1', 'key_2': 'value_2'}",
+                'nb_errors': 1,
+                'nb_created': 0,
+                'nb_updated': 0,
+                'nb_processed': 0,
+            }
+
+        rollback = cr.rollback
+        cr.rollback = lambda: None
+        commit = cr.commit
+        cr.commit = lambda: None
+        for data in datas:
+            try:
+                cr.execute("SAVEPOINT import_record")
+                record += 1
+                action = update_method(cr, uid, data)
+                if action == 'created':
+                    created += 1
+                elif action == 'updated':
+                    updated += 1
+                cr.execute("RELEASE SAVEPOINT import_record")
+            except Exception as e:
+                self.__logger.exception('Record %d: %s' % (record, e))
+                error += 1
+                errors.append({'line': data, 'error': f'{e}'})
+                cr.execute("ROLLBACK TO SAVEPOINT import_record")
+
+        cr.rollback = rollback
+        cr.commit = commit
+        if error:
+            if all_or_nothing:
+                cr.rollback()
+                created = 0
+                updated = 0
+            return {
+                'success': False,
+                'nb_errors': error,
+                'nb_created': created,
+                'nb_updated': updated,
+                'nb_processed': record,
+                'error': errors,
+            }
+        return {
+            'success': True,
+            'nb_created': created,
+            'nb_updated': updated,
+            'nb_processed': record,
+            'nb_errors': 0,
+        }
 
 waca_fin_sync()
