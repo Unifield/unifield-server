@@ -452,6 +452,7 @@ class stock_picking(osv.osv):
             context = {}
 
         data_obj = self.pool.get('ir.model.data')
+        move_obj = self.pool.get('stock.move')
 
         if ids:
             doc_type = self.browse(cr, uid, ids[0], fields_to_fetch=['type'], context=context).type
@@ -461,17 +462,19 @@ class stock_picking(osv.osv):
                 loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
                 loss_children_rt_ids = self.pool.get('stock.reason.type').search(cr, uid, [('parent_id', '=', loss_rt_id)], context=context)
                 destr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_destruction')[1]
+                ret_qua_scrap_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine_scrap')[1]
                 exp_dam_scrap_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
                 destr_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+                qua_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
                 restr_qua_loc_ids = [
                     data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
                     data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1],
                     data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')[1],
-                    data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
+                    qua_loc_id
                 ]
                 child_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'in', restr_qua_loc_ids)], context=context)
                 restr_qua_loc_ids.extend(child_loc_ids)
-                for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines'], context=context):
+                for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines', 'reason_type_id', 'from_wkf'], context=context):
                     moves_to_update_rt = []
                     for move in pick.move_lines:
                         # INT move not to update RT if:
@@ -489,19 +492,36 @@ class stock_picking(osv.osv):
                                 or (loc_id == exp_dam_scrap_loc_id and loc_dest_id == destr_loc_id and rt_id == destr_rt_id)\
                                 or (vals['reason_type_id'] == destr_rt_id and (loc_id != exp_dam_scrap_loc_id or loc_dest_id != destr_loc_id))
 
-                        if not int_move_ignore and move.location_dest_id and \
+                        if (not int_move_ignore and move.location_dest_id and \
                                 (not (not move.location_dest_id.virtual_location and
                                       (move.location_dest_id.usage == 'inventory' or move.location_dest_id.scrap_location)) \
-                                 or (doc_type == 'internal' and move.location_dest_id.id == destr_loc_id)):
+                                 or (doc_type == 'internal' and move.location_dest_id.id == destr_loc_id)))\
+                                or (doc_type == 'in' and vals['reason_type_id'] == ret_qua_scrap_rt_id and vals.get('sub_reason_type_id')):
                             moves_to_update_rt.append(move.id)
                     if moves_to_update_rt:
-                        self.pool.get('stock.move').write(cr, uid, moves_to_update_rt,
-                                                          {'reason_type_id': vals['reason_type_id']}, context=context)
+                        # Change the moves RT and destination using the sub-RT if the header RT is 25 Return Qua & Exp/Dam/Scrap
+                        if doc_type == 'in' and vals['reason_type_id'] == ret_qua_scrap_rt_id and vals.get('sub_reason_type_id'):
+                            loc_dest_id = vals['sub_reason_type_id'] == data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine')[1]\
+                                          and qua_loc_id or exp_dam_scrap_loc_id
+                            move_vals = {'reason_type_id': vals['sub_reason_type_id'], 'location_dest_id': loc_dest_id}
+                            move_obj.write(cr, uid, moves_to_update_rt, move_vals, context=context)
+                        else:
+                            ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+                            ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+                            move_vals = {'reason_type_id': vals['reason_type_id']}
+                            # If the RT of the IN from scratch is changed from 25 to 4/5, set the destinations to Input
+                            if doc_type == 'in' and not pick.from_wkf and pick.reason_type_id.id == ret_qua_scrap_rt_id and\
+                                    vals['reason_type_id'] in [ret_rt_id, ext_rt_id]:
+                                move_vals['location_dest_id'] = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+                            move_obj.write(cr, uid, moves_to_update_rt, move_vals, context=context)
             if doc_type == 'in':
                 if vals.get('partner_id2'):
                     vals['ext_cu'] = False
                 if vals.get('ext_cu'):
                     vals.update({'partner_id': False, 'partner_id2': False, 'address_id': False})
+                if vals.get('reason_type_id') != data_obj.get_object_reference(cr, uid, 'reason_types_moves',
+                                                                               'reason_type_return_quarantine_scrap')[1]:
+                    vals['sub_reason_type_id'] = False
 
         return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
 
@@ -569,7 +589,7 @@ class stock_picking(osv.osv):
             }
         return {}
 
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, type, context=None):
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, type, reason_type_id, context=None):
         '''
         Change the delivery address when the partner change.
         '''
@@ -578,6 +598,7 @@ class stock_picking(osv.osv):
 
         v = {}
         d = {}
+        warn_msg = {}
 
         move_obj = self.pool.get('stock.move')
         partner = False
@@ -588,6 +609,10 @@ class stock_picking(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
             d.update({'address_id': [('partner_id', '=', partner_id)]})
             v.update({'is_esc': partner.partner_type == 'esc'})
+            if type == 'in' and partner.partner_type != 'external' and reason_type_id == self.pool.get('ir.model.data').\
+                    get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine_scrap')[1]:
+                v.update({'reason_type_id': False, 'sub_rt_required': False, 'sub_reason_type_id': False})
+                warn_msg = _('You can only select the Reason Type "25 Return Quarantine & Expired / Damaged / For Scrap" if the Partner is External')
 
         if address_id:
             addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
@@ -640,17 +665,17 @@ class stock_picking(osv.osv):
                 move_ids = move_obj.search(cr, uid, [('picking_id', '=', ids[0]), ('location_id', '!=', default_loc)], context=context)
                 if not picking.from_wkf and move_ids and picking.type == 'in':
                     move_obj.write(cr, uid, move_ids, {'location_id': default_loc}, context=context)
-                    return {
-                        'value': v,
-                        'domain': d,
-                        'warning': {
-                            'title': _('Warning'),
-                            'message': _('The source location of lines has been changed according to the new partner'),
-                        }
-                    }
+                    if warn_msg:
+                        warn_msg = _('The source location of lines has been changed according to the new partner\n%s')\
+                                   % (warn_msg,)
+                    else:
+                        warn_msg = _('The source location of lines has been changed according to the new partner')
+                    return {'value': v, 'domain': d, 'warning': {'title': _('Warning'), 'message': warn_msg}}
 
-        return {'value': v,
-                'domain': d}
+        res = {'value': v, 'domain': d}
+        if warn_msg:
+            res['warning'] = {'title': _('Warning'), 'message': warn_msg}
+        return res
 
     def return_to_state(self, cr, uid, ids, context=None):
         '''
@@ -922,8 +947,8 @@ class stock_picking(osv.osv):
 
         move_obj = self.pool.get('stock.move')
         move_ids = move_obj.search(cr, uid, [('state', '=', 'draft'), ('picking_id', 'in', ids)], context=context)
-        # Check locations and RT on moves in INTs from scratch
-        if context.get('from_button') and context.get('picking_type') == 'internal_move':
+        # Check locations and RT on moves in INs/INTs from scratch
+        if context.get('from_button') and context.get('picking_type') in ['incoming_shipment', 'internal_move']:
             move_obj.check_moves_loc_reason_type(cr, uid, move_ids, context=context)
 
         res = super(stock_picking, self).draft_force_assign(cr, uid, ids)

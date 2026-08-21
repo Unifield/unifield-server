@@ -110,7 +110,8 @@ class stock_reason_type(osv.osv):
             name = record.name
             code = record.code
             if record.parent_id:
-                name = record.parent_id.name + ' / ' + name
+                if not record.no_complete_name:
+                    name = record.parent_id.name + ' / ' + name
                 code = str(record.parent_id.code) + '.' + str(code)
             res.append((record.id, '%s %s' % (code, name)))
         return res
@@ -128,7 +129,13 @@ class stock_reason_type(osv.osv):
     def _search_is_fs_in(self, cr, uid, obj, name, args, context=None):
         for arg in args:
             if arg[0] == 'is_fs_in' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
-                return [('code', 'in', [1, 4, 5]), ('parent_id', '=', False)]
+                return [('code', 'in', [1, 4, 5, 25]), ('parent_id', '=', False)]
+        return []
+
+    def _search_is_fs_in_sub(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[0] == 'is_fs_in_sub' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
+                return [('code', 'in', [1, 21, 22, 23, 24]), ('parent_id', '!=', False), ('sub_reason_type', '=', True)]
         return []
 
     _columns = {
@@ -146,8 +153,11 @@ class stock_reason_type(osv.osv):
         'internal_ok': fields.boolean(string='Available for internal picking ?'),
         'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
         'pi_discrepancy_type': fields.boolean(string="Is an Adjustment Type in the Physical Inventory's Discrepancy lines"),
+        'sub_reason_type': fields.boolean(string="Is a Sub-Reason type"),
+        'no_complete_name': fields.boolean(string="Only uses its own name for the complete_name"),
         'is_fs_out': fields.function(tools.misc.get_fake, type='boolean', string='For FS out', method=True, fnct_search=_search_is_fs_out),
         'is_fs_in': fields.function(tools.misc.get_fake, type='boolean', string='For FS in', method=True, fnct_search=_search_is_fs_in),
+        'is_fs_in_sub': fields.function(tools.misc.get_fake, type='boolean', string='For FS in sub-RT', method=True, fnct_search=_search_is_fs_in_sub),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -402,13 +412,27 @@ class stock_picking(osv.osv):
 
         return [('reason_type_id', 'in', [loan_id, loan_return_id])]
 
+    def _get_sub_rt_required(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        ret_qua_scrap_rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves',
+                                                                               'reason_type_return_quarantine_scrap')[1]
+        for pick in self.read(cr, uid, ids, ['reason_type_id'], context=context):
+            if pick['reason_type_id'] and pick['reason_type_id'][0] == ret_qua_scrap_rt_id:
+                res[pick['id']] = True
+            else:
+                res[pick['id']] = False
+
+        return res
+
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
+        'sub_reason_type_id': fields.many2one('stock.reason.type', string='Sub-Reason type'),
         'is_donation': fields.function(_get_is_donation, string='Is Donation ?', method=True, type='boolean', fnct_search=_search_is_donation),
         'is_loan': fields.function(_get_is_loan, string='Is Loan ?', method=True, type='boolean', fnct_search=_search_is_loan),
+        'sub_rt_required': fields.function(_get_sub_rt_required, string='Is the Sub-Reason type required ?', method=True, type='boolean'),
     }
 
-    def on_change_reason_type_id(self, cr, uid, ids, reason_type_id, type, context=None):
+    def on_change_reason_type_id(self, cr, uid, ids, reason_type_id, type, partner_id, context=None):
         if context is None:
             context = {}
 
@@ -418,14 +442,40 @@ class stock_picking(osv.osv):
             int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
             ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
             return_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            ret_qua_scrap_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine_scrap')[1]
 
-            if reason_type_id not in (int_rt_id, ext_rt_id, return_rt_id):
+            if reason_type_id not in (int_rt_id, ext_rt_id, return_rt_id, ret_qua_scrap_rt_id):
                 return {'value': {'reason_type_id': False, 'ret_from_unit_rt': False},
                         'warning': {'title': _('Error'), 'message': _('You can not select this Reason Type manually')}}
             elif reason_type_id == return_rt_id:
-                return {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False, 'address_id': False}}
+                res = {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False,
+                                 'address_id': False, 'sub_rt_required': False, 'sub_reason_type_id': False}}
+                pick = self.read(cr, uid, ids[0], ['reason_type_id'], context=context)
+                # From RT 25 Return Quarantine & Expired / Damaged / For Scrap to RT 4 Return from Unit
+                if pick['reason_type_id'] and pick['reason_type_id'][0] == ret_qua_scrap_rt_id:
+                    res['warning'] = {
+                        'title': _('Warning'),
+                        'message': _('All Destination Locations will be set to "Input". Please review and update the Destination Locations if needed')
+                    }
+                return res
+            elif reason_type_id == ret_qua_scrap_rt_id:
+                if partner_id and self.pool.get('res.partner').read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type'] != 'external':
+                    return {
+                        'value': {'reason_type_id': False, 'sub_reason_type_id': False, 'sub_rt_required': False},
+                        'warning': {'title': _('Warning'), 'message': _('You can only select the Reason Type "25 Return Quarantine & Expired / Damaged / For Scrap" if the Partner is External')}
+                    }
+                return {'value': {'ret_from_unit_rt': False, 'sub_rt_required': True}}
             else:
-                return {'value': {'ret_from_unit_rt': False}}
+                res = {'value': {'ret_from_unit_rt': False, 'sub_rt_required': False, 'sub_reason_type_id': False}}
+                if ids and reason_type_id == ext_rt_id:
+                    pick = self.read(cr, uid, ids[0], ['reason_type_id'], context=context)
+                    # From RT 25 Return Quarantine & Expired / Damaged / For Scrap to RT 5 External Supply
+                    if pick['reason_type_id'] and pick['reason_type_id'][0] == ret_qua_scrap_rt_id:
+                        res['warning'] = {
+                            'title': _('Warning'),
+                            'message': _('All Destination Locations will be set to "Input". Please review and update the Destination Locations if needed')
+                        }
+                return res
         elif type == 'internal' and reason_type_id == data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]:
             return {
                 'value': {'reason_type_id': False},
@@ -433,6 +483,32 @@ class stock_picking(osv.osv):
             }
 
         return {}
+
+    def on_change_sub_reason_type_id(self, cr, uid, ids, sub_reason_type_id, type, context=None):
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+        res = {}
+        if type == 'in':
+            ret_loss_rt_ids = [
+                data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_damage')[1],
+                data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_scrap')[1],
+                data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_expiry')[1],
+                data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_batch_recall')[1],
+            ]
+            if sub_reason_type_id == data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine')[1]:
+                res['warning'] = {
+                    'title': _('Warning'),
+                    'message': _('All products moved with this sub-reason type will be sent to the "Quarantine (analyze)" Location')
+                }
+            elif sub_reason_type_id in ret_loss_rt_ids:
+                res['warning'] = {
+                    'title': _('Warning'),
+                    'message': _('All products moved with this sub-reason type will be sent to the "Expired / Damaged / For Scrap" Location')
+                }
+
+        return res
 
     _constraints = [
         (_check_reason_type, _invalid_reason_type_msg, ['reason_type_id', ]),

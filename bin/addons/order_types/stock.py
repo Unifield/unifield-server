@@ -252,7 +252,7 @@ class stock_picking(osv.osv):
                     )
 
                 # Check locations and RT in INTs from scratch
-                if pick.type == 'internal' and not pick.from_wkf:
+                if pick.type in ['in', 'internal'] and not pick.from_wkf:
                     move_ids = [move.id for move in pick.move_lines]
                     self.pool.get('stock.move').check_moves_loc_reason_type(cr, uid, move_ids, context=context)
 

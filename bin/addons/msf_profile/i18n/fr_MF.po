@@ -7761,8 +7761,9 @@ msgstr "Unreconcile date"
 msgid "PERUVIAN NUEVO SOL"
 msgstr "PERUVIAN NUEVO SOL"
 
-#. module: stock_override
+#. module: stock_override, stock
 #: model:stock.location,name:stock_override.stock_location_quarantine_analyze
+#: code:addons/stock/stock_move.py:2514
 msgid "Quarantine (analyze)"
 msgstr "Quarantaine (analyse)"
 
@@ -42276,8 +42277,9 @@ msgstr "MEXICAN PESO"
 msgid "Line of the wizard to return products from a PPL"
 msgstr "Line of the wizard to return products from a PPL"
 
-#. module: stock_override
+#. module: stock_override, stock
 #: model:stock.location,name:stock_override.stock_location_quarantine_scrap
+#: code:addons/stock/stock_move.py:2514
 msgid "Expired / Damaged / For Scrap"
 msgstr "Expiré / Endommagé / Pour Rebuts"
 
@@ -77097,6 +77099,14 @@ msgstr "La zone source des lignes a été changée avec la valeur présente en e
 #, python-format
 msgid "The source location of lines has been changed according to the new partner"
 msgstr "La zone source des lignes a été changée en fonction du nouveau partenaire"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:669
+#, python-format
+msgid "The source location of lines has been changed according to the new partner\n"
+"%s"
+msgstr "La zone source des lignes a été changée en fonction du nouveau partenaire\n"
+"%s"
 
 #. modules: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:571
@@ -132857,3 +132867,121 @@ msgstr "La Zone Destination \"Desctruction\" peut être sélectionnée uniquemen
 #, python-format
 msgid "The selected Location can not be used with the Reason Type \"7 Internal Move\". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
 msgstr "La Zone sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
+
+#. module: reason_types_moves
+#: field:stock.reason.type,sub_reason_type:0
+msgid "Is a Sub-Reason type"
+msgstr "Est un Sous-type de Raison"
+
+#. module: reason_types_moves
+#: field:stock.reason.type,no_complete_name:0
+msgid "Only uses its own name for the complete_name"
+msgstr "Utilise uniquement son propre nom avec complete_name"
+
+#. module: reason_types_moves
+#: code:addons/reason_types_moves/reason_type.py:456
+#: code:addons/reason_types_moves/reason_type.py:471
+#, python-format
+msgid "All Destination Locations will be set to \"Input\". Please review and update the Destination Locations if needed"
+msgstr "Toutes les Zones Destination réglées en \"Entrée\". Si besoin, veuillez vérifier et mettre à jour les Zones Destination"
+
+#. module: reason_types_moves
+#: code:addons/reason_types_moves/reason_type.py:502
+#, python-format
+msgid "All products moved with this sub-reason type will be sent to the \"Expired / Damaged / For Scrap\" Location"
+msgstr "Tous les produits déplacés avec ce sous-type de raison seront envoyés vers la Zone \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: reason_types_moves
+#: code:addons/reason_types_moves/reason_type.py:497
+#, python-format
+msgid "All products moved with this sub-reason type will be sent to the \"Quarantine (analyze)\" Location"
+msgstr "Tous les produits déplacés avec ce sous-type de raison seront envoyés vers la Zone \"Quarantaine (analyse)\""
+
+#. module: reason_types_moves
+#: field:stock.picking,sub_rt_required:0
+msgid "Is the Sub-Reason type required ?"
+msgstr "Est-ce que le Sous-type de Raison est obligatoire ?"
+
+#. module: reason_types_moves
+#: field:stock.picking,sub_reason_type_id:0
+msgid "Sub-Reason type"
+msgstr "Sous-type de Raison"
+
+#. modules: stock_override, reason_types_moves
+#: code:addons/reason_types_moves/reason_type.py:462
+#: code:addons/stock_override/stock.py:615
+#, python-format
+msgid "You can only select the Reason Type \"25 Return Quarantine & Expired / Damaged / For Scrap\" if the Partner is External"
+msgstr "Vous pouvez uniquement sélectionner le Type de Raison \"25 Retour Quarantaine & Expiré / Endommagé / Pour Rebuts\" si le Partenaire est Externe"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_return_quarantine
+msgid "Return Quarantine"
+msgstr "Retour Quarantaine"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_return_quarantine_scrap
+msgid "Return Quarantine & Expired / Damaged / For Scrap"
+msgstr "Retour Quarantaine & Expiré / Endommagé / Pour Rebuts"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_return_loss_batch_recall
+msgid "Return Loss / Batch Recall"
+msgstr "Retour Perte / Rappel de Lot"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_return_loss_damage
+msgid "Return Loss / Damage"
+msgstr "Retour Perte / Dommage"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_return_loss_expiry
+msgid "Return Loss / Expiry"
+msgstr "Retour Perte / Expiration"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_return_loss_scrap
+msgid "Return Loss / Scrap"
+msgstr "Retour Perte / Détruit"
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2497
+#, python-format
+msgid "If the Reason Type is \"25.1 Return Quarantine\", the only authorized Destination Location is \"Quarantine (analyze)\""
+msgstr "Si le Type de Raison est \"25.1 Retour Quarantaine\", la seule Zone Destination autorisée est \"Quarantaine (analyse)\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2505
+#, python-format
+msgid "If the Reason Type is \"25.21 Return Loss / Damage\", \"25.22 Return Loss / Scrap\", \"25.23 Return Loss / Expiry\" or \"25.24 Return Loss / Batch Recall\", the only authorized Destination Location is \"Expired / Damaged / For Scrap\""
+msgstr "Si le Type de Raison est \"25.21 Retour Perte / Dommage\", \"25.22 Retour Perte / Détruit\", \"25.23 Retour Perte / Expiration\" ou \"25.24 Retour Perte / Rappel de Lot\", la seule Zone Destination autorisée est \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2513
+#, python-format
+msgid "The Destination Location \"%s\" can not be manually selected if the Reason Type is \"4 Return from unit\" or \"5 External Supply\""
+msgstr "La Zone Destination \"%s\" ne peut pas être sélectionnée manuellement si le Type de Raison est \"4 Retour d'UdC\" or \"5 Approvisionnement externe\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2805
+#, python-format
+msgid "Lines %s: If the Reason Type is \"25.1 Return Quarantine\", the only authorized Destination Location is \"Quarantine (analyze)\""
+msgstr "Lignes %s: Si le Type de Raison est \"25.1 Retour Quarantaine\", la seule Zone Destination autorisée est \"Quarantaine (analyse)\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2817
+#, python-format
+msgid "Lines %s: If the Reason Type is \"25.21 Return Loss / Damage\", \"25.22 Return Loss / Scrap\", \"25.23 Return Loss / Expiry\" or \"25.24 Return Loss / Batch Recall\", the only authorized Destination Location is \"Expired / Damaged / For Scrap\""
+msgstr "Lignes %s: Si le Type de Raison est \"25.21 Retour Perte / Dommage\", \"25.22 Retour Perte / Détruit\", \"25.23 Retour Perte / Expiration\" ou \"25.24 Retour Perte / Rappel de Lot\", la seule Zone Destination autorisée est \"Expiré / Endommagé / Pour Rebuts\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2829
+#, python-format
+msgid "Lines %s: The Destination Location \"Quarantine (analyze)\" and \"Expired / Damaged / For Scrap\" can not be manually selected if the Reason Type is \"4 Return from unit\""
+msgstr "Lignes %s: Les Zones Destination \"Quarantine (analyze)\" et \"Expiré / Endommagé / Pour Rebuts\" ne peuvent pas être sélectionnées manuellement si le Type de Raison est \"4 Retour d'UdC\""
+
+#. module: stock
+#: code:addons/stock/stock_move.py:2841
+#, python-format
+msgid "Lines %s: The Destination Location \"Quarantine (analyze)\" and \"Expired / Damaged / For Scrap\" can not be manually selected if the Reason Type is \"5 External Supply\""
+msgstr "Lignes %s: Les Zones Destination \"Quarantine (analyze)\" et \"Expiré / Endommagé / Pour Rebuts\" ne peuvent pas être sélectionnées manuellement si le Type de Raison est \"5 Approvisionnement externe\""

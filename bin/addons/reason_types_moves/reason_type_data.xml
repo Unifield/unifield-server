@@ -222,5 +222,62 @@
             <field name="complete_code">23.00</field>
             <field name="internal_ok">True</field>
         </record>
+
+        <record id="reason_type_return_quarantine_scrap" model="stock.reason.type">
+            <field name="name">Return Quarantine &amp; Expired / Damaged / For Scrap</field>
+            <field name="code">25</field>
+            <field name="complete_code">25.00</field>
+            <field name="incoming_ok">True</field>
+        </record>
+
+        <record id="reason_type_return_quarantine" model="stock.reason.type">
+            <field name="name">Return Quarantine</field>
+            <field name="code">1</field>
+            <field name="complete_code">25.01</field>
+            <field name="parent_id" ref="reason_type_return_quarantine_scrap" />
+            <field name="incoming_ok">True</field>
+            <field name="sub_reason_type">True</field>
+            <field name="no_complete_name">True</field>
+        </record>
+
+        <record id="reason_type_return_loss_damage" model="stock.reason.type">
+            <field name="name">Return Loss / Damage</field>
+            <field name="code">21</field>
+            <field name="complete_code">25.21</field>
+            <field name="parent_id" ref="reason_type_return_quarantine_scrap" />
+            <field name="incoming_ok">True</field>
+            <field name="sub_reason_type">True</field>
+            <field name="no_complete_name">True</field>
+        </record>
+
+        <record id="reason_type_return_loss_scrap" model="stock.reason.type">
+            <field name="name">Return Loss / Scrap</field>
+            <field name="code">22</field>
+            <field name="complete_code">25.22</field>
+            <field name="parent_id" ref="reason_type_return_quarantine_scrap" />
+            <field name="incoming_ok">True</field>
+            <field name="sub_reason_type">True</field>
+            <field name="no_complete_name">True</field>
+        </record>
+
+        <record id="reason_type_return_loss_expiry" model="stock.reason.type">
+            <field name="name">Return Loss / Expiry</field>
+            <field name="code">23</field>
+            <field name="complete_code">25.23</field>
+            <field name="parent_id" ref="reason_type_return_quarantine_scrap" />
+            <field name="incoming_ok">True</field>
+            <field name="sub_reason_type">True</field>
+            <field name="no_complete_name">True</field>
+        </record>
+
+        <record id="reason_type_return_loss_batch_recall" model="stock.reason.type">
+            <field name="name">Return Loss / Batch Recall</field>
+            <field name="code">24</field>
+            <field name="complete_code">25.24</field>
+            <field name="parent_id" ref="reason_type_return_quarantine_scrap" />
+            <field name="incoming_ok">True</field>
+            <field name="sub_reason_type">True</field>
+            <field name="no_complete_name">True</field>
+        </record>
     </data>
 </openerp>
