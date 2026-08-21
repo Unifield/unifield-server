@@ -734,6 +734,41 @@ class waca_fin_sync(osv.osv):
     def import_rates(self, cr, uid, datas):
         return self.import_records(cr, uid, datas, update_method=self._import_rate, all_or_nothing=False)
 
+    @jsonrpc_orm_exposed('waca.fin.sync', 'import_hq_entries')
+    def import_hq_entries(self, cr, uid, datas):
+        cr.cache_import_data = {
+            'funding_pool': {
+                'private_fund': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            }
+        }
+        try:
+            return self.import_records(cr, uid, datas, update_method=self._import_hq_entry, all_or_nothing=True)
+        finally:
+            cr.cache_import_data = {}
+
+    def _import_hq_entry(self, cr, uid, data):
+
+        fields_order = ['description', 'reference', 'document_date', 'posting_date', 'account_code', 'third_party', 'amount', 'currency', 'destination', 'cost_center', 'funding_pool']
+        optionnal = ['third_party', 'destination', 'funding_pool']
+        line = []
+
+        for f in fields_order:
+            if not data.get(f) and f not in optionnal:
+                raise osv.except_osv('Error', f'Field {f} is required')
+            if f in ('document_date', 'posting_date'):
+                try:
+                    line.append(time.strftime('%d/%m/%Y', time.strptime(data[f], '%Y-%m-%d')))
+                except:
+                    raise osv.except_osv('Error', f'"{f}" {data[f]} must be a date, format: YYYY-MM-DD')
+
+            else:
+                line.append(data.get(f))
+
+        #Free 1, free2
+        line += ['', '']
+        if self.pool.get('hq.entries.import').update_hq_entries(cr, uid, line, cr.cache_import_data):
+            return 'created'
+        return ''
 
     def import_records(self, cr, uid, datas, update_method, all_or_nothing=True):
         updated = 0
