@@ -21,6 +21,7 @@
 
 from osv import osv
 from osv import fields
+from reason_types_moves import reason_type
 
 from specific_rules.specific_rules import SHORT_SHELF_LIFE_MESS
 
@@ -757,18 +758,26 @@ class stock_move(osv.osv):
             else:
                 location_dest_id = False
 
+            # Change the reason_type_id if needed
+            reason_type_id = picking.reason_type_id.id
+            if picking.type == 'in' and not picking.from_wkf and picking.sub_reason_type_id:
+                reason_type_id = picking.sub_reason_type_id.id
+
             values = {'picking_id': parent_id,
                       'product_id': p_data['id'],
                       'product_uom': p_data['uom_id'][0],
                       'date': picking.date,
                       'date_expected': picking.min_date,
-                      'reason_type_id': picking.reason_type_id.id,
+                      'reason_type_id': reason_type_id,
                       'location_id': location_id,
                       'location_dest_id': location_dest_id,
                       'name': p_data['name'],
                       }
 
-            values.update(self.onchange_product_id(cr, uid, False, p_data['id'], location_id, location_dest_id, picking.address_id and picking.address_id.id or False, picking.type, False).get('value', {}))
+
+            values.update(self.onchange_product_id(cr, uid, False, p_data['id'], location_id, location_dest_id,
+                                                   picking.address_id and picking.address_id.id or False, picking.type,
+                                                   False, False, False, False, False, reason_type_id).get('value', {}))
 
             values.update({'product_qty': p_data['import_product_qty']})
 
