@@ -309,7 +309,7 @@
                             <field name="details"  attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="reason_type_id" widget="selection"
                                    domain="[('internal_ok', '=', True)]"
-                                   on_change="on_change_reason_type_id(reason_type_id, type)"
+                                   on_change="on_change_reason_type_id(reason_type_id, type, False)"
                                    attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_wkf', '=', True)], 'required': [('state', '=', 'draft'), ('from_wkf', '=', False)]}"/>
                             <field name="incoming_id" />
