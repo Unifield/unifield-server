@@ -545,6 +545,10 @@ Error(s):
                     remote.move_to_process_path(filename, success=False)
                     self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
             finally:
+                if context.get('nb_rejected_po_vi_lines'):
+                    context.pop('nb_rejected_po_vi_lines')
+                if context.get('nb_rejected_in_vi_lines'):
+                    context.pop('nb_rejected_in_vi_lines')
                 if orig_file_name:
                     self.end_processing_filename(orig_file_name)
 
