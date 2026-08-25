@@ -30,27 +30,31 @@ class labels(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'range': range,
-            'get_pack_weight': self.get_pack_weight,
+            'getMissingPack': self.getMissingPack,
         })
 
-    def get_pack_weight(self, stock_picking, pack_num):
-        '''
-        Return weight of the given pack
-        stock.picking.pack_family_memory_ids => pack.family.memory.ppl_id
-        '''
-        res_pack = self.pool.get('pack.family.memory').search(self.cr, self.uid, [
-            ('ppl_id', '=', stock_picking.id),
-            ('from_pack', '<=', pack_num),
-            ('to_pack', '>=', pack_num),
-        ])
-        weight = 0.0
-        if res_pack:
-            res_pack = self.pool.get('pack.family.memory').browse(self.cr, self.uid, res_pack[0])
-            weight = res_pack.weight
+    def getMissingPack(self, stock_picking):
+        if not stock_picking.pack_family_memory_ids:
+            return []
+        missing = []
+        if stock_picking.pack_family_memory_ids[0].from_pack != 1:
+            if stock_picking.pack_family_memory_ids[0].from_pack == 2:
+                missing.append('1')
+            else:
+                missing.append('1 - %s' % (stock_picking.pack_family_memory_ids[0].from_pack - 1))
+        max_pack = len(stock_picking.pack_family_memory_ids)
+        index = 1
+        while index < max_pack:
+            if stock_picking.pack_family_memory_ids[index].from_pack != stock_picking.pack_family_memory_ids[index-1].to_pack + 1:
+                missing_from = stock_picking.pack_family_memory_ids[index-1].to_pack + 1
+                missing_to = stock_picking.pack_family_memory_ids[index].from_pack - 1
+                if missing_to == missing_from:
+                    missing.append('%s'%missing_to)
+                else:
+                    missing.append('%s - %s' % (missing_from, missing_to))
+            index += 1
 
-        return str(weight)
-
-
+        return missing
 
     def set_context(self, objects, data, ids, report_type=None):
         '''
