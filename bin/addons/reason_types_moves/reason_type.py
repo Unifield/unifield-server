@@ -450,13 +450,14 @@ class stock_picking(osv.osv):
             elif reason_type_id == return_rt_id:
                 res = {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False,
                                  'address_id': False, 'sub_rt_required': False, 'sub_reason_type_id': False}}
-                pick = self.read(cr, uid, ids[0], ['reason_type_id'], context=context)
-                # From RT 25 Return Quarantine & Expired / Damaged / For Scrap to RT 4 Return from Unit
-                if pick['reason_type_id'] and pick['reason_type_id'][0] == ret_qua_scrap_rt_id:
-                    res['warning'] = {
-                        'title': _('Warning'),
-                        'message': _('All Destination Locations will be set to "Input". Please review and update the Destination Locations if needed')
-                    }
+                if ids:
+                    pick = self.read(cr, uid, ids[0], ['reason_type_id'], context=context)
+                    # From RT 25 Return Quarantine & Expired / Damaged / For Scrap to RT 4 Return from Unit
+                    if pick['reason_type_id'] and pick['reason_type_id'][0] == ret_qua_scrap_rt_id:
+                        res['warning'] = {
+                            'title': _('Warning'),
+                            'message': _('All Destination Locations will be set to "Input". Please review and update the Destination Locations if needed')
+                        }
                 return res
             elif reason_type_id == ret_qua_scrap_rt_id:
                 if partner_id and self.pool.get('res.partner').read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type'] != 'external':
