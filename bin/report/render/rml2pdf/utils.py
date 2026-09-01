@@ -113,7 +113,7 @@ def _child_get(node, self=None, tagname=None):
         if (tagname is None) or (n.tag==tagname):
             yield n
 
-def _process_text(self, txt):
+def _process_text(self, txt, no_shape=False):
     if not self.localcontext:
         return str2xml(txt)
     if not txt:
@@ -142,6 +142,8 @@ def _process_text(self, txt):
                 result += str2xml(txt)
             elif txt and (txt is not None) and (txt is not False):
                 result += ustr(txt)
+    if no_shape:
+        return result
     return get_display(arabic_reshaper.reshape(result))
 
 def text_get(node):

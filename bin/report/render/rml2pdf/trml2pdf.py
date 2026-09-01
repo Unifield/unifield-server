@@ -573,7 +573,7 @@ class _rml_canvas(object):
         fontname = node.get('name')
         if fontname not in pdfmetrics.getRegisteredFontNames()\
                 or fontname not in pdfmetrics.standardFonts:
-                # let reportlab attempt to find it
+            # let reportlab attempt to find it
             try:
                 pdfmetrics.getFont(fontname)
             except Exception:
@@ -846,7 +846,7 @@ class _rml_flowable(object):
                     import base64
                     newtext = node.text
                     if self.localcontext:
-                        newtext = utils._process_text(self, node.text or '')
+                        newtext = utils._process_text(self, node.text or '', no_shape=True)
                     image_data = base64.b64decode(newtext)
                 if not image_data:
                     self._logger.debug("No inline image data")

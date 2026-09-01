@@ -8760,7 +8760,7 @@ msgstr "Message ESC 2"
 msgid "The currency used to enter statement"
 msgstr "Devise utilisée pour entrer les relevés"
 
-#. modules: register_accounting, account_hq_entries, msf_homere_interface, msf_doc_import, account, product_asset, msf_accrual
+#. modules: register_accounting, account_hq_entries, msf_homere_interface, msf_doc_import, account, product_asset, msf_accrual, msf_outgoing
 #: field:msf.doc.import.accounting,filename:0
 #: field:hq.entries.import,filename:0
 #: field:hr.expat.employee.import,filename:0
@@ -8774,6 +8774,7 @@ msgstr "Devise utilisée pour entrer les relevés"
 #: field:product.asset.import.entries,filename:0
 #: field:msf.accrual.import,filename:0
 #: field:import.asset.reference,filename:0
+#: field:sde.import,filename:0
 msgid "Imported filename"
 msgstr "Nom du fichier importé"
 
@@ -74776,6 +74777,7 @@ msgstr "Has identifier"
 #. module: msf_outgoing
 #: report:packing.list:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:414
+#: report:addons/msf_outgoing/report/dispatched_packing_list_xls.mako:228
 msgid "NO PACK FAMILIES IN THIS PPL"
 msgstr "ACUNE FAMILLE DE COLIS DANS CETTE LPC"
 
@@ -84512,7 +84514,7 @@ msgstr "OPW"
 msgid "Sourced-n line"
 msgstr "Ligne sourcée-n"
 
-#. modules: analytic_distribution, sales_followup, register_accounting, reason_types_moves, msf_homere_interface, stock_override, consumption_calculation, sale, specific_rules, order_types, msf_tools, mission_stock, msf_doc_import, stock, product, acccount, msf_supply_doc_export, account, product_asset, msf_accrual
+#. modules: analytic_distribution, sales_followup, register_accounting, reason_types_moves, msf_homere_interface, stock_override, consumption_calculation, sale, specific_rules, order_types, msf_tools, mission_stock, msf_doc_import, stock, product, acccount, msf_supply_doc_export, account, product_asset, msf_accrual, msf_outgoing
 #: field:import.commitment.wizard,in_progress:0
 #: view:product.history.consumption:0
 #: selection:product.history.consumption,fake_status:0
@@ -84566,6 +84568,7 @@ msgstr "Ligne sourcée-n"
 #: selection:product.asset.import.entries,state:0
 #: selection:msf.accrual.import,state:0
 #: selection:import.asset.reference,state:0
+#: view:sde.import.pagination:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"
@@ -100896,10 +100899,11 @@ msgstr "Num chq"
 msgid "Rec?"
 msgstr "Lett?"
 
-#. module: register_accounting, stock_override, msf_doc_import
+#. module: register_accounting, stock_override, msf_doc_import, msf_outgoing
 #: report:addons/register_accounting/report/fully_report_xls.mako:569
 #: selection:stock.picking.cancel.wizard,doc_type:0
 #: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:366
+#: view:sde.import:0
 msgid "OUT"
 msgstr "SORTANT"
 
@@ -122434,8 +122438,9 @@ msgstr "Energie"
 msgid "IT"
 msgstr "IT"
 
-#. module: product_asset
+#. modules: product_asset, msf_outgoing
 #: model:product.asset.event.type,name:product_asset.asset_event_type_missing
+#: report:labels:0
 msgid "Missing"
 msgstr "Manquant"
 
@@ -125757,6 +125762,7 @@ msgstr "Mis à jour par SDE"
 #: model:ir.actions.act_window,name:msf_outgoing.action_sde_import
 #: model:ir.ui.menu,name:msf_outgoing.sde_import_menu
 #: view:sde.import:0
+#: model:ir.model,name:msf_outgoing.model_sde_import
 msgid "SDE Tools"
 msgstr "Outils SDE"
 
@@ -132867,6 +132873,21 @@ msgstr "La Zone Destination \"Desctruction\" peut être sélectionnée uniquemen
 #, python-format
 msgid "The selected Location can not be used with the Reason Type \"7 Internal Move\". Please use a Stock location, an Intermediate Stocks location, an EPREP Stocks location or \"Quarantine (analyze)\""
 msgstr "La Zone sélectionnée ne peut pas être utilisée avec le Type de Raison \"7 Mouvement Interne\". Veuillez utiliser une zone Stock, une zone Stocks Intermédiaire, une zone Stocks EPREP ou \"Quarantaine (analyse)\""
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Gaps in parcel sequence:"
+msgstr "Écarts dans les séquences:"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "of"
+msgstr "sur"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "parcels printed"
+msgstr "colis imprimé"
 
 #. module: reason_types_moves
 #: field:stock.reason.type,sub_reason_type:0
