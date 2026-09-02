@@ -1525,8 +1525,8 @@ class stock_move(osv.osv):
         picking = False
         sync_dpo_in = False
         if vals.get('picking_id', False):
-            picking = pick_obj.read(cr, uid, vals['picking_id'], ['move_sequence_id', 'type', 'reason_type_id',
-                                                                  'sync_dpo_in', 'sale_id', 'purchase_id'], context=context)
+            ftf = ['move_sequence_id', 'type', 'reason_type_id', 'sync_dpo_in', 'sale_id', 'purchase_id', 'from_wkf', 'sub_reason_type_id']
+            picking = pick_obj.read(cr, uid, vals['picking_id'], ftf, context=context)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
                 sequence_id = picking['move_sequence_id'][0]
@@ -1598,9 +1598,23 @@ class stock_move(osv.osv):
 
         # Change the reason type if needed
         if picking and picking['type'] in ('in', 'out') and not vals.get('reason_type_id'):
-            vals['reason_type_id'] = picking['reason_type_id'][0]
+            ret_qua_scrap_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine_scrap')[1]
+            if picking['type'] == 'in' and not picking['from_wkf'] and picking['reason_type_id'][0] == ret_qua_scrap_rt_id\
+                    and picking['sub_reason_type_id']:
+                vals['reason_type_id'] = picking['sub_reason_type_id'][0]
+            else:
+                vals['reason_type_id'] = picking['reason_type_id'][0]
 
-        return super(stock_move, self).create(cr, uid, vals, context=context)
+        new_move_id = super(stock_move, self).create(cr, uid, vals, context=context)
+
+        # Check locations and RT in the new move of the IN from scratch
+        if picking and not picking['from_wkf'] and picking['type'] == 'in':
+            context['from_button'] = True
+            self.check_moves_loc_reason_type(cr, uid, [new_move_id], context=context)
+            if 'from_button' in context:
+                context.pop('from_button')
+
+        return new_move_id
 
     def _check_locations_active(self, cr, uid, ids, context=None):
         if isinstance(ids, int):
