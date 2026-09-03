@@ -926,10 +926,7 @@ class stock_picking(osv.osv):
         if context.get('from_button') and context.get('picking_type') == 'internal_move':
             move_obj.check_moves_loc_reason_type(cr, uid, move_ids, context=context)
 
-        res = super(stock_picking, self).draft_force_assign(cr, uid, ids)
-        move_obj.action_confirm(cr, uid, move_ids, context=context)
-
-        return res
+        return super(stock_picking, self).draft_force_assign(cr, uid, ids)
 
     def is_invoice_needed(self, cr, uid, sp=None, invoice_type=None):
         """
