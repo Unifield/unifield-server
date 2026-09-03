@@ -2510,6 +2510,14 @@ class stock_move(osv.osv):
                     'message': _('If the Reason Type is "25.1 Return Quarantine", the only authorized Destination Location is "Quarantine (analyze)"')
                 }
             }
+        if location_dest_id == quarantine_loc_id and rt_id != ret_qua_rt_id:
+            return {
+                'value': {kind: False},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('The Destination Location "Quarantine (analyze)" can not be manually selected if the Reason Type is not "25.1 Return Quarantine"')
+                }
+            }
         if rt_id in ret_loss_rt_ids and location_dest_id != exp_dam_scrap_loc_id:
             return {
                 'value': {kind: exp_dam_scrap_loc_id},
@@ -2518,13 +2526,12 @@ class stock_move(osv.osv):
                     'message': _('If the Reason Type is "25.21 Return Loss / Damage", "25.22 Return Loss / Scrap", "25.23 Return Loss / Expiry" or "25.24 Return Loss / Batch Recall", the only authorized Destination Location is "Expired / Damaged / For Scrap"')
                 }
             }
-        if rt_id in [ret_rt_id, ext_rt_id] and location_dest_id in [quarantine_loc_id, exp_dam_scrap_loc_id]:
+        if location_dest_id == exp_dam_scrap_loc_id and rt_id not in ret_loss_rt_ids:
             return {
                 'value': {kind: False},
                 'warning': {
                     'title': _('Warning'),
-                    'message': _('The Destination Location "%s" can not be manually selected if the Reason Type is "4 Return from unit" or "5 External Supply"')
-                               % (location_dest_id == quarantine_loc_id and _('Quarantine (analyze)') or _('Expired / Damaged / For Scrap'),)
+                    'message': _('The Destination Location "Expired / Damaged / For Scrap" can not be manually selected if the Reason Type is not "25.21 Return Loss / Damage", "25.22 Return Loss / Scrap", "25.23 Return Loss / Expiry" or "25.24 Return Loss / Batch Recall"')
                 }
             }
 
@@ -2790,8 +2797,6 @@ class stock_move(osv.osv):
                     data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_expiry')[1],
                     data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_batch_recall')[1],
                 ]
-                ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-                ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
                 
                 # RT 25.1 must have Destination in qua_loc_id on an IN not from flow
                 lines_pb = []
@@ -2805,6 +2810,18 @@ class stock_move(osv.osv):
                     raise osv.except_osv(_('Error'), _('Lines %s: If the Reason Type is "25.1 Return Quarantine", the only authorized Destination Location is "Quarantine (analyze)"')
                                          % (', '.join(lines_pb),))
                     
+                # Destination qua_loc_id must have RT 25.1 on an IN not from flow
+                lines_pb = []
+                cr.execute("""
+                    SELECT m.line_number FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id
+                    WHERE m.id IN %s AND p.from_wkf = 'f' AND m.reason_type_id != %s AND m.location_dest_id = %s
+                """, (tuple(ids), ret_qua_rt_id, qua_loc_id))
+                for x in cr.fetchall():
+                    lines_pb.append(str(x[0]))
+                if lines_pb:
+                    raise osv.except_osv(_('Error'), _('Lines %s: The Destination Location "Quarantine (analyze)" can not be manually selected if the Reason Type is not "25.1 Return Quarantine"')
+                                         % (', '.join(lines_pb),))
+
                 # RT 25.21/22/23/24 must have Destination in exp_dam_scrap_loc_id on an IN not from flow
                 lines_pb = []
                 cr.execute("""
@@ -2817,28 +2834,16 @@ class stock_move(osv.osv):
                     raise osv.except_osv(_('Error'), _('Lines %s: If the Reason Type is "25.21 Return Loss / Damage", "25.22 Return Loss / Scrap", "25.23 Return Loss / Expiry" or "25.24 Return Loss / Batch Recall", the only authorized Destination Location is "Expired / Damaged / For Scrap"')
                                          % (', '.join(lines_pb),))
 
-                # RT 4 Return from unit can not have Destination in qua_loc_id/exp_dam_scrap_loc_id on an IN not from flow
+                # Destination exp_dam_scrap_loc_id must have RT 25.21/22/23/24 on an IN not from flow
                 lines_pb = []
                 cr.execute("""
                     SELECT m.line_number FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id
-                    WHERE m.id IN %s AND p.from_wkf = 'f' AND m.reason_type_id = %s AND m.location_dest_id IN %s
-                """, (tuple(ids), ret_rt_id, tuple([qua_loc_id, exp_dam_scrap_loc_id])))
+                    WHERE m.id IN %s AND p.from_wkf = 'f' AND m.reason_type_id NOT IN %s AND m.location_dest_id = %s
+                """, (tuple(ids), tuple(ret_loss_rt_ids), exp_dam_scrap_loc_id))
                 for x in cr.fetchall():
                     lines_pb.append(str(x[0]))
                 if lines_pb:
-                    raise osv.except_osv(_('Error'), _('Lines %s: The Destination Location "Quarantine (analyze)" and "Expired / Damaged / For Scrap" can not be manually selected if the Reason Type is "4 Return from unit"')
-                                         % (', '.join(lines_pb),))
-
-                # RT 5 External Supply can not have Destination in qua_loc_id/exp_dam_scrap_loc_id on an IN not from flow
-                lines_pb = []
-                cr.execute("""
-                    SELECT m.line_number FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id
-                    WHERE m.id IN %s AND p.from_wkf = 'f' AND m.reason_type_id = %s AND m.location_dest_id IN %s
-                """, (tuple(ids), ext_rt_id, tuple([qua_loc_id, exp_dam_scrap_loc_id])))
-                for x in cr.fetchall():
-                    lines_pb.append(str(x[0]))
-                if lines_pb:
-                    raise osv.except_osv(_('Error'), _('Lines %s: The Destination Location "Quarantine (analyze)" and "Expired / Damaged / For Scrap" can not be manually selected if the Reason Type is "5 External Supply"')
+                    raise osv.except_osv(_('Error'), _('Lines %s: The Destination Location "Expired / Damaged / For Scrap" can not be manually selected if the Reason Type is not "25.21 Return Loss / Damage", "25.22 Return Loss / Scrap", "25.23 Return Loss / Expiry" or "25.24 Return Loss / Batch Recall"')
                                          % (', '.join(lines_pb),))
             elif context.get('picking_type') == 'internal_move':
                 int_move_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
