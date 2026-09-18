@@ -1587,7 +1587,7 @@ class account_invoice(osv.osv):
         prop_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.name
 
         data = {
-            'ids': context.get('active_ids', []),
+            'ids': ids,
             'model': 'account.invoice',
         }
 
