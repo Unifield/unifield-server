@@ -1594,6 +1594,7 @@ class account_invoice(osv.osv):
             'type': 'ir.actions.report.xml',
             'report_name': 'account.export_invoice',
             'datas': data,
+            'context': context,
         }
 
     def import_invoice(self, cr, uid, ids, data, context=None):
