@@ -1586,10 +1586,8 @@ class account_invoice(osv.osv):
         report_date = time.strftime('%Y%m%d')
         prop_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.name
 
-        data = {
-            'ids': ids,
-            'model': 'account.invoice',
-        }
+        if not data:
+            data = {}
 
         data['target_filename'] = '%s_Export - Invoice_%s' % (prop_instance, report_date)
 
