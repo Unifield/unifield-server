@@ -1190,6 +1190,7 @@ class stock_picking(osv.osv):
             'dpo_out': False,
             'new_dpo_out': False,
             'auto_picking': False,
+            'sub_reason_type_id': False,
         }
         for reset_f in to_reset:
             if reset_f not in default:

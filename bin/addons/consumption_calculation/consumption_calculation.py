@@ -1856,6 +1856,17 @@ class product_product(osv.osv):
         return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1] # code 16
         replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1] # code 17
         internal_return = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_return')[1] # code 18
+        ret_qua_scrap_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine_scrap')[1] # code 25
+        ret_qua_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine')[1] # code 25.1
+        ret_loss_dam_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_damage')[1] # code 25.21
+        ret_loss_scrap_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_scrap')[1] # code 25.22
+        ret_loss_exp_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_expiry')[1] # code 25.23
+        ret_loss_br_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_batch_recall')[1] # code 25.24
+
+        all_return_rt_ids = [return_id, return_good_id, ret_qua_scrap_rt_id, ret_qua_rt_id, ret_loss_dam_rt_id,
+                             ret_loss_scrap_rt_id, ret_loss_exp_rt_id, ret_loss_br_rt_id]
+        all_return_repla_rt_ids = all_return_rt_ids.copy()
+        all_return_repla_rt_ids.append(replacement_id)
 
         src_locations = context.get('histo_src_location_ids') or context.get('amc_location_ids')
         dest_locations = context.get('histo_dest_location_ids')
@@ -1865,8 +1876,8 @@ class product_product(osv.osv):
         #    out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
         #    domain += [
         #        '|',
-        #        '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
-        #        '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_dest_id', 'in', src_locations)
+        #        '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), ('reason_type_id', 'not in', all_return_repla_rt_ids), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
+        #        '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', all_return_rt_ids), ('location_dest_id', 'in', src_locations)
         #    ]
 
 
@@ -1895,17 +1906,17 @@ class product_product(osv.osv):
             if ext_partners:
                 domain += [
                     '|',
-                    '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                    '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', all_return_repla_rt_ids),
                     '|',
                     ('location_dest_id', 'in', dest_locations),
                     '&', ('picking_subtype', 'in', ['standard', 'picking']), ('partner_id', 'in', ext_partners),
-                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', all_return_rt_ids), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
                 ]
             else:
                 domain += [
                     '|',
-                    '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
-                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
+                    '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('reason_type_id', 'not in', all_return_repla_rt_ids),
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', all_return_rt_ids), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
                 ]
 
             int_return_qery = '''
@@ -1941,16 +1952,16 @@ class product_product(osv.osv):
                         '&', '&', '&', '&', '&',
                         ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
                         # SRC INTERNAL, DEST: EXTERNAL OR EXTERNAL PARTNER
-                        '&', '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
+                        '&', '&', '&', ('type', '=', 'out'), ('reason_type_id', 'not in', all_return_repla_rt_ids), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations),
                         '|',
                         ('location_dest_id', 'in', dest_locations),
                         '&', ('picking_subtype', 'in', ['standard', 'picking']), ('partner_id', 'in', ext_partners),
-                        '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
+                        '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', all_return_rt_ids), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
                     ]
                 else:
                     domain += [
                         '&', '&', '&', '&',
-                        ('type', '=', 'out'), ('picking_subtype', 'in', ['standard', 'picking']), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('partner_id', 'in', ext_partners),
+                        ('type', '=', 'out'), ('picking_subtype', 'in', ['standard', 'picking']), ('reason_type_id', 'not in', all_return_repla_rt_ids), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('partner_id', 'in', ext_partners),
                     ]
             else:
                 domain += [
@@ -1961,8 +1972,8 @@ class product_product(osv.osv):
                     '&', '&', '&', '&', '&',
                     ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
                     # SRC INTERNAL , DEST: EXTERNAL
-                    '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
-                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
+                    '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('reason_type_id', 'not in', all_return_repla_rt_ids),
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', all_return_rt_ids), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
                 ]
 
             #INT chained return from unit wher src.In= dest and dest.INT = src
@@ -1992,14 +2003,14 @@ class product_product(osv.osv):
                 domain += [
                     '|',
                     '&', '&', '&', ('location_id', 'in', internal_locations), ('type', '=', 'out'), ('partner_id', 'in', ext_partners), ('picking_subtype', 'in', ['standard', 'picking']),
-                    '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id])
+                    '&', ('type', '=', 'in'), ('reason_type_id', 'in', all_return_rt_ids)
                 ]
             else:
                 customer_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
                 domain += [
                     '|',
                     '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations),
-                    '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id])
+                    '&', ('type', '=', 'in'), ('reason_type_id', 'in', all_return_rt_ids)
                 ]
 
         return domain, int_return_qery, dest_locations
@@ -2009,7 +2020,7 @@ class product_product(osv.osv):
         Compute the Average Monthly Consumption with this formula :
             AMC = (sum(OUTGOING (except reason types Loan, Loan Return, Donation, Loss, Discrepancy))
                   -
-                  sum(INCOMING with reason type Return from unit)) / Number of period's months
+                  sum(INCOMING with reason type Return from unit, Return Quarantine & Exp/Dam/Scrap)) / Number of period's months
             The AMC is the addition of all done stock moves for a product within a period.
             For stock moves generated from a real consumption report, the qty of product is computed
             according to the average of consumption for the time of the period.
@@ -2045,6 +2056,12 @@ class product_product(osv.osv):
         return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1] # code 16
         internal_return = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_return')[1] # code 18
         replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1] # code 17
+        ret_qua_scrap_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine_scrap')[1] # code 25
+        ret_qua_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_quarantine')[1] # code 25.1
+        ret_loss_dam_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_damage')[1] # code 25.21
+        ret_loss_scrap_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_scrap')[1] # code 25.22
+        ret_loss_exp_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_expiry')[1] # code 25.23
+        ret_loss_br_rt_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_loss_batch_recall')[1] # code 25.24
 
         domain, extra_sql, dest_locations = self._get_domain_compute_amc(cr, uid, context)
         domain.insert(0, ('product_id', 'in', ids))
@@ -2055,14 +2072,14 @@ class product_product(osv.osv):
             domain.insert(0, ('date', '>=', from_date))
 
         # Search all real consumption line included in the period
-        # If no period found, take all stock moves
+        # If no period found, take all stock moves
         if from_date and to_date:
             rcr_domain = ['&', '&', ('rac_id.state', 'not in', ['draft', 'cancel']), ('product_id', 'in', ids),
                           # All lines with a report started out the period and finished in the period
                           '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
-                          # All lines with a report started in the period and finished out the period
+                          # All lines with a report started in the period and finished out the period
                           '|', '&', ('rac_id.period_from', '<=', to_date), ('rac_id.period_from', '>=', from_date),
-                          # All lines with a report started before the period  and finished after the period
+                          # All lines with a report started before the period  and finished after the period
                           '&', ('rac_id.period_from', '<=', from_date), ('rac_id.period_to', '>=', to_date)]
 
             if context.get('amc_location_ids'):
@@ -2111,6 +2128,8 @@ class product_product(osv.osv):
 
         out_move_ids = move_obj.search(cr, uid, domain, context=context, order='NO_ORDER')
         int_return = []
+        all_return_rt_ids = [return_id, return_good_id, ret_qua_scrap_rt_id, ret_qua_rt_id, ret_loss_dam_rt_id,
+                             ret_loss_scrap_rt_id, ret_loss_exp_rt_id, ret_loss_br_rt_id]
         if extra_sql:
             cr.execute(extra_sql, {
                 'from_date': from_date or '1970-01-01 00:00:00',
@@ -2118,7 +2137,7 @@ class product_product(osv.osv):
                 'product_ids': tuple(ids),
                 'src_locations': tuple(src_locations),
                 'dest_locations': tuple(dest_locations),
-                'return_reason': tuple([return_id, return_good_id]),
+                'return_reason': tuple(all_return_rt_ids),
             })
             int_return = [x[0] for x in cr.fetchall()]
             out_move_ids += int_return
@@ -2130,13 +2149,17 @@ class product_product(osv.osv):
         for move in move_result:
             sign = False
             if src_locations is None:
-                if move['reason_type_id'][0] in [return_id, return_good_id] and move['type'] == 'in':
+                if move['reason_type_id'][0] in all_return_rt_ids and move['type'] == 'in':
                     sign = -1
 
-                elif move['location_dest_id'][0] in customer_locations_ids and move['reason_type_id'][0] not in [return_id, return_good_id, replacement_id]:
+                elif move['location_dest_id'][0] in customer_locations_ids and move['reason_type_id'][0] \
+                        not in [return_id, return_good_id, ret_qua_scrap_rt_id, ret_qua_rt_id, ret_loss_dam_rt_id,
+                                ret_loss_scrap_rt_id, ret_loss_exp_rt_id, ret_loss_br_rt_id, replacement_id]:
                     sign = 1
             else:
-                if move['reason_type_id'][0] in [return_id, return_good_id, internal_return] or move['id'] in int_return:
+                if move['reason_type_id'][0] in [return_id, return_good_id, ret_qua_scrap_rt_id, ret_qua_rt_id, ret_loss_dam_rt_id,
+                                                 ret_loss_scrap_rt_id, ret_loss_exp_rt_id, ret_loss_br_rt_id, internal_return]\
+                        or move['id'] in int_return:
                     sign = -1
                 else:
                     sign = 1
