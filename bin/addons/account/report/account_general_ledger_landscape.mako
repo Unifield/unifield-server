@@ -1,9 +1,20 @@
 <?xml version="1.0"?>
 <document filename="General Ledger.pdf">
-  <template pageSize="(842.0,595.0)" title="General Ledger" author="OpenERP S.A.(sales@openerp.com)" allowSplitting="20">
-    <pageTemplate id="first">
-      <frame id="first" x1="28.0" y1="28.0" width="786" height="525"/>
+   <template pageSize="(842.0,595.0)" title="General Ledger" author="OpenERP S.A.(sales@openerp.com)" allowSplitting="20">
+   <pageTemplate id="first">
+    <frame id="first" x1="28.0" y1="28.0" width="786" height="525"/>
+    <pageGraphics>
+        <fill color="black"/>
+        <stroke color="black"/>
+        <setFont name="DejaVu Sans" size="8"/>
+        <drawString x="25" y="555"> ${formatLang(time.strftime("%Y-%m-%d"), date=True)} ${time.strftime("%H:%M")}</drawString>
+        <setFont name="DejaVu Sans Bold" size="10"/>
+        <drawString x="382" y="555">${company.partner_id.name}</drawString>
+        <stroke color="#000000"/>
+        <lines>25 550 818 550</lines>
+    </pageGraphics>
     </pageTemplate>
+
   </template>
   <stylesheet>
     <blockTableStyle id="Standard_Outline">
