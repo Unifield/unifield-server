@@ -506,12 +506,13 @@ class stock_picking(osv.osv):
                             move_vals = {'reason_type_id': vals['sub_reason_type_id'], 'location_dest_id': loc_dest_id}
                             move_obj.write(cr, uid, moves_to_update_rt, move_vals, context=context)
                         else:
+                            int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
                             ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
                             ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
                             move_vals = {'reason_type_id': vals['reason_type_id']}
-                            # If the RT of the IN from scratch is changed from 25 to 4/5, set the destinations to Input
+                            # If the RT of the IN from scratch is changed from 25 to 1/4/5, set the destinations to Input
                             if doc_type == 'in' and not pick.from_wkf and pick.reason_type_id.id == ret_qua_scrap_rt_id and\
-                                    vals['reason_type_id'] in [ret_rt_id, ext_rt_id]:
+                                    vals['reason_type_id'] in [int_rt_id, ret_rt_id, ext_rt_id]:
                                 move_vals['location_dest_id'] = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
                             move_obj.write(cr, uid, moves_to_update_rt, move_vals, context=context)
             if doc_type == 'in':

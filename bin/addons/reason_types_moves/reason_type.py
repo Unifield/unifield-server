@@ -468,9 +468,9 @@ class stock_picking(osv.osv):
                 return {'value': {'ret_from_unit_rt': False, 'sub_rt_required': True}}
             else:
                 res = {'value': {'ret_from_unit_rt': False, 'sub_rt_required': False, 'sub_reason_type_id': False}}
-                if ids and reason_type_id == ext_rt_id:
+                if ids and reason_type_id in (int_rt_id, ext_rt_id):
                     pick = self.read(cr, uid, ids[0], ['reason_type_id'], context=context)
-                    # From RT 25 Return Quarantine & Expired / Damaged / For Scrap to RT 5 External Supply
+                    # From RT 25 Return Quarantine & Expired / Damaged / For Scrap to RT 1 Internal Supply/5 External Supply
                     if pick['reason_type_id'] and pick['reason_type_id'][0] == ret_qua_scrap_rt_id:
                         res['warning'] = {
                             'title': _('Warning'),
