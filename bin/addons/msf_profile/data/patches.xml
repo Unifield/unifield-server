@@ -1380,5 +1380,9 @@
         <record id="us_16107_fix_customs_fees_name" model="patch.scripts">
             <field name="method">us_16107_fix_customs_fees_name</field>
         </record>
+
+        <record id="us_16214_set_other_liquidity_accounts" model="patch.scripts">
+            <field name="method">us_16214_set_other_liquidity_accounts</field>
+        </record>
     </data>
 </openerp>

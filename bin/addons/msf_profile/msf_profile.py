@@ -58,6 +58,49 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_16214_set_other_liquidity_accounts(self, cr, uid, *a, **b):
+        '''
+        Set the default Debit/Credit accounts of the "Other Financial Institution" liquidity journals
+        (other_debit_account_id / other_credit_account_id on res.company) depending on the OC.
+        '''
+        entity_obj = self.pool.get('sync.client.entity')
+        if not entity_obj or self.pool.get('sync.server.update'):
+            return True
+
+        other_account_by_oc = {
+            # 'oca': '10300',
+            'ocb': '10300',
+            'ocp': '10300',
+            # 'ocg': '10300',
+            'waca': '10300',
+            'ubuntu': '16030',
+        }
+
+        oc = entity_obj.get_entity(cr, uid).oc
+        account_code = other_account_by_oc.get(oc)
+        if not account_code:
+            return True
+
+        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id
+        if not company or not company.instance_id:
+            return True
+
+        account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)], context={})
+        if not account_ids:
+            self.log_info(cr, uid, "US-16214: account %s not found, Other Default Debit/Credit accounts not set" % (account_code,))
+            return True
+
+        to_write = {}
+        if not company.other_debit_account_id:
+            to_write['other_debit_account_id'] = account_ids[0]
+        if not company.other_credit_account_id:
+            to_write['other_credit_account_id'] = account_ids[0]
+        if to_write:
+            self.pool.get('res.company').write(cr, uid, company.id, to_write, context={})
+            self.log_info(cr, uid, "US-16214: Other Default Debit/Credit accounts set to %s" % (account_code,))
+
+        return True
+
     # UF42.0
     def us_16107_fix_customs_fees_name(self, cr, uid, *a, **b):
         '''
