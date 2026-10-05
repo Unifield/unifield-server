@@ -961,8 +961,11 @@ class stock_picking(osv.osv):
 
                     # Sort the OUT moves to get the closest quantities as the IN quantity
                     out_moves = sorted(out_moves, key=lambda x: abs(x.product_qty-line.quantity))
-                    if not context.get('auto_import_ok') and not context.get('sync_message_execution') and not out_moves and extra_qty and move.purchase_line_id.linked_sol_id:
-                        # extra qty, if no more out available create a new out line
+                    if not context.get('auto_import_ok') and not context.get('sync_message_execution') and not out_moves and\
+                            extra_qty and move.purchase_line_id.linked_sol_id and (not move.purchase_line_id.linked_sol_id.procurement_request or
+                            move.purchase_line_id.linked_sol_id.procurement_request and
+                            move.purchase_line_id.linked_sol_id.order_id.location_requestor_id.usage == 'customer'):
+                        # extra qty, if no more out available create a new out line, only for FO or IR with Ext CU
                         pick_to_use = self.pool.get('sale.order.line').get_existing_pick(cr, uid, move.purchase_line_id.linked_sol_id.id, context=context)
                         move_data_n = self.pool.get('sale.order')._get_move_data(cr, uid, move.purchase_line_id.linked_sol_id.order_id, move.purchase_line_id.linked_sol_id, pick_to_use, context=context)
                         move_data_n.update({'product_qty': extra_qty, 'product_uos_qty': extra_qty, 'product_uos': line.uom_id.id, 'product_uom': line.uom_id.id})
