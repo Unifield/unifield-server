@@ -80,8 +80,9 @@ class XlsxReportParser():
 
         col_dim = {}
         for x in self.workbook_template.active.column_dimensions.values():
-            for y in range(x.min, x.max+1):
-                col_dim[get_column_letter(y)] = x
+            if x.min and x.max:
+                for y in range(x.min, x.max+1):
+                    col_dim[get_column_letter(y)] = x
 
         for x in range(1, self.workbook_template.active.max_column+1):
             letter = get_column_letter(x)
