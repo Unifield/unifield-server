@@ -921,12 +921,15 @@ class stock_picking(osv.osv):
                 raise osv.except_osv(_('Error'), _('The selected Partner is Phase Out, please select another Partner'))
 
         move_obj = self.pool.get('stock.move')
-        move_ids = move_obj.search(cr, uid, [('state', '=', 'draft'), ('picking_id', 'in', ids)], context=context)
         # Check locations and RT on moves in INTs from scratch
         if context.get('from_button') and context.get('picking_type') == 'internal_move':
+            move_ids = move_obj.search(cr, uid, [('state', '=', 'draft'), ('picking_id', 'in', ids)], context=context)
             move_obj.check_moves_loc_reason_type(cr, uid, move_ids, context=context)
 
         res = super(stock_picking, self).draft_force_assign(cr, uid, ids)
+
+        # Search for moves that are still Draft to confirm them
+        move_ids = move_obj.search(cr, uid, [('state', '=', 'draft'), ('picking_id', 'in', ids)], context=context)
         move_obj.action_confirm(cr, uid, move_ids, context=context)
 
         return res
