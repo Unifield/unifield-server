@@ -68,12 +68,11 @@ class patch_scripts(osv.osv):
             return True
 
         other_account_by_oc = {
-            # 'oca': '10300',
+            'oca': '10300',
             'ocb': '10300',
             'ocp': '10300',
-            # 'ocg': '10300',
+            'ocg': '10300',
             'waca': '10300',
-            'ubuntu': '16030',
         }
 
         oc = entity_obj.get_entity(cr, uid).oc
