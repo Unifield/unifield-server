@@ -404,7 +404,7 @@ class ConnectionPool(object):
                 if time.time() - t > 3600:
                     cnx.close()
                     try:
-                        cnx = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
+                        cnx = psycopg2.connect(**dsn, connection_factory=PsycoConnection)
                         t = time.time()
                     except psycopg2.Error:
                         self.__logger.exception('Connection to the database failed')
@@ -428,7 +428,7 @@ class ConnectionPool(object):
                 raise PoolError('The Connection Pool Is Full')
 
         try:
-            result = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
+            result = psycopg2.connect(**dsn, connection_factory=PsycoConnection)
         except psycopg2.Error:
             log = logging.getLogger()
             if len(log.handlers) > 1:
@@ -491,21 +491,26 @@ class Connection(object):
             return False
 
 
-_dsn = ''
+_dsn = {}
 for p in ('host', 'port', 'user', 'password'):
     cfg = tools.config['db_' + p]
     if cfg:
-        _dsn += '%s=%s ' % (p, cfg)
+        _dsn[p] = cfg
 
 def dsn(db_name):
-    return '%sdbname=%s' % (_dsn, db_name)
+    dsn = _dsn.copy()
+    dsn['dbname'] = db_name
+    return dsn
 
-def dsn_are_equals(first, second):
-    def key(dsn):
-        k = dict(x.split('=', 1) for x in dsn.strip().split())
-        k.pop('password', None) # password is not relevant
-        return k
-    return key(first) == key(second)
+def dsn_are_equals(dsn1, dsn2):
+    alias_keys = {'dbname': 'database'}
+    ignore_keys = ['password']
+    dsn1, dsn2 = ({
+        alias_keys.get(key, key): str(value)
+        for key, value in (psycopg2.extensions.parse_dsn(dsn) if isinstance(dsn, str) else dsn).items()
+        if key not in ignore_keys
+    } for dsn in (dsn1, dsn2))
+    return dsn1 == dsn2
 
 
 _Pool = ConnectionPool(int(tools.config['db_maxconn']))
