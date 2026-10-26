@@ -55,18 +55,27 @@ class analytic_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
             if not arg[2]:
                 raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
+
+
             fp_id = arg[2]
-            tuple_list = analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, fp_id, context=context)
+            fp_data = analytic_acc_obj.browse(cr, uid, fp_id, fields_to_fetch=['fp_account_ids', 'category', 'select_accounts_only'], context=context)
+
             cost_center_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, fp_id, context=context)]
-            for cc in cost_center_ids:
-                for t in tuple_list:
-                    if res:
-                        res = ['|'] + res
-                    res.append('&')
-                    res.append('&')
-                    res.append(('cost_center_id', '=', cc))
-                    res.append(('general_account_id', '=', t[0]))
-                    res.append(('destination_id', '=', t[1]))
+            res = [('cost_center_id', 'in', cost_center_ids)]
+
+            if fp_data.category == 'FUNDING' and fp_data.select_accounts_only:
+                account_ids = [x.id for x in analytic_acc_obj.browse(cr, uid, fp_id, fields_to_fetch=['fp_account_ids'], context=context).fp_account_ids]
+                return res + [('general_account_id', 'in', account_ids)]
+
+            tuple_list = analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, fp_id, context=context)
+            gl_dest_dom = []
+            for t in tuple_list:
+                if gl_dest_dom:
+                    gl_dest_dom = ['|'] + gl_dest_dom
+                gl_dest_dom += ['&', ('general_account_id', '=', t[0]), ('destination_id', '=', t[1])]
+
+            res += gl_dest_dom
+
         return res
 
     def _journal_type_get(self, cr, uid, context=None):

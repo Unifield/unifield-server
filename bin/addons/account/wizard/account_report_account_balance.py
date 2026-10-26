@@ -124,6 +124,9 @@ class account_balance_report(osv.osv_memory):
             if default_journals:
                 if set(default_journals) == set(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
+        used_context = self._build_contexts(cr, uid, ids, data, context=context)
+        data['form']['periods'] = used_context.get('periods', False) and used_context['periods'] or []
+        data['form']['used_context'] = used_context
 
         return data
 

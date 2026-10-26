@@ -1577,7 +1577,7 @@ class account_invoice(osv.osv):
             fp_codes.append(fp_line.analytic_id.code)
         return [';'.join(percentages), ';'.join(cc_codes), ';'.join(dest_codes), ';'.join(fp_codes)]
 
-    def export_invoice(self, cr, uid, ids, data, context=None):
+    def export_invoice(self, cr, uid, ids, context=None):
         """
         Opens the Export Invoice report
         """
@@ -1587,16 +1587,14 @@ class account_invoice(osv.osv):
         prop_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.name
 
         data = {
-            'ids': context.get('active_ids', []),
-            'model': 'account.invoice',
+            'target_filename': '%s_Export - Invoice_%s' % (prop_instance, report_date),
         }
-
-        data['target_filename'] = '%s_Export - Invoice_%s' % (prop_instance, report_date)
 
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.export_invoice',
             'datas': data,
+            'context': context,
         }
 
     def import_invoice(self, cr, uid, ids, data, context=None):
