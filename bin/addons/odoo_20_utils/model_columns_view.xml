@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="model_columns_form_view" model="ir.ui.view">
+            <field name="name">model.columns.form.view</field>
+            <field name="model">model.columns</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Model fields">
+                    <group col="8">
+                        <field name="model_name" on_change="onchange_model_name(model_name,method_name)" colspan="8"/>
+                        <field name="method_name" on_change="onchange_model_name(model_name,method_name)"/>
+
+                        <field name="fields" colspan="8"/>
+                        <field name="placeholder_methods" colspan="8"/>
+                        <field name="method_inheritance_chain" colspan="8"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_model_columns_form_view" model="ir.actions.act_window">
+            <field name="name">Model fields</field>
+            <field name="res_model">model.columns</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="odoo_migration_utils" name="Odoo Utils" parent="base.menu_administration" sequence="20" />
+        <menuitem
+            id="menu_model_columns"
+            action="action_model_columns_form_view"
+            sequence="99"
+            parent="odoo_migration_utils" />
+
+    </data>
+</openerp>
