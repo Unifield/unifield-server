@@ -58,6 +58,17 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF43.0
+    def us_16356_fix_user_synchronize_flag(self, cr, uid, *a, **b):
+        """
+        Set the synchronize flag from Null to False on users that require it
+        """
+        cr.execute("""UPDATE res_users SET synchronize = 'f' WHERE synchronize IS NULL""")
+        self.log_info(cr, uid, "US-16356: The Synchronize flag was set to False on %s user(s)" % (cr.rowcount,))
+
+        return True
+
+    # UF42.1
     def us_16214_set_other_liquidity_accounts(self, cr, uid, *a, **b):
         '''
         Set the default Debit/Credit accounts of the "Other Financial Institution" liquidity journals

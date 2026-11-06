@@ -1384,5 +1384,10 @@
         <record id="us_16214_set_other_liquidity_accounts" model="patch.scripts">
             <field name="method">us_16214_set_other_liquidity_accounts</field>
         </record>
+
+        <!-- UF43.0 -->
+        <record id="us_16356_fix_user_synchronize_flag" model="patch.scripts">
+            <field name="method">us_16356_fix_user_synchronize_flag</field>
+        </record>
     </data>
 </openerp>
