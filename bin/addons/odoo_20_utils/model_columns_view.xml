@@ -15,6 +15,9 @@
                         <field name="fields" colspan="8"/>
                         <field name="placeholder_methods" colspan="8"/>
                         <field name="method_inheritance_chain" colspan="8"/>
+                        <separator string="View conversion" colspan="8"/>
+                        <field name="view_ref" on_change="onchange_view_ref(view_ref)" colspan="8"/>
+                        <field name="views_xml" colspan="8"/>
                     </group>
                 </form>
             </field>

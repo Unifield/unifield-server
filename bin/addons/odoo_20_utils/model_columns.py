@@ -4,8 +4,11 @@
 import inspect
 import re
 import textwrap
+import traceback
 
 from osv import fields, osv
+
+from . import view_converter
 
 LINE_LENGTH = 88
 INDENT = " " * 4
@@ -309,6 +312,79 @@ class model_columns(osv.osv_memory):
             attrs.append(("help", self.string_cleanup(field_data.help)))
 
         return attrs
+
+    @staticmethod
+    def set_view_message(res, message):
+        res["value"]["views_xml"] = message
+
+    def get_view(self, cr, uid, view_ref, res, context=None):
+        try:
+            view_obj = self.pool.get("ir.ui.view")
+            data_obj = self.pool.get("ir.model.data")
+            ref = (view_ref or "").strip()
+            if not ref:
+                self.set_view_message(res, "Type in a view id or an xml id and click away")
+                return
+            if ref.isdigit():
+                view_id = int(ref)
+            elif "." in ref:
+                module, name = ref.split(".", 1)
+                data_ids = data_obj.search(
+                    cr, uid,
+                    [
+                        ("model", "=", "ir.ui.view"),
+                        ("module", "=", module),
+                        ("name", "=", name),
+                    ],
+                    context=context,
+                )
+                if not data_ids:
+                    self.set_view_message(res, f"No view with xml id '{ref}'.")
+                    return
+                data = data_obj.read(cr, uid, data_ids[:1], ["res_id"], context=context)
+                view_id = data[0]["res_id"]
+            else:
+                self.set_view_message(
+                    res, "Give a view id (number) or an xml id (module.name)."
+                )
+                return
+            if not view_obj.search(cr, uid, [("id", "=", view_id)], context=context):
+                self.set_view_message(res, f"View {view_id} not found.")
+                return
+
+            view = view_obj.read(
+                cr, uid, [view_id],
+                ["name", "model", "type", "inherit_id", "arch", "priority"],
+                context=context,
+            )[0]
+            parent = view.get("inherit_id")
+            view["inherit_id"] = (
+                parent[0] if isinstance(parent, (list, tuple)) else parent
+            ) or None
+            wanted = [view_id] + ([view["inherit_id"]] if view["inherit_id"] else [])
+            data_ids = data_obj.search(
+                cr, uid,
+                [("model", "=", "ir.ui.view"), ("res_id", "in", wanted)],
+                context=context,
+            )
+            xml_ids = {}
+            for data in data_obj.read(
+                cr, uid, data_ids, ["module", "name", "res_id"], context=context
+            ):
+                xml_ids.setdefault(data["res_id"], f"{data['module']}.{data['name']}")
+            _summary, xml = view_converter.convert_views(
+                view.get("model") or "", [view], xml_ids
+            )
+            res["value"]["views_xml"] = xml
+        except Exception:
+            self.set_view_message(
+                res, f"Error while reading the view:\n{traceback.format_exc()}"
+            )
+
+    def onchange_view_ref(self, cr, uid, ids, view_ref=None, context=None):
+        res = {"value": {}}
+        self.get_view(cr, uid, view_ref, res, context=context)
+        return res
 
     @staticmethod
     def build_placeholders(methods):
