@@ -554,6 +554,14 @@ class model_columns(osv.osv_memory):
             string="Method Inheritance",
             readonly=True,
         ),
+        "view_ref": fields.char(
+            size=128,
+            string="View id or xml id",
+        ),
+        "views_xml": fields.text(
+            string="Views (Odoo 20 syntax)",
+            readonly=True,
+        ),
     }
 
 
