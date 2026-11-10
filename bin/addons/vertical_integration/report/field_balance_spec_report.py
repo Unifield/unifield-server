@@ -666,7 +666,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     and p.number not in (0, 16)
                     and l.account_id = %(account_id)s
                     and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
-                    and j.type in ('bank', 'cash')
+                    and j.type in ('bank', 'cash', 'other_reg')
                 group by
                     l.currency_id, j.id
                 ''', {
@@ -792,7 +792,7 @@ class field_balance_spec_parser(XlsxReportParser):
         line += 1
 
         year = datetime.strptime(self.report.period_id.date_start, '%Y-%m-%d').year
-        for j_type in ['cash', 'bank']:
+        for j_type in ['cash', 'bank', 'other_reg']:
             j_ids = self.pool.get('account.journal').search(self.cr, self.uid, ['&', ('type', '=', j_type), '|', ('is_active', '=', True), ('inactivation_date', '>', '%s-01-31' % (year, )), ('instance_id', 'in', all_instance_ids)], context=context)
             first_line = True
             account_sum = 0
