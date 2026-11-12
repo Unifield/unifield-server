@@ -178,6 +178,7 @@ class email_signature_notification(osv.osv):
         """
         For each signable signature line, create a single mail for each user describing which document need to be signed
         A log will be added to the signature of each signature line affected
+        The admin user (ID 1) should always be ignored
         """
         if context is None:
             context = {}
@@ -251,7 +252,8 @@ class email_signature_notification(osv.osv):
                     LEFT JOIN account_invoice inv ON sign.signature_res_id = inv.id AND sign.signature_res_model = 'account.invoice'
                     LEFT JOIN account_journal invj ON inv.journal_id = invj.id
                     LEFT JOIN physical_inventory phys ON sign.signature_res_id = phys.id AND sign.signature_res_model = 'physical.inventory'
-                WHERE signl.user_id IS NOT NULL AND u.signature_enabled = 't' AND signl.signed = 'f' AND signl.is_active = 't'
+                WHERE signl.user_id IS NOT NULL AND u.id != 1 AND u.signature_enabled = 't'
+                    AND signl.signed = 'f' AND signl.is_active = 't'
                     AND sign.signed_off_line = 'f' AND sign.signature_is_closed = 'f' AND """ + sql_date_where + """
                     AND (""" + ' OR '.join(sql_doc_wheres) + """) AND (u.synchronize = 'f' OR u.notify_by_email = 't')
                 GROUP BY signl.user_id, u.name, u.user_email, u.signature_to, sign.id, sign.signature_res_model,
@@ -440,6 +442,9 @@ class email_signature_notification(osv.osv):
         return True
 
     def email_expired_signatures(self, cr, uid, ids, usernames, context=None):
+        """
+        The admin user (ID 1) should always be ignored
+        """
         if context is None:
             context = {}
 
@@ -499,6 +504,7 @@ class email_signature_notification(osv.osv):
         '''
         Send up to 2 mails to users in the Sign_document_creator_supply or Sign_document_creator_finance group to list
         the documents which have been fully signed but haven't had this email sent yet
+        The admin user (ID 1) should always be ignored
         '''
         if context is None:
             context = {}
