@@ -1578,6 +1578,8 @@ class waca_export_accounting_lines(osv.osv):
         'partner_id': fields.integer('Partner ID'), # 9
         'partner_txt': fields.text('Partner TXT'), # 10
         'emplid': fields.integer('Employee ID', size=64), # 11
+        'emplnum': fields.char('Employee Num', size=64), # 11
+        'empltype': fields.char('Employee Type', size=64), # 11
         'description': fields.char('Description', size=512), # 12
         'ref': fields.char('Description', size=128), # 13
         'booking_currency': fields.char('Book Curr', size=128), # 14
@@ -1781,7 +1783,8 @@ class waca_export_accounting_lines(osv.osv):
                     'account_code': row['account_code'],
                     'partner_id': row['partner_id'] or '',
                     'partner_txt': row['partner_txt'] or '',
-                    'emplid': row['emplid'] or '',
+                    'emplid': row['empltype'] == 'local' and row['emplid'] or '',
+                    'emplnum': row['empltype'] != 'local' and row['emplnum'] or '',
                     'description': row['description'] or '',
                     'reference': row['ref'] or '',
                     'booking_currency': row['booking_currency'],
@@ -1993,6 +1996,8 @@ class waca_export_accounting_lines(osv.osv):
                     aml.partner_id, -- 9
                     al.partner_txt as partner_txt, -- 10
                     hr.id as emplid, -- 11
+                    hr.identification_id as emplnum, -- 11*
+                    hr.employee_type as empltype, -- 11**
                     al.name as description, -- 12
                     al.ref, -- 13
                     CASE WHEN aml.is_addendum_line = 'f' THEN c.name ELSE move_c.name END AS booking_currency, -- 14
@@ -2061,6 +2066,8 @@ class waca_export_accounting_lines(osv.osv):
                     aml.partner_id,  -- 9
                     aml.partner_txt as partner_txt, -- 10
                     hr.id as emplid, -- 11
+                    hr.identification_id as emplnum, -- 11
+                    hr.employee_type as empltype, -- 11**
                     aml.name as description, -- 12
                     aml.ref,  -- 13
                     c.name AS booking_currency,  -- 14
@@ -2101,7 +2108,7 @@ class waca_export_accounting_lines(osv.osv):
                 object, object_id, instance, journal_code,
                 entry_sequence, document_date, posting_date,
                 account_code, partner_id, partner_txt,
-                emplid, description, ref,
+                emplid, emplnum, empltype, description, ref,
                 booking_currency, book_debit, book_credit,
                 func_debit, func_credit,
                 cost_center, destination_code, fp_code,
