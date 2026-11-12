@@ -180,7 +180,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
         sheet.add_image(img, 'A1')
 
-        sheet.title = sheet_title
+        sheet.title = sheet_title[0:31]
         sheet.row_dimensions[1].height = 25
 
 
