@@ -53,7 +53,6 @@ class account_period_state(osv.osv):
                 coalesce(st.already_exported, 'f') = 'f' and
                 i.level = 'coordo' and
                 st.state in ('mission-closed', 'done') and
-                project.state = 'active' and
                 st.id in %s
             group by
                 st.id, i.code, p.number, p.date_start
@@ -83,8 +82,7 @@ class account_period_state(osv.osv):
             where
                 coalesce(st.already_exported, 'f') = 'f' and
                 i.level = 'coordo' and
-                st.state in ('mission-closed', 'done') and
-                project.state = 'active'
+                st.state in ('mission-closed', 'done')
             group by
                 st.id, i.code, p.number, p.date_start
             having
