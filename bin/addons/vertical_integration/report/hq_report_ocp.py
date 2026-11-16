@@ -1054,7 +1054,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     c.ocp_workday_decimal = 0 as no_decimal, -- 20
                     rounded.rounded_amount as rounded_amount, -- 21
                     hr.employee_type as employee_type, -- 22
-                    al.partner_txt as partner_txt -- 23
+                    al.partner_txt as partner_txt, -- 23
+                    linked_journal.code as linked_journal -- 24
                 FROM
                     account_analytic_line AS al
                         left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id
@@ -1068,7 +1069,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     account_move_line aml
                         left outer join hr_employee hr on hr.id = aml.employee_id,
                     account_move am,
-                    account_journal AS aj,
+                    account_journal AS aj
+                        left outer join account_journal linked_journal on linked_journal.id = aj.bank_journal_id,
                     account_period p,
                     msf_instance AS i
                 WHERE
@@ -1117,7 +1119,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     c.ocp_workday_decimal = 0 as no_decimal, -- 18
                     rounded.rounded_amount as rounded_amount, -- 19
                     hr.employee_type as employee_type, -- 20
-                    aml.partner_txt as partner_txt
+                    aml.partner_txt as partner_txt,
+                    linked_journal.code as linked_journal
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -1125,6 +1128,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     INNER JOIN account_account AS a ON aml.account_id = a.id
                     INNER JOIN res_currency AS c ON aml.currency_id = c.id
                     INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                    LEFT JOIN  account_journal AS linked_journal on linked_journal.id = j.bank_journal_id
                     INNER JOIN msf_instance AS i ON aml.instance_id = i.id
                     LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
                     left join hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
@@ -1286,7 +1290,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                         row['cost_center'] or '',
                         local_employee and row['emplid'] or row['partner_id'] or '',
                         row['journal_code'] if row['journal_type'] == 'cash' else '',
-                        row['journal_code'] if row['journal_type'] in ('bank', 'cheque') else '',
+                        row['linked_journal'] if row['linked_journal'] and row['journal_type'] == 'cheque' else row['journal_code'] if row['journal_type'] in ('bank', 'cheque', 'other_reg') else '',
                         row['account_code'],
                         not local_employee and row['emplid'] or '',
                         row['entry_sequence'][0:3],
@@ -1399,7 +1403,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     '',# Cost Center
                     '', # Partner DB ID
                     row[10] if row[4] == 'cash' else '', # Journal Cash
-                    row[10] if row[4] in ('bank', 'cheque') else '', # Journal Cash
+                    row[10] if row[4] in ('bank', 'cheque', 'other_reg') else '', # Journal Cash
                     row[11], # G/L Account,
                     '', # EMPLID
                     row[12][0:3], # 3 digits seq
