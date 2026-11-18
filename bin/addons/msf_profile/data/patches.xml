@@ -1389,5 +1389,9 @@
         <record id="us_16356_fix_user_synchronize_flag" model="patch.scripts">
             <field name="method">us_16356_fix_user_synchronize_flag</field>
         </record>
+
+        <record id="us_16410_fix_product_null_international_status" model="patch.scripts">
+            <field name="method">us_16410_fix_product_null_international_status</field>
+        </record>
     </data>
 </openerp>

@@ -59,6 +59,16 @@ class patch_scripts(osv.osv):
     }
 
     # UF43.0
+    def us_16410_fix_product_null_international_status(self, cr, uid, *a, **b):
+        """
+        Set the Product Creator from Null to Local on products that require it
+        """
+        status_local_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+        cr.execute("""UPDATE product_product SET international_status = %s WHERE international_status IS NULL""", (status_local_id,))
+        self.log_info(cr, uid, "US-16410: The International Status was set to Local on %s product(s)" % (cr.rowcount,))
+
+        return True
+
     def us_16356_fix_user_synchronize_flag(self, cr, uid, *a, **b):
         """
         Set the synchronize flag from Null to False on users that require it
