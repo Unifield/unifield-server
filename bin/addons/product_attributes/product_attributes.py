@@ -1967,7 +1967,7 @@ class product_attributes(osv.osv):
                 raise osv.except_osv(
                     _('Error'), _('The Code must be between 11 and 18 characters. Please adjust it and try again')
                 )
-            if 'Z' not in default_code:
+            if default_code != 'XXX' and 'Z' not in default_code:
                 raise osv.except_osv(
                     _('Error'),
                     _("Product Code %s must include a 'Z' character") % (default_code,),
@@ -2751,7 +2751,7 @@ class product_attributes(osv.osv):
         copy_pattern = _("%s (copy)")
         copydef = dict(name=(copy_pattern % product2copy['name']),
                        default_code="XXX",
-                       international_status=False,
+                       international_status=self._get_default_international_status(cr, uid),
                        # we do not duplicate the o2m objects
                        asset_ids=False,
                        prodlot_ids=False,
