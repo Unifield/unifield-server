@@ -125,10 +125,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
      % elif d and isDate(d, date_format='%Y-%m-%d %H:%M:%S.%f'):
         <Cell ss:StyleID="sDate">
         <Data ss:Type="DateTime">${d.replace(' ','T')}</Data>
-     % elif d and re.match(r'^-?[0-9]+$', d):
+     % elif d and re.match(r'^-?[0-9]{1,15}$', d):
         <Cell ss:StyleID="sInteger">
         <Data ss:Type="Number">${d}</Data>
-     % elif d and re.match(r'^-?[0-9]+\.?[0-9]*$', d):
+     % elif d and re.match(r'^-?[0-9]+\.[0-9]*$', d):
         <% match = re.match(r'^-?[0-9]+\.?([0-9]*)$', d) if d else False %>
         <% digits = '' %>
         % if match.group(1) and len(match.group(1)) > 2 and len(match.group(1)) < 6:
